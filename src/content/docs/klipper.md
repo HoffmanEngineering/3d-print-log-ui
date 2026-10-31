@@ -95,8 +95,8 @@ Print Time and Filament Usage will be updated.
 
 #### Step 1: Generate API Key on 3D Print Log
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <p>
         Moonraker will need an "API Key" to authenticate. This is how 3D Print
         Log knows what user your Moonraker is for.
@@ -122,14 +122,14 @@ Print Time and Filament Usage will be updated.
         </li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="doc-column">
     </div>
   </div>
 
 #### Step 2: Find your Printer ID Number in 3D Print Log
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <p>
         Moonraker needs to know what Printer to use in 3D Print Log. We'll need
         to find the printer's id number in 3D Print Log.
@@ -147,14 +147,14 @@ Print Time and Filament Usage will be updated.
         <li>Copy that ID number for use in <strong>Step 3</strong>.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="doc-column">
     </div>
   </div>
 
 #### Step 3: Update Moonraker Configuration
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <ul>
         <li>
           If your Klipper installation has a UI such as Fluidd or Mainsail, then
@@ -197,21 +197,21 @@ body:
         <li>Save and restart Moonraker.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="doc-column">
     </div>
   </div>
 
 #### Step 4: Happy Printing!
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <p>
         The <strong>Moonraker Integration</strong> should now be configured.
         Happy printing!
       </p>
     </div>
 
-    <div fxFlex>
+    <div class="doc-column">
     </div>
   </div>
 

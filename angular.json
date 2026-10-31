@@ -181,18 +181,6 @@
           "options": {
             "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
           }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "print-log-ui:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "print-log-ui:serve:production"
-            }
-          }
         }
       }
     }

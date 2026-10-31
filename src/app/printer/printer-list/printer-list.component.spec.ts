@@ -9,7 +9,6 @@ import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { of, Subject } from 'rxjs';
 
-import { SharedModule } from 'src/app/shared/shared.module';
 import { EmptyStateComponent } from 'src/app/shared/empty-state/empty-state.component';
 import {
   PrinterService,
@@ -81,7 +80,6 @@ describe('PrinterListComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        SharedModule,
         NoopAnimationsModule,
         EmptyStateComponent,
         SignedImageComponent,

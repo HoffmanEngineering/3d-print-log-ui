@@ -10,3 +10,51 @@
   margin-left: 20px;
   color: #ff0000;
 }
+
+.page {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 100%;
+  max-height: 100%;
+}
+
+// Not a flex container: the fields stay inline, spaced as fxLayoutGap spaced them.
+.filter-fields > :not(:last-child) {
+  margin-right: 10px;
+}
+
+.reset-filters {
+  flex: 1 1 120px;
+  min-width: 120px;
+  max-width: 120px;
+  height: 36px;
+
+  @media (max-width: 599.98px) {
+    flex: 1 1 80px;
+    min-width: 80px;
+    max-width: 80px;
+    height: auto;
+    white-space: normal;
+    line-height: 26px;
+  }
+}
+
+.entries {
+  flex: 1 1 100%;
+  max-height: 100%;
+}
+
+.edit-field {
+  width: 100%;
+
+  @media (max-width: 599.98px) {
+    width: auto;
+  }
+}

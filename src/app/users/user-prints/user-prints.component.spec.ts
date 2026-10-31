@@ -94,6 +94,19 @@ describe('UserPrintsComponent', () => {
     expect(component.prints().map((p) => p.id)).toEqual([9]);
   });
 
+  it('keeps the search from the URL on first load', () => {
+    queryParams.next(convertToParamMap({ searchText: 'benchy' }));
+    printService.getPrintSummaries.calls.reset();
+    const opened = TestBed.createComponent(UserPrintsComponent);
+    opened.componentRef.setInput('userId', 7);
+    opened.detectChanges();
+
+    expect(opened.componentInstance.searchText()).toBe('benchy');
+    const args = printService.getPrintSummaries.calls.mostRecent().args;
+    expect(args[2]).toBe('benchy');
+    expect(args[8]).toBe(7);
+  });
+
   it('clears the search and reloads when switched to another user', () => {
     component.searchText.set('benchy');
     printService.getPrintSummaries.and.returnValue(page(1, 1, [4]));

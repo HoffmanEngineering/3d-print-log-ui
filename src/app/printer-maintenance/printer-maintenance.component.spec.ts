@@ -8,13 +8,13 @@ import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { of, Subject } from 'rxjs';
 
-import { SharedModule } from 'src/app/shared/shared.module';
 import {
   PrinterMaintenanceDto,
   PrinterMaintenanceService,
 } from 'src/app/core/services/printer-maintenance.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { provideSectionProviders } from 'src/app/shared/section-providers';
 import { PrinterMaintenanceComponent } from './printer-maintenance.component';
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
@@ -103,7 +103,6 @@ describe('PrinterMaintenanceComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        SharedModule,
         FormsModule,
         NoopAnimationsModule,
         PrinterAvatarComponent,
@@ -112,6 +111,8 @@ describe('PrinterMaintenanceComponent', () => {
         PrinterMaintenanceComponent,
       ],
       providers: [
+        // The section route's providers: the datepickers need its DateAdapter.
+        ...provideSectionProviders(),
         ...(later ? [provideZoneChangeDetection()] : []),
         // Stubbed: the real store would issue its own authenticated fetch.
         {
@@ -219,6 +220,42 @@ describe('PrinterMaintenanceComponent', () => {
       expect(fixture.nativeElement.querySelector('td input[matInput]'))
         .withContext('editing')
         .toBeNull();
+    });
+
+    it('saves what was typed, with its printer', () => {
+      const other = aPrinter({ id: 9, name: 'Ender 3' });
+      component.printers.set([aPrinter(), other]);
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      component.editForm.patchValue({
+        printerId: 9,
+        category: 'Belts',
+        description: 'Tension belts',
+      });
+
+      component.saveEntry(entry);
+
+      const sent =
+        maintenanceService.updatePrinterMaintenanceEntry.calls.mostRecent()
+          .args[0] as PrinterMaintenanceDto;
+      expect(sent.id).toBe(entry.id);
+      expect(sent.category).toBe('Belts');
+      expect(sent.description).toBe('Tension belts');
+      expect(sent.printerId).toBe(9);
+      expect(sent.printer).toBe(other);
+    });
+
+    it('leaves the row as it was on cancel', () => {
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      component.editForm.patchValue({ description: 'Typed, then cancelled' });
+
+      component.cancelEdit();
+      fixture.detectChanges();
+
+      expect(component.entries()[0]).toBe(entry);
+      expect(entry.description).toBe('Replace nozzle');
+      expect(text()).toContain('Replace nozzle');
     });
   });
 });

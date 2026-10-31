@@ -13,7 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -32,6 +32,7 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
+import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import type { Material } from 'src/app/core/services/material.service';
 import type { CatalogMatch, TagReading } from 'src/app/core/types/tag-reading';
 import { By } from '@angular/platform-browser';
@@ -1534,5 +1535,125 @@ describe('FilamentDetailComponent scanned tag', () => {
         { uid: '04A23F11', reading: PETG },
       ]);
     });
+  });
+});
+
+describe('FilamentDetailComponent - autocomplete options', () => {
+  let component: FilamentDetailComponent;
+  let routeData: BehaviorSubject<Record<string, unknown>>;
+
+  const pla: Material = {
+    id: 'm-pla',
+    acronym: 'PLA',
+    name: 'Polylactic Acid',
+    materialCategoryNickname: 'filament',
+    densityGramPerCubicCm: 1.24,
+  };
+  const petg: Material = {
+    id: 'm-petg',
+    acronym: 'PETG',
+    name: 'Polyethylene Terephthalate Glycol',
+    materialCategoryNickname: 'filament',
+    densityGramPerCubicCm: 1.27,
+  };
+
+  function dataFor(materials: Material[]) {
+    return {
+      filament: { id: 'filament-1', colors: [], filamentAdjustments: [] },
+      materials,
+      materialCategories: [],
+    };
+  }
+
+  async function setup() {
+    const filamentSvc = jasmine.createSpyObj<FilamentService>(
+      'FilamentService',
+      {
+        getFilamentBrands: of({ brands: ['Prusament', 'Polymaker'] }),
+        getFilamentPurchaseLocations: of({ purchaseLocations: ['Amazon'] }),
+        getFilamentStorageLocations: of({
+          storageLocations: ['Shelf A', 'Dry box'],
+        }),
+      }
+    );
+    stubImageTarget(filamentSvc);
+    routeData = new BehaviorSubject<Record<string, unknown>>(
+      dataFor([pla, petg])
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [
+        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
+        RouterTestingModule,
+        MatNativeDateModule,
+        FilamentDetailComponent,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: filamentSvc },
+        {
+          provide: ToastrService,
+          useValue: jasmine.createSpyObj('ToastrService', ['success']),
+        },
+        {
+          provide: UserSettingService,
+          useValue: jasmine.createSpyObj('UserSettingService', ['x']),
+        },
+        {
+          provide: LoggingService,
+          useValue: jasmine.createSpyObj('LoggingService', [
+            'logEvent',
+            'logException',
+          ]),
+        },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        { provide: ActivatedRoute, useValue: { data: routeData } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(FilamentDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  }
+
+  it('offers every option at first, then those matching what is typed', async () => {
+    await setup();
+
+    expect(component.filteredFilamentBrands()).toEqual([
+      'Polymaker',
+      'Prusament',
+    ]);
+    expect(component.filteredMaterials().map((m) => m.id)).toEqual([
+      'm-pla',
+      'm-petg',
+    ]);
+
+    component.filamentForm.get('brand')!.setValue('prus');
+    component.filamentForm.get('storageLocation')!.setValue('dry');
+    component.filamentForm.get('materialType')!.setValue('petg');
+
+    expect(component.filteredFilamentBrands()).toEqual(['Prusament']);
+    expect(component.filteredFilamentStorageLocations()).toEqual(['Dry box']);
+    expect(component.filteredMaterials().map((m) => m.id)).toEqual(['m-petg']);
+  });
+
+  it("fills in a picked material type's density", async () => {
+    await setup();
+
+    component.filamentForm
+      .get('materialType')!
+      .setValue(new MaterialNamePipe().transform(petg));
+
+    expect(
+      component.filamentForm.get('materialDensityGramPerCubicCm')!.value
+    ).toBe(1.27);
+  });
+
+  it('starts over with the new materials when the route data changes', async () => {
+    await setup();
+    component.filamentForm.get('materialType')!.setValue('petg');
+
+    routeData.next(dataFor([pla]));
+
+    expect(component.filteredMaterials().map((m) => m.id)).toEqual(['m-pla']);
   });
 });

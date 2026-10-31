@@ -32,13 +32,15 @@ export function emitPageComponentTs(page) {
     BANNER,
     "import { ChangeDetectionStrategy, Component } from '@angular/core';",
     '',
+    "import { DOCS_PAGE_IMPORTS } from '../../docs-page-imports';",
+    '',
     '@Component({',
     `  selector: '${page.selector}',`,
     `  templateUrl: './docs-${page.slug}.component.html',`,
     ...(page.hasStyles
       ? [`  styleUrls: ['./docs-${page.slug}.component.scss'],`]
       : []),
-    '  standalone: false,',
+    '  imports: [DOCS_PAGE_IMPORTS],',
     '  changeDetection: ChangeDetectionStrategy.OnPush,',
     '})',
     `export class ${page.className} {${fields.length ? `\n${fields.join('\n')}\n` : '\n'}}`,
@@ -101,13 +103,9 @@ export function emitRoutesTs(manifest) {
 }
 
 /**
- * The generated page components, for DocumentationModule's `declarations`.
- *
- * They stay `standalone: false` on purpose: a routed standalone component would
- * not inherit RouterModule/MatIcon/YouTubePlayer from the module, and
- * `strictTemplates` turns a missing directive into a build error rather than
- * inert markup. A `component:` page is already declared by hand, so it is left
- * out — declaring it twice would not compile.
+ * The generated page components, as one list for the spec that renders every
+ * page (docs-pages.spec.ts). A `component:` page is hand-written and imported
+ * there by name, so it is left out.
  */
 export function emitDeclarationsTs(manifest) {
   const generated = manifest.pages.filter((p) => !p.dormant && !p.component);

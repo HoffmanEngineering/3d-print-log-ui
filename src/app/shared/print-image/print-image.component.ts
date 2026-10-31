@@ -1,11 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnChanges,
   OnInit,
-  SimpleChanges,
   inject,
   input,
+  linkedSignal,
   model,
   output,
   signal,
@@ -21,7 +20,7 @@ import { PrintService } from '../../core/services/print.service';
   imports: [MatButtonModule, MatIconModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PrintImageComponent implements OnInit, OnChanges {
+export class PrintImageComponent implements OnInit {
   readonly printId = input<number>();
   readonly imageId = input<number>();
   /**
@@ -38,7 +37,13 @@ export class PrintImageComponent implements OnInit, OnChanges {
 
   protected readonly imageHovered = signal(false);
 
-  protected readonly imageFailed = signal(false);
+  // Reset whenever the image changes. Without this a single failure would
+  // persist across carousel navigation, showing "Image unavailable" for every
+  // subsequent image.
+  protected readonly imageFailed = linkedSignal({
+    source: () => [this.imageId(), this.imageData()],
+    computation: () => false,
+  });
 
   private readonly printService = inject(PrintService);
 
@@ -55,14 +60,6 @@ export class PrintImageComponent implements OnInit, OnChanges {
       request.subscribe((data) => {
         this.imageData.set(data);
       });
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    // Without this a single failure would persist across carousel navigation,
-    // showing "Image unavailable" for every subsequent image.
-    if (changes['imageId'] || changes['imageData']) {
-      this.imageFailed.set(false);
     }
   }
 

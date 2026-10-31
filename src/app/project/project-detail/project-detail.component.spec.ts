@@ -1,3 +1,4 @@
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -17,7 +18,7 @@ import {
 } from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
@@ -51,7 +52,7 @@ describe('ProjectDetailComponent', () => {
   let component: ProjectDetailComponent;
   let mockProjectService: jasmine.SpyObj<ProjectService>;
   let mockPrintService: jasmine.SpyObj<PrintService>;
-  let currentUserSubject: BehaviorSubject<any>;
+  let currentUser: WritableSignal<any>;
 
   beforeEach(async () => {
     mockProjectService = jasmine.createSpyObj<ProjectService>(
@@ -82,8 +83,8 @@ describe('ProjectDetailComponent', () => {
     mockPrintService.deletePrint.and.returnValue(of(null));
     mockPrintService.updatePrintStatus.and.returnValue(of(null));
 
-    currentUserSubject = new BehaviorSubject({ id: 1 });
-    const mockAuthService = { userProfile$: currentUserSubject.asObservable() };
+    currentUser = signal({ id: 1 });
+    const mockAuthService = { userProfile: currentUser };
 
     await TestBed.configureTestingModule({
       imports: [ProjectDetailComponent, NoopAnimationsModule],
@@ -135,7 +136,7 @@ describe('ProjectDetailComponent', () => {
   });
 
   it('should not show edit button for non-owner', async () => {
-    currentUserSubject.next({ id: 99 });
+    currentUser.set({ id: 99 });
     await fixture.whenStable();
     fixture.detectChanges();
     const editButton = fixture.nativeElement.querySelector(
@@ -212,9 +213,9 @@ describe('ProjectDetailComponent', () => {
       afterClosed: () => of(true),
       componentInstance: {},
     } as any;
-    // Spy directly on the component's injected dialog instance — SharedModule provides
-    // the real MatDialog via MatDialogModule, which shadows the root-injector mock.
-    spyOn((component as any).dialog, 'open').and.returnValue(mockDialogRef);
+    (TestBed.inject(MatDialog).open as jasmine.Spy).and.returnValue(
+      mockDialogRef
+    );
 
     const print: PrintSummary = {
       id: 7,
@@ -543,9 +544,9 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       })
     );
 
-    const currentUserSubject = new BehaviorSubject({ id: 1 });
+    const currentUser = signal({ id: 1 });
     const mockAuthService = {
-      userProfile$: currentUserSubject.asObservable(),
+      userProfile: currentUser,
     };
 
     await TestBed.configureTestingModule({
@@ -733,7 +734,7 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
       providers: [
         { provide: ProjectService, useValue: projectService },
         { provide: PrintService, useValue: printService },
-        { provide: AuthService, useValue: { userProfile$: of(null) } },
+        { provide: AuthService, useValue: { userProfile: signal(null) } },
         { provide: MetaTagService, useValue: metaTags },
         { provide: SeoService, useValue: seoService },
         { provide: Title, useValue: title },

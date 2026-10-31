@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { PrintService } from 'src/app/core/services/print.service';
-import { SharedModule } from '../shared.module';
 import {
   PrintSummaryCardComponent,
   PrintSummaryCardPrint,
@@ -17,7 +16,7 @@ describe('PrintSummaryCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SharedModule],
+      imports: [],
       providers: [
         provideRouter([]),
         {

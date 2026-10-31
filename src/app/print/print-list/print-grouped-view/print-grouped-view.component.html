@@ -40,7 +40,6 @@
   <!-- Mobile Card View -->
   <div
     class="grouped-mobile-card-view"
-    fxHide.gt-sm
     [class.refreshing]="showRefreshing()"
     [attr.aria-busy]="showRefreshing() ? 'true' : null"
   >
@@ -570,7 +569,7 @@
   <table
     aria-label="Prints grouped by project"
     aria-live="polite"
-    fxHide.lt-md
+    class="grouped-table"
     [class.refreshing]="showRefreshing()"
     [attr.aria-busy]="showRefreshing() ? 'true' : null"
     mat-table

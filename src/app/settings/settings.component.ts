@@ -3,12 +3,12 @@ import { KeyValue, KeyValuePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   inject,
+  linkedSignal,
   OnInit,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { map } from 'rxjs';
@@ -39,13 +39,6 @@ import {
   PushPreferencesService,
 } from '../core/services/push-preferences.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard } from '@angular/material/card';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
@@ -70,12 +63,7 @@ import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatCard,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
-    FlexFillDirective,
     MatTooltip,
     MatIcon,
     FormsModule,
@@ -134,7 +122,12 @@ export class SettingsComponent implements OnInit {
     signal<PrintFilamentSourceMeasurement | null>(null);
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
-  readonly deactivateHasBeenClicked = signal(false);
+  // Follows the profile: a deactivated account shows as clicked, and a
+  // reactivation clears it. Clicking sets it in between.
+  readonly deactivateHasBeenClicked = linkedSignal({
+    source: this.authService.userProfile,
+    computation: (user) => !!user?.deactivationDateTime,
+  });
 
   /**
    * NgModel for Profile View Status
@@ -201,7 +194,6 @@ export class SettingsComponent implements OnInit {
   private readonly pushPreferences = inject(PushPreferencesService);
   private readonly nativeBridge = inject(NativeBridgeService);
   private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
-  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * The filament display unit toggles are about 440px wide in a row, wider than a phone
@@ -333,17 +325,6 @@ export class SettingsComponent implements OnInit {
           : null
       );
     });
-
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => {
-        if (user?.deactivationDateTime) {
-          this.deactivateHasBeenClicked.set(true);
-        } else {
-          // If the deactivate date time gets set back to null, then clear the click
-          this.deactivateHasBeenClicked.set(false);
-        }
-      });
   }
 
   public sortByName = (

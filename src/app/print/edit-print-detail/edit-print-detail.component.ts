@@ -111,14 +111,6 @@ import {
   ProjectSelection,
 } from 'src/app/shared/project-selector/project-selector.component';
 import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultLayoutGapDirective,
-  DefaultFlexDirective,
-  FlexFillDirective,
-  DefaultFlexOffsetDirective,
-} from '@ngbracket/ngx-layout/flex';
-import {
   MatCard,
   MatCardTitle,
   MatCardContent,
@@ -146,18 +138,10 @@ import {
 } from '@angular/material/datepicker';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
-import {
-  DefaultGridColumnsDirective,
-  DefaultGridRowsDirective,
-  DefaultGridGapDirective,
-  DefaultGridColumnDirective,
-  DefaultGridRowDirective,
-} from '@ngbracket/ngx-layout/grid';
 import { CdkTextareaAutosize } from '@angular/cdk/text-field';
 import { MatCheckbox } from '@angular/material/checkbox';
 import { FileAttachmentSectionComponent } from '../../shared/file-attachment-section/file-attachment-section.component';
 import { AdComponent } from '../../shared/ad/ad.component';
-import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
 import { TitleCasePipe } from '@angular/common';
 import {
@@ -236,6 +220,43 @@ export interface PrintFormValue {
   allowFileDownloads: boolean;
 }
 
+/**
+ * An amount the print does not have (a G-code import sets no actual amount) loads as empty.
+ * Dividing it gave NaN, which a usage row's Weight input then rejected.
+ */
+function milligramsToGrams(mg: number | null | undefined): number | null {
+  return mg == null ? null : mg / 1000;
+}
+
+/**
+ * Re-runs the validators of every control under `control`, children first. A validator a
+ * template input attached is removed with that input, but Angular does not re-check the
+ * control, so it keeps whatever status that validator last gave it.
+ */
+function revalidateAll(control: AbstractControl): void {
+  if (control instanceof FormGroup || control instanceof FormArray) {
+    Object.values(control.controls).forEach(revalidateAll);
+  }
+  control.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+}
+
+/** Paths of the invalid controls under `control`, such as `filamentUsage.3.amountG`. */
+function invalidControlPaths(control: AbstractControl, path = ''): string[] {
+  if (!control.invalid) {
+    return [];
+  }
+  if (control instanceof FormGroup || control instanceof FormArray) {
+    const children = Object.entries(control.controls).flatMap(([key, child]) =>
+      invalidControlPaths(child, path ? `${path}.${key}` : key)
+    );
+    if (children.length > 0) {
+      return children;
+    }
+  }
+  // A field, or a group whose own validator failed rather than a child's.
+  return [path || 'form'];
+}
+
 @Component({
   selector: 'app-print-detail',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -245,11 +266,7 @@ export interface PrintFormValue {
     '(window:beforeunload)': 'canDeactivate()',
   },
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultLayoutGapDirective,
     MatCard,
-    DefaultFlexDirective,
     FormsModule,
     ReactiveFormsModule,
     MatCardTitle,
@@ -259,7 +276,6 @@ export interface PrintFormValue {
     PrintImageComponent,
     ImageThumbnailStripComponent,
     MatCardContent,
-    FlexFillDirective,
     MatFormField,
     MatLabel,
     MatInput,
@@ -280,19 +296,12 @@ export interface PrintFormValue {
     MatMenuTrigger,
     MatMenu,
     MatMenuItem,
-    DefaultGridColumnsDirective,
-    DefaultGridRowsDirective,
-    DefaultGridGapDirective,
-    DefaultGridColumnDirective,
-    DefaultGridRowDirective,
     CdkTextareaAutosize,
     MatHint,
     MatCheckbox,
     FileAttachmentSectionComponent,
     MatCardActions,
-    DefaultFlexOffsetDirective,
     AdComponent,
-    DefaultShowHideDirective,
     SidebarAdComponent,
     RemainingPipe,
     TitleCasePipe,
@@ -1087,11 +1096,11 @@ export class EditPrintDetailComponent
       print.filamentUsage.forEach((pf) => {
         const newFormGroup = this.GetNewFilamentUsageForm(
           pf.id,
-          pf.amountMg / 1000,
+          milligramsToGrams(pf.amountMg),
           pf.lengthInM,
           pf.volumeMl,
           pf.source,
-          pf.estimatedAmountMg / 1000,
+          milligramsToGrams(pf.estimatedAmountMg),
           pf.estimatedLengthInM,
           pf.estimatedVolumeMl,
           pf.estimatedSource,
@@ -1117,13 +1126,11 @@ export class EditPrintDetailComponent
     ) {
       const newFormGroup = this.GetNewFilamentUsageForm(
         EMPTY_GUID,
-        print.filamentUsageMg / 1000,
+        milligramsToGrams(print.filamentUsageMg),
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
-        estimatedFilamentUsageMg !== null
-          ? estimatedFilamentUsageMg / 1000
-          : null,
+        milligramsToGrams(estimatedFilamentUsageMg),
         null,
         null,
         PrintFilamentSourceMeasurement.Weight,
@@ -1174,7 +1181,7 @@ export class EditPrintDetailComponent
         print ? this.parseIntoString(print.printTimeInSeconds) : null,
       ],
       filamentUsageG: [
-        print ? print.filamentUsageMg / 1000 : null,
+        milligramsToGrams(print?.filamentUsageMg),
         [Validators.min(0)],
       ],
       filamentType: [print ? print.filamentType : ''],
@@ -1822,7 +1829,9 @@ export class EditPrintDetailComponent
   onSubmit() {
     this.saving.set(true);
 
-    // Validate form
+    // Validate form. Re-run every validator first: one a template input attached leaves with
+    // that input (a usage row switching measure), but the control keeps the status it judged.
+    revalidateAll(this.printForm);
     this.printForm.markAllAsTouched();
     if (!this.printForm.valid) {
       this.saving.set(false);
@@ -1934,18 +1943,28 @@ export class EditPrintDetailComponent
   }
 
   /**
-   * Focus the first invalid form control
+   * Focuses the first invalid field on the page, which shows its error. A usage row's fields
+   * share names across rows, so this goes by the `ng-invalid` class Angular puts on each one
+   * rather than by name. A control with no field on the page cannot show an error, so the user
+   * is told instead of Submit doing nothing.
    */
   private focusFirstInvalidControl(): void {
-    for (const key of Object.keys(this.printForm.controls)) {
-      if (this.printForm.controls[key].invalid) {
-        const invalidControl = this.el.nativeElement.querySelector(
-          '[formcontrolname="' + key + '"]'
-        );
-        invalidControl.focus();
-        break;
-      }
+    const field = (
+      this.el.nativeElement as HTMLElement
+    ).querySelector<HTMLElement>('[formcontrolname].ng-invalid');
+    if (field) {
+      field.focus();
+      return;
     }
+
+    const fields = invalidControlPaths(this.printForm);
+    this.loggingService.logEvent('EditPrintDetail_HiddenFieldInvalid', {
+      fields: fields.join(', '),
+    });
+    this.toastr.error(
+      `Your print wasn't saved: a field that isn't shown has an invalid value (${fields.join(', ')}).`,
+      'Save failed'
+    );
   }
 
   /**
@@ -1975,11 +1994,22 @@ export class EditPrintDetailComponent
       this.afterNewPrintSaved();
     }
 
-    this.saving.set(false);
+    // Submit keeps spinning until the print list has loaded; it stops only if the navigation
+    // does not happen, since this page then stays open.
     this.printForm.markAsPristine();
-    this.router.navigate(['/prints']).then(() => {
-      this.toastr.success('Save successful!');
-    });
+    this.router.navigate(['/prints']).then(
+      (navigated) => {
+        if (!navigated) {
+          this.saving.set(false);
+        }
+        this.toastr.success('Save successful!');
+      },
+      (err) => {
+        this.saving.set(false);
+        this.toastr.success('Save successful!');
+        this.loggingService.logException(err);
+      }
+    );
   }
 
   /** Bound to the printer select's `openedChange`. */

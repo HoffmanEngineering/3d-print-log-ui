@@ -1,30 +1,21 @@
-<div fxLayout="row" fxLayoutAlign="center start" fxLayoutGap="24px">
-  <mat-card appearance="outlined" fxFlex="500px" fxFlex.xs="100%">
+<div class="page">
+  <mat-card class="printer-card" appearance="outlined">
     <form
+      class="printer-form"
       [formGroup]="printerForm()"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
     >
-      <mat-card-title fxFlex="grow"
+      <mat-card-title class="grow"
         >{{ printerForm().get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Printer</mat-card-title
       >
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
-      >
+      <mat-card-content class="section printer-fields">
         @if (showFillCard()) {
           <section
-            class="fill-specs"
+            class="fill-specs section"
             data-testid="fill-specs-card"
             aria-labelledby="fill-specs-text"
-            fxFlex="grow"
-            fxFlexFill
           >
             <p id="fill-specs-text" class="fill-specs__text">
               {{ fillCardText() }}
@@ -54,21 +45,20 @@
             </div>
           </section>
         }
-        <div fxFlex="grow" fxFlexFill>
+        <div class="section">
           <h2 style="text-align: start">Photos</h2>
         </div>
         <app-entity-images-panel
-          fxFlex="grow"
-          fxFlexFill
+          class="section"
           [target]="imageTarget()"
           [images]="printerImages()"
           [maxImages]="maxImages()"
           imageAlt="Printer photo"
         />
-        <div fxFlex="grow" fxFlexFill>
+        <div class="section">
           <h2 style="text-align: start">General</h2>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Name</mat-label>
           <input
             id="edit-printer-name"
@@ -82,7 +72,7 @@
             <mat-error> A Name is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Type</mat-label>
           <mat-select formControlName="type">
             @for (group of groupedPrinterCategories(); track group.name) {
@@ -102,7 +92,7 @@
             <mat-error> A Type is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Find your printer</mat-label>
           <input
             id="edit-printer-catalog-search"
@@ -128,7 +118,7 @@
             >
           }
         </mat-autocomplete>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Make</mat-label>
           <input
             id="edit-printer-make"
@@ -143,7 +133,7 @@
             <mat-error> A Make is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Model</mat-label>
           <input
             id="edit-printer-model"
@@ -158,7 +148,7 @@
             <mat-error> A Model is <strong>required</strong> </mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Description</mat-label>
           <textarea
             id="edit-printer-description"
@@ -169,12 +159,12 @@
             rows="3"
           ></textarea>
         </mat-form-field>
-        <mat-checkbox fxFlex="grow" formControlName="isActive"
+        <mat-checkbox class="grow" formControlName="isActive"
           >Is Active</mat-checkbox
         >
         <h2>Machine Settings</h2>
         @if (printerForm().get('filamentDiameter').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Filament Diameter (mm)</mat-label>
             <input
               id="edit-printer-filament-diameter"
@@ -189,7 +179,7 @@
           </mat-form-field>
         }
         @if (printerForm().get('nozzleDiameter').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Nozzle Diameter (mm)</mat-label>
             <input
               matInput
@@ -204,7 +194,7 @@
           </mat-form-field>
         }
         @if (printerForm().get('beamDiameter').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Beam Diameter (mm)</mat-label>
             <input
               matInput
@@ -218,7 +208,7 @@
           </mat-form-field>
         }
         @if (printerForm().get('bedWidthMm').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Bed X (Width) (mm)</mat-label>
             <input
               matInput
@@ -232,7 +222,7 @@
           </mat-form-field>
         }
         @if (printerForm().get('bedDepthMm').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Bed Y (Depth) (mm)</mat-label>
             <input
               matInput
@@ -246,7 +236,7 @@
           </mat-form-field>
         }
         @if (printerForm().get('bedHeightMm').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Bed Z (Height) (mm)</mat-label>
             <input
               matInput
@@ -261,7 +251,7 @@
         }
         <!-- Form for Screen Resolution-->
         @if (printerForm().get('screenResolutionXPixels').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Screen Resolution X (Pixels)</mat-label>
             <input
               matInput
@@ -279,7 +269,7 @@
           </mat-form-field>
         }
         @if (printerForm().get('screenResolutionYPixels').enabled) {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="section">
             <mat-label>Screen Resolution Y (Pixels)</mat-label>
             <input
               matInput
@@ -296,7 +286,7 @@
             }
           </mat-form-field>
         }
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Average Wattage (W)</mat-label>
           <input
             matInput
@@ -316,7 +306,7 @@
             <mat-error>Wattage cannot be negative</mat-error>
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="section">
           <mat-label>Material slots</mat-label>
           <input
             matInput
@@ -338,33 +328,28 @@
         </mat-form-field>
         <!-- Checkboxes for hasHeatedBed and hasHeatedChamber-->
         @if (printerForm().get('hasHeatedBed').enabled) {
-          <mat-checkbox
-            fxFlex="grow"
-            formControlName="hasHeatedBed"
-            class="align-left"
+          <mat-checkbox formControlName="hasHeatedBed" class="align-left grow"
             >Has Heated Bed</mat-checkbox
           >
         }
         @if (printerForm().get('hasHeatedChamber').enabled) {
           <mat-checkbox
-            fxFlex="grow"
             formControlName="hasHeatedChamber"
-            class="align-left"
+            class="align-left grow"
             >Has Heated Chamber</mat-checkbox
           >
         }
         <h2>Loaded Materials</h2>
         @if (showSlots()) {
           <app-printer-slots
-            fxFlex="grow"
-            fxFlexFill
+            class="section"
             [printerId]="savedPrinterId()"
             [slotCount]="slotCount()"
             [loaded]="slotLoaded()"
             (loadedChange)="onSlotsChanged($event)"
           />
         } @else {
-          <div fxFlex="grow" fxFlexFill>
+          <div class="section">
             <button
               type="button"
               mat-raised-button
@@ -385,14 +370,11 @@
                 <div [formGroupName]="printFilamentIndex">
                   <mat-card
                     appearance="outlined"
-                    class="mat-elevation-z4"
-                    fxFlex="grow"
-                    fxFlexFill
-                    fxLayout="row"
+                    class="mat-elevation-z4 loaded-material"
                   >
                     <mat-card-content>
-                      <div fxFlex="grow" fxLayout="column" fxLayoutGap="4px">
-                        <div fxFlex style="padding-bottom: 10px">
+                      <div class="loaded-material-details">
+                        <div class="detail" style="padding-bottom: 10px">
                           <div
                             class="filament-color-cell"
                             [style]="
@@ -406,7 +388,7 @@
                             "
                           ></div>
                         </div>
-                        <div fxFlex>
+                        <div class="detail">
                           {{
                             printFilament.get('filament').value?.displayName ||
                               'Other'
@@ -415,11 +397,11 @@
                         @if (
                           printFilament.get('filament').value?.colorName !== ''
                         ) {
-                          <div fxFlex>
+                          <div class="detail">
                             {{ printFilament.get('filament').value?.colorName }}
                           </div>
                         }
-                        <div fxFlex>
+                        <div class="detail">
                           {{
                             printFilament.get('filament').value?.materialType
                           }}
@@ -431,7 +413,7 @@
                         @if (
                           isMeasuredInMl(printFilament.get('filament').value)
                         ) {
-                          <div fxFlex="grow">
+                          <div class="grow">
                             {{
                               printFilament.get('filament').value
                                 ?.filamentVolumeRemainingInMl
@@ -441,7 +423,7 @@
                         } @else if (
                           printFilament.get('filament').value !== null
                         ) {
-                          <div fxFlex="grow">
+                          <div class="grow">
                             {{
                               printFilament.get('filament').value
                                 ?.filamentRemaining
@@ -456,7 +438,7 @@
                               ?.filamentLengthRemainingInM
                           )
                         ) {
-                          <div fxFlex="grow">
+                          <div class="grow">
                             {{
                               printFilament.get('filament').value
                                 ?.filamentLengthRemainingInM
@@ -464,11 +446,7 @@
                             }}
                           </div>
                         }
-                        <div
-                          fxFlex
-                          fxLayoutAlign="center"
-                          style="padding-top: 10px"
-                        >
+                        <div class="detail unload" style="padding-top: 10px">
                           <button
                             type="button"
                             mat-raised-button
@@ -491,16 +469,14 @@
         }
         @if (savedPrinterId(); as printerId) {
           <app-printer-connections
-            fxFlex="grow"
-            fxFlexFill
+            class="section"
             [printerId]="printerId"
             [category]="savedCategory()"
             [make]="savedMake()"
             [model]="savedModel()"
           />
           <app-printer-spoolman
-            fxFlex="grow"
-            fxFlexFill
+            class="section"
             [printerId]="printerId"
             [category]="savedCategory()"
             [make]="savedMake()"
@@ -509,11 +485,7 @@
           />
         }
       </mat-card-content>
-      <mat-card-actions
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
-      >
+      <mat-card-actions class="actions">
         <button
           mat-raised-button
           type="submit"
@@ -538,7 +510,7 @@
     </form>
     <app-ad></app-ad>
   </mat-card>
-  <div fxHide fxShow.gt-md fxFlex="300px" class="ad-sidebar">
+  <div class="ad-sidebar ad-column">
     <app-sidebar-ad></app-sidebar-ad>
   </div>
 </div>

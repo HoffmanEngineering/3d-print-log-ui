@@ -15,7 +15,6 @@ import {
 } from '@angular/forms';
 import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
-import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -36,7 +35,6 @@ import {
   styleUrls: ['./feedback.component.scss'],
   imports: [
     ReactiveFormsModule,
-    FlexLayoutModule,
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,

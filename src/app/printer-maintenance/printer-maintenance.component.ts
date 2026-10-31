@@ -26,12 +26,6 @@ import { PagedList } from '../core/types/paging';
 import { SortDirection } from '../core/types/sort-request';
 import { openSimpleDialog } from '../shared/simple-dialog/simple-dialog.component';
 import { toSortHeaderIds } from '../core/utils/sort-header-ids';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import {
   MatFormField,
@@ -40,10 +34,16 @@ import {
   MatError,
 } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
-import { FormsModule } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  FormControl,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.component';
-import { DefaultStyleDirective } from '@ngbracket/ngx-layout/extended';
 import {
   MatTable,
   MatColumnDef,
@@ -76,19 +76,15 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
   templateUrl: './printer-maintenance.component.html',
   styleUrls: ['./printer-maintenance.component.scss'],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
     MatButton,
     MatFormField,
     MatLabel,
     MatInput,
     FormsModule,
+    ReactiveFormsModule,
     MatSelect,
     MatOption,
     PrinterAvatarComponent,
-    DefaultStyleDirective,
     MatTable,
     MatSort,
     MatColumnDef,
@@ -172,7 +168,20 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     'more',
   ];
 
-  public preEditEntry: PrinterMaintenanceDto | null = null;
+  /**
+   * The row being edited. Filled when a row enters edit mode; the row itself
+   * is untouched until a save returns, so cancelling just drops the form.
+   */
+  readonly editForm = new FormGroup({
+    date: new FormControl<string | Date | null>(null),
+    printerId: new FormControl<number | null>(null),
+    category: new FormControl('', { nonNullable: true }),
+    description: new FormControl('', { nonNullable: true }),
+    priceValue: new FormControl<string | null>(null, {
+      validators: Validators.pattern('[0-9,.]*'),
+    }),
+    notes: new FormControl('', { nonNullable: true }),
+  });
 
   readonly dateError = signal<string | null>(null);
   readonly printerError = signal<string | null>(null);
@@ -185,6 +194,10 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       this.currentPage.set(1);
       this.updateFilter();
     }, 400);
+
+    this.editForm.controls.category.valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((category) => this.filterCategories(category));
   }
   ngOnDestroy(): void {
     this.subscriptions?.unsubscribe();
@@ -397,6 +410,7 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       ...this.entries(),
     ]);
 
+    this.fillEditForm(this.entries()[0]);
     this.editId.set(EMPTY_GUID);
   }
 
@@ -404,14 +418,39 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
     this.printerError.set(null);
     this.dateError.set(null);
 
+    this.fillEditForm(entry);
     this.editId.set(entry.id);
-    this.preEditEntry = { ...entry };
+  }
+
+  private fillEditForm(entry: PrinterMaintenanceDto) {
+    // Quietly: typing a category filters the suggestions, filling one doesn't.
+    this.editForm.reset(
+      {
+        date: entry.date,
+        printerId: entry.printerId,
+        category: entry.category ?? '',
+        description: entry.description ?? '',
+        priceValue: entry.priceValue,
+        notes: entry.notes ?? '',
+      },
+      { emitEvent: false }
+    );
   }
 
   deleteEntry(entry: PrinterMaintenanceDto) {}
 
-  saveEntry(entry: PrinterMaintenanceDto) {
+  saveEntry(original: PrinterMaintenanceDto) {
     this.isLoading = true;
+
+    const value = this.editForm.getRawValue();
+    const entry: PrinterMaintenanceDto = {
+      ...original,
+      ...value,
+      date: value.date instanceof Date ? value.date.toISOString() : value.date,
+      printer:
+        this.printers().find((p) => p.id === value.printerId) ??
+        original.printer,
+    };
 
     // Validate the date and printerId, if they are invalid, don't save
     if (entry.date == null) {
@@ -493,27 +532,12 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
       this.entries.update((entries) =>
         entries.filter((e) => e.id !== EMPTY_GUID)
       );
-    } else {
-      this.entries.update((entries) =>
-        entries.map((e) => (e.id === editId ? this.preEditEntry : e))
-      );
     }
 
     this.printerError.set(null);
     this.dateError.set(null);
 
     this.editId.set(null);
-  }
-
-  updateDate(entry: PrinterMaintenanceDto, date: any) {
-    entry.date = date.value.toISOString();
-  }
-
-  updatePrinter(entry: PrinterMaintenanceDto, printerId: number) {
-    const printer = this.printers().find((p) => p.id === printerId);
-
-    entry.printerId = printer.id;
-    entry.printer = printer;
   }
 
   public filterCategories(value: string) {

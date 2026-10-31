@@ -1,6 +1,5 @@
-import { importProvidersFrom } from '@angular/core';
 import { Routes } from '@angular/router';
-import { SharedModule } from '../shared/shared.module';
+import { provideSectionProviders } from '../shared/section-providers';
 import { CuraParserService } from './services/integration/cura-parser.service';
 import { CuraParserV1pt0pt0Service } from './services/integration/cura/cura-parser-v1-0-0.service';
 import { CuraParserV1pt1pt0Service } from './services/integration/cura/cura-parser-v1-1-0.service';
@@ -32,10 +31,8 @@ import { filamentFilterResolver } from './resolvers/filament-filter.resolver';
 export const PRINT_ROUTES: Routes = [
   {
     path: '',
-    // The providers SharedModule's imports carry, notably the native
-    // DateAdapter and a MatDialog scoped to this section.
     providers: [
-      importProvidersFrom(SharedModule),
+      ...provideSectionProviders(),
       CuraParserService,
       CuraParserV1pt0pt0Service,
       CuraParserV1pt1pt0Service,

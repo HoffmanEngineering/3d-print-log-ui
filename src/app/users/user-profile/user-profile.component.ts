@@ -31,13 +31,6 @@ import {
   UserDetailDto,
   UserService,
 } from 'src/app/core/services/user.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard, MatCardHeader, MatCardContent } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -57,18 +50,13 @@ import { UserPrintsComponent } from '../user-prints/user-prints.component';
   styleUrls: ['./user-profile.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatCard,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
     MatCardHeader,
     MatButton,
     MatMenuTrigger,
     MatIcon,
     MatMenu,
     MatMenuItem,
-    FlexFillDirective,
     MatFormField,
     MatLabel,
     MatInput,
@@ -95,9 +83,7 @@ export class UserProfileComponent implements OnInit {
 
   readonly userDetail = signal<UserDetailDto>(null);
 
-  readonly currentUser = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  readonly currentUser = this.authService.userProfile;
 
   public profileViewStatusTypes = ProfileViewStatus;
 

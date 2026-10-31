@@ -2,7 +2,6 @@ import { PLATFORM_ID, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -16,7 +15,7 @@ import { EmailNoticeComponent } from './email-notice.component';
 
 describe('EmailNoticeComponent', () => {
   let fixture: ComponentFixture<EmailNoticeComponent>;
-  let user$: BehaviorSubject<unknown>;
+  let user: WritableSignal<unknown>;
   let settings: jasmine.SpyObj<UserSettingService>;
   let logging: jasmine.SpyObj<LoggingService>;
   let seenAt: string | undefined;
@@ -47,7 +46,7 @@ describe('EmailNoticeComponent', () => {
       providers: [
         provideRouter([{ path: '**', children: [] }]),
         { provide: PLATFORM_ID, useValue: platform },
-        { provide: AuthService, useValue: { userProfile$: user$ } },
+        { provide: AuthService, useValue: { userProfile: user } },
         { provide: UserSettingService, useValue: settings },
         { provide: LoggingService, useValue: logging },
         {
@@ -78,7 +77,7 @@ describe('EmailNoticeComponent', () => {
   }
 
   beforeEach(() => {
-    user$ = new BehaviorSubject<unknown>({ id: 1 });
+    user = signal<unknown>({ id: 1 });
     seenAt = undefined;
     noticeAcknowledged = signal(false);
     checklistShowing = signal(false);
@@ -167,7 +166,7 @@ describe('EmailNoticeComponent', () => {
   });
 
   it('stays hidden when signed out', async () => {
-    user$.next(null);
+    user.set(null);
     await render();
 
     expect(banner()).toBeNull();
@@ -183,7 +182,7 @@ describe('EmailNoticeComponent', () => {
 
   it('hides when the user signs out', async () => {
     await render();
-    user$.next(null);
+    user.set(null);
     await settle();
 
     expect(banner()).toBeNull();

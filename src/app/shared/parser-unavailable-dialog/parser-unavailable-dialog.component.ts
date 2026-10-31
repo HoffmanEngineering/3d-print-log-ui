@@ -17,10 +17,6 @@ import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MatFormField, MatLabel, MatHint } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatButton } from '@angular/material/button';
 
 export interface ParserUnavailableDialogData {
@@ -42,8 +38,6 @@ export interface ParserUnavailableDialogData {
     FormsModule,
     MatHint,
     MatDialogActions,
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatButton,
     MatDialogClose,
   ],

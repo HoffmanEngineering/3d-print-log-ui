@@ -5,7 +5,6 @@ import { of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { PrinterService } from 'src/app/core/services/printer.service';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
-import { SharedModule } from '../shared.module';
 import { GcodeViewerModalComponent } from './gcode-viewer-modal.component';
 
 describe('GcodeViewerModalComponent', () => {
@@ -29,7 +28,7 @@ describe('GcodeViewerModalComponent', () => {
     );
 
     await TestBed.configureTestingModule({
-      imports: [SharedModule, NoopAnimationsModule],
+      imports: [NoopAnimationsModule],
       providers: [
         { provide: MatDialogRef, useValue: dialogRef },
         {

@@ -1,20 +1,10 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card appearance="outlined" fxFlex="80vw" fxFlex.xs="100%">
-    <form
-      autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-    >
-      <mat-card-title fxFlex="grow"> API Keys</mat-card-title>
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
-      >
+<div class="page">
+  <mat-card appearance="outlined" class="keys-card">
+    <form autocomplete="off" class="keys-form">
+      <mat-card-title class="fill-column"> API Keys</mat-card-title>
+      <mat-card-content class="fill-column keys-content">
         <button
-          fxFlexAlign="start"
+          class="add-key"
           mat-raised-button
           type="button"
           color="accent"
@@ -47,7 +37,7 @@
                 remaining.</mat-hint
               >
             </mat-form-field>
-            <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+            <div class="new-key-actions">
               <button
                 mat-raised-button
                 type="button"
@@ -71,7 +61,7 @@
         @if (loading()) {
           <div class="spinner">Loading...</div>
         }
-        <table fxFlex="grow" fxFlexFill mat-table [dataSource]="keys()">
+        <table class="fill-column keys-table" mat-table [dataSource]="keys()">
           <ng-container matColumnDef="description">
             <th mat-header-cell *matHeaderCellDef>Description</th>
             <td mat-cell *matCellDef="let key">
@@ -84,8 +74,8 @@
               <div>
                 @if (key.privateKey !== undefined) {
                   <div>
-                    <div fxLayout="row">
-                      <mat-form-field fxFlex="40ch">
+                    <div class="private-key">
+                      <mat-form-field class="private-key-field">
                         <input
                           matInput
                           maxlength="1000"
@@ -94,7 +84,7 @@
                         />
                       </mat-form-field>
                       <button
-                        fxFlex="60px"
+                        class="copy-key"
                         style="width=40px; height: 40px"
                         type="button"
                         mat-raised-button

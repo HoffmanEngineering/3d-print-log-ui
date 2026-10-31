@@ -8,18 +8,29 @@ import {
   ChangeDetectionStrategy,
   computed,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
 import { PrintService } from 'src/app/core/services/print.service';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { CommentComponent } from 'src/app/shared/comments/comment/comment.component';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-print-comments',
   templateUrl: './print-comments.component.html',
   styleUrls: ['./print-comments.component.scss'],
-  imports: [SharedModule],
+  imports: [
+    CommentComponent,
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintCommentsComponent {
@@ -46,9 +57,7 @@ export class PrintCommentsComponent {
 
   readonly notLoggedIn = viewChild<ElementRef>('notLoggedIn');
 
-  private readonly user = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  private readonly user = this.authService.userProfile;
 
   readonly isLoggedIn = computed(() => this.user() !== null);
   readonly currentUserId = computed(() => this.user()?.id ?? null);

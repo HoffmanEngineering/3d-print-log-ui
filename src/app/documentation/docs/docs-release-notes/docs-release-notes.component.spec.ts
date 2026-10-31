@@ -29,7 +29,7 @@ describe('DocsReleaseNotesComponent', () => {
     );
 
     await TestBed.configureTestingModule({
-      declarations: [DocsReleaseNotesComponent],
+      imports: [DocsReleaseNotesComponent],
       providers: [
         {
           provide: ActivatedRoute,

@@ -13,14 +13,6 @@ import {
 } from '../core/services/api-key.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-  FlexFillDirective,
-  DefaultFlexAlignDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard, MatCardTitle, MatCardContent } from '@angular/material/card';
 import { FormsModule } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
@@ -53,17 +45,11 @@ export interface UserApiKeySummaryWithKey extends UserApiKeySummary {
   styleUrls: ['./apikeys.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatCard,
-    DefaultFlexDirective,
     FormsModule,
-    DefaultLayoutGapDirective,
     MatCardTitle,
     MatCardContent,
-    FlexFillDirective,
     MatButton,
-    DefaultFlexAlignDirective,
     MatFormField,
     MatLabel,
     MatInput,

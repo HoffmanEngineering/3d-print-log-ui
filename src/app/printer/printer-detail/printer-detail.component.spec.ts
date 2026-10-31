@@ -18,7 +18,6 @@ import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 
-import { SharedModule } from 'src/app/shared/shared.module';
 import {
   PrinterDetail,
   PrinterService,
@@ -150,7 +149,6 @@ describe('PrinterDetailComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        SharedModule,
         FormsModule,
         ReactiveFormsModule,
         NoopAnimationsModule,

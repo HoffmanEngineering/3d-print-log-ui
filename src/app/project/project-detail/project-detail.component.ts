@@ -53,7 +53,9 @@ import { todayUtcCivilDate } from 'src/app/core/utils/civil-date';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { AdComponent } from 'src/app/shared/ad/ad.component';
+import { SidebarAdComponent } from 'src/app/shared/ad/sidebar-ad.component';
+import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
@@ -93,7 +95,9 @@ function readSaveError(err: unknown): string {
     MatMenuModule,
     MatSelectModule,
     MatProgressSpinnerModule,
-    SharedModule,
+    AdComponent,
+    SidebarAdComponent,
+    DurationPipe,
     ProjectEditFormComponent,
     ImageCarouselComponent,
     ImageThumbnailStripComponent,
@@ -140,7 +144,9 @@ export class ProjectDetailComponent implements OnInit {
   imageIdsToDelete: number[] = [];
   private defaultImageIdOnLoad: number | null = null;
 
-  private readonly currentUserId = signal<number | null>(null);
+  private readonly currentUserId = computed(
+    () => this.authService.userProfile()?.id ?? null
+  );
 
   /** The API's `/seo` answer for this project; never waited on. */
   private readonly seoLookup = signal<SeoLookupState>(SEO_PENDING);
@@ -256,10 +262,6 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => this.currentUserId.set(user?.id ?? null));
-
     const id = this.route.snapshot.params['id'];
 
     if (id === 'new') {

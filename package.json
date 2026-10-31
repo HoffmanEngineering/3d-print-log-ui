@@ -83,18 +83,18 @@
     "@types/d3": "^7.4.3",
     "@types/node": "^22.19.18",
     "@types/qrcode": "^1.5.5",
-    "@vitest/browser-playwright": "^4.1.12",
-    "@vitest/coverage-v8": "^4.1.12",
+    "@vitest/browser-playwright": "^5.0.5",
+    "@vitest/coverage-v8": "^5.0.5",
     "angular-eslint": "22.6.0",
     "axe-core": "^4.13.0",
     "baseline-browser-mapping": "^2.10.29",
-    "cypress": "^13.17.0",
+    "cypress": "^16.2.0",
     "cypress-axe": "^1.7.0",
     "esbuild": "0.27.3",
     "eslint": "^9.39.4",
     "husky": "^7.0.4",
     "lint-staged": "^15.5.2",
-    "playwright": "^1.63.0",
+    "playwright": "^1.64.1",
     "prettier": "3.3.3",
     "sharp": "^0.35.3",
     "source-map-explorer": "^2.5.3",
@@ -103,7 +103,7 @@
     "turndown": "^7.2.4",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.71.2",
-    "vitest": "^4.1.12"
+    "vitest": "^5.0.5"
   },
   "lint-staged": {
     "*.{js,css,md,ts,scss}": "prettier --write"

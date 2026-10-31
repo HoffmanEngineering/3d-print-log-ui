@@ -478,8 +478,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
     () => this.loadingIndicator.visible() && this.hasLoadedOnce()
   );
 
-  public isFilterPanelOpen =
-    typeof window !== 'undefined' && window.innerWidth >= 600;
+  // A signal: the route data opens it after first render, which nothing
+  // else would repaint without zone.js.
+  readonly isFilterPanelOpen = signal(
+    typeof window !== 'undefined' && window.innerWidth >= 600
+  );
 
   readonly activeFilterCount = computed(() => {
     let count = 0;
@@ -503,7 +506,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public toggleFilterPanel(): void {
-    this.isFilterPanelOpen = !this.isFilterPanelOpen;
+    this.isFilterPanelOpen.update((open) => !open);
   }
 
   public printSearchSubscription: Subscription | null = null;
@@ -654,7 +657,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       );
 
       if (this.activeFilterCount() > 0) {
-        this.isFilterPanelOpen = true;
+        this.isFilterPanelOpen.set(true);
       }
     });
 

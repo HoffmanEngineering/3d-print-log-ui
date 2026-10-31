@@ -87,7 +87,7 @@
     "@vitest/coverage-v8": "^4.1.12",
     "angular-eslint": "22.6.0",
     "axe-core": "^4.13.0",
-    "baseline-browser-mapping": "^2.10.29",
+    "baseline-browser-mapping": "^2.11.33",
     "cypress": "^13.17.0",
     "cypress-axe": "^1.7.0",
     "esbuild": "0.27.3",

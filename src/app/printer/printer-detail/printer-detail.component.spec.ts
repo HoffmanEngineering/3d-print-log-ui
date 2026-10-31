@@ -1,13 +1,8 @@
+import type { MockedObject } from 'vitest';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  flushMicrotasks,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -80,12 +75,12 @@ const P1S: PrinterModel = {
 describe('PrinterDetailComponent', () => {
   let component: PrinterDetailComponent;
   let fixture: ComponentFixture<PrinterDetailComponent>;
-  let printerService: jasmine.SpyObj<PrinterService>;
-  let catalog: jasmine.SpyObj<PrinterCatalogService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let router: jasmine.SpyObj<Router>;
+  let printerService: MockedObject<PrinterService>;
+  let catalog: MockedObject<PrinterCatalogService>;
+  let logging: MockedObject<LoggingService>;
+  let router: MockedObject<Router>;
 
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialog: MockedObject<MatDialog>;
 
   /**
    * `printer` is null for the create route, which the resolver models the same way.
@@ -101,49 +96,53 @@ describe('PrinterDetailComponent', () => {
       linked = null as PrinterModel | null,
     } = {}
   ) => {
-    catalog = jasmine.createSpyObj<PrinterCatalogService>(
-      'PrinterCatalogService',
-      ['search', 'popular', 'get', 'match']
-    );
-    catalog.search.and.returnValue(of([]));
-    catalog.popular.and.returnValue(of([]));
-    catalog.get.and.returnValue(of(linked));
-    catalog.match.and.returnValue(of(null));
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    catalog = {
+      search: vi.fn().mockName('PrinterCatalogService.search'),
+      popular: vi.fn().mockName('PrinterCatalogService.popular'),
+      get: vi.fn().mockName('PrinterCatalogService.get'),
+      match: vi.fn().mockName('PrinterCatalogService.match'),
+    } as unknown as MockedObject<PrinterCatalogService>;
+    catalog.search.mockReturnValue(of([]));
+    catalog.popular.mockReturnValue(of([]));
+    catalog.get.mockReturnValue(of(linked));
+    catalog.match.mockReturnValue(of(null));
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
-    printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'addPrinter',
-      'updatePrinter',
-      'imageTarget',
-    ]);
-    printerService.addPrinter.and.returnValue(of(aPrinterDetail()));
-    printerService.updatePrinter.and.returnValue(of(aPrinterDetail()));
-    printerService.imageTarget.and.callFake((id) => ({
+    printerService = {
+      addPrinter: vi.fn().mockName('PrinterService.addPrinter'),
+      updatePrinter: vi.fn().mockName('PrinterService.updatePrinter'),
+      imageTarget: vi.fn().mockName('PrinterService.imageTarget'),
+    } as unknown as MockedObject<PrinterService>;
+    printerService.addPrinter.mockReturnValue(of(aPrinterDetail()));
+    printerService.updatePrinter.mockReturnValue(of(aPrinterDetail()));
+    printerService.imageTarget.mockImplementation((id) => ({
       id,
-      gateway: jasmine.createSpyObj('EntityImageGateway', [
-        'upload',
-        'delete',
-        'reorder',
-        'setDefault',
-      ]),
+      gateway: {
+        upload: vi.fn().mockName('EntityImageGateway.upload'),
+        delete: vi.fn().mockName('EntityImageGateway.delete'),
+        reorder: vi.fn().mockName('EntityImageGateway.reorder'),
+        setDefault: vi.fn().mockName('EntityImageGateway.setDefault'),
+      },
     }));
 
-    router = jasmine.createSpyObj<Router>('Router', [
-      'navigate',
-      'navigateByUrl',
-    ]);
-    router.navigateByUrl.and.returnValue(Promise.resolve(true));
-    router.navigate.and.returnValue(Promise.resolve(true));
+    router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+      navigateByUrl: vi.fn().mockName('Router.navigateByUrl'),
+    } as unknown as MockedObject<Router>;
+    router.navigateByUrl.mockReturnValue(Promise.resolve(true));
+    router.navigate.mockReturnValue(Promise.resolve(true));
 
-    const toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-      'warning',
-    ]);
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    const toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+      warning: vi.fn().mockName('ToastrService.warning'),
+    };
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
 
     await TestBed.configureTestingModule({
       imports: [
@@ -212,7 +211,7 @@ describe('PrinterDetailComponent', () => {
     const panel = fixture.debugElement.query(
       By.directive(PrinterConnectionsComponent)
     );
-    expect(panel).withContext('app-printer-connections').not.toBeNull();
+    expect(panel, 'app-printer-connections').not.toBeNull();
     expect(
       (panel.componentInstance as PrinterConnectionsComponent).printerId()
     ).toBe(42);
@@ -225,7 +224,7 @@ describe('PrinterDetailComponent', () => {
     const panel = fixture.debugElement.query(
       By.directive(PrinterSpoolmanComponent)
     );
-    expect(panel).withContext('app-printer-spoolman').not.toBeNull();
+    expect(panel, 'app-printer-spoolman').not.toBeNull();
     const spoolman = panel.componentInstance as PrinterSpoolmanComponent;
     expect(spoolman.printerId()).toBe(42);
     expect(spoolman.category()?.nickname).toBe('FFF');
@@ -260,25 +259,25 @@ describe('PrinterDetailComponent', () => {
 
     // FFF shows a nozzle diameter and no beam diameter, so the beam control is disabled
     // and its value is left out of the payload entirely.
-    expect(component.printerForm().get('nozzleDiameter')!.enabled).toBeTrue();
-    expect(component.printerForm().get('beamDiameter')!.disabled).toBeTrue();
+    expect(component.printerForm().get('nozzleDiameter')!.enabled).toBe(true);
+    expect(component.printerForm().get('beamDiameter')!.disabled).toBe(true);
   });
 
   it('blocks deactivation while the form is dirty', async () => {
     await setUp(aPrinterDetail());
 
-    expect(component.canDeactivate()).toBeTrue();
+    expect(component.canDeactivate()).toBe(true);
 
     component.printerForm().markAsDirty();
-    expect(component.canDeactivate()).toBeFalse();
+    expect(component.canDeactivate()).toBe(false);
   });
 
   it('asks before the page unloads only while the form is dirty', async () => {
     await setUp(aPrinterDetail());
-    expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false);
 
     component.printerForm().markAsDirty();
-    expect(dispatchBeforeUnload().defaultPrevented).toBeTrue();
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(true);
   });
 
   it('updates rather than creating when the form already carries an id', async () => {
@@ -325,7 +324,7 @@ describe('PrinterDetailComponent', () => {
       component.onSubmit();
 
       expect(
-        printerService.updatePrinter.calls.mostRecent().args[0].slotCount
+        vi.mocked(printerService.updatePrinter).mock.lastCall[0].slotCount
       ).toBe(2);
     });
 
@@ -334,18 +333,18 @@ describe('PrinterDetailComponent', () => {
       const control = component.printerForm().get('slotCount')!;
 
       control.setValue(0);
-      expect(control.valid).toBeFalse();
+      expect(control.valid).toBe(false);
       control.setValue(65);
-      expect(control.valid).toBeFalse();
+      expect(control.valid).toBe(false);
       control.setValue(4);
-      expect(control.valid).toBeTrue();
+      expect(control.valid).toBe(true);
     });
 
     it('shows the slots for a saved multi-slot printer', async () => {
       await setUp(aPrinterDetail({ slotCount: 4 }));
 
       const panel = slotsPanel();
-      expect(panel).withContext('app-printer-slots').not.toBeNull();
+      expect(panel, 'app-printer-slots').not.toBeNull();
       expect(
         (panel.componentInstance as PrinterSlotsComponent).slotCount()
       ).toBe(4);
@@ -373,15 +372,15 @@ describe('PrinterDetailComponent', () => {
       ).loadedChange.emit([{ id: 'pf-1', filament: spool('a'), slot: 2 }]);
       fixture.detectChanges();
 
-      expect(component.printerForm().dirty).toBeFalse();
+      expect(component.printerForm().dirty).toBe(false);
       component.onSubmit();
-      const saved = printerService.updatePrinter.calls.mostRecent().args[0];
+      const saved = vi.mocked(printerService.updatePrinter).mock.lastCall[0];
       expect(saved.loadedFilaments.map((pf) => pf.id)).toEqual(['pf-1']);
     });
   });
 
   describe('photos panel', () => {
-    let panel: jasmine.SpyObj<EntityImagesPanelComponent>;
+    let panel: MockedObject<EntityImagesPanelComponent>;
 
     const aFile = () => new File(['x'], 'printer.jpg', { type: 'image/jpeg' });
 
@@ -400,15 +399,20 @@ describe('PrinterDetailComponent', () => {
       });
 
     const stubPanel = (staged: boolean) => {
-      panel = jasmine.createSpyObj<EntityImagesPanelComponent>(
-        'EntityImagesPanelComponent',
-        ['uploadStagedImages', 'retryFailedUploads'],
-        {
-          hasStagedImages: jasmine.createSpy().and.returnValue(staged) as never,
+      panel = {
+        uploadStagedImages: vi
+          .fn()
+          .mockName('EntityImagesPanelComponent.uploadStagedImages'),
+        retryFailedUploads: vi
+          .fn()
+          .mockName('EntityImagesPanelComponent.retryFailedUploads'),
+        hasStagedImages: vi.fn().mockReturnValue(staged) as never,
+      } as unknown as MockedObject<EntityImagesPanelComponent>;
+      (
+        component as unknown as {
+          imagesPanel: () => unknown;
         }
-      );
-      (component as unknown as { imagesPanel: () => unknown }).imagesPanel =
-        () => panel;
+      ).imagesPanel = () => panel;
     };
 
     const fillCreateForm = () => {
@@ -437,7 +441,9 @@ describe('PrinterDetailComponent', () => {
 
       expect(
         (
-          component as unknown as { printerImages: () => unknown[] }
+          component as unknown as {
+            printerImages: () => unknown[];
+          }
         ).printerImages().length
       ).toBe(1);
     });
@@ -447,7 +453,11 @@ describe('PrinterDetailComponent', () => {
 
       expect(
         (
-          component as unknown as { imageTarget: () => { id: number | null } }
+          component as unknown as {
+            imageTarget: () => {
+              id: number | null;
+            };
+          }
         ).imageTarget().id
       ).toBe(42);
     });
@@ -455,8 +465,8 @@ describe('PrinterDetailComponent', () => {
     it('uploads staged images before navigating away on create', async () => {
       await setUp(null);
       stubPanel(true);
-      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
-      panel.uploadStagedImages.and.returnValue(succeeded());
+      printerService.addPrinter.mockReturnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.mockReturnValue(succeeded());
       fillCreateForm();
 
       component.onSubmit();
@@ -469,8 +479,8 @@ describe('PrinterDetailComponent', () => {
     it('stays on the page and writes back the id when an upload fails', async () => {
       await setUp(null);
       stubPanel(true);
-      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
-      panel.uploadStagedImages.and.returnValue(transientlyFailed());
+      printerService.addPrinter.mockReturnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.mockReturnValue(transientlyFailed());
       fillCreateForm();
 
       component.onSubmit();
@@ -478,20 +488,20 @@ describe('PrinterDetailComponent', () => {
 
       expect(router.navigateByUrl).not.toHaveBeenCalled();
       expect(component.printerForm().get('id')!.value).toBe(42);
-      expect(component.saving()).toBeFalse();
+      expect(component.saving()).toBe(false);
     });
 
     it('updates rather than re-creating after a failed upload', async () => {
       await setUp(null);
       stubPanel(true);
-      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
-      panel.uploadStagedImages.and.returnValue(transientlyFailed());
+      printerService.addPrinter.mockReturnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.mockReturnValue(transientlyFailed());
       fillCreateForm();
 
       component.onSubmit();
       await fixture.whenStable();
 
-      printerService.addPrinter.calls.reset();
+      printerService.addPrinter.mockClear();
       component.onSubmit();
       await fixture.whenStable();
 
@@ -502,9 +512,9 @@ describe('PrinterDetailComponent', () => {
     it('does not navigate while the staged photos are still uploading', async () => {
       await setUp(null);
       stubPanel(true);
-      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
+      printerService.addPrinter.mockReturnValue(of(aPrinterDetail({ id: 42 })));
       // Never emits: the upload is in flight for the whole test.
-      panel.uploadStagedImages.and.returnValue(new Subject());
+      panel.uploadStagedImages.mockReturnValue(new Subject());
       fillCreateForm();
 
       component.onSubmit();
@@ -518,18 +528,18 @@ describe('PrinterDetailComponent', () => {
       stubPanel(true);
       component.printerForm().markAsPristine();
 
-      expect(component.canDeactivate()).toBeFalse();
+      expect(component.canDeactivate()).toBe(false);
     });
 
     it('leaves the guard alone for its own post-save URL rewrite', async () => {
       await setUp(null);
       stubPanel(true);
-      printerService.addPrinter.and.returnValue(of(aPrinterDetail({ id: 42 })));
-      panel.uploadStagedImages.and.returnValue(transientlyFailed());
+      printerService.addPrinter.mockReturnValue(of(aPrinterDetail({ id: 42 })));
+      panel.uploadStagedImages.mockReturnValue(transientlyFailed());
       fillCreateForm();
 
       let guardAnswer: boolean | null = null;
-      router.navigate.and.callFake(() => {
+      router.navigate.mockImplementation(() => {
         // The guard runs during the navigation, with photos still staged for the
         // retry. It must not prompt for a navigation the page started itself.
         guardAnswer = component.canDeactivate() as boolean;
@@ -542,7 +552,7 @@ describe('PrinterDetailComponent', () => {
       expect(router.navigate).toHaveBeenCalledWith(['/printers', 42], {
         replaceUrl: true,
       });
-      expect(guardAnswer).toBeTrue();
+      expect(guardAnswer).toBe(true);
     });
   });
 
@@ -572,16 +582,16 @@ describe('PrinterDetailComponent', () => {
     it('re-enables Save when the save fails', async () => {
       await setUp(aPrinterDetail(), { settle: true });
       const saved = new Subject<PrinterDetail>();
-      printerService.updatePrinter.and.returnValue(saved);
+      printerService.updatePrinter.mockReturnValue(saved);
 
       component.onSubmit();
       fixture.detectChanges();
-      expect(saveButton().disabled).withContext('while saving').toBeTrue();
+      expect(saveButton().disabled, 'while saving').toBe(true);
 
       saved.error(new Error('500'));
       fixture.detectChanges();
 
-      expect(saveButton().disabled).toBeFalse();
+      expect(saveButton().disabled).toBe(false);
     });
 
     const loadedWith = (remaining: {
@@ -622,7 +632,7 @@ describe('PrinterDetailComponent', () => {
     it('shows grams and meters remaining for a tracked loaded spool', async () => {
       await setUp(
         loadedWith({
-          filamentRemaining: 250_000,
+          filamentRemaining: 250000,
           filamentLengthRemainingInM: 84,
         }),
         { settle: true }
@@ -637,7 +647,7 @@ describe('PrinterDetailComponent', () => {
     it('shows mL remaining for a loaded resin bottle', async () => {
       await setUp(
         loadedWith({
-          filamentRemaining: 935_000,
+          filamentRemaining: 935000,
           filamentLengthRemainingInM: null,
           filamentVolumeRemainingInMl: 850,
         }),
@@ -652,7 +662,7 @@ describe('PrinterDetailComponent', () => {
     it('keeps grams and meters, without mL, for a filament spool', async () => {
       await setUp(
         loadedWith({
-          filamentRemaining: 250_000,
+          filamentRemaining: 250000,
           filamentLengthRemainingInM: 84,
           filamentVolumeRemainingInMl: 201,
         }),
@@ -668,7 +678,7 @@ describe('PrinterDetailComponent', () => {
     it('shows mL for a bottle whose source is Volume, even with a length remaining', async () => {
       await setUp(
         loadedWith({
-          filamentRemaining: 935_000,
+          filamentRemaining: 935000,
           filamentLengthRemainingInM: 12,
           filamentVolumeRemainingInMl: 850,
           source: FilamentSourceMeasurement.Volume,
@@ -683,7 +693,7 @@ describe('PrinterDetailComponent', () => {
     it('shows grams for a spool tracked by weight, even with no length remaining', async () => {
       await setUp(
         loadedWith({
-          filamentRemaining: 250_000,
+          filamentRemaining: 250000,
           filamentLengthRemainingInM: null,
           filamentVolumeRemainingInMl: 201,
           source: FilamentSourceMeasurement.Weight,
@@ -698,7 +708,7 @@ describe('PrinterDetailComponent', () => {
     it('falls back to the remaining figures when an older API sends no source', async () => {
       await setUp(
         loadedWith({
-          filamentRemaining: 935_000,
+          filamentRemaining: 935000,
           filamentLengthRemainingInM: null,
           filamentVolumeRemainingInMl: 850,
           source: null,
@@ -727,7 +737,7 @@ describe('PrinterDetailComponent', () => {
     it('lists a spool picked in the filament dialog', async () => {
       await setUp(aPrinterDetail(), { settle: true });
       const closed = new Subject<unknown>();
-      dialog.open.and.returnValue({
+      dialog.open.mockReturnValue({
         componentInstance: { dialogRef: { afterClosed: () => closed } },
       } as never);
 
@@ -773,23 +783,26 @@ describe('PrinterDetailComponent', () => {
       };
     };
     const savedPayload = () =>
-      printerService.updatePrinter.calls.mostRecent().args[0];
+      vi.mocked(printerService.updatePrinter).mock.lastCall[0];
 
     afterEach(() => {
       localStorage.removeItem('pl_fill_specs_dismissed_42');
     });
 
-    it('feeds the make-and-model search from catalog.search after a 150 ms debounce', fakeAsync(() => {
-      void setUp(null);
-      flushMicrotasks();
+    it('feeds the make-and-model search from catalog.search after a 150 ms debounce', async () => {
+      // Set up on real timers: only the debounce, which typing starts, needs faking.
+      await setUp(null);
+      vi.useFakeTimers();
 
       typeInto('edit-printer-catalog-search', 'P1');
-      tick(149);
+      await vi.advanceTimersByTimeAsync(149);
       expect(catalog.search).not.toHaveBeenCalled();
-      tick(1);
+      await vi.advanceTimersByTimeAsync(1);
 
-      expect(catalog.search).toHaveBeenCalledOnceWith('P1');
-    }));
+      expect(catalog.search).toHaveBeenCalledTimes(1);
+
+      expect(catalog.search).toHaveBeenCalledWith('P1');
+    });
 
     it('has no bundled make list: make and model are plain free-text inputs', async () => {
       await setUp(null);
@@ -802,10 +815,9 @@ describe('PrinterDetailComponent', () => {
       expect(
         el()
           .querySelector('#edit-printer-make')!
-          .hasAttribute('aria-autocomplete')
-      )
-        .withContext('make has no autocomplete')
-        .toBeFalse();
+          .hasAttribute('aria-autocomplete'),
+        'make has no autocomplete'
+      ).toBe(false);
     });
 
     describe('on a new printer', () => {
@@ -816,7 +828,7 @@ describe('PrinterDetailComponent', () => {
         fixture.detectChanges();
 
         expect(specValues()).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             make: 'Bambu Lab',
             model: 'P1S',
             nozzleDiameter: 0.4,
@@ -831,7 +843,7 @@ describe('PrinterDetailComponent', () => {
         expect(control('name').value).toBe('P1S');
         component.onSubmit();
         expect(
-          printerService.addPrinter.calls.mostRecent().args[0].catalogModelId
+          vi.mocked(printerService.addPrinter).mock.lastCall[0].catalogModelId
         ).toBe('bambu-lab-p1s');
       });
 
@@ -856,7 +868,7 @@ describe('PrinterDetailComponent', () => {
         typeInto('edit-printer-make', 'Bambu');
         component.onSubmit();
 
-        const saved = printerService.addPrinter.calls.mostRecent().args[0];
+        const saved = vi.mocked(printerService.addPrinter).mock.lastCall[0];
         expect(saved.catalogModelId).toBeNull();
         expect(saved.bedWidthMm).toBe(256);
       });
@@ -903,10 +915,10 @@ describe('PrinterDetailComponent', () => {
         expect(modelAfter).toBe('P1S');
         expect(specsAfter).toEqual(specsBefore);
         expect(control('name').value).toBe(nameBefore);
-        expect(component.printerForm().dirty).toBeTrue();
+        expect(component.printerForm().dirty).toBe(true);
         component.onSubmit();
         expect(savedPayload()).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             catalogModelId: 'bambu-lab-p1s',
             make: 'Bambu Lab',
             model: 'P1S',
@@ -952,7 +964,7 @@ describe('PrinterDetailComponent', () => {
         );
         expect(logging.logEvent).toHaveBeenCalledWith(
           'PrinterSpecs_FillShown',
-          jasmine.objectContaining({ catalogModelId: 'bambu-lab-p1s' })
+          expect.objectContaining({ catalogModelId: 'bambu-lab-p1s' })
         );
       });
 
@@ -969,7 +981,7 @@ describe('PrinterDetailComponent', () => {
         )!;
         expect(input.value).toBe('Bambu Lab P1S');
         expect(catalog.search).not.toHaveBeenCalled();
-        expect(component.printerForm().pristine).toBeTrue();
+        expect(component.printerForm().pristine).toBe(true);
       });
 
       it('leaves the search empty when the linked model is unknown', async () => {
@@ -1010,13 +1022,13 @@ describe('PrinterDetailComponent', () => {
         fixture.detectChanges();
 
         expect(control('nozzleDiameter').value).toBe(0.6);
-        expect(control('nozzleDiameter').dirty).toBeFalse();
+        expect(control('nozzleDiameter').dirty).toBe(false);
         expect(control('bedWidthMm').value).toBe(256);
-        expect(control('bedWidthMm').dirty).toBeTrue();
+        expect(control('bedWidthMm').dirty).toBe(true);
         expect(control('filamentDiameter').value).toBe(1.75);
         // A heated bed the form shows as off may be unknown or a real "no": Fill leaves it.
-        expect(control('hasHeatedBed').value).toBeFalse();
-        expect(component.printerForm().dirty).toBeTrue();
+        expect(control('hasHeatedBed').value).toBe(false);
+        expect(component.printerForm().dirty).toBe(true);
         expect(printerService.updatePrinter).not.toHaveBeenCalled();
         expect(card()).toBeNull();
         expect(logging.logEvent).toHaveBeenCalledWith('PrinterSpecs_Filled', {
@@ -1043,7 +1055,7 @@ describe('PrinterDetailComponent', () => {
         ).not.toBeNull();
         expect(logging.logEvent).toHaveBeenCalledWith(
           'PrinterSpecs_FillDismissed',
-          jasmine.anything()
+          expect.anything()
         );
 
         fixture.destroy();
@@ -1060,7 +1072,7 @@ describe('PrinterDetailComponent', () => {
         expect(card()).toBeNull();
         expect(logging.logEvent).not.toHaveBeenCalledWith(
           'PrinterSpecs_FillShown',
-          jasmine.anything()
+          expect.anything()
         );
       });
 

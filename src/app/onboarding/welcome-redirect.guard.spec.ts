@@ -1,9 +1,5 @@
-import {
-  fakeAsync,
-  flushMicrotasks,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import {
   ActivatedRouteSnapshot,
   RedirectCommand,
@@ -15,13 +11,15 @@ import { OnboardingService } from './onboarding.service';
 import { welcomeRedirectGuard } from './welcome-redirect.guard';
 
 describe('welcomeRedirectGuard', () => {
-  let onboarding: jasmine.SpyObj<OnboardingService>;
+  let onboarding: MockedObject<OnboardingService>;
   let router: Router;
 
   beforeEach(() => {
-    onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
-      'shouldShowWelcome',
-    ]);
+    onboarding = {
+      shouldShowWelcome: vi
+        .fn()
+        .mockName('OnboardingService.shouldShowWelcome'),
+    } as unknown as MockedObject<OnboardingService>;
     TestBed.configureTestingModule({
       providers: [{ provide: OnboardingService, useValue: onboarding }],
     });
@@ -37,12 +35,12 @@ describe('welcomeRedirectGuard', () => {
     ) as Promise<boolean | RedirectCommand>;
 
   it('redirects to /welcome with entry "guard" when the welcome flow should show', async () => {
-    onboarding.shouldShowWelcome.and.resolveTo(true);
+    onboarding.shouldShowWelcome.mockResolvedValue(true);
 
     const result = await run();
 
     expect(onboarding.shouldShowWelcome).toHaveBeenCalledWith('/prints?x=1');
-    expect(result instanceof RedirectCommand).toBeTrue();
+    expect(result instanceof RedirectCommand).toBe(true);
     const command = result as RedirectCommand;
     expect(router.serializeUrl(command.redirectTo as UrlTree)).toBe('/welcome');
     expect(command.navigationBehaviorOptions?.state).toEqual({
@@ -51,27 +49,28 @@ describe('welcomeRedirectGuard', () => {
   });
 
   it('allows navigation when the welcome flow should not show', async () => {
-    onboarding.shouldShowWelcome.and.resolveTo(false);
+    onboarding.shouldShowWelcome.mockResolvedValue(false);
 
-    expect(await run()).toBeTrue();
+    expect(await run()).toBe(true);
   });
 
   it('allows navigation when the lookup rejects', async () => {
-    onboarding.shouldShowWelcome.and.rejectWith(new Error('offline'));
+    onboarding.shouldShowWelcome.mockRejectedValue(new Error('offline'));
 
-    expect(await run()).toBeTrue();
+    expect(await run()).toBe(true);
   });
 
-  it('allows navigation when the lookup is still pending after 3 s', fakeAsync(() => {
-    onboarding.shouldShowWelcome.and.returnValue(new Promise(() => {}));
+  it('allows navigation when the lookup is still pending after 3 s', async () => {
+    vi.useFakeTimers();
+    onboarding.shouldShowWelcome.mockReturnValue(new Promise(() => {}));
     let result: boolean | RedirectCommand | undefined;
     void run().then((r) => (result = r));
 
-    tick(2999);
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(2999);
+    await vi.advanceTimersByTimeAsync(0);
     expect(result).toBeUndefined();
-    tick(1);
-    flushMicrotasks();
-    expect(result).toBeTrue();
-  }));
+    await vi.advanceTimersByTimeAsync(1);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(result).toBe(true);
+  });
 });

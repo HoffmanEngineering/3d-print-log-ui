@@ -50,13 +50,13 @@ describe('FilamentListContainerComponent (isolated)', () => {
     it('opens the filter panel when closed', () => {
       component.isFilterPanelOpen = false;
       component.toggleFilterPanel();
-      expect(component.isFilterPanelOpen).toBeTrue();
+      expect(component.isFilterPanelOpen).toBe(true);
     });
 
     it('closes the filter panel when open', () => {
       component.isFilterPanelOpen = true;
       component.toggleFilterPanel();
-      expect(component.isFilterPanelOpen).toBeFalse();
+      expect(component.isFilterPanelOpen).toBe(false);
     });
   });
 
@@ -130,21 +130,21 @@ describe('FilamentListContainerComponent (isolated)', () => {
       component.filterByStorageLocation = 'Box 2';
 
       // Stub updateFilter so it doesn't throw (router is null)
-      spyOn(component, 'updateFilter');
+      vi.spyOn(component, 'updateFilter').mockReturnValue(undefined);
 
       component.resetFilters();
 
       expect(component.searchText).toBe('');
-      expect(component.showFavoritesOnly).toBeFalse();
-      expect(component.showLoadedFilamentOnly).toBeFalse();
-      expect(component.includeInactive).toBeFalse();
+      expect(component.showFavoritesOnly).toBe(false);
+      expect(component.showLoadedFilamentOnly).toBe(false);
+      expect(component.includeInactive).toBe(false);
       expect(component.filterByMaterialCategory).toBe('');
       expect(component.filterByStorageLocation).toBe('');
       expect(component.currentPage()).toBe(1);
     });
 
     it('calls updateFilter after resetting', () => {
-      spyOn(component, 'updateFilter');
+      vi.spyOn(component, 'updateFilter').mockReturnValue(undefined);
       component.resetFilters();
       expect(component.updateFilter).toHaveBeenCalled();
     });
@@ -152,11 +152,11 @@ describe('FilamentListContainerComponent (isolated)', () => {
 
   describe('navigateToFilament', () => {
     it('navigates to the filament detail route', () => {
-      spyOn(routerStub, 'navigate');
+      vi.spyOn(routerStub, 'navigate').mockReturnValue(undefined);
       component.navigateToFilament('abc-123');
       expect(routerStub.navigate).toHaveBeenCalledWith(
         ['abc-123'],
-        jasmine.objectContaining({ relativeTo: jasmine.anything() })
+        expect.objectContaining({ relativeTo: expect.anything() })
       );
     });
   });

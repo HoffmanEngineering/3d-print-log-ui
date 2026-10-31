@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Router } from '@angular/router';
@@ -40,8 +41,8 @@ function families(n: number): AchievementFamily[] {
 
 describe('AchievementCelebrationDialogComponent', () => {
   let fixture: ComponentFixture<AchievementCelebrationDialogComponent>;
-  let router: jasmine.SpyObj<Router>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<unknown>>;
+  let router: MockedObject<Router>;
+  let dialogRef: MockedObject<MatDialogRef<unknown>>;
 
   async function create(
     data: CelebrationItem,
@@ -81,10 +82,12 @@ describe('AchievementCelebrationDialogComponent', () => {
   }
 
   beforeEach(() => {
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    dialogRef = jasmine.createSpyObj<MatDialogRef<unknown>>('MatDialogRef', [
-      'close',
-    ]);
+    router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+    } as unknown as MockedObject<Router>;
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<MatDialogRef<unknown, any>>;
   });
 
   it('shows tier name, title, description and rarity for a grant', async () => {

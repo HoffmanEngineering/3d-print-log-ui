@@ -96,6 +96,6 @@ describe('EmptyStateComponent', () => {
       By.directive(EmptyStateComponent)
     ).nativeElement as HTMLElement;
 
-    expect(emptyState.hasAttribute('role')).toBeFalse();
+    expect(emptyState.hasAttribute('role')).toBe(false);
   });
 });

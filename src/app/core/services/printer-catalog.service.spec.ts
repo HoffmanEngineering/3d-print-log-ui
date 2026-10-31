@@ -128,7 +128,13 @@ describe('PrinterCatalogService', () => {
   });
 
   it('match sends the name anonymously and returns the match', () => {
-    let result: { id: string; confidence: string } | null | undefined;
+    let result:
+      | {
+          id: string;
+          confidence: string;
+        }
+      | null
+      | undefined;
     service.match('Prusa MK4').subscribe((r) => (result = r));
     const req = http.expectOne(
       (r) => r.url === `${base}/match` && r.params.get('name') === 'Prusa MK4'
@@ -139,7 +145,13 @@ describe('PrinterCatalogService', () => {
   });
 
   it('match maps a 204 to null', () => {
-    let result: { id: string; confidence: string } | null | undefined;
+    let result:
+      | {
+          id: string;
+          confidence: string;
+        }
+      | null
+      | undefined;
     service.match('zzz').subscribe((r) => (result = r));
     http
       .expectOne((r) => r.url === `${base}/match`)
@@ -148,7 +160,13 @@ describe('PrinterCatalogService', () => {
   });
 
   it('match maps a 500 to null', () => {
-    let result: { id: string; confidence: string } | null | undefined;
+    let result:
+      | {
+          id: string;
+          confidence: string;
+        }
+      | null
+      | undefined;
     service.match('zzz').subscribe((r) => (result = r));
     http
       .expectOne((r) => r.url === `${base}/match`)
@@ -205,9 +223,10 @@ describe('PrinterCatalogService', () => {
       http.expectOne((r) => r.url === `${base}/match`),
     ];
     for (const req of requests) {
-      expect(req.request.context.get(NGX_LOADING_BAR_IGNORED))
-        .withContext(req.request.urlWithParams)
-        .toBeTrue();
+      expect(
+        req.request.context.get(NGX_LOADING_BAR_IGNORED),
+        req.request.urlWithParams
+      ).toBe(true);
       req.flush(null);
     }
   });

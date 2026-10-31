@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -81,22 +77,22 @@ const response = (
 describe('PrintersTabComponent', () => {
   let fixture: ComponentFixture<PrintersTabComponent>;
   let component: PrintersTabComponent;
-  let analytics: jasmine.SpyObj<AnalyticsService>;
+  let analytics: MockedObject<AnalyticsService>;
 
-  /** Synchronous, to be called inside fakeAsync: createTabData debounces the first load 250ms. */
-  const setup = () => {
+  /** Call after vi.useFakeTimers(): createTabData debounces the first load 250ms. */
+  const setup = async () => {
     fixture = TestBed.createComponent(PrintersTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     fixture.detectChanges();
   };
 
   beforeEach(async () => {
-    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
-      'getPrinters',
-    ]);
-    analytics.getPrinters.and.returnValue(of(response()));
+    analytics = {
+      getPrinters: vi.fn().mockName('AnalyticsService.getPrinters'),
+    } as unknown as MockedObject<AnalyticsService>;
+    analytics.getPrinters.mockReturnValue(of(response()));
 
     await TestBed.configureTestingModule({
       imports: [PrintersTabComponent, NoopAnimationsModule],
@@ -112,8 +108,9 @@ describe('PrintersTabComponent', () => {
     }).compileComponents();
   });
 
-  it('sorts the time series chronologically, not by response order', fakeAsync(() => {
-    setup();
+  it('sorts the time series chronologically, not by response order', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.timeSeriesData().map((d) => d.fullLabel)).toEqual(
       component
@@ -122,17 +119,19 @@ describe('PrintersTabComponent', () => {
         .slice()
         .sort()
     );
-  }));
+  });
 
-  it('builds one bar series per printer so the stack legend matches the table', fakeAsync(() => {
-    setup();
+  it('builds one bar series per printer so the stack legend matches the table', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.printerSeries().map((s) => s.key)).toEqual(['1']);
     expect(component.printerSeries()[0].label).toBe('Ender 3');
-  }));
+  });
 
-  it('reports empty when every printer is idle', fakeAsync(() => {
-    analytics.getPrinters.and.returnValue(
+  it('reports empty when every printer is idle', async () => {
+    vi.useFakeTimers();
+    analytics.getPrinters.mockReturnValue(
       of(
         response({
           printers: [
@@ -154,16 +153,17 @@ describe('PrintersTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(component.state()).toBe('empty');
-  }));
+  });
 
-  it('totals maintenance from the per-printer figures, not the capped event list', fakeAsync(() => {
+  it('totals maintenance from the per-printer figures, not the capped event list', async () => {
+    vi.useFakeTimers();
     // The API caps the event LIST at 500 but computes maintenanceCost per printer from an
     // uncapped read. Here the list shows one 4.00 event while the printer's real total is
     // 900 — summing the list would report 4 and contradict the column beside it.
-    analytics.getPrinters.and.returnValue(
+    analytics.getPrinters.mockReturnValue(
       of(
         response({
           printers: [
@@ -185,13 +185,14 @@ describe('PrintersTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(component.maintenanceTotal()).toBe(900);
-  }));
+  });
 
-  it('reports no maintenance total when no printer has a known cost', fakeAsync(() => {
-    analytics.getPrinters.and.returnValue(
+  it('reports no maintenance total when no printer has a known cost', async () => {
+    vi.useFakeTimers();
+    analytics.getPrinters.mockReturnValue(
       of(
         response({
           printers: [
@@ -213,33 +214,36 @@ describe('PrintersTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     // Null, not 0: "no readable price" is not "spent nothing".
     expect(component.maintenanceTotal()).toBeNull();
-  }));
+  });
 
-  it('fails the whole tab on an error', fakeAsync(() => {
-    analytics.getPrinters.and.returnValue(throwError(() => new Error('boom')));
-    setup();
+  it('fails the whole tab on an error', async () => {
+    vi.useFakeTimers();
+    analytics.getPrinters.mockReturnValue(throwError(() => new Error('boom')));
+    await setup();
 
     expect(component.state()).toBe('error');
-  }));
+  });
 
   // 3d-print-log-api#294: the mL column comes after every existing one.
-  it('appends the resin mL to the comparison CSV', fakeAsync(() => {
-    setup();
+  it('appends the resin mL to the comparison CSV', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     const csv = component.comparisonCsv();
     expect(csv.columns[4]).toBe('Filament (g)');
     expect(csv.columns.at(-1)).toBe('Filament (mL)');
     expect(csv.rows[0][4]).toBe(60);
     expect(csv.rows[0].at(-1)).toBe(12.5);
-  }));
+  });
 
-  it('passes the resin printers to the comparison', fakeAsync(() => {
-    setup();
+  it('passes the resin printers to the comparison', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.resinPrinterIds()).toEqual(new Set([1]));
-  }));
+  });
 });

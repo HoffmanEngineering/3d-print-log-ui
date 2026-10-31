@@ -6,7 +6,7 @@ describe('setIfChanged', () => {
     const target = signal<number[]>([1, 2]);
     const before = target();
 
-    expect(setIfChanged(target, [1, 2])).toBeFalse();
+    expect(setIfChanged(target, [1, 2])).toBe(false);
     // Identity is the point: a signal settles on Object.is, so holding the
     // original instance is what stops a toObservable from emitting.
     expect(target()).toBe(before);
@@ -16,21 +16,21 @@ describe('setIfChanged', () => {
     const target = signal<string[]>([]);
     const before = target();
 
-    expect(setIfChanged(target, [])).toBeFalse();
+    expect(setIfChanged(target, [])).toBe(false);
     expect(target()).toBe(before);
   });
 
   it('writes when the contents differ', () => {
     const target = signal<number[]>([1, 2]);
 
-    expect(setIfChanged(target, [1, 3])).toBeTrue();
+    expect(setIfChanged(target, [1, 3])).toBe(true);
     expect(target()).toEqual([1, 3]);
   });
 
   it('writes when the length differs', () => {
     const target = signal<number[]>([1]);
 
-    expect(setIfChanged(target, [1, 2])).toBeTrue();
+    expect(setIfChanged(target, [1, 2])).toBe(true);
     expect(target()).toEqual([1, 2]);
   });
 
@@ -38,7 +38,7 @@ describe('setIfChanged', () => {
   it('writes when only the order differs', () => {
     const target = signal<number[]>([1, 2]);
 
-    expect(setIfChanged(target, [2, 1])).toBeTrue();
+    expect(setIfChanged(target, [2, 1])).toBe(true);
     expect(target()).toEqual([2, 1]);
   });
 });

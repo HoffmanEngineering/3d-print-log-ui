@@ -46,17 +46,20 @@ To test with real Auth0 authentication:
 
 ## Running Tests
 
-The project has unit tests (Jasmine/Karma) and E2E tests (Cypress).
+The project has unit tests (Vitest, in headless Chromium) and E2E tests (Cypress).
 
 ```bash
-# Run all unit tests once (CI mode, with coverage)
+# Run all unit tests once (CI mode)
 npm run test:ci
+
+# Run them once with a coverage report (slower)
+npm run test:coverage
 
 # Run unit tests in watch mode (development)
 npm test
 
 # Run a specific test file
-npm test -- --include='src/app/path/to/file.spec.ts'
+npm test -- --no-watch --include='src/app/path/to/file.spec.ts'
 
 # Unit tests for the build/generator scripts, plus docs validation
 npm run test:scripts

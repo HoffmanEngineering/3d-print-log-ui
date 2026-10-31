@@ -17,7 +17,9 @@ describe('SubscriptionSuccessComponent', () => {
         provideHttpClientTesting(),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();

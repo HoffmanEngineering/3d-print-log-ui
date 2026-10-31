@@ -32,7 +32,7 @@ describe('RemainingPipe', () => {
 
   it('scales, rounds and suffixes a tracked amount', () => {
     expect(
-      pipe.transform(812_400, { divisor: 1000, digitsInfo: '1.0-0', unit: 'g' })
+      pipe.transform(812400, { divisor: 1000, digitsInfo: '1.0-0', unit: 'g' })
     ).toBe('812g');
   });
 
@@ -51,13 +51,13 @@ describe('RemainingPipe', () => {
 
 describe('isRemainingTracked', () => {
   it('is false for null and undefined', () => {
-    expect(isRemainingTracked(null)).toBeFalse();
-    expect(isRemainingTracked(undefined)).toBeFalse();
+    expect(isRemainingTracked(null)).toBe(false);
+    expect(isRemainingTracked(undefined)).toBe(false);
   });
 
   it('is true for any number, including zero and negatives', () => {
-    expect(isRemainingTracked(0)).toBeTrue();
-    expect(isRemainingTracked(-1)).toBeTrue();
-    expect(isRemainingTracked(500)).toBeTrue();
+    expect(isRemainingTracked(0)).toBe(true);
+    expect(isRemainingTracked(-1)).toBe(true);
+    expect(isRemainingTracked(500)).toBe(true);
   });
 });

@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { DOCUMENT } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -7,9 +8,9 @@ import { EmailClickTrackerService } from './email-click-tracker.service';
 import { LoggingService } from './logging.service';
 
 describe('EmailClickTrackerService', () => {
-  let logging: jasmine.SpyObj<LoggingService>;
-  let replaceState: jasmine.Spy;
-  let navigate: jasmine.Spy;
+  let logging: MockedObject<LoggingService>;
+  let replaceState: Mock;
+  let navigate: Mock;
 
   /** The address bar the service reads, and the history it writes to. */
   function setup(
@@ -17,14 +18,14 @@ describe('EmailClickTrackerService', () => {
     platform: 'browser' | 'server' = 'browser'
   ): EmailClickTrackerService {
     const url = new URL(href, 'https://www.3dprintlog.com');
-    replaceState = jasmine.createSpy('replaceState');
+    replaceState = vi.fn();
     const fakeDocument = {
       location: { pathname: url.pathname, search: url.search, hash: url.hash },
       defaultView: { history: { state: { navigationId: 1 }, replaceState } },
     };
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     TestBed.configureTestingModule({
       providers: [
         provideRouter([]),
@@ -33,7 +34,9 @@ describe('EmailClickTrackerService', () => {
         { provide: DOCUMENT, useValue: fakeDocument },
       ],
     });
-    navigate = spyOn(TestBed.inject(Router), 'navigateByUrl');
+    navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigateByUrl')
+      .mockReturnValue(undefined);
     return TestBed.inject(EmailClickTrackerService);
   }
 
@@ -48,7 +51,8 @@ describe('EmailClickTrackerService', () => {
       campaign: 'monthly-recap',
       content: '2026-11',
     });
-    expect(replaceState).toHaveBeenCalledOnceWith(
+    expect(replaceState).toHaveBeenCalledTimes(1);
+    expect(replaceState).toHaveBeenCalledWith(
       { navigationId: 1 },
       '',
       '/analytics?foo=1'
@@ -62,7 +66,7 @@ describe('EmailClickTrackerService', () => {
     service.trackFromUrl(url);
 
     expect(navigate).not.toHaveBeenCalled();
-    expect(replaceState.calls.mostRecent().args[2]).toBe('/analytics');
+    expect(vi.mocked(replaceState).mock.lastCall[2]).toBe('/analytics');
   });
 
   it('keeps the fragment', () => {
@@ -71,7 +75,7 @@ describe('EmailClickTrackerService', () => {
 
     service.trackFromUrl(url);
 
-    expect(replaceState.calls.mostRecent().args[2]).toBe('/settings#email');
+    expect(vi.mocked(replaceState).mock.lastCall[2]).toBe('/settings#email');
   });
 
   it('does not put back a token fragment the preferences page already removed', () => {
@@ -82,7 +86,7 @@ describe('EmailClickTrackerService', () => {
       '/email-preferences?utm_source=email&utm_campaign=x#m=SECRET'
     );
 
-    expect(replaceState.calls.mostRecent().args[2]).toBe('/email-preferences');
+    expect(vi.mocked(replaceState).mock.lastCall[2]).toBe('/email-preferences');
   });
 
   it('ignores links that did not come from an email', () => {

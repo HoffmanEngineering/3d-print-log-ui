@@ -1,6 +1,6 @@
 import { provideRouter } from '@angular/router';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DocManifestPage } from '../generated/docs-manifest';
 import { DocSidebarComponent, buildNavItems } from './doc-sidebar.component';
@@ -9,13 +9,13 @@ describe('DocSidebarComponent', () => {
   let component: DocSidebarComponent;
   let fixture: ComponentFixture<DocSidebarComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       providers: [provideRouter([])],
       imports: [DocSidebarComponent],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(DocSidebarComponent);

@@ -34,7 +34,7 @@ describe('app-schema', () => {
   it('buildOrganization has a support contactPoint and no address', () => {
     const org = buildOrganization();
     expect(org['contactPoint']).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         '@type': 'ContactPoint',
         contactType: 'customer support',
         email: 'hello@3dprintlog.com',
@@ -60,7 +60,7 @@ describe('app-schema', () => {
     const offers = buildOffers();
     expect(offers.length).toBe(1 + PRO_PLANS.length);
     expect(offers[0]).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'Free',
         price: '0',
         priceCurrency: 'USD',

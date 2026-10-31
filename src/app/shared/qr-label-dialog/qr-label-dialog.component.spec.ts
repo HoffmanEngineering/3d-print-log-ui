@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  flushMicrotasks,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
@@ -24,10 +20,10 @@ import {
 describe('QrLabelDialogComponent', () => {
   let component: QrLabelDialogComponent;
   let fixture: ComponentFixture<QrLabelDialogComponent>;
-  let mockDialogRef: jasmine.SpyObj<MatDialogRef<QrLabelDialogComponent>>;
-  let mockQrCodeService: jasmine.SpyObj<QrCodeService>;
-  let mockLoggingService: jasmine.SpyObj<LoggingService>;
-  let mockToastr: jasmine.SpyObj<ToastrService>;
+  let mockDialogRef: MockedObject<MatDialogRef<QrLabelDialogComponent>>;
+  let mockQrCodeService: MockedObject<QrCodeService>;
+  let mockLoggingService: MockedObject<LoggingService>;
+  let mockToastr: MockedObject<ToastrService>;
 
   const mockFilament: FilamentSummary = {
     id: 'test-id-123',
@@ -64,22 +60,28 @@ describe('QrLabelDialogComponent', () => {
   };
 
   beforeEach(async () => {
-    mockDialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-    mockQrCodeService = jasmine.createSpyObj('QrCodeService', [
-      'generateSvg',
-      'generateFilamentUrl',
-    ]);
-    mockLoggingService = jasmine.createSpyObj('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
-    mockToastr = jasmine.createSpyObj('ToastrService', ['warning']);
+    mockDialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<MatDialogRef<QrLabelDialogComponent, any>>;
+    mockQrCodeService = {
+      generateSvg: vi.fn().mockName('QrCodeService.generateSvg'),
+      generateFilamentUrl: vi
+        .fn()
+        .mockName('QrCodeService.generateFilamentUrl'),
+    } as unknown as MockedObject<QrCodeService>;
+    mockLoggingService = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
+    mockToastr = {
+      warning: vi.fn().mockName('ToastrService.warning'),
+    } as unknown as MockedObject<ToastrService>;
     localStorage.removeItem('qr_label_layout');
 
-    mockQrCodeService.generateFilamentUrl.and.callFake(
+    mockQrCodeService.generateFilamentUrl.mockImplementation(
       (id: string) => `https://example.com/materials/${id}`
     );
-    mockQrCodeService.generateSvg.and.returnValue(
+    mockQrCodeService.generateSvg.mockReturnValue(
       Promise.resolve('<svg><rect /></svg>')
     );
 
@@ -116,9 +118,10 @@ describe('QrLabelDialogComponent', () => {
     expect(component.loading()).toBe(true);
   });
 
-  it('should generate QR codes on init', fakeAsync(() => {
+  it('should generate QR codes on init', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges(); // triggers ngOnInit → generateQrCodes()
-    flushMicrotasks(); // resolves Promise.resolve() from generateSvg mock
+    await vi.advanceTimersByTimeAsync(0); // resolves Promise.resolve() from generateSvg mock
     fixture.detectChanges(); // propagates signal updates (loading, labels) to view
 
     expect(mockQrCodeService.generateFilamentUrl).toHaveBeenCalledWith(
@@ -128,7 +131,7 @@ describe('QrLabelDialogComponent', () => {
     expect(mockQrCodeService.generateSvg).toHaveBeenCalled();
     expect(component.loading()).toBe(false);
     expect(component.labels().length).toBe(1);
-  }));
+  });
 
   it('should close dialog when close is called', () => {
     component.close();
@@ -139,12 +142,12 @@ describe('QrLabelDialogComponent', () => {
     const listeners: Record<string, () => void> = {};
     const mockPrintWindow = {
       document: {
-        write: jasmine.createSpy('write'),
-        close: jasmine.createSpy('close'),
+        write: vi.fn(),
+        close: vi.fn(),
       },
-      focus: jasmine.createSpy('focus'),
-      print: jasmine.createSpy('print'),
-      close: jasmine.createSpy('close'),
+      focus: vi.fn(),
+      print: vi.fn(),
+      close: vi.fn(),
       addEventListener: (event: string, handler: () => void) => {
         listeners[event] = handler;
       },
@@ -152,7 +155,9 @@ describe('QrLabelDialogComponent', () => {
       hasListener: (event: string) => Boolean(listeners[event]),
     };
 
-    spyOn(window, 'open').and.returnValue(mockPrintWindow as unknown as Window);
+    vi.spyOn(window, 'open').mockReturnValue(
+      mockPrintWindow as unknown as Window
+    );
     return mockPrintWindow;
   }
 
@@ -189,7 +194,7 @@ describe('QrLabelDialogComponent', () => {
   });
 
   it('warns instead of alerting when the print window is blocked', async () => {
-    spyOn(window, 'open').and.returnValue(null);
+    vi.spyOn(window, 'open').mockReturnValue(null);
 
     fixture.detectChanges();
     await fixture.whenStable();
@@ -310,9 +315,10 @@ describe('QrLabelDialogComponent', () => {
     });
   });
 
-  it('should compute pages array based on labels and items per page', fakeAsync(() => {
+  it('should compute pages array based on labels and items per page', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
 
     component.columnOverride.set(2);
@@ -321,7 +327,7 @@ describe('QrLabelDialogComponent', () => {
     // With 1 label and 10 items per page, should have 1 page
     expect(component.pages().length).toBe(1);
     expect(component.pages()[0].length).toBe(1);
-  }));
+  });
 
   it('should compute grid style based on columns', () => {
     component.labelSize.set('small');
@@ -345,12 +351,13 @@ describe('QrLabelDialogComponent', () => {
     });
   });
 
-  it('sizes each rendered page and its grid from the layout', fakeAsync(() => {
+  it('sizes each rendered page and its grid from the layout', async () => {
+    vi.useFakeTimers();
     component.paperSize.set('A4');
     component.labelSize.set('small');
     component.columnOverride.set(3);
     fixture.detectChanges();
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
 
     const page = fixture.nativeElement.querySelector(
@@ -361,7 +368,7 @@ describe('QrLabelDialogComponent', () => {
     expect(page.style.width).toBe('210mm');
     expect(page.style.height).toBe('297mm');
     expect(grid.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
-  }));
+  });
 
   it('should compute label class based on size', () => {
     component.labelSize.set('small');
@@ -371,20 +378,22 @@ describe('QrLabelDialogComponent', () => {
     expect(component.labelClass()).toBe('label-large');
   });
 
-  it('should apply correct background color for non-empty colorHex', fakeAsync(() => {
+  it('should apply correct background color for non-empty colorHex', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
 
     const swatch = fixture.nativeElement.querySelector(
       '.color-swatch'
     ) as HTMLElement;
     expect(swatch.style.backgroundColor).toBe('rgb(255, 0, 0)');
-  }));
+  });
 
-  it('should apply default background color when colorHex is empty', fakeAsync(() => {
+  it('should apply default background color when colorHex is empty', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
 
     (component.labels as any).set([
@@ -401,7 +410,7 @@ describe('QrLabelDialogComponent', () => {
       '.color-swatch'
     ) as HTMLElement;
     expect(swatch.style.backgroundColor).toBe('rgb(204, 204, 204)');
-  }));
+  });
 
   describe('with multiple filaments across pages', () => {
     const multipleFilaments: FilamentSummary[] = Array.from(
@@ -434,18 +443,20 @@ describe('QrLabelDialogComponent', () => {
       component = fixture.componentInstance;
     });
 
-    it('should generate QR codes for all filaments', fakeAsync(() => {
+    it('should generate QR codes for all filaments', async () => {
+      vi.useFakeTimers();
       fixture.detectChanges();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(0);
       fixture.detectChanges();
 
       expect(mockQrCodeService.generateSvg).toHaveBeenCalledTimes(15);
       expect(component.labels().length).toBe(15);
-    }));
+    });
 
-    it('should split labels into multiple pages', fakeAsync(() => {
+    it('should split labels into multiple pages', async () => {
+      vi.useFakeTimers();
       fixture.detectChanges();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(0);
       fixture.detectChanges();
 
       // 2 columns x 5 rows = 10 items per page; 15 labels = 2 pages (10 + 5)
@@ -455,6 +466,6 @@ describe('QrLabelDialogComponent', () => {
       expect(component.pages().length).toBe(2);
       expect(component.pages()[0].length).toBe(10);
       expect(component.pages()[1].length).toBe(5);
-    }));
+    });
   });
 });

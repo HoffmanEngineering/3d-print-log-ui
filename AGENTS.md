@@ -13,8 +13,9 @@ npm start                  # Dev server, HTTPS on localhost:4200
 npm run build:dev          # Development build
 npm run build              # Production build (runs prerendering)
 
-npm test                   # Karma watch mode
-npm run test:ci            # ChromeHeadless + coverage
+npm test                   # Vitest watch mode, in headless Chromium
+npm run test:ci            # One run, no coverage
+npm run test:coverage      # One run with coverage, what CI runs (about twice as slow; see Testing)
 npm run test:brief         # Token-efficient: CI mode, failures/warnings only
 npm run test:scripts       # Node tests for scripts/ (security headers, docs validation)
 
@@ -35,7 +36,7 @@ npm run capture:docs:all   # Documentation figures -> src/assets/docs/captures/
 
 Prefer `test:brief` and `lint:brief` when reporting failures — they are optimized for minimal output while preserving what is actionable.
 
-**Read the last line of `test:brief`, not the exit code.** These are meant to be piped (`npm run test:brief | tail -20`), and a shell pipeline reports the status of its _last_ command — so the exit code you see belongs to `tail`. The script prints `RESULT: PASSED` or `RESULT: FAILED (ng test exited N)` as its final line for exactly this reason. A compile error is the case that bites: Karma never reaches a `TOTAL:` line, so without that verdict the output ends in a blank summary that looks like a clean run.
+**Read the last line of `test:brief`, not the exit code.** These are meant to be piped (`npm run test:brief | tail -20`), and a shell pipeline reports the status of its _last_ command — so the exit code you see belongs to `tail`. The script prints `RESULT: PASSED` or `RESULT: FAILED (ng test exited N)` as its final line for exactly this reason. A compile error is the case that bites: Vitest never starts, so without that verdict the output ends in a blank summary that looks like a clean run.
 
 **`lint-staged` formats `*.{js,css,md,ts,scss}` on commit — not `.html`.** Templates are never auto-formatted, so an edit that writes CRLF silently flips a whole file and shows up as a several-hundred-line diff with equal insertions and deletions. Run `npx prettier --write` on every template you touch. `npm run prettier` currently reports one pre-existing warning (`settings.component.html`); anything beyond that is yours.
 
@@ -168,7 +169,7 @@ If a lazily-loading store must be readable from a computed, keep the read pure a
 
 The app runs without zone.js (`provideZonelessChangeDetection()` in `main.ts`; the server bootstrap never had it). Change detection runs only when a signal a template reads changes, an input changes, a template event fires, or something calls `markForCheck()`, and only dirty views are checked. A plain field set from an HTTP response, a route's `queryParamMap` or `data`, a dialog's `afterClosed()`, a timer or a `FileReader` callback therefore changes nothing on screen, and no test fails unless it looks at the DOM after that callback. Nothing patches the browser's async APIs, so there is no `NgZone.run` to reach for: hold the state in a signal.
 
-zone.js is still loaded in the unit tests only (the `test` target's polyfills), because `fakeAsync`/`tick` need it. It does not drive change detection there either: the TestBed is zoneless, like the app.
+zone.js is not installed at all, so `fakeAsync`, `tick` and `waitForAsync` are unavailable in specs. Fake time with Vitest instead: `vi.useFakeTimers()`, then `await vi.advanceTimersByTimeAsync(ms)`. The shared `afterEach` in `src/test-setup.ts` puts the real timers back.
 
 In end-to-end tests, a routed component's elements can reach the DOM a pass before its bindings. Read state from something that is itself bound (an `aria-*` attribute set by the template), not from a class or text that might not be applied yet; see `cy.openFilterPanel()`.
 
@@ -202,13 +203,23 @@ A child's own `.thing img` rule and a parent's `::ng-deep .thing img` tie on spe
 
 ## Testing
 
-Jasmine + Karma with Chrome, specs co-located with source (`*.spec.ts`), unit-test environment in `src/environments/environment.unittest.ts`. Cypress E2E against `https://localhost:4200`; **E2E needs the API running in `E2ETesting` mode**, so ask before running it.
+Vitest, through Angular's `@angular/build:unit-test` builder, in headless Chromium (Vitest browser mode with Playwright, at Karma's old 800×600 viewport). Specs are co-located with source (`*.spec.ts`); the unit-test environment is `src/environments/environment.unittest.ts`. Cypress E2E runs against `https://localhost:4200`; **E2E needs the API running in `E2ETesting` mode**, so ask before running it.
 
-Components are standalone and go in TestBed `imports`. Mock services with `jasmine.createSpyObj<T>`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
+- **Run one file:** `npx ng test --no-watch --include src/app/path/to/file.spec.ts`.
+- **First run on a new machine:** `npx playwright install chromium`. CI does this itself.
+- **Shared setup:** `src/test-providers.ts` gives every TestBed its providers (noop animations). `src/test-setup.ts` runs before each file, and its `afterEach` restores every `vi.spyOn` spy and the real timers.
+- **Spec files share pages.** Vitest runs a few pages in parallel, and the files it sends to one page all run in it (`isolate: false`, the builder's default), as every spec shared Karma's. A spec that changes the document (an `<html>` class, a `<meta>` tag, `localStorage`) must put it back.
+- **Coverage is its own run** (`npm run test:coverage`), and CI runs it: the totals go on the run's summary page (`scripts/coverage-summary.mjs`), and CI uploads the HTML report as the `coverage-report` artifact. It covers our TypeScript and component templates (`.html`): V8 coverage maps template code back to the template, so an `@if` branch no test renders shows as uncovered. Karma's coverage counted TypeScript only, so the totals are not comparable with old Karma reports. JSON is excluded in `angular.json`.
+- **Coverage has floors** (`coverageThresholds` in `angular.json`: statements 87%, branches 79%, functions 74%, lines 83%, about a point under where they stood when set). A run below any of them fails, in CI and in deploy. Raise them as coverage improves; lowering one is a decision to make in review, not a fix for a red build.
+- **`patches/@angular+build+*.patch` is load-bearing for coverage** (applied by `postinstall` through patch-package). @angular/build 21 wraps setup files in a stub when coverage is on, the browser caches the stub's import after the first spec file in a page, and from then on the TestBed is never reset and `src/test-setup.ts`'s `afterEach` never runs: about 200 files fail. @angular/build 22.2 fixes it upstream; delete the patch with that upgrade. If `npm install` reports the patch failed to apply, coverage runs are broken until it's fixed.
+
+Components are standalone and go in TestBed `imports`. Mock a service as an object of `vi.fn()`s cast to `MockedObject<T>` (`{ getX: vi.fn() } as unknown as MockedObject<XService>`), and read calls from `.mock.calls` / `.mock.lastCall`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
+
+**`vi.spyOn` calls through; Jasmine's `spyOn` did not.** A spy meant to stub needs `.mockReturnValue(…)` or `.mockImplementation(…)`, or the real method runs.
 
 **Stubbing every collaborator can hide the bug that matters.** A component's contract with a service is not just the values it returns — with signals it includes _when_ that service touches reactive state. Every spec around `PrinterAvatarComponent` stubbed the store and passed while the print list rendered nothing in a real browser (see NG0600 above). When a component depends on a service that reads or writes signals, add at least one spec that wires the **real** service with `provideHttpClientTesting`, and assert the first `detectChanges()` does not throw.
 
-The suite also flakes under Karma's random ordering — re-run and check a failure in isolation before treating it as real.
+Because pages are shared, a spec that leaks state can fail a later one in the same page. Re-run, and check a failure in isolation with `--include`, before treating it as real.
 
 ## Analytics & Metrics
 

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -16,22 +17,22 @@ function makePrint(id: number, title = `Print ${id}`): PrintSummary {
 
 describe('PrintBulkActionsService', () => {
   let service: PrintBulkActionsService;
-  let printService: jasmine.SpyObj<PrintService>;
-  let logger: jasmine.SpyObj<LoggingService>;
+  let printService: MockedObject<PrintService>;
+  let logger: MockedObject<LoggingService>;
 
   const printOne = makePrint(1, 'Benchy');
   const printTwo = makePrint(2, 'Calibration Cube');
   const printThree = makePrint(3, 'Bracket');
 
   beforeEach(() => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'bulkUpdatePrints',
-      'bulkDeletePrints',
-    ]);
-    logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    printService = {
+      bulkUpdatePrints: vi.fn().mockName('PrintService.bulkUpdatePrints'),
+      bulkDeletePrints: vi.fn().mockName('PrintService.bulkDeletePrints'),
+    } as unknown as MockedObject<PrintService>;
+    logger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -47,17 +48,17 @@ describe('PrintBulkActionsService', () => {
   describe('selection', () => {
     it('starts empty', () => {
       expect(service.selectedCount()).toBe(0);
-      expect(service.hasSelection()).toBeFalse();
-      expect(service.isSelected(printOne.id)).toBeFalse();
+      expect(service.hasSelection()).toBe(false);
+      expect(service.isSelected(printOne.id)).toBe(false);
     });
 
     it('toggles a print on and back off', () => {
       service.toggleSelection(printOne);
-      expect(service.isSelected(printOne.id)).toBeTrue();
+      expect(service.isSelected(printOne.id)).toBe(true);
       expect(service.selectedCount()).toBe(1);
 
       service.toggleSelection(printOne);
-      expect(service.isSelected(printOne.id)).toBeFalse();
+      expect(service.isSelected(printOne.id)).toBe(false);
       expect(service.selectedCount()).toBe(0);
     });
 
@@ -65,11 +66,11 @@ describe('PrintBulkActionsService', () => {
       const page = [printOne, printTwo, printThree];
 
       service.toggleSelectAllOnPage(page);
-      expect(service.isAllOnPageSelected(page)).toBeTrue();
+      expect(service.isAllOnPageSelected(page)).toBe(true);
       expect(service.selectedCount()).toBe(3);
 
       service.toggleSelectAllOnPage(page);
-      expect(service.isAllOnPageSelected(page)).toBeFalse();
+      expect(service.isAllOnPageSelected(page)).toBe(false);
       expect(service.selectedCount()).toBe(0);
     });
 
@@ -77,16 +78,16 @@ describe('PrintBulkActionsService', () => {
       const page = [printOne, printTwo];
       service.toggleSelection(printOne);
 
-      expect(service.isIndeterminate(page)).toBeTrue();
-      expect(service.isAllOnPageSelected(page)).toBeFalse();
+      expect(service.isIndeterminate(page)).toBe(true);
+      expect(service.isAllOnPageSelected(page)).toBe(false);
 
       service.toggleSelection(printTwo);
-      expect(service.isIndeterminate(page)).toBeFalse();
+      expect(service.isIndeterminate(page)).toBe(false);
     });
 
     it('treats an empty page as neither fully selected nor indeterminate', () => {
-      expect(service.isAllOnPageSelected([])).toBeFalse();
-      expect(service.isIndeterminate([])).toBeFalse();
+      expect(service.isAllOnPageSelected([])).toBe(false);
+      expect(service.isIndeterminate([])).toBe(false);
     });
 
     it('leaves selections from other pages alone when selecting all on a page', () => {
@@ -97,7 +98,7 @@ describe('PrintBulkActionsService', () => {
       // Deselecting the visible page keeps the off-page selection.
       service.toggleSelectAllOnPage([printOne, printTwo]);
       expect(service.selectedCount()).toBe(1);
-      expect(service.isSelected(printThree.id)).toBeTrue();
+      expect(service.isSelected(printThree.id)).toBe(true);
     });
 
     it('reports a page with none of its own rows selected as neither checked nor indeterminate', () => {
@@ -106,8 +107,8 @@ describe('PrintBulkActionsService', () => {
       // as "click to clear" while it would actually select more.
       service.toggleSelection(printThree);
 
-      expect(service.isIndeterminate([printOne, printTwo])).toBeFalse();
-      expect(service.isAllOnPageSelected([printOne, printTwo])).toBeFalse();
+      expect(service.isIndeterminate([printOne, printTwo])).toBe(false);
+      expect(service.isAllOnPageSelected([printOne, printTwo])).toBe(false);
       expect(service.selectedCount()).toBe(1);
     });
 
@@ -115,7 +116,7 @@ describe('PrintBulkActionsService', () => {
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       service.deselect(printOne.id);
-      expect(service.isSelected(printOne.id)).toBeFalse();
+      expect(service.isSelected(printOne.id)).toBe(false);
       expect(service.selectedCount()).toBe(1);
 
       service.deselect(printThree.id);
@@ -125,7 +126,7 @@ describe('PrintBulkActionsService', () => {
     it('clears the selection', () => {
       service.toggleSelectAllOnPage([printOne, printTwo]);
       service.clearSelection();
-      expect(service.hasSelection()).toBeFalse();
+      expect(service.hasSelection()).toBe(false);
     });
   });
 
@@ -136,7 +137,7 @@ describe('PrintBulkActionsService', () => {
   describe('setStatusForSelected', () => {
     it('sends one request per 25-id chunk', async () => {
       const prints = makePrints(60);
-      printService.bulkUpdatePrints.and.callFake((request) =>
+      printService.bulkUpdatePrints.mockImplementation((request) =>
         of({ succeeded: request.printIds, failed: [] })
       );
       service.toggleSelectAllOnPage(prints);
@@ -144,13 +145,13 @@ describe('PrintBulkActionsService', () => {
       const result = await service.setStatusForSelected(PrintStatus.Success);
 
       expect(printService.bulkUpdatePrints).toHaveBeenCalledTimes(3);
-      const sizes = printService.bulkUpdatePrints.calls
-        .allArgs()
-        .map(([request]) => request.printIds.length);
+      const sizes = vi
+        .mocked(printService.bulkUpdatePrints)
+        .mock.calls.map(([request]) => request.printIds.length);
       expect(sizes).toEqual([25, 25, 10]);
-      expect(printService.bulkUpdatePrints.calls.first().args[0].status).toBe(
-        PrintStatus.Success
-      );
+      expect(
+        vi.mocked(printService.bulkUpdatePrints).mock.calls[0][0].status
+      ).toBe(PrintStatus.Success);
       expect(result.succeededIds.length).toBe(60);
       expect(result.failedIds).toEqual([]);
     });
@@ -162,16 +163,16 @@ describe('PrintBulkActionsService', () => {
       { count: 26, expected: [25, 1] },
     ].forEach(({ count, expected }) => {
       it(`splits ${count} ids into chunks of ${expected.join(' + ')}`, async () => {
-        printService.bulkUpdatePrints.and.callFake((request) =>
+        printService.bulkUpdatePrints.mockImplementation((request) =>
           of({ succeeded: request.printIds, failed: [] })
         );
         service.toggleSelectAllOnPage(makePrints(count));
 
         await service.setStatusForSelected(PrintStatus.Success);
 
-        const batches = printService.bulkUpdatePrints.calls
-          .allArgs()
-          .map(([request]) => request.printIds);
+        const batches = vi
+          .mocked(printService.bulkUpdatePrints)
+          .mock.calls.map(([request]) => request.printIds);
         expect(batches.map((ids) => ids.length)).toEqual(expected);
 
         // Sizes alone would pass with the ids shuffled, duplicated across
@@ -182,7 +183,7 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('sends a single request when the selection fits one chunk', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1, 2], failed: [] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -197,18 +198,18 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('clears the selection when everything succeeds', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1, 2], failed: [] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       await service.setStatusForSelected(PrintStatus.Success);
 
-      expect(service.hasSelection()).toBeFalse();
+      expect(service.hasSelection()).toBe(false);
     });
 
     it('reports per-id failures from the response and keeps them selected', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1], failed: [{ id: 2, reason: 'Forbidden' }] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -217,15 +218,15 @@ describe('PrintBulkActionsService', () => {
 
       expect(result.succeededIds).toEqual([1]);
       expect(result.failedIds).toEqual([2]);
-      expect(result.failuresRetained).toBeTrue();
-      expect(service.isSelected(2)).toBeTrue();
-      expect(service.isSelected(1)).toBeFalse();
+      expect(result.failuresRetained).toBe(true);
+      expect(service.isSelected(2)).toBe(true);
+      expect(service.isSelected(1)).toBe(false);
     });
 
     it('fails only the chunk that errored and keeps going', async () => {
       const prints = makePrints(30);
       let call = 0;
-      printService.bulkUpdatePrints.and.callFake((request) => {
+      printService.bulkUpdatePrints.mockImplementation((request) => {
         call++;
         return call === 1
           ? throwError(() => new HttpErrorResponse({ status: 500 }))
@@ -243,7 +244,7 @@ describe('PrintBulkActionsService', () => {
     it('stops sending after a 400 and keeps completed chunks intact', async () => {
       const prints = makePrints(75);
       let call = 0;
-      printService.bulkUpdatePrints.and.callFake((request) => {
+      printService.bulkUpdatePrints.mockImplementation((request) => {
         call++;
         return call === 2
           ? throwError(
@@ -267,7 +268,7 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('leaves the selection alone when the user clears it mid-batch, and says so', async () => {
-      printService.bulkUpdatePrints.and.callFake((request) => {
+      printService.bulkUpdatePrints.mockImplementation((request) => {
         // The user changes the result set (which clears the selection) while
         // the batch is still running.
         service.clearSelection();
@@ -283,12 +284,12 @@ describe('PrintBulkActionsService', () => {
       // The batch still finished from its own snapshot...
       expect(result.failedIds).toEqual([printOne.id, printTwo.id]);
       // ...but the user's clear wins, and the caller is told not to promise a retry.
-      expect(result.failuresRetained).toBeFalse();
-      expect(service.hasSelection()).toBeFalse();
+      expect(result.failuresRetained).toBe(false);
+      expect(service.hasSelection()).toBe(false);
     });
 
     it('never swallows an error - each failed request is logged', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 500 }))
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -299,7 +300,7 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('logs the outcome with counts', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1], failed: [{ id: 2, reason: 'NotFound' }] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -313,18 +314,18 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('reports determinate progress and stops running when finished', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1, 2], failed: [] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
 
       const pending = service.setStatusForSelected(PrintStatus.Success);
-      expect(service.isRunning()).toBeTrue();
+      expect(service.isRunning()).toBe(true);
       expect(service.totalCount()).toBe(2);
 
       await pending;
 
-      expect(service.isRunning()).toBeFalse();
+      expect(service.isRunning()).toBe(false);
       expect(service.processedCount()).toBe(2);
       expect(service.progressPercent()).toBe(100);
     });
@@ -345,16 +346,16 @@ describe('PrintBulkActionsService', () => {
   it('sends the same project id in every chunk', async () => {
     // The dialog creates the project once and hands over an id, so a 60-print
     // assignment must reuse that one id rather than creating anything per chunk.
-    printService.bulkUpdatePrints.and.callFake((request) =>
+    printService.bulkUpdatePrints.mockImplementation((request) =>
       of({ succeeded: request.printIds, failed: [] })
     );
     service.toggleSelectAllOnPage(makePrints(60));
 
     await service.setProjectForSelected('one-project-id');
 
-    const projectIds = printService.bulkUpdatePrints.calls
-      .allArgs()
-      .map(([request]) => request.projectId);
+    const projectIds = vi
+      .mocked(printService.bulkUpdatePrints)
+      .mock.calls.map(([request]) => request.projectId);
     expect(projectIds).toEqual([
       'one-project-id',
       'one-project-id',
@@ -365,7 +366,7 @@ describe('PrintBulkActionsService', () => {
   it('treats an id the response never mentions as failed', async () => {
     // A truncated or version-skewed body must not quietly deselect a print
     // that may not have been changed at all.
-    printService.bulkUpdatePrints.and.returnValue(
+    printService.bulkUpdatePrints.mockReturnValue(
       of({ succeeded: [1], failed: [] })
     );
     service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -374,12 +375,12 @@ describe('PrintBulkActionsService', () => {
 
     expect(result.succeededIds).toEqual([1]);
     expect(result.failedIds).toEqual([2]);
-    expect(service.isSelected(2)).toBeTrue();
+    expect(service.isSelected(2)).toBe(true);
   });
 
   describe('setProjectForSelected', () => {
     it('sends the project id', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1], failed: [] })
       );
       service.toggleSelection(printOne);
@@ -395,7 +396,7 @@ describe('PrintBulkActionsService', () => {
 
   describe('removeProjectFromSelected', () => {
     it('sends the clear list', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1], failed: [] })
       );
       service.toggleSelection(printOne);
@@ -409,7 +410,7 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('logs its own event, not the assignment one', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1], failed: [] })
       );
       service.toggleSelection(printOne);
@@ -418,14 +419,14 @@ describe('PrintBulkActionsService', () => {
 
       expect(logger.logEvent).toHaveBeenCalledWith(
         'PrintBulkActionBar_RemoveProjectCompleted',
-        jasmine.anything()
+        expect.anything()
       );
     });
   });
 
   describe('the remaining field actions', () => {
     beforeEach(() => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [1], failed: [] })
       );
       service.toggleSelection(printOne);
@@ -461,7 +462,7 @@ describe('PrintBulkActionsService', () => {
 
   describe('deleteSelected', () => {
     it('posts the ids to the bulk delete endpoint', async () => {
-      printService.bulkDeletePrints.and.returnValue(
+      printService.bulkDeletePrints.mockReturnValue(
         of({ succeeded: [1, 2], failed: [] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -473,7 +474,7 @@ describe('PrintBulkActionsService', () => {
     });
 
     it('keeps refused deletions selected and logs the outcome', async () => {
-      printService.bulkDeletePrints.and.returnValue(
+      printService.bulkDeletePrints.mockReturnValue(
         of({ succeeded: [2], failed: [{ id: 1, reason: 'Forbidden' }] })
       );
       service.toggleSelectAllOnPage([printOne, printTwo]);
@@ -481,7 +482,7 @@ describe('PrintBulkActionsService', () => {
       const result = await service.deleteSelected();
 
       expect(result.failedIds).toEqual([printOne.id]);
-      expect(service.isSelected(printOne.id)).toBeTrue();
+      expect(service.isSelected(printOne.id)).toBe(true);
       expect(logger.logEvent).toHaveBeenCalledWith(
         'PrintBulkActionBar_DeleteCompleted',
         { attempted: 2, succeeded: 1, failed: 1 }
@@ -504,7 +505,7 @@ describe('PrintBulkActionsService', () => {
       service.selectAllOnPage([printOne, printTwo]);
 
       expect(service.selectedCount()).toBe(3);
-      expect(service.isSelected(printThree.id)).toBeTrue();
+      expect(service.isSelected(printThree.id)).toBe(true);
     });
 
     it('is idempotent', () => {
@@ -519,8 +520,8 @@ describe('PrintBulkActionsService', () => {
       service.selectAllOnPage([printOne, printTwo]);
       service.selectAllOnPage([printOne, printTwo]);
 
-      expect(service.isSelected(printOne.id)).toBeTrue();
-      expect(service.isSelected(printTwo.id)).toBeTrue();
+      expect(service.isSelected(printOne.id)).toBe(true);
+      expect(service.isSelected(printTwo.id)).toBe(true);
     });
 
     it('leaves the selection alone for an empty page', () => {

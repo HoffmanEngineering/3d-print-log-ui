@@ -28,7 +28,7 @@ describe('DocSiteFooterComponent', () => {
 
   it('links the About, Contact and Privacy pages', () => {
     expect(hrefs()).toEqual(
-      jasmine.arrayContaining([
+      expect.arrayContaining([
         '/docs/about',
         '/docs/contact',
         '/docs/privacy-policy',
@@ -45,9 +45,9 @@ describe('DocSiteFooterComponent', () => {
     );
     expect(docLinks.length).toBeGreaterThan(0);
     for (const href of docLinks) {
-      expect(published.has(href))
-        .withContext(`${href} is not a published docs page`)
-        .toBeTrue();
+      expect(published.has(href), `${href} is not a published docs page`).toBe(
+        true
+      );
     }
   });
 

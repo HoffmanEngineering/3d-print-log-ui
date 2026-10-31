@@ -68,7 +68,7 @@ describe('EmailPreferencesApiService', () => {
   it('sends no Authorization header', () => {
     service.read('MANAGE').subscribe();
     const req = http.expectOne(`${base}/preferences`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 });

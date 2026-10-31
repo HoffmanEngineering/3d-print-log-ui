@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { SimpleDialogData } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -17,11 +18,15 @@ import { SpoolmanConnectionsComponent } from './spoolman-connections.component';
 describe('SpoolmanConnectionsComponent', () => {
   let fixture: ComponentFixture<SpoolmanConnectionsComponent>;
   let httpMock: HttpTestingController;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let dialogInstance: { title?: string; body?: string; yesText?: string };
+  let dialog: MockedObject<MatDialog>;
+  let dialogInstance: {
+    title?: string;
+    body?: string;
+    yesText?: string;
+  };
   let confirm: boolean | undefined;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
 
   const listUrl = `${environment.printLogApiUrl}/api/SpoolmanConnections`;
 
@@ -42,22 +47,24 @@ describe('SpoolmanConnectionsComponent', () => {
   beforeEach(async () => {
     confirm = true;
     dialogInstance = {};
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.callFake(
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockImplementation(
       () =>
         ({
           componentInstance: dialogInstance,
           afterClosed: () => of(confirm),
         }) as any
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     // The real SpoolmanConnectionService, over HttpTestingController.
     await TestBed.configureTestingModule({
@@ -146,7 +153,8 @@ describe('SpoolmanConnectionsComponent', () => {
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
     expect(
-      (dialog.open.calls.mostRecent().args[1]?.data as SimpleDialogData).yesText
+      (vi.mocked(dialog.open).mock.lastCall[1]?.data as SimpleDialogData)
+        .yesText
     ).toBe('Revoke');
     const del = httpMock.expectOne(`${listUrl}/c1`);
     expect(del.request.method).toBe('DELETE');
@@ -165,7 +173,7 @@ describe('SpoolmanConnectionsComponent', () => {
     expect(toastr.success).toHaveBeenCalled();
     expect(logging.logEvent).toHaveBeenCalledWith(
       'SpoolmanConnections_Revoked',
-      jasmine.anything()
+      expect.anything()
     );
   });
 

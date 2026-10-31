@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
@@ -6,10 +7,12 @@ import { ProjectStatus } from 'src/app/core/services/project.service';
 
 describe('ProjectChipComponent', () => {
   let fixture: ComponentFixture<ProjectChipComponent>;
-  let mockRouter: jasmine.SpyObj<Router>;
+  let mockRouter: MockedObject<Router>;
 
   beforeEach(async () => {
-    mockRouter = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    mockRouter = {
+      navigate: vi.fn().mockName('Router.navigate'),
+    } as unknown as MockedObject<Router>;
 
     await TestBed.configureTestingModule({
       imports: [ProjectChipComponent],

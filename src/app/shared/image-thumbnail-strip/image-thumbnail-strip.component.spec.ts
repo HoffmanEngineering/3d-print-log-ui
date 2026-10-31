@@ -158,7 +158,9 @@ describe('ImageThumbnailStripComponent', () => {
   });
 
   it('should emit imageSelected when thumbnail select button is clicked', () => {
-    const spy = spyOn(component.imageSelected, 'emit');
+    const spy = vi
+      .spyOn(component.imageSelected, 'emit')
+      .mockReturnValue(undefined);
     const btn = fixture.nativeElement.querySelector('.thumbnail-select');
     btn.click();
     expect(spy).toHaveBeenCalledWith(mockImages[0]);
@@ -281,7 +283,9 @@ describe('ImageThumbnailStripComponent', () => {
 
   describe('auto-scroll', () => {
     it('should call scrollIntoView on the selected thumbnail when selectedId changes', async () => {
-      const scrollSpy = spyOn(HTMLElement.prototype, 'scrollIntoView');
+      const scrollSpy = vi
+        .spyOn(HTMLElement.prototype, 'scrollIntoView')
+        .mockReturnValue(undefined);
 
       fixture.componentRef.setInput('selectedId', 2);
       fixture.detectChanges();

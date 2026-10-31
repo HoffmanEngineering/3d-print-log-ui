@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -46,15 +47,15 @@ import {
 describe('ViewPrintDetailComponent', () => {
   let fixture: ComponentFixture<ViewPrintDetailComponent>;
   let component: ViewPrintDetailComponent;
-  let metaService: jasmine.SpyObj<MetaTagService>;
-  let printServiceSpy: jasmine.SpyObj<PrintService>;
-  let loaderSpy: jasmine.SpyObj<PrintDetailLoaderService>;
-  let userSettingServiceSpy: jasmine.SpyObj<UserSettingService>;
-  let seoServiceSpy: jasmine.SpyObj<SeoService>;
+  let metaService: MockedObject<MetaTagService>;
+  let printServiceSpy: MockedObject<PrintService>;
+  let loaderSpy: MockedObject<PrintDetailLoaderService>;
+  let userSettingServiceSpy: MockedObject<UserSettingService>;
+  let seoServiceSpy: MockedObject<SeoService>;
 
   const OWNER_ID = 7;
 
-  let pushPromptSpy: jasmine.SpyObj<PushPermissionPromptService>;
+  let pushPromptSpy: MockedObject<PushPermissionPromptService>;
   let nextPromptResult: PushPromptResult;
 
   const basePrint = {
@@ -79,8 +80,7 @@ describe('ViewPrintDetailComponent', () => {
   /**
    * The skeleton is deferred, so "still loading" is no longer observable the
    * instant the component is created — that is the whole point of the change.
-   * These waits are real time rather than `tick()` because `setup` awaits
-   * `compileComponents`, which cannot run inside `fakeAsync`.
+   * These waits are real time: this file does not fake timers.
    */
   const waitPastSkeletonDelay = async (): Promise<void> => {
     await new Promise((resolve) =>
@@ -131,61 +131,68 @@ describe('ViewPrintDetailComponent', () => {
     // calculatePrintCost is required for the same reason as in the rail's spec:
     // the real FilamentUsageSummaryComponent renders inside the rail and calls
     // it per row on the owner path.
-    const printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'addPrintComment',
-      'calculateElectricityCost',
-      'calculateTotalPrintCost',
-      'calculatePrintCost',
-    ]);
-    printService.calculatePrintCost.and.returnValue({
+    const printService = {
+      addPrintComment: vi.fn().mockName('PrintService.addPrintComment'),
+      calculateElectricityCost: vi
+        .fn()
+        .mockName('PrintService.calculateElectricityCost'),
+      calculateTotalPrintCost: vi
+        .fn()
+        .mockName('PrintService.calculateTotalPrintCost'),
+      calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+    } as unknown as MockedObject<PrintService>;
+    printService.calculatePrintCost.mockReturnValue({
       valid: true,
       price: currency(0.42),
       formattedPrice: '$0.42',
       symbol: '$',
       usesDefaultPrice: false,
     });
-    printService.calculateTotalPrintCost.and.returnValue({
+    printService.calculateTotalPrintCost.mockReturnValue({
       prices: [],
       total: { valid: false, message: 'Cannot calculate total' },
     });
-    printService.calculateElectricityCost.and.returnValue({
+    printService.calculateElectricityCost.mockReturnValue({
       valid: false,
       message: 'No rate configured',
     });
     printServiceSpy = printService;
-    metaService = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setTitle',
-      'setSocialMediaTags',
-      'applySeoMetadata',
-      'preventIndexing',
-      'restoreShellRobots',
-    ]);
-    seoServiceSpy = jasmine.createSpyObj<SeoService>('SeoService', [
-      'forPrint',
-    ]);
-    seoServiceSpy.forPrint.and.callFake(seo);
-    userSettingServiceSpy = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['getCurrentUsersSettingByType']
+    metaService = {
+      setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+      setSocialMediaTags: vi.fn().mockName('MetaTagService.setSocialMediaTags'),
+      applySeoMetadata: vi.fn().mockName('MetaTagService.applySeoMetadata'),
+      preventIndexing: vi.fn().mockName('MetaTagService.preventIndexing'),
+      restoreShellRobots: vi.fn().mockName('MetaTagService.restoreShellRobots'),
+    } as unknown as MockedObject<MetaTagService>;
+    seoServiceSpy = {
+      forPrint: vi.fn().mockName('SeoService.forPrint'),
+    } as unknown as MockedObject<SeoService>;
+    seoServiceSpy.forPrint.mockImplementation(seo);
+    userSettingServiceSpy = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+    } as unknown as MockedObject<UserSettingService>;
+    userSettingServiceSpy.getCurrentUsersSettingByType.mockImplementation(
+      settings
     );
-    userSettingServiceSpy.getCurrentUsersSettingByType.and.callFake(settings);
 
-    loaderSpy = jasmine.createSpyObj<PrintDetailLoaderService>(
-      'PrintDetailLoaderService',
-      ['load']
-    );
-    loaderSpy.load.and.callFake(load);
+    loaderSpy = {
+      load: vi.fn().mockName('PrintDetailLoaderService.load'),
+    } as unknown as MockedObject<PrintDetailLoaderService>;
+    loaderSpy.load.mockImplementation(load);
 
-    pushPromptSpy = jasmine.createSpyObj<PushPermissionPromptService>(
-      'PushPermissionPromptService',
-      ['promptInContext']
-    );
+    pushPromptSpy = {
+      promptInContext: vi
+        .fn()
+        .mockName('PushPermissionPromptService.promptInContext'),
+    } as unknown as MockedObject<PushPermissionPromptService>;
     // Only a default: a test that set its own outcome before calling setup keeps it.
     nextPromptResult ??= { permission: 'default', outcome: 'shown' };
-    // callFake over resolveTo: setup() recreates this spy, so a test that configured a
+    // mockImplementation over mockResolvedValue: setup() recreates this mock, so a test that configured a
     // result beforehand would have it silently discarded. Reading a mutable value keeps the
     // test's choice in force.
-    pushPromptSpy.promptInContext.and.callFake(() =>
+    pushPromptSpy.promptInContext.mockImplementation(() =>
       Promise.resolve(nextPromptResult)
     );
 
@@ -210,10 +217,10 @@ describe('ViewPrintDetailComponent', () => {
         // and injects ToastrService, which needs its own ToastConfig token.
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj<ToastrService>('ToastrService', [
-            'success',
-            'error',
-          ]),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
         { provide: MetaTagService, useValue: metaService },
         { provide: SeoService, useValue: seoServiceSpy },
@@ -232,7 +239,7 @@ describe('ViewPrintDetailComponent', () => {
     }).compileComponents();
 
     if (arrivedInApp) {
-      spyOn(TestBed.inject(Router), 'getCurrentNavigation').and.returnValue({
+      vi.spyOn(TestBed.inject(Router), 'getCurrentNavigation').mockReturnValue({
         previousNavigation: { id: 1 },
       } as any);
     }
@@ -461,7 +468,7 @@ describe('ViewPrintDetailComponent', () => {
   });
 
   it('does not throw when the print is null', async () => {
-    await expectAsync(setup({ viewerId: null, print: null })).toBeResolved();
+    await expect(setup({ viewerId: null, print: null })).resolves.not.toThrow();
   });
 
   it('makes the page container programmatically focusable', async () => {
@@ -481,9 +488,9 @@ describe('ViewPrintDetailComponent', () => {
   it('navigates to an in-app fallback when the visitor deep-linked', async () => {
     await setup({ viewerId: null });
     const router = TestBed.inject(Router);
-    const navigate = spyOn(router, 'navigate');
+    const navigate = vi.spyOn(router, 'navigate').mockReturnValue(undefined);
     const location = TestBed.inject(Location);
-    const back = spyOn(location, 'back');
+    const back = vi.spyOn(location, 'back').mockReturnValue(undefined);
 
     // getCurrentNavigation() is null in this harness, matching a deep link.
     component.handleClose();
@@ -494,15 +501,21 @@ describe('ViewPrintDetailComponent', () => {
 
   it('sends the owner to the print list when they deep-linked', async () => {
     await setup({ viewerId: OWNER_ID });
-    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(undefined);
     component.handleClose();
     expect(navigate).toHaveBeenCalledWith(['/prints']);
   });
 
   it('goes back when the visitor arrived via in-app navigation', async () => {
     await setup({ viewerId: null, arrivedInApp: true });
-    const back = spyOn(TestBed.inject(Location), 'back');
-    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+    const back = vi
+      .spyOn(TestBed.inject(Location), 'back')
+      .mockReturnValue(undefined);
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(undefined);
 
     component.handleClose();
 
@@ -583,13 +596,13 @@ describe('ViewPrintDetailComponent', () => {
       },
     });
 
-    const imageUrl = metaService.setSocialMediaTags.calls.mostRecent().args[3];
+    const imageUrl = vi.mocked(metaService.setSocialMediaTags).mock.lastCall[3];
     expect(imageUrl).toContain('/image/2');
   });
 
   it('describes the client-side fallback as an article', async () => {
     await setup({ viewerId: null });
-    const options = metaService.setSocialMediaTags.calls.mostRecent().args[4];
+    const options = vi.mocked(metaService.setSocialMediaTags).mock.lastCall[4];
     expect(options?.type).toBe('article');
   });
 
@@ -628,7 +641,7 @@ describe('ViewPrintDetailComponent', () => {
       await setup({ viewerId: null, seo: () => seo$ });
       expect(metaService.setSocialMediaTags).toHaveBeenCalled();
 
-      metaService.setSocialMediaTags.calls.reset();
+      metaService.setSocialMediaTags.mockClear();
       seo$.next({ kind: 'ok', seo: seoFor(1) });
       fixture.detectChanges();
       await fixture.whenStable();
@@ -695,7 +708,7 @@ describe('ViewPrintDetailComponent', () => {
         viewerId: null,
         seo: (id) => of<SeoLookup>({ kind: 'ok', seo: seoFor(id) }),
       });
-      metaService.restoreShellRobots.calls.reset();
+      metaService.restoreShellRobots.mockClear();
       fixture.destroy();
       expect(metaService.restoreShellRobots).toHaveBeenCalled();
     });
@@ -706,7 +719,7 @@ describe('ViewPrintDetailComponent', () => {
   it('renders a comment that arrives after the initial render', async () => {
     const posted = new Subject<any>();
     await setup({ viewerId: OWNER_ID });
-    printServiceSpy.addPrintComment.and.returnValue(posted.asObservable());
+    printServiceSpy.addPrintComment.mockReturnValue(posted.asObservable());
 
     component.addComment('Nice print');
     posted.next({

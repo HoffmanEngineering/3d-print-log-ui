@@ -67,8 +67,8 @@ describe('ScatterChartComponent', () => {
 
     expect(component.marks().length).toBe(1);
     component.marks().forEach((mark) => {
-      expect(Number.isFinite(mark.cx)).toBeTrue();
-      expect(Number.isFinite(mark.cy)).toBeTrue();
+      expect(Number.isFinite(mark.cx)).toBe(true);
+      expect(Number.isFinite(mark.cy)).toBe(true);
     });
   });
 
@@ -78,7 +78,10 @@ describe('ScatterChartComponent', () => {
     ]);
     fixture.detectChanges();
 
-    let emitted: { x: number; y: number } | null = null;
+    let emitted: {
+      x: number;
+      y: number;
+    } | null = null;
     component.pointSelect.subscribe((event) => (emitted = event));
 
     component.onSelect(component.marks()[0]);

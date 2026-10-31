@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -24,23 +25,25 @@ const UNVERIFIED: OnboardingStatus = {
 describe('FirstPrintStepComponent', () => {
   let fixture: ComponentFixture<FirstPrintStepComponent>;
   let component: FirstPrintStepComponent;
-  let onboarding: jasmine.SpyObj<OnboardingService>;
-  let api: jasmine.SpyObj<OnboardingApiService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let onboarding: MockedObject<OnboardingService>;
+  let api: MockedObject<OnboardingApiService>;
+  let logging: MockedObject<LoggingService>;
   let choices: PathChoice[];
 
   function configure(cordova = false, status = UNVERIFIED) {
-    onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
-      'status',
-    ]);
-    onboarding.status.and.resolveTo(status);
-    api = jasmine.createSpyObj<OnboardingApiService>('OnboardingApiService', [
-      'resendVerificationEmail',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    onboarding = {
+      status: vi.fn().mockName('OnboardingService.status'),
+    } as unknown as MockedObject<OnboardingService>;
+    onboarding.status.mockResolvedValue(status);
+    api = {
+      resendVerificationEmail: vi
+        .fn()
+        .mockName('OnboardingApiService.resendVerificationEmail'),
+    } as unknown as MockedObject<OnboardingApiService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     TestBed.configureTestingModule({
       imports: [FirstPrintStepComponent, NoopAnimationsModule],
       providers: [
@@ -130,7 +133,7 @@ describe('FirstPrintStepComponent', () => {
     for (const key of ['orcaslicer', 'snapmaker-orca', 'anycubic']) {
       component.selectSlicer(key);
       await settle();
-      expect(installText()).withContext(key).toContain('setup wizard');
+      expect(installText(), key).toContain('setup wizard');
     }
   });
 
@@ -149,10 +152,8 @@ describe('FirstPrintStepComponent', () => {
       component.selectSlicer(key);
       await settle();
       const text = installText();
-      expect(text)
-        .withContext(key)
-        .not.toMatch(/wizard/i);
-      expect(text).withContext(key).toContain('Post-processing scripts');
+      expect(text, key).not.toMatch(/wizard/i);
+      expect(text, key).toContain('Post-processing scripts');
     }
   });
 
@@ -190,9 +191,9 @@ describe('FirstPrintStepComponent', () => {
     ]) {
       component.selectSlicer(key);
       await settle();
-      expect(el('slicer-doc-link')!.getAttribute('href'))
-        .withContext(key)
-        .toBe('/docs/slic3r-uploader');
+      expect(el('slicer-doc-link')!.getAttribute('href'), key).toBe(
+        '/docs/slic3r-uploader'
+      );
     }
   });
 
@@ -261,7 +262,7 @@ describe('FirstPrintStepComponent', () => {
     for (const [result, copy] of copies) {
       it(`shows "${copy}" for ${result}`, async () => {
         configure();
-        api.resendVerificationEmail.and.returnValue(of(result));
+        api.resendVerificationEmail.mockReturnValue(of(result));
         await render();
 
         el('resend')!.click();
@@ -284,7 +285,7 @@ describe('FirstPrintStepComponent', () => {
       expect(region.getAttribute('role')).toBe('status');
       expect(region.textContent!.trim()).toBe('');
 
-      api.resendVerificationEmail.and.returnValue(of('sent'));
+      api.resendVerificationEmail.mockReturnValue(of('sent'));
       el('resend')!.click();
       await settle();
 
@@ -294,7 +295,7 @@ describe('FirstPrintStepComponent', () => {
 
     it('hides the line when the address is already verified', async () => {
       configure();
-      api.resendVerificationEmail.and.returnValue(of('already-verified'));
+      api.resendVerificationEmail.mockReturnValue(of('already-verified'));
       await render();
 
       el('resend')!.click();
@@ -306,7 +307,7 @@ describe('FirstPrintStepComponent', () => {
     it('makes one call for a double click and disables Resend while in flight', async () => {
       configure();
       const response = new Subject<ResendResult>();
-      api.resendVerificationEmail.and.returnValue(response);
+      api.resendVerificationEmail.mockReturnValue(response);
       await render();
 
       el('resend')!.click();
@@ -314,12 +315,12 @@ describe('FirstPrintStepComponent', () => {
       fixture.detectChanges();
 
       expect(api.resendVerificationEmail).toHaveBeenCalledTimes(1);
-      expect((el('resend') as HTMLButtonElement).disabled).toBeTrue();
+      expect((el('resend') as HTMLButtonElement).disabled).toBe(true);
 
       response.next('sent');
       response.complete();
       await settle();
-      expect((el('resend') as HTMLButtonElement).disabled).toBeFalse();
+      expect((el('resend') as HTMLButtonElement).disabled).toBe(false);
     });
   });
 });

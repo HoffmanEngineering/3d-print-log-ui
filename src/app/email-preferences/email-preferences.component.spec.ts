@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -27,36 +28,39 @@ const PREFS: EmailPreferencesDto = {
 
 describe('EmailPreferencesComponent', () => {
   let fixture: ComponentFixture<EmailPreferencesComponent>;
-  let api: jasmine.SpyObj<EmailPreferencesApiService>;
+  let api: MockedObject<EmailPreferencesApiService>;
   let calls: string[];
-  let replaceState: jasmine.Spy;
+  let replaceState: Mock;
   let originalUrl: string;
 
   beforeEach(() => {
     originalUrl = location.pathname + location.search;
     calls = [];
-    api = jasmine.createSpyObj<EmailPreferencesApiService>(
-      'EmailPreferencesApiService',
-      ['confirmUnsubscribe', 'read', 'update']
-    );
-    api.confirmUnsubscribe.and.callFake(() => {
+    api = {
+      confirmUnsubscribe: vi
+        .fn()
+        .mockName('EmailPreferencesApiService.confirmUnsubscribe'),
+      read: vi.fn().mockName('EmailPreferencesApiService.read'),
+      update: vi.fn().mockName('EmailPreferencesApiService.update'),
+    } as unknown as MockedObject<EmailPreferencesApiService>;
+    api.confirmUnsubscribe.mockImplementation(() => {
       calls.push('confirm');
       return of({ category: 24 });
     });
-    api.read.and.callFake(() => {
+    api.read.mockImplementation(() => {
       calls.push('read');
       return of(PREFS);
     });
-    api.update.and.callFake((_t, p) => of({ ...PREFS, ...p }));
-    replaceState = spyOn(history, 'replaceState').and.callFake(
-      (...args: Parameters<History['replaceState']>) => {
+    api.update.mockImplementation((_t, p) => of({ ...PREFS, ...p }));
+    replaceState = vi
+      .spyOn(history, 'replaceState')
+      .mockImplementation((...args: Parameters<History['replaceState']>) => {
         calls.push(`replaceState:${String(args[2])}`);
-      }
-    );
+      });
   });
 
   afterEach(() => {
-    replaceState.and.callThrough();
+    replaceState.mockReset(); // back to the real replaceState
     history.replaceState(null, '', originalUrl);
   });
 
@@ -64,10 +68,10 @@ describe('EmailPreferencesComponent', () => {
     hash: string,
     platform: 'browser' | 'server' = 'browser'
   ): Promise<HTMLElement> {
-    replaceState.and.callThrough();
+    replaceState.mockReset(); // back to the real replaceState
     history.replaceState(null, '', originalUrl + hash);
-    replaceState.calls.reset();
-    replaceState.and.callFake(
+    replaceState.mockClear();
+    replaceState.mockImplementation(
       (...args: Parameters<History['replaceState']>) => {
         calls.push(`replaceState:${String(args[2])}`);
       }
@@ -81,10 +85,10 @@ describe('EmailPreferencesComponent', () => {
         { provide: EmailPreferencesApiService, useValue: api },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
         {
           // The page is for visitors arriving from an email: it must never reach for sign-in.
@@ -114,7 +118,7 @@ describe('EmailPreferencesComponent', () => {
     expect(fixture.componentInstance.phase()).toBe('confirm-unsubscribe');
     expect(text(el)).toContain('Unsubscribe from monthly recaps?');
     expect(replaceState).toHaveBeenCalled();
-    expect(String(replaceState.calls.mostRecent().args[2])).not.toContain('#');
+    expect(String(vi.mocked(replaceState).mock.lastCall[2])).not.toContain('#');
     expect(api.confirmUnsubscribe).not.toHaveBeenCalled();
   });
 
@@ -180,7 +184,7 @@ describe('EmailPreferencesComponent', () => {
   });
 
   it('shows invalid for a rejected token', async () => {
-    api.read.and.returnValue(
+    api.read.mockReturnValue(
       throwError(
         () => new HttpErrorResponse({ status: 400 })
       ) as Observable<EmailPreferencesDto>
@@ -191,7 +195,7 @@ describe('EmailPreferencesComponent', () => {
   });
 
   it('shows an error for a network failure', async () => {
-    api.read.and.returnValue(
+    api.read.mockReturnValue(
       throwError(
         () => new HttpErrorResponse({ status: 0 })
       ) as Observable<EmailPreferencesDto>

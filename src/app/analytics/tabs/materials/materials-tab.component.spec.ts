@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -111,23 +107,23 @@ const response = (
 describe('MaterialsTabComponent', () => {
   let fixture: ComponentFixture<MaterialsTabComponent>;
   let component: MaterialsTabComponent;
-  let analytics: jasmine.SpyObj<AnalyticsService>;
+  let analytics: MockedObject<AnalyticsService>;
 
   // createTabData debounces by 250ms, so the response only lands after the timer is
   // flushed — a plain whenStable() would assert against a still-loading tab.
-  const setup = () => {
+  const setup = async () => {
     fixture = TestBed.createComponent(MaterialsTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     fixture.detectChanges();
   };
 
   beforeEach(async () => {
-    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
-      'getMaterials',
-    ]);
-    analytics.getMaterials.and.returnValue(of(response()));
+    analytics = {
+      getMaterials: vi.fn().mockName('AnalyticsService.getMaterials'),
+    } as unknown as MockedObject<AnalyticsService>;
+    analytics.getMaterials.mockReturnValue(of(response()));
 
     await TestBed.configureTestingModule({
       imports: [MaterialsTabComponent, NoopAnimationsModule],
@@ -139,21 +135,24 @@ describe('MaterialsTabComponent', () => {
     }).compileComponents();
   });
 
-  it('gives by-type bars a swatch fill referencing the chart-local defs', fakeAsync(() => {
-    setup();
+  it('gives by-type bars a swatch fill referencing the chart-local defs', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.byTypeData()[0].fill).toBeTruthy();
-  }));
+  });
 
-  it('does NOT swatch-fill the stacked consumption chart', fakeAsync(() => {
-    setup();
+  it('does NOT swatch-fill the stacked consumption chart', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     // Stacked series use the categorical palette; the swatch lives in the legend (spec §10).
     expect(component.consumptionData()[0].fill).toBeUndefined();
-  }));
+  });
 
-  it('sorts consumption chronologically, not by response order', fakeAsync(() => {
-    setup();
+  it('sorts consumption chronologically, not by response order', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.consumptionData().map((d) => d.fullLabel)).toEqual(
       component
@@ -162,10 +161,11 @@ describe('MaterialsTabComponent', () => {
         .slice()
         .sort()
     );
-  }));
+  });
 
-  it('lists running-low spools first and omits ones with no runway', fakeAsync(() => {
-    analytics.getMaterials.and.returnValue(
+  it('lists running-low spools first and omits ones with no runway', async () => {
+    vi.useFakeTimers();
+    analytics.getMaterials.mockReturnValue(
       of(
         response({
           runway: [
@@ -189,30 +189,34 @@ describe('MaterialsTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(component.runningLow().map((r) => r.filamentId)).toEqual(['b']);
-  }));
+  });
 
-  it("links a spool row to that spool's prints, without a userId", fakeAsync(() => {
-    setup();
+  it("links a spool row to that spool's prints, without a userId", async () => {
+    vi.useFakeTimers();
+    await setup();
     const router = TestBed.inject(Router);
-    const navigate = spyOn(router, 'navigate');
+    const navigate = vi.spyOn(router, 'navigate').mockReturnValue(undefined);
 
     component.onSpoolSelect('f1');
 
-    const [commands, extras] = navigate.calls.mostRecent().args as [
+    const [commands, extras] = vi.mocked(navigate).mock.lastCall as [
       unknown[],
-      { queryParams: Record<string, unknown> },
+      {
+        queryParams: Record<string, unknown>;
+      },
     ];
     expect(commands).toEqual(['/prints']);
     expect(extras.queryParams['filterByFilamentId']).toBe('f1');
     // A userId would narrow the user's own list to their PUBLIC prints.
     expect(extras.queryParams['userId']).toBeUndefined();
-  }));
+  });
 
-  it('shows a negative remaining as-is rather than clamping it to zero', fakeAsync(() => {
-    analytics.getMaterials.and.returnValue(
+  it('shows a negative remaining as-is rather than clamping it to zero', async () => {
+    vi.useFakeTimers();
+    analytics.getMaterials.mockReturnValue(
       of(
         response({
           topSpools: [
@@ -231,10 +235,10 @@ describe('MaterialsTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(fixture.nativeElement.textContent).toContain('-100');
-  }));
+  });
 
   describe('filament adjustments (api#231)', () => {
     const group = (
@@ -288,9 +292,10 @@ describe('MaterialsTabComponent', () => {
         Object.fromEntries(csv.columns.map((column, i) => [column, row[i]]))
       );
 
-    it('adds Adjustments as a signed series beside the print stack', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('adds Adjustments as a signed series beside the print stack', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const adjustments = component
         .consumptionSeries()
@@ -304,24 +309,26 @@ describe('MaterialsTabComponent', () => {
           .filter((series) => !series.signed)
           .map((series) => series.key)
       ).toEqual(['PLA', 'PETG', 'ABS']);
-    }));
+    });
 
-    it('keeps a negative adjustment negative in the series, in grams', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('keeps a negative adjustment negative in the series, in grams', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const key = component.consumptionSeries().find((s) => s.signed)!.key;
       const [first, second] = component.consumptionData();
       expect(first.values[key]).toBe(-15);
       expect(first.values['PLA']).toBe(40);
       expect(second.values[key] ?? 0).toBe(0);
-    }));
+    });
 
-    it('leaves the series out when no period has an adjustment', fakeAsync(() => {
-      setup();
+    it('leaves the series out when no period has an adjustment', async () => {
+      vi.useFakeTimers();
+      await setup();
 
-      expect(component.consumptionSeries().some((s) => s.signed)).toBeFalse();
-    }));
+      expect(component.consumptionSeries().some((s) => s.signed)).toBe(false);
+    });
 
     // An API older than #231 sends none of the adjustment fields. Until it does, the tab and its
     // CSVs must be exactly what they were: no 0 g columns, no "net" wording.
@@ -345,13 +352,14 @@ describe('MaterialsTabComponent', () => {
       return legacy as unknown as MaterialsResponse;
     };
 
-    it('renders an older API response exactly as before adjustments existed', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(legacyResponse()));
-      setup();
+    it('renders an older API response exactly as before adjustments existed', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(legacyResponse()));
+      await setup();
       const el = fixture.nativeElement as HTMLElement;
 
-      expect(component.supportsAdjustments()).toBeFalse();
-      expect(component.consumptionSeries().some((s) => s.signed)).toBeFalse();
+      expect(component.supportsAdjustments()).toBe(false);
+      expect(component.consumptionSeries().some((s) => s.signed)).toBe(false);
       expect(component.byTypeData()[0].values['value']).toBe(60);
       expect(component.byTypeData()[0].fullLabel).toBe('PLA — 60 g');
       expect(
@@ -372,11 +380,12 @@ describe('MaterialsTabComponent', () => {
       expect(summaries).toContain('Most-used spools with remaining stock');
       expect(el.textContent).not.toMatch(/adjustment|net consumed/i);
       expect(el.textContent).not.toContain('NaN');
-    }));
+    });
 
-    it('exports an older API response with the original CSV columns', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(legacyResponse()));
-      setup();
+    it('exports an older API response with the original CSV columns', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(legacyResponse()));
+      await setup();
 
       expect(component.byTypeCsv().columns).toEqual([
         'Group',
@@ -403,17 +412,18 @@ describe('MaterialsTabComponent', () => {
       expect(component.topSpoolsCsv().rows).toEqual([
         ['Acme PLA Red', 60, 940, 6, null],
       ]);
-    }));
+    });
 
-    it('shows "<1 g" for an adjustment under a gram, keeping its sign', fakeAsync(() => {
-      setup();
+    it('shows "<1 g" for an adjustment under a gram, keeping its sign', async () => {
+      vi.useFakeTimers();
+      await setup();
 
       expect(component.signedGrams(400)).toBe('+<1 g');
       expect(component.signedGrams(-400)).toBe('-<1 g');
       expect(component.signedGrams(-999)).toBe('-<1 g');
       expect(component.signedGrams(0)).toBe('0 g');
       expect(component.signedGrams(1400)).toBe('+1 g');
-    }));
+    });
 
     describe('when no group has net use to chart', () => {
       const netNegative = () =>
@@ -424,9 +434,10 @@ describe('MaterialsTabComponent', () => {
           adjustmentCount: 1,
         });
 
-      it('says why in place of a blank chart', fakeAsync(() => {
-        analytics.getMaterials.and.returnValue(of(netNegative()));
-        setup();
+      it('says why in place of a blank chart', async () => {
+        vi.useFakeTimers();
+        analytics.getMaterials.mockReturnValue(of(netNegative()));
+        await setup();
         const el = fixture.nativeElement as HTMLElement;
 
         const messages = Array.from(
@@ -437,10 +448,11 @@ describe('MaterialsTabComponent', () => {
         expect(messages[0]).toMatch(/CSV/);
         // The consumption chart still draws.
         expect(el.querySelectorAll('app-bar-chart').length).toBe(1);
-      }));
+      });
 
-      it('keeps the tab ready for a range that holds only adjustments', fakeAsync(() => {
-        analytics.getMaterials.and.returnValue(
+      it('keeps the tab ready for a range that holds only adjustments', async () => {
+        vi.useFakeTimers();
+        analytics.getMaterials.mockReturnValue(
           of(
             response({
               byType: [],
@@ -460,7 +472,7 @@ describe('MaterialsTabComponent', () => {
             })
           )
         );
-        setup();
+        await setup();
         const el = fixture.nativeElement as HTMLElement;
 
         expect(component.state()).toBe('ready');
@@ -474,10 +486,11 @@ describe('MaterialsTabComponent', () => {
         expect(
           el.querySelector('[data-testid="net-empty"]')!.textContent
         ).not.toMatch(/CSV/);
-      }));
+      });
 
-      it('keeps the tab ready when only top spools have rows', fakeAsync(() => {
-        analytics.getMaterials.and.returnValue(
+      it('keeps the tab ready when only top spools have rows', async () => {
+        vi.useFakeTimers();
+        analytics.getMaterials.mockReturnValue(
           of(
             response({
               byType: [],
@@ -488,25 +501,27 @@ describe('MaterialsTabComponent', () => {
             })
           )
         );
-        setup();
+        await setup();
 
         expect(component.state()).toBe('ready');
-      }));
+      });
 
-      it('still reports an empty tab from an older API with no groups', fakeAsync(() => {
+      it('still reports an empty tab from an older API with no groups', async () => {
+        vi.useFakeTimers();
         const legacy = legacyResponse();
-        analytics.getMaterials.and.returnValue(
+        analytics.getMaterials.mockReturnValue(
           of({ ...legacy, byType: [], byBrand: [], byColor: [] })
         );
-        setup();
+        await setup();
 
         expect(component.state()).toBe('empty');
-      }));
+      });
     });
 
-    it('charts each group at its net, prints plus adjustments, never below zero', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('charts each group at its net, prints plus adjustments, never below zero', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const bars = component.byTypeData();
       // PLA: 60 g printed, 80 g added back. Its net is below zero, so it gets no bar at all
@@ -515,22 +530,24 @@ describe('MaterialsTabComponent', () => {
       // PETG was only ever weighed in: its bar is the adjustment, not a 0 g print total.
       expect(bars[0].values['value']).toBe(25);
       expect(bars[1].values['value']).toBe(25);
-      expect(bars.every((bar) => bar.values['value'] > 0)).toBeTrue();
-    }));
+      expect(bars.every((bar) => bar.values['value'] > 0)).toBe(true);
+    });
 
-    it('spells out printed and adjusted grams in the group tooltip', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('spells out printed and adjusted grams in the group tooltip', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const abs = component.byTypeData().find((bar) => bar.label === 'ABS')!;
       expect(abs.fullLabel).toContain('25 g net');
       expect(abs.fullLabel).toContain('30 g printed');
       expect(abs.fullLabel).toContain('-5 g adjustments');
-    }));
+    });
 
-    it('lists every group in the table, net-zero ones included, with a signed Adjustments cell', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('lists every group in the table, net-zero ones included, with a signed Adjustments cell', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const rows = Array.from(
         (fixture.nativeElement as HTMLElement).querySelectorAll(
@@ -541,11 +558,12 @@ describe('MaterialsTabComponent', () => {
       expect(rows[0]).toContain('PLA');
       expect(rows[0]).toContain('-80 g');
       expect(rows[1]).toContain('+25 g');
-    }));
+    });
 
-    it('exports printed, adjustment and net grams per group', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('exports printed, adjustment and net grams per group', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const csv = component.byTypeCsv();
       expect(csv.columns).toEqual([
@@ -578,11 +596,12 @@ describe('MaterialsTabComponent', () => {
           'Net (g)': 25,
         },
       ]);
-    }));
+    });
 
-    it('exports each period adjustment as its own row', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('exports each period adjustment as its own row', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const csv = component.consumptionCsv();
       expect(csv.columns).toEqual([
@@ -611,11 +630,12 @@ describe('MaterialsTabComponent', () => {
           Source: 'Prints',
         },
       ]);
-    }));
+    });
 
-    it('exports a spool adjustment and labels consumption as net', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('exports a spool adjustment and labels consumption as net', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const csv = component.topSpoolsCsv();
       expect(csv.columns).toEqual([
@@ -627,11 +647,12 @@ describe('MaterialsTabComponent', () => {
         'Net cost',
       ]);
       expect(csv.rows[0]).toEqual(['Acme PLA Red', 60, 12.5, 927.5, 7.25, 1.5]);
-    }));
+    });
 
-    it('shows a spool Adjustments column and net headings in the table', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('shows a spool Adjustments column and net headings in the table', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const el = fixture.nativeElement as HTMLElement;
       const headings = Array.from(
@@ -643,28 +664,30 @@ describe('MaterialsTabComponent', () => {
       expect(
         el.querySelector('.materials-tab__spools tbody tr')!.textContent
       ).toContain('+13 g');
-    }));
+    });
 
-    it('explains adjustments beside the consumption chart when there are any', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(of(adjusted()));
-      setup();
+    it('explains adjustments beside the consumption chart when there are any', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(of(adjusted()));
+      await setup();
 
       const note = (fixture.nativeElement as HTMLElement).querySelector(
         '[data-testid="adjustments-note"]'
       );
       expect(note?.textContent).toMatch(/weigh-in/i);
       expect(note?.textContent).toMatch(/negative/i);
-    }));
+    });
 
-    it('has no adjustments note when nothing was adjusted', fakeAsync(() => {
-      setup();
+    it('has no adjustments note when nothing was adjusted', async () => {
+      vi.useFakeTimers();
+      await setup();
 
       expect(
         (fixture.nativeElement as HTMLElement).querySelector(
           '[data-testid="adjustments-note"]'
         )
       ).toBeNull();
-    }));
+    });
   });
 
   describe('row cap (api#231)', () => {
@@ -688,9 +711,10 @@ describe('MaterialsTabComponent', () => {
         )
       ).map((el) => el.textContent!.trim());
 
-    it('explains an emptied tab from rowCapExceeded, even with no prints to exclude', fakeAsync(() => {
+    it('explains an emptied tab from rowCapExceeded, even with no prints to exclude', async () => {
+      vi.useFakeTimers();
       // Adjustments alone can trip the cap; print coverage then has nothing to say.
-      analytics.getMaterials.and.returnValue(
+      analytics.getMaterials.mockReturnValue(
         of(
           emptied({
             rowCapExceeded: true,
@@ -699,17 +723,18 @@ describe('MaterialsTabComponent', () => {
           })
         )
       );
-      setup();
+      await setup();
 
-      expect(component.rowCapExceeded()).toBeTrue();
+      expect(component.rowCapExceeded()).toBe(true);
       expect(emptyMessages().length).toBeGreaterThan(0);
       expect(
         emptyMessages().every((message) => /too many/i.test(message))
-      ).toBeTrue();
-    }));
+      ).toBe(true);
+    });
 
-    it('falls back to the coverage exclusion when an older API omits the field', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(
+    it('falls back to the coverage exclusion when an older API omits the field', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(
         of(
           emptied({
             coverage: {
@@ -719,31 +744,33 @@ describe('MaterialsTabComponent', () => {
           })
         )
       );
-      setup();
+      await setup();
 
-      expect(component.rowCapExceeded()).toBeTrue();
+      expect(component.rowCapExceeded()).toBe(true);
       expect(emptyMessages()[0]).toMatch(/too many/i);
       // An older API knows nothing of adjustments, so the notice does not mention them.
       expect(emptyMessages()[0]).not.toMatch(/adjustment/i);
-    }));
+    });
 
-    it('trusts rowCapExceeded: false over nothing else to go on', fakeAsync(() => {
-      analytics.getMaterials.and.returnValue(
+    it('trusts rowCapExceeded: false over nothing else to go on', async () => {
+      vi.useFakeTimers();
+      analytics.getMaterials.mockReturnValue(
         of(emptied({ rowCapExceeded: false }))
       );
-      setup();
+      await setup();
 
-      expect(component.rowCapExceeded()).toBeFalse();
+      expect(component.rowCapExceeded()).toBe(false);
       expect(emptyMessages()[0]).toBe(
         'No spool-tracked filament in this range yet.'
       );
-    }));
+    });
   });
 
-  it('fails the whole tab on an error', fakeAsync(() => {
-    analytics.getMaterials.and.returnValue(throwError(() => new Error('boom')));
-    setup();
+  it('fails the whole tab on an error', async () => {
+    vi.useFakeTimers();
+    analytics.getMaterials.mockReturnValue(throwError(() => new Error('boom')));
+    await setup();
 
     expect(component.state()).toBe('error');
-  }));
+  });
 });

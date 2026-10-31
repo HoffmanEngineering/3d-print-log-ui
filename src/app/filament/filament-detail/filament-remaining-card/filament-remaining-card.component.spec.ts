@@ -23,9 +23,9 @@ describe('FilamentRemainingCardComponent', () => {
 
   it('shows the remaining grams', () => {
     const el = render({
-      remainingMg: 412_000,
-      projectedMg: 412_000,
-      nominalMg: 1_000_000,
+      remainingMg: 412000,
+      projectedMg: 412000,
+      nominalMg: 1000000,
     });
     expect(el.textContent).toContain('412');
   });
@@ -42,9 +42,9 @@ describe('FilamentRemainingCardComponent', () => {
 
   it('warns when more was used than the spool held', () => {
     const el = render({
-      remainingMg: -38_000,
-      projectedMg: -38_000,
-      nominalMg: 1_000_000,
+      remainingMg: -38000,
+      projectedMg: -38000,
+      nominalMg: 1000000,
     });
     expect(el.querySelector('.over-used')).toBeTruthy();
     expect(el.textContent).toContain('38');
@@ -52,9 +52,9 @@ describe('FilamentRemainingCardComponent', () => {
 
   it('shows the projected value when it differs from the server value', () => {
     const el = render({
-      remainingMg: 412_000,
-      projectedMg: 380_000,
-      nominalMg: 1_000_000,
+      remainingMg: 412000,
+      projectedMg: 380000,
+      nominalMg: 1000000,
     });
     expect(el.textContent).toContain('after saving');
     expect(el.textContent).toContain('380');
@@ -62,10 +62,10 @@ describe('FilamentRemainingCardComponent', () => {
 
   it('hides the projection arrow when it is suppressed', () => {
     const el = render({
-      remainingMg: 412_000,
-      projectedMg: 412_000,
+      remainingMg: 412000,
+      projectedMg: 412000,
       isSuppressed: true,
-      nominalMg: 1_000_000,
+      nominalMg: 1000000,
     });
     // The suppressed note replaces the "X g -> Y g after saving" arrow entirely.
     expect(el.querySelector('.projection.muted')).toBeTruthy();
@@ -75,10 +75,10 @@ describe('FilamentRemainingCardComponent', () => {
 
   it('shows the server value, not a stale projection, while suppressed', () => {
     const el = render({
-      remainingMg: 412_000,
-      projectedMg: 380_000,
+      remainingMg: 412000,
+      projectedMg: 380000,
       isSuppressed: true,
-      nominalMg: 1_000_000,
+      nominalMg: 1000000,
     });
     expect(el.textContent).toContain('412');
     expect(el.textContent).not.toContain('380');
@@ -86,12 +86,12 @@ describe('FilamentRemainingCardComponent', () => {
 
   it('renders length, volume and usage totals', () => {
     const el = render({
-      remainingMg: 412_000,
-      projectedMg: 412_000,
-      nominalMg: 1_000_000,
+      remainingMg: 412000,
+      projectedMg: 412000,
+      nominalMg: 1000000,
       lengthRemainingM: 138.2,
       volumeRemainingMl: 345.1,
-      totalUsedMg: 588_000,
+      totalUsedMg: 588000,
       printCount: 23,
     });
     expect(el.textContent).toContain('138');
@@ -113,6 +113,6 @@ describe('FilamentRemainingCardComponent', () => {
 
     el.querySelector('button')!.click();
 
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 });

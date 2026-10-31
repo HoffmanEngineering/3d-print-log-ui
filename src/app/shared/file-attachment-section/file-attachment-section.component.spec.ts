@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FileAttachmentSectionComponent } from './file-attachment-section.component';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -19,33 +15,37 @@ describe('FileAttachmentSectionComponent', () => {
   let component: FileAttachmentSectionComponent;
   let fixture: ComponentFixture<FileAttachmentSectionComponent>;
 
-  const mockSubscriptionService = jasmine.createSpyObj(
-    'SubscriptionService',
-    ['incrementUsedStorage', 'decrementUsedStorage'],
-    {
-      isPro: signal(true),
-      maxFilesPerPrint: signal(5),
-      maxFileStorageBytes: signal(53687091200),
-      usedFileStorageBytes: signal(5368709120),
-    }
-  );
+  const mockSubscriptionService = {
+    incrementUsedStorage: vi
+      .fn()
+      .mockName('SubscriptionService.incrementUsedStorage'),
+    decrementUsedStorage: vi
+      .fn()
+      .mockName('SubscriptionService.decrementUsedStorage'),
+    isPro: signal(true),
+    maxFilesPerPrint: signal(5),
+    maxFileStorageBytes: signal(53687091200),
+    usedFileStorageBytes: signal(5368709120),
+  };
 
-  const mockPrintFileService = jasmine.createSpyObj('PrintFileService', [
-    'getFiles',
-    'getUploadUrl',
-    'uploadToSasUrl',
-    'confirmUpload',
-    'deleteFile',
-    'getDownloadUrl',
-    'validateFile',
-  ]);
-  mockPrintFileService.getFiles.and.returnValue(of([]));
-  mockPrintFileService.validateFile.and.returnValue({ valid: true });
+  const mockPrintFileService = {
+    getFiles: vi.fn().mockName('PrintFileService.getFiles'),
+    getUploadUrl: vi.fn().mockName('PrintFileService.getUploadUrl'),
+    uploadToSasUrl: vi.fn().mockName('PrintFileService.uploadToSasUrl'),
+    confirmUpload: vi.fn().mockName('PrintFileService.confirmUpload'),
+    deleteFile: vi.fn().mockName('PrintFileService.deleteFile'),
+    getDownloadUrl: vi.fn().mockName('PrintFileService.getDownloadUrl'),
+    validateFile: vi.fn().mockName('PrintFileService.validateFile'),
+  };
+  mockPrintFileService.getFiles.mockReturnValue(of([]));
+  mockPrintFileService.validateFile.mockReturnValue({ valid: true });
 
-  const mockToastrService = jasmine.createSpyObj<ToastrService>(
-    'ToastrService',
-    ['success', 'error', 'warning', 'info']
-  );
+  const mockToastrService = {
+    success: vi.fn().mockName('ToastrService.success'),
+    error: vi.fn().mockName('ToastrService.error'),
+    warning: vi.fn().mockName('ToastrService.warning'),
+    info: vi.fn().mockName('ToastrService.info'),
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -60,10 +60,10 @@ describe('FileAttachmentSectionComponent', () => {
         { provide: ToastrService, useValue: mockToastrService },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
       ],
     }).compileComponents();
@@ -95,8 +95,8 @@ describe('FileAttachmentSectionComponent', () => {
   it('should show toastr warning for invalid file', () => {
     const mockToastr = TestBed.inject(
       ToastrService
-    ) as jasmine.SpyObj<ToastrService>;
-    mockPrintFileService.validateFile.and.returnValue({
+    ) as MockedObject<ToastrService>;
+    mockPrintFileService.validateFile.mockReturnValue({
       valid: false,
       error: 'Bad file type',
     });
@@ -109,20 +109,21 @@ describe('FileAttachmentSectionComponent', () => {
     );
   });
 
-  it('should call confirmUpload exactly once when upload completes', fakeAsync(() => {
-    mockPrintFileService.validateFile.and.returnValue({ valid: true });
-    mockPrintFileService.getUploadUrl.and.returnValue(
+  it('should call confirmUpload exactly once when upload completes', async () => {
+    vi.useFakeTimers();
+    mockPrintFileService.validateFile.mockReturnValue({ valid: true });
+    mockPrintFileService.getUploadUrl.mockReturnValue(
       of({ sasUrl: 'https://blob.example.com/sas', blobPath: '1/1/abc.gcode' })
     );
     // Emit a mix of in-progress and completion events — only one 100% event
-    mockPrintFileService.uploadToSasUrl.and.returnValue(
+    mockPrintFileService.uploadToSasUrl.mockReturnValue(
       of(
         { percent: 50, loaded: 512, total: 1024 },
         { percent: 99, loaded: 1023, total: 1024 },
         { percent: 100, loaded: 1024, total: 1024 }
       )
     );
-    mockPrintFileService.confirmUpload.and.returnValue(
+    mockPrintFileService.confirmUpload.mockReturnValue(
       of({
         id: 1,
         originalFileName: 'test.gcode',
@@ -138,16 +139,17 @@ describe('FileAttachmentSectionComponent', () => {
     component.onFilesSelected([
       new File(['x'], 'test.gcode', { type: 'application/octet-stream' }),
     ]);
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockPrintFileService.confirmUpload).toHaveBeenCalledTimes(1);
     expect(mockSubscriptionService.incrementUsedStorage).toHaveBeenCalledWith(
       1
     );
-  }));
+  });
 
-  it('should decrement used storage quota when a file is deleted', fakeAsync(() => {
-    mockPrintFileService.deleteFile.and.returnValue(of(undefined));
+  it('should decrement used storage quota when a file is deleted', async () => {
+    vi.useFakeTimers();
+    mockPrintFileService.deleteFile.mockReturnValue(of(undefined));
 
     const uploadedFile: FileAttachmentItem = {
       id: 99,
@@ -160,16 +162,18 @@ describe('FileAttachmentSectionComponent', () => {
     component.files.set([uploadedFile]);
 
     component.onDeleteFile(uploadedFile);
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockSubscriptionService.decrementUsedStorage).toHaveBeenCalledWith(
       2048
     );
-  }));
+  });
 
   it('should emit allowFileDownloadsChange when toggle changes', () => {
     fixture.detectChanges();
-    const spy = spyOn(component.allowFileDownloadsChange, 'emit');
+    const spy = vi
+      .spyOn(component.allowFileDownloadsChange, 'emit')
+      .mockReturnValue(undefined);
     component.onAllowDownloadsToggle(true);
     expect(spy).toHaveBeenCalledWith(true);
   });
@@ -191,32 +195,30 @@ describe('FileAttachmentSectionComponent', () => {
 describe('FileAttachmentSectionComponent (free user)', () => {
   let fixture: ComponentFixture<FileAttachmentSectionComponent>;
 
-  const mockFreeSubscriptionService = jasmine.createSpyObj(
-    'SubscriptionService',
-    [],
-    {
-      isPro: signal(false),
-      maxFilesPerPrint: signal(0),
-      maxFileStorageBytes: signal(0),
-      usedFileStorageBytes: signal(0),
-    }
-  );
+  const mockFreeSubscriptionService = {
+    isPro: signal(false),
+    maxFilesPerPrint: signal(0),
+    maxFileStorageBytes: signal(0),
+    usedFileStorageBytes: signal(0),
+  };
 
-  const mockPrintFileService = jasmine.createSpyObj('PrintFileService', [
-    'getFiles',
-    'getUploadUrl',
-    'uploadToSasUrl',
-    'confirmUpload',
-    'deleteFile',
-    'getDownloadUrl',
-    'validateFile',
-  ]);
-  mockPrintFileService.getFiles.and.returnValue(of([]));
+  const mockPrintFileService = {
+    getFiles: vi.fn().mockName('PrintFileService.getFiles'),
+    getUploadUrl: vi.fn().mockName('PrintFileService.getUploadUrl'),
+    uploadToSasUrl: vi.fn().mockName('PrintFileService.uploadToSasUrl'),
+    confirmUpload: vi.fn().mockName('PrintFileService.confirmUpload'),
+    deleteFile: vi.fn().mockName('PrintFileService.deleteFile'),
+    getDownloadUrl: vi.fn().mockName('PrintFileService.getDownloadUrl'),
+    validateFile: vi.fn().mockName('PrintFileService.validateFile'),
+  };
+  mockPrintFileService.getFiles.mockReturnValue(of([]));
 
-  const mockToastrService = jasmine.createSpyObj<ToastrService>(
-    'ToastrService',
-    ['success', 'error', 'warning', 'info']
-  );
+  const mockToastrService = {
+    success: vi.fn().mockName('ToastrService.success'),
+    error: vi.fn().mockName('ToastrService.error'),
+    warning: vi.fn().mockName('ToastrService.warning'),
+    info: vi.fn().mockName('ToastrService.info'),
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -231,10 +233,10 @@ describe('FileAttachmentSectionComponent (free user)', () => {
         { provide: ToastrService, useValue: mockToastrService },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
       ],
     }).compileComponents();
@@ -256,31 +258,35 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
 
   const maxFilesPerPrint = signal(2);
 
-  const mockSubscriptionService = jasmine.createSpyObj(
-    'SubscriptionService',
-    ['incrementUsedStorage', 'decrementUsedStorage'],
-    {
-      isPro: signal(true),
-      maxFilesPerPrint,
-      maxFileStorageBytes: signal(53687091200),
-      usedFileStorageBytes: signal(0),
-    }
-  );
+  const mockSubscriptionService = {
+    incrementUsedStorage: vi
+      .fn()
+      .mockName('SubscriptionService.incrementUsedStorage'),
+    decrementUsedStorage: vi
+      .fn()
+      .mockName('SubscriptionService.decrementUsedStorage'),
+    isPro: signal(true),
+    maxFilesPerPrint,
+    maxFileStorageBytes: signal(53687091200),
+    usedFileStorageBytes: signal(0),
+  };
 
-  const mockPrintFileService = jasmine.createSpyObj('PrintFileService', [
-    'getFiles',
-    'getUploadUrl',
-    'uploadToSasUrl',
-    'confirmUpload',
-    'deleteFile',
-    'getDownloadUrl',
-    'validateFile',
-  ]);
+  const mockPrintFileService = {
+    getFiles: vi.fn().mockName('PrintFileService.getFiles'),
+    getUploadUrl: vi.fn().mockName('PrintFileService.getUploadUrl'),
+    uploadToSasUrl: vi.fn().mockName('PrintFileService.uploadToSasUrl'),
+    confirmUpload: vi.fn().mockName('PrintFileService.confirmUpload'),
+    deleteFile: vi.fn().mockName('PrintFileService.deleteFile'),
+    getDownloadUrl: vi.fn().mockName('PrintFileService.getDownloadUrl'),
+    validateFile: vi.fn().mockName('PrintFileService.validateFile'),
+  };
 
-  const mockToastrService = jasmine.createSpyObj<ToastrService>(
-    'ToastrService',
-    ['success', 'error', 'warning', 'info']
-  );
+  const mockToastrService = {
+    success: vi.fn().mockName('ToastrService.success'),
+    error: vi.fn().mockName('ToastrService.error'),
+    warning: vi.fn().mockName('ToastrService.warning'),
+    info: vi.fn().mockName('ToastrService.info'),
+  };
 
   const validFile = (name: string) =>
     new File(['x'], name, { type: 'application/octet-stream' });
@@ -295,14 +301,14 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
 
   beforeEach(async () => {
     maxFilesPerPrint.set(2);
-    mockPrintFileService.getFiles.calls.reset();
-    mockPrintFileService.getUploadUrl.calls.reset();
-    mockToastrService.warning.calls.reset();
-    mockToastrService.error.calls.reset();
-    mockPrintFileService.getFiles.and.returnValue(of([]));
-    mockPrintFileService.validateFile.and.returnValue({ valid: true });
+    mockPrintFileService.getFiles.mockClear();
+    mockPrintFileService.getUploadUrl.mockClear();
+    mockToastrService.warning.mockClear();
+    mockToastrService.error.mockClear();
+    mockPrintFileService.getFiles.mockReturnValue(of([]));
+    mockPrintFileService.validateFile.mockReturnValue({ valid: true });
     // Never completes: uploads stay in 'uploading' state so they hold a slot.
-    mockPrintFileService.getUploadUrl.and.returnValue(new Subject());
+    mockPrintFileService.getUploadUrl.mockReturnValue(new Subject());
 
     await TestBed.configureTestingModule({
       imports: [
@@ -316,10 +322,10 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
         { provide: ToastrService, useValue: mockToastrService },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
       ],
     }).compileComponents();
@@ -364,7 +370,11 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
     const u2 = new Subject();
     const u3 = new Subject();
     const u4 = new Subject();
-    mockPrintFileService.getUploadUrl.and.returnValues(u1, u2, u3, u4);
+    mockPrintFileService.getUploadUrl
+      .mockReturnValueOnce(u1)
+      .mockReturnValueOnce(u2)
+      .mockReturnValueOnce(u3)
+      .mockReturnValueOnce(u4);
 
     // Fill both slots with in-progress uploads.
     component.onFilesSelected([validFile('a.gcode'), validFile('b.gcode')]);
@@ -423,7 +433,7 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
   });
 
   it('rejects an invalid file without consuming a slot', () => {
-    mockPrintFileService.validateFile.and.returnValue({
+    mockPrintFileService.validateFile.mockReturnValue({
       valid: false,
       error: 'nope',
     });
@@ -436,7 +446,7 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
 
   it('does not admit uploads until the initial load resolves', () => {
     const getFiles$ = new Subject<FileAttachmentItem[]>();
-    mockPrintFileService.getFiles.and.returnValue(getFiles$);
+    mockPrintFileService.getFiles.mockReturnValue(getFiles$);
 
     // Re-create so ngOnInit subscribes to the pending getFiles$.
     fixture.destroy();
@@ -464,7 +474,7 @@ describe('FileAttachmentSectionComponent (upload limits)', () => {
 
   it('keeps uploads blocked and surfaces an error if the initial load fails', () => {
     const getFiles$ = new Subject<FileAttachmentItem[]>();
-    mockPrintFileService.getFiles.and.returnValue(getFiles$);
+    mockPrintFileService.getFiles.mockReturnValue(getFiles$);
 
     fixture.destroy();
     fixture = TestBed.createComponent(FileAttachmentSectionComponent);

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -10,24 +11,28 @@ import {
 import { PrintBulkProjectDialogComponent } from './print-bulk-project-dialog.component';
 
 describe('PrintBulkProjectDialogComponent', () => {
-  let projectService: jasmine.SpyObj<ProjectService>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<PrintBulkProjectDialogComponent>>;
+  let projectService: MockedObject<ProjectService>;
+  let dialogRef: MockedObject<MatDialogRef<PrintBulkProjectDialogComponent>>;
 
   beforeEach(async () => {
-    projectService = jasmine.createSpyObj<ProjectService>('ProjectService', [
-      'createProject',
-      'getProjectSummaries',
-    ]);
+    projectService = {
+      createProject: vi.fn().mockName('ProjectService.createProject'),
+      getProjectSummaries: vi
+        .fn()
+        .mockName('ProjectService.getProjectSummaries'),
+    } as unknown as MockedObject<ProjectService>;
     // ProjectSelectorComponent calls getProjectSummaries on init and expects a PagedList.
-    projectService.getProjectSummaries.and.returnValue(
+    projectService.getProjectSummaries.mockReturnValue(
       of({
         paging: { currentPage: 1, totalPages: 1, pageSize: 25, totalCount: 0 },
         items: [],
       })
     );
-    dialogRef = jasmine.createSpyObj<
-      MatDialogRef<PrintBulkProjectDialogComponent>
-    >('MatDialogRef', ['close']);
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<
+      MatDialogRef<PrintBulkProjectDialogComponent, any>
+    >;
 
     await TestBed.configureTestingModule({
       imports: [PrintBulkProjectDialogComponent, NoopAnimationsModule],
@@ -65,7 +70,7 @@ describe('PrintBulkProjectDialogComponent', () => {
   });
 
   it('creates the project once when a new name is typed, then closes with its id', async () => {
-    projectService.createProject.and.returnValue(
+    projectService.createProject.mockReturnValue(
       of({ id: 'created-id', name: 'New Batch' } as never)
     );
     const fixture = createComponent();
@@ -90,7 +95,7 @@ describe('PrintBulkProjectDialogComponent', () => {
   });
 
   it('keeps the dialog open and shows an error when creating the project fails', async () => {
-    projectService.createProject.and.returnValue(
+    projectService.createProject.mockReturnValue(
       throwError(() => new Error('boom'))
     );
     const fixture = createComponent();

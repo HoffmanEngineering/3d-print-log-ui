@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -75,23 +71,23 @@ const response = (overrides: Partial<CostsResponse> = {}): CostsResponse => ({
 describe('CostsTabComponent', () => {
   let fixture: ComponentFixture<CostsTabComponent>;
   let component: CostsTabComponent;
-  let analytics: jasmine.SpyObj<AnalyticsService>;
+  let analytics: MockedObject<AnalyticsService>;
 
   // createTabData debounces by 250ms, so the response only lands after the timer is
   // flushed — a plain whenStable() would assert against a still-loading tab.
-  const setup = () => {
+  const setup = async () => {
     fixture = TestBed.createComponent(CostsTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     fixture.detectChanges();
   };
 
   beforeEach(async () => {
-    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
-      'getCosts',
-    ]);
-    analytics.getCosts.and.returnValue(of(response()));
+    analytics = {
+      getCosts: vi.fn().mockName('AnalyticsService.getCosts'),
+    } as unknown as MockedObject<AnalyticsService>;
+    analytics.getCosts.mockReturnValue(of(response()));
 
     await TestBed.configureTestingModule({
       imports: [CostsTabComponent, NoopAnimationsModule],
@@ -103,8 +99,9 @@ describe('CostsTabComponent', () => {
     }).compileComponents();
   });
 
-  it('sorts spend-over-time chronologically, not by response order', fakeAsync(() => {
-    setup();
+  it('sorts spend-over-time chronologically, not by response order', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.spendData().map((d) => d.fullLabel)).toEqual(
       component
@@ -113,10 +110,11 @@ describe('CostsTabComponent', () => {
         .slice()
         .sort()
     );
-  }));
+  });
 
-  it('keeps the three cost components on fixed colors across the tab', fakeAsync(() => {
-    setup();
+  it('keeps the three cost components on fixed colors across the tab', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.componentSeries.map((s) => s.key)).toEqual([
       'filament',
@@ -126,10 +124,11 @@ describe('CostsTabComponent', () => {
     expect(component.componentSeries.map((s) => s.seriesIndex)).toEqual([
       1, 2, 3,
     ]);
-  }));
+  });
 
-  it('offers a setup CTA for each specific missing input, not a generic one', fakeAsync(() => {
-    analytics.getCosts.and.returnValue(
+  it('offers a setup CTA for each specific missing input, not a generic one', async () => {
+    vi.useFakeTimers();
+    analytics.getCosts.mockReturnValue(
       of(
         response({
           coverage: {
@@ -145,22 +144,24 @@ describe('CostsTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     const calls = component.setupActions().map((a) => a.reason);
     expect(calls).toContain('PriceMissing');
     expect(calls).toContain('RateMissing');
     expect(calls).not.toContain('WattageMissing');
-  }));
+  });
 
-  it('shows no setup CTA when everything is priced', fakeAsync(() => {
-    setup();
+  it('shows no setup CTA when everything is priced', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.setupActions()).toEqual([]);
-  }));
+  });
 
-  it('keeps an unpriced component distinguishable from a genuine zero', fakeAsync(() => {
-    setup();
+  it('keeps an unpriced component distinguishable from a genuine zero', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     // The chart has to coerce null to 0 — a stacked segment of unknown height is not drawable —
     // but the accessible table and the CSV must not claim maintenance cost nothing in a period
@@ -175,19 +176,21 @@ describe('CostsTabComponent', () => {
       .spendCsv()
       .rows.find((row) => row[0] === '2026-07-02');
     expect(maintenanceCell?.[3]).toBeNull();
-  }));
+  });
 
-  it('renders the failure share only when it is defined', fakeAsync(() => {
-    analytics.getCosts.and.returnValue(
+  it('renders the failure share only when it is defined', async () => {
+    vi.useFakeTimers();
+    analytics.getCosts.mockReturnValue(
       of(response({ costOfFailureSharePercent: null }))
     );
-    setup();
+    await setup();
 
     expect(component.failureShareText()).toBeNull();
-  }));
+  });
 
-  it('renders the extremes as currency, ranked, and linked to the print', fakeAsync(() => {
-    setup();
+  it('renders the extremes as currency, ranked, and linked to the print', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     const rows = (fixture.nativeElement as HTMLElement).querySelectorAll(
       '.costs-tab__extremes-row'
@@ -200,28 +203,30 @@ describe('CostsTabComponent', () => {
     expect(text).toContain('$1.00');
 
     expect(rows[0].querySelector('a')?.getAttribute('href')).toBe('/prints/1');
-  }));
+  });
 
-  it('names an untitled print rather than rendering an empty link', fakeAsync(() => {
-    analytics.getCosts.and.returnValue(
+  it('names an untitled print rather than rendering an empty link', async () => {
+    vi.useFakeTimers();
+    analytics.getCosts.mockReturnValue(
       of(
         response({
           mostExpensive: [{ printId: 9, title: null, date: null, amount: 3 }],
         })
       )
     );
-    setup();
+    await setup();
 
     const link = (fixture.nativeElement as HTMLElement).querySelector(
       '.costs-tab__extremes-link'
     );
     expect(link?.textContent?.trim()).toBe('Untitled print');
-  }));
+  });
 
-  it('fails the whole tab on an error', fakeAsync(() => {
-    analytics.getCosts.and.returnValue(throwError(() => new Error('boom')));
-    setup();
+  it('fails the whole tab on an error', async () => {
+    vi.useFakeTimers();
+    analytics.getCosts.mockReturnValue(throwError(() => new Error('boom')));
+    await setup();
 
     expect(component.state()).toBe('error');
-  }));
+  });
 });

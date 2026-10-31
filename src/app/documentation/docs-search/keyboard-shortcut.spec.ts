@@ -17,13 +17,13 @@ describe('docs search keyboard shortcut', () => {
   describe('isApplePlatform', () => {
     it('recognizes the platforms that expect Cmd', () => {
       for (const platform of ['MacIntel', 'iPhone', 'iPad', 'iPod touch']) {
-        expect(isApplePlatform(platform)).withContext(platform).toBe(true);
+        expect(isApplePlatform(platform), platform).toBe(true);
       }
     });
 
     it('treats everything else as a Ctrl platform', () => {
       for (const platform of ['Win32', 'Linux x86_64', '']) {
-        expect(isApplePlatform(platform)).withContext(platform).toBe(false);
+        expect(isApplePlatform(platform), platform).toBe(false);
       }
     });
 

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -25,7 +26,7 @@ const aSpool = (overrides: Partial<FilamentSummary> = {}) =>
     effects: [],
     isActive: true,
     isFavorite: false,
-    filamentRemaining: 800_000,
+    filamentRemaining: 800000,
     loadedInPrinter: null,
     storageLocation: '',
     ...overrides,
@@ -49,18 +50,20 @@ const page = (items: FilamentSummary[]): PagedList<FilamentSummary> =>
  */
 describe('FilamentListContainerComponent (rendered)', () => {
   let harness: RouterTestingHarness;
-  let filamentService: jasmine.SpyObj<FilamentService>;
+  let filamentService: MockedObject<FilamentService>;
   let listed: Subject<PagedList<FilamentSummary>>;
 
   const text = () => (harness.routeNativeElement as HTMLElement).textContent;
 
   beforeEach(async () => {
     listed = new Subject();
-    filamentService = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getCurrentUserFilamentSummaries',
-      'changeFavorite',
-    ]);
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(listed);
+    filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+      changeFavorite: vi.fn().mockName('FilamentService.changeFavorite'),
+    } as unknown as MockedObject<FilamentService>;
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(listed);
 
     TestBed.configureTestingModule({
       imports: [
@@ -83,16 +86,23 @@ describe('FilamentListContainerComponent (rendered)', () => {
         { provide: FilamentService, useValue: filamentService },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
         // Stubbed: the real store would issue its own authenticated fetch.
         {
           provide: PrinterThumbnailStore,
-          useValue: jasmine.createSpyObj('PrinterThumbnailStore', [
-            'thumbnailFor',
-            'invalidate',
-            'noteLoadFailure',
-          ]),
+          useValue: {
+            thumbnailFor: vi
+              .fn()
+              .mockName('PrinterThumbnailStore.thumbnailFor'),
+            invalidate: vi.fn().mockName('PrinterThumbnailStore.invalidate'),
+            noteLoadFailure: vi
+              .fn()
+              .mockName('PrinterThumbnailStore.noteLoadFailure'),
+          },
         },
       ],
     });
@@ -190,7 +200,7 @@ describe('FilamentListContainerComponent (rendered)', () => {
 
   it('stars a favorite once the server confirms it', () => {
     const favorited = new Subject<unknown>();
-    filamentService.changeFavorite.and.returnValue(favorited as never);
+    filamentService.changeFavorite.mockReturnValue(favorited as never);
     const component = harness.routeDebugElement!
       .componentInstance as FilamentListContainerComponent;
     const stars = () =>

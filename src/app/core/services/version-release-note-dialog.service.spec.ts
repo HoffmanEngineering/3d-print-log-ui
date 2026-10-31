@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -65,8 +66,8 @@ describe('VersionReleaseNoteDialogService', () => {
   let account: Map<UserSettingType, string>;
   let accountWrites: [UserSettingType, string][];
   let accountFails: boolean;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let dialog: MockedObject<MatDialog>;
+  let logging: MockedObject<LoggingService>;
   let isLoggedIn: ReturnType<typeof signal<boolean | null>>;
   let isPro: ReturnType<typeof signal<boolean>>;
   let originalVersion: string;
@@ -104,14 +105,16 @@ describe('VersionReleaseNoteDialogService', () => {
     isLoggedIn = signal<boolean | null>(true);
     isPro = signal(false);
 
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.returnValue({
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockReturnValue({
       afterClosed: () => of(true),
     } as unknown as MatDialogRef<unknown, unknown>);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -140,7 +143,7 @@ describe('VersionReleaseNoteDialogService', () => {
 
   function shownDialog(): SimpleDialogData {
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    return dialog.open.calls.mostRecent().args[1]!.data as SimpleDialogData;
+    return vi.mocked(dialog.open).mock.lastCall[1]!.data as SimpleDialogData;
   }
 
   it('shows nothing when the stored version is the running one', async () => {
@@ -200,7 +203,7 @@ describe('VersionReleaseNoteDialogService', () => {
 
     const body = shownDialog().body;
     expect(body.split('Support development').length - 1).toBe(1);
-    expect(body.endsWith(SUPPORT_FOOTER)).toBeTrue();
+    expect(body.endsWith(SUPPORT_FOOTER)).toBe(true);
   });
 
   it('thanks a Pro member instead of asking for support', async () => {
@@ -209,7 +212,7 @@ describe('VersionReleaseNoteDialogService', () => {
     await create({ [DIALOG_KEY]: '2.2.0' }).checkLastLoggedInVersion();
 
     const body = shownDialog().body;
-    expect(body.endsWith(PRO_FOOTER)).toBeTrue();
+    expect(body.endsWith(PRO_FOOTER)).toBe(true);
     expect(body).not.toContain('Support development');
   });
 
@@ -219,7 +222,7 @@ describe('VersionReleaseNoteDialogService', () => {
     await create({ [DIALOG_KEY]: '2.2.0' }).checkLastLoggedInVersion();
 
     const body = shownDialog().body;
-    expect(body.endsWith(IOS_APP_FOOTER)).toBeTrue();
+    expect(body.endsWith(IOS_APP_FOOTER)).toBe(true);
     expect(body).not.toContain('/subscription');
     expect(body).not.toContain('paypal');
     expect(body).not.toContain('patreon');
@@ -266,7 +269,7 @@ describe('VersionReleaseNoteDialogService', () => {
 
     expect(logging.logEvent).toHaveBeenCalledWith(
       'VersionReleaseNotes_Opened',
-      jasmine.objectContaining({ unseenCount: 6, shownCount: 3, isPro: false })
+      expect.objectContaining({ unseenCount: 6, shownCount: 3, isPro: false })
     );
   });
 
@@ -332,13 +335,13 @@ describe('VersionReleaseNoteDialogService', () => {
 
       await service.checkLastLoggedInVersion();
 
-      expect(service.hasUnreadReleases()).toBeTrue();
+      expect(service.hasUnreadReleases()).toBe(true);
       expect(service.firstUnreadAnchor()).toBe('v2.3.0');
 
       service.markReleaseNotesViewed();
       await settle();
 
-      expect(service.hasUnreadReleases()).toBeFalse();
+      expect(service.hasUnreadReleases()).toBe(false);
       expect(service.firstUnreadAnchor()).toBeNull();
       expect(storage.get(PAGE_KEY)).toBe('2.4.0');
       expect(account.get(VIEWED)).toBe('2.4.0');
@@ -349,7 +352,7 @@ describe('VersionReleaseNoteDialogService', () => {
 
       await service.checkLastLoggedInVersion();
 
-      expect(service.hasUnreadReleases()).toBeFalse();
+      expect(service.hasUnreadReleases()).toBe(false);
     });
 
     it('follows the page, not the dialog, once the page has been opened', () => {
@@ -369,7 +372,7 @@ describe('VersionReleaseNoteDialogService', () => {
 
       await service.checkLastLoggedInVersion();
 
-      expect(service.hasUnreadReleases()).toBeFalse();
+      expect(service.hasUnreadReleases()).toBe(false);
     });
 
     it('saves a page visit to this browser only when signed out', async () => {
@@ -388,7 +391,7 @@ describe('VersionReleaseNoteDialogService', () => {
     TestBed.overrideProvider(PLATFORM_ID, { useValue: 'server' });
     const service = create({ [DIALOG_KEY]: '2.2.0', [PAGE_KEY]: '2.2.0' });
 
-    expect(service.hasUnreadReleases()).toBeFalse();
+    expect(service.hasUnreadReleases()).toBe(false);
     service.markReleaseNotesViewed();
     expect(storage.get(PAGE_KEY)).toBe('2.2.0');
     expect(accountWrites).toEqual([]);

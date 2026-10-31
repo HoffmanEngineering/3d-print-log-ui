@@ -27,9 +27,10 @@ describe('preload route matrix', () => {
 
   it('only ever flags routes that actually have a chunk to fetch', () => {
     for (const route of appRoutes.filter((r) => preloads(r))) {
-      expect(!!(route.loadChildren || route.loadComponent))
-        .withContext(`${route.path} is flagged but is not lazily loaded`)
-        .toBe(true);
+      expect(
+        !!(route.loadChildren || route.loadComponent),
+        `${route.path} is flagged but is not lazily loaded`
+      ).toBe(true);
     }
   });
 
@@ -37,7 +38,7 @@ describe('preload route matrix', () => {
     // docs, analytics and subscription are large and rarely the first stop.
     for (const path of ['docs', 'analytics', 'subscription', 'feed']) {
       const route = appRoutes.find((r) => r.path === path);
-      expect(preloads(route)).withContext(path).toBe(false);
+      expect(preloads(route), path).toBe(false);
     }
   });
 });

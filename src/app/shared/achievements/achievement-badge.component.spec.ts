@@ -36,11 +36,9 @@ describe('AchievementBadgeComponent', () => {
 
   it('every REQUIRED_GLYPH has markup', () => {
     for (const glyph of REQUIRED_GLYPHS) {
-      expect(ACHIEVEMENT_GLYPHS[glyph]).withContext(glyph).toBeDefined();
+      expect(ACHIEVEMENT_GLYPHS[glyph], glyph).toBeDefined();
       if (glyph !== 'numeral') {
-        expect(ACHIEVEMENT_GLYPHS[glyph].length)
-          .withContext(glyph)
-          .toBeGreaterThan(0);
+        expect(ACHIEVEMENT_GLYPHS[glyph].length, glyph).toBeGreaterThan(0);
       }
     }
   });
@@ -127,7 +125,7 @@ describe('AchievementBadgeDefsComponent', () => {
       'ach-fill-hi',
       'ach-layers',
     ]) {
-      expect(ids).withContext(id).toContain(id);
+      expect(ids, id).toContain(id);
     }
   });
 });

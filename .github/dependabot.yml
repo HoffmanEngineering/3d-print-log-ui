@@ -50,15 +50,14 @@ updates:
           - '@ngtools/*'
           - 'ng-packagr'
           - 'typescript'
-          - 'zone.js'
 
       # Test tooling only affects CI, so a single combined PR is easy to judge:
       # either the suite still passes or it does not.
       test-tooling:
         patterns:
-          - 'karma*'
-          - 'jasmine*'
-          - '@types/jasmine'
+          - 'vitest'
+          - '@vitest/*'
+          - 'playwright'
           - 'cypress'
           - 'cypress-*'
 

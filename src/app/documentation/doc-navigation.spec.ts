@@ -50,10 +50,10 @@ describe('doc navigation', () => {
   });
 
   describe('relatedTo', () => {
-    it('resolves the slugs a page declares, in the order authored', () => {
+    it('resolves the slugs a page declares, in the order authored', (context) => {
       const page = routed.find((entry) => entry.related.length > 1);
       if (!page) {
-        pending('no doc page declares more than one related slug');
+        context.skip('no doc page declares more than one related slug');
         return;
       }
 
@@ -82,7 +82,7 @@ describe('doc navigation', () => {
       // related page going dormant after it was linked to.
       for (const page of routed) {
         for (const link of relatedTo(page.path)) {
-          expect(routed.some((entry) => entry.path === link.path)).toBeTrue();
+          expect(routed.some((entry) => entry.path === link.path)).toBe(true);
         }
       }
     });

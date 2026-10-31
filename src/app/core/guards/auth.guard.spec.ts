@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { firstValueFrom, isObservable, of } from 'rxjs';
@@ -7,7 +8,10 @@ import { AuthService } from '../services/auth.service';
 import { authGuard } from './auth.guard';
 
 describe('authGuard', () => {
-  let auth: { isAuthenticated$: unknown; login: jasmine.Spy };
+  let auth: {
+    isAuthenticated$: unknown;
+    login: Mock;
+  };
 
   const canActivate = async (url = '/prints') => {
     const result = TestBed.runInInjectionContext(() =>
@@ -17,32 +21,41 @@ describe('authGuard', () => {
   };
 
   beforeEach(() => {
-    auth = { isAuthenticated$: of(false), login: jasmine.createSpy('login') };
+    auth = { isAuthenticated$: of(false), login: vi.fn() };
     TestBed.configureTestingModule({
       providers: [{ provide: AuthService, useValue: auth }],
     });
   });
 
   afterEach(() => {
-    (environment as { devAuthBypass?: boolean }).devAuthBypass = false;
+    (
+      environment as {
+        devAuthBypass?: boolean;
+      }
+    ).devAuthBypass = false;
   });
 
   it('lets a signed-in user through', async () => {
     auth.isAuthenticated$ = of(true);
 
-    await expectAsync(canActivate()).toBeResolvedTo(true);
+    await expect(canActivate()).resolves.toEqual(true);
     expect(auth.login).not.toHaveBeenCalled();
   });
 
   it('blocks a signed-out visitor and sends them to log in, returning to the page', async () => {
-    await expectAsync(canActivate('/printers/3')).toBeResolvedTo(false);
-    expect(auth.login).toHaveBeenCalledOnceWith('/printers/3');
+    await expect(canActivate('/printers/3')).resolves.toEqual(false);
+    expect(auth.login).toHaveBeenCalledTimes(1);
+    expect(auth.login).toHaveBeenCalledWith('/printers/3');
   });
 
   it('lets everyone through when the dev auth bypass is on', async () => {
-    (environment as { devAuthBypass?: boolean }).devAuthBypass = true;
+    (
+      environment as {
+        devAuthBypass?: boolean;
+      }
+    ).devAuthBypass = true;
 
-    await expectAsync(canActivate()).toBeResolvedTo(true);
+    await expect(canActivate()).resolves.toEqual(true);
     expect(auth.login).not.toHaveBeenCalled();
   });
 });

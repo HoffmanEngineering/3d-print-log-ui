@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { LoggingService } from '../core/services/logging.service';
@@ -50,42 +51,48 @@ function achievements(earned: string[]): MyAchievements {
 
 describe('OnboardingService', () => {
   let service: OnboardingService;
-  let api: jasmine.SpyObj<OnboardingApiService>;
-  let settings: jasmine.SpyObj<UserSettingService>;
-  let printers: jasmine.SpyObj<PrinterService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let api: MockedObject<OnboardingApiService>;
+  let settings: MockedObject<UserSettingService>;
+  let printers: MockedObject<PrinterService>;
+  let logging: MockedObject<LoggingService>;
   let store: Map<UserSettingType, UserSetting>;
 
   function setPrinterCount(totalCount: number) {
-    printers.getCurrentUserPrinterSummaries.and.returnValue(
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(
       of({ paging: { totalCount } } as never)
     );
   }
 
   beforeEach(() => {
     store = new Map();
-    api = jasmine.createSpyObj<OnboardingApiService>('OnboardingApiService', [
-      'getStatus',
-    ]);
-    api.getStatus.and.returnValue(of(ELIGIBLE));
-    settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
-      'getCurrentUsersSettingByType',
-      'addOrUpdateSetting',
-    ]);
-    settings.getCurrentUsersSettingByType.and.callFake(
+    api = {
+      getStatus: vi.fn().mockName('OnboardingApiService.getStatus'),
+    } as unknown as MockedObject<OnboardingApiService>;
+    api.getStatus.mockReturnValue(of(ELIGIBLE));
+    settings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting'),
+    } as unknown as MockedObject<UserSettingService>;
+    settings.getCurrentUsersSettingByType.mockImplementation(
       async (type) => store.get(type) ?? null
     );
-    settings.addOrUpdateSetting.and.callFake(async (type) => {
+    settings.addOrUpdateSetting.mockImplementation(async (type) => {
       await Promise.resolve();
       store.set(type, setting(type));
     });
-    printers = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'getCurrentUserPrinterSummaries',
-    ]);
+    printers = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    } as unknown as MockedObject<PrinterService>;
     setPrinterCount(0);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-    ]);
+    logging = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     TestBed.configureTestingModule({
       providers: [
         { provide: OnboardingApiService, useValue: api },
@@ -118,9 +125,9 @@ describe('OnboardingService', () => {
     });
 
     it('does not cache a failed lookup', async () => {
-      api.getStatus.and.returnValue(of(INELIGIBLE_STATUS));
+      api.getStatus.mockReturnValue(of(INELIGIBLE_STATUS));
       expect(await service.status()).toBe(INELIGIBLE_STATUS);
-      api.getStatus.and.returnValue(of(ELIGIBLE));
+      api.getStatus.mockReturnValue(of(ELIGIBLE));
       expect(await service.status()).toEqual(ELIGIBLE);
     });
   });
@@ -193,7 +200,7 @@ describe('OnboardingService', () => {
 
     for (const row of rows) {
       it(`eligible=${row.eligible} setting29=${row.welcomeSet ? 'set' : 'unset'} printers=${row.printers} ${row.target} -> ${row.expected}`, async () => {
-        api.getStatus.and.returnValue(
+        api.getStatus.mockReturnValue(
           of({ ...ELIGIBLE, onboardingEligible: row.eligible })
         );
         if (row.welcomeSet) {
@@ -208,26 +215,28 @@ describe('OnboardingService', () => {
     }
 
     it('is false when the status lookup throws', async () => {
-      api.getStatus.and.returnValue(throwError(() => new Error('boom')));
-      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+      api.getStatus.mockReturnValue(throwError(() => new Error('boom')));
+      expect(await service.shouldShowWelcome('/prints')).toBe(false);
     });
 
     it('is false when the settings lookup throws', async () => {
-      settings.getCurrentUsersSettingByType.and.rejectWith(new Error('boom'));
-      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+      settings.getCurrentUsersSettingByType.mockRejectedValue(
+        new Error('boom')
+      );
+      expect(await service.shouldShowWelcome('/prints')).toBe(false);
     });
 
     it('is false when the printers call errors', async () => {
-      printers.getCurrentUserPrinterSummaries.and.returnValue(
+      printers.getCurrentUserPrinterSummaries.mockReturnValue(
         throwError(() => new Error('boom'))
       );
-      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+      expect(await service.shouldShowWelcome('/prints')).toBe(false);
     });
   });
 
   describe('checklistVisible', () => {
     it('is true for an eligible user with no badges', async () => {
-      expect(await service.checklistVisible(achievements([]))).toBeTrue();
+      expect(await service.checklistVisible(achievements([]))).toBe(true);
     });
 
     it('is true when only earlier steps are earned', async () => {
@@ -235,13 +244,13 @@ describe('OnboardingService', () => {
         await service.checklistVisible(
           achievements(['first-printer', 'first-material'])
         )
-      ).toBeTrue();
+      ).toBe(true);
     });
 
     it('is false once first-print is held', async () => {
       expect(
         await service.checklistVisible(achievements(['first-print']))
-      ).toBeFalse();
+      ).toBe(false);
     });
 
     it('is false when dismissed (setting 30 set)', async () => {
@@ -249,37 +258,38 @@ describe('OnboardingService', () => {
         UserSettingType.Onboarding_ChecklistDismissedAt,
         setting(UserSettingType.Onboarding_ChecklistDismissedAt)
       );
-      expect(await service.checklistVisible(achievements([]))).toBeFalse();
+      expect(await service.checklistVisible(achievements([]))).toBe(false);
     });
 
     it('is false when achievements are null', async () => {
-      expect(await service.checklistVisible(null)).toBeFalse();
+      expect(await service.checklistVisible(null)).toBe(false);
     });
 
     it('is false when ineligible', async () => {
-      api.getStatus.and.returnValue(
+      api.getStatus.mockReturnValue(
         of({ ...ELIGIBLE, onboardingEligible: false })
       );
-      expect(await service.checklistVisible(achievements([]))).toBeFalse();
+      expect(await service.checklistVisible(achievements([]))).toBe(false);
     });
 
     it('is false when the status call fails with a 404-style fallback', async () => {
-      api.getStatus.and.returnValue(of(INELIGIBLE_STATUS));
-      expect(await service.checklistVisible(achievements([]))).toBeFalse();
+      api.getStatus.mockReturnValue(of(INELIGIBLE_STATUS));
+      expect(await service.checklistVisible(achievements([]))).toBe(false);
     });
   });
 
   describe('dismissChecklist', () => {
     it('writes setting 30', async () => {
       await service.dismissChecklist();
-      expect(settings.addOrUpdateSetting).toHaveBeenCalledOnceWith(
+      expect(settings.addOrUpdateSetting).toHaveBeenCalledTimes(1);
+      expect(settings.addOrUpdateSetting).toHaveBeenCalledWith(
         UserSettingType.Onboarding_ChecklistDismissedAt,
-        jasmine.any(String)
+        expect.any(String)
       );
     });
 
     it('logs and swallows a failed write', async () => {
-      settings.addOrUpdateSetting.and.rejectWith(new Error('boom'));
+      settings.addOrUpdateSetting.mockRejectedValue(new Error('boom'));
       await service.dismissChecklist();
       expect(logging.logException).toHaveBeenCalledTimes(1);
     });
@@ -302,15 +312,16 @@ describe('OnboardingService', () => {
     describe(name, () => {
       it('writes the setting once', async () => {
         await run();
-        expect(settings.addOrUpdateSetting).toHaveBeenCalledOnceWith(
+        expect(settings.addOrUpdateSetting).toHaveBeenCalledTimes(1);
+        expect(settings.addOrUpdateSetting).toHaveBeenCalledWith(
           type,
-          jasmine.any(String)
+          expect.any(String)
         );
       });
 
       it('writes an ISO timestamp', async () => {
         await run();
-        const value = settings.addOrUpdateSetting.calls.mostRecent().args[1];
+        const value = vi.mocked(settings.addOrUpdateSetting).mock.lastCall[1];
         expect(new Date(value).toISOString()).toBe(value);
       });
 
@@ -321,7 +332,7 @@ describe('OnboardingService', () => {
       });
 
       it('does not write when ineligible', async () => {
-        api.getStatus.and.returnValue(
+        api.getStatus.mockReturnValue(
           of({ ...ELIGIBLE, onboardingEligible: false })
         );
         await run();
@@ -329,8 +340,8 @@ describe('OnboardingService', () => {
       });
 
       it('does not throw when the write fails, and logs it', async () => {
-        settings.addOrUpdateSetting.and.rejectWith(new Error('400 exists'));
-        await expectAsync(run()).toBeResolved();
+        settings.addOrUpdateSetting.mockRejectedValue(new Error('400 exists'));
+        await expect(run()).resolves.not.toThrow();
         expect(logging.logException).toHaveBeenCalledTimes(1);
       });
 
@@ -350,45 +361,45 @@ describe('OnboardingService', () => {
 
   describe('session flags', () => {
     it('noticeAcknowledged turns true as soon as acknowledgeEmailNotice is called', () => {
-      expect(service.noticeAcknowledged()).toBeFalse();
+      expect(service.noticeAcknowledged()).toBe(false);
       void service.acknowledgeEmailNotice();
-      expect(service.noticeAcknowledged()).toBeTrue();
+      expect(service.noticeAcknowledged()).toBe(true);
     });
 
     it('noticeAcknowledged stays true when the write fails', async () => {
-      settings.addOrUpdateSetting.and.rejectWith(new Error('500'));
+      settings.addOrUpdateSetting.mockRejectedValue(new Error('500'));
       await service.acknowledgeEmailNotice();
-      expect(service.noticeAcknowledged()).toBeTrue();
+      expect(service.noticeAcknowledged()).toBe(true);
     });
 
     it('noticeAcknowledged is true even for an ineligible user, whose write is skipped', async () => {
-      api.getStatus.and.returnValue(
+      api.getStatus.mockReturnValue(
         of({ ...ELIGIBLE, onboardingEligible: false })
       );
       await service.acknowledgeEmailNotice();
-      expect(service.noticeAcknowledged()).toBeTrue();
+      expect(service.noticeAcknowledged()).toBe(true);
     });
 
     it('shouldShowWelcome is false after markWelcomeFinished, even when the write fails', async () => {
-      settings.addOrUpdateSetting.and.rejectWith(new Error('500'));
+      settings.addOrUpdateSetting.mockRejectedValue(new Error('500'));
       await service.markWelcomeFinished();
-      expect(
-        store.has(UserSettingType.Onboarding_WelcomeFinishedAt)
-      ).toBeFalse();
-      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+      expect(store.has(UserSettingType.Onboarding_WelcomeFinishedAt)).toBe(
+        false
+      );
+      expect(await service.shouldShowWelcome('/prints')).toBe(false);
     });
 
     it('shouldShowWelcome is false while the finish write is still pending', async () => {
-      settings.addOrUpdateSetting.and.returnValue(new Promise(() => {}));
+      settings.addOrUpdateSetting.mockReturnValue(new Promise(() => {}));
       void service.markWelcomeFinished();
-      expect(await service.shouldShowWelcome('/prints')).toBeFalse();
+      expect(await service.shouldShowWelcome('/prints')).toBe(false);
       expect(printers.getCurrentUserPrinterSummaries).not.toHaveBeenCalled();
     });
 
     it('checklistShowing starts false and is writable by the slot', () => {
-      expect(service.checklistShowing()).toBeFalse();
+      expect(service.checklistShowing()).toBe(false);
       service.checklistShowing.set(true);
-      expect(service.checklistShowing()).toBeTrue();
+      expect(service.checklistShowing()).toBe(true);
     });
 
     it('clear resets the session flags', async () => {
@@ -397,15 +408,15 @@ describe('OnboardingService', () => {
       service.checklistShowing.set(true);
       service.clear();
       store.clear();
-      expect(service.noticeAcknowledged()).toBeFalse();
-      expect(service.checklistShowing()).toBeFalse();
-      expect(await service.shouldShowWelcome('/prints')).toBeTrue();
+      expect(service.noticeAcknowledged()).toBe(false);
+      expect(service.checklistShowing()).toBe(false);
+      expect(await service.shouldShowWelcome('/prints')).toBe(true);
     });
   });
 
   describe('emailNoticePending', () => {
     it('is true when setting 26 is unset and nothing acknowledged it', async () => {
-      expect(await service.emailNoticePending()).toBeTrue();
+      expect(await service.emailNoticePending()).toBe(true);
     });
 
     it('is false once setting 26 is set', async () => {
@@ -413,27 +424,29 @@ describe('OnboardingService', () => {
         UserSettingType.Email_NoticeSeenAt,
         setting(UserSettingType.Email_NoticeSeenAt)
       );
-      expect(await service.emailNoticePending()).toBeFalse();
+      expect(await service.emailNoticePending()).toBe(false);
     });
 
     it('is false after an acknowledgment this session', async () => {
-      settings.addOrUpdateSetting.and.rejectWith(new Error('500'));
+      settings.addOrUpdateSetting.mockRejectedValue(new Error('500'));
       await service.acknowledgeEmailNotice();
-      expect(await service.emailNoticePending()).toBeFalse();
+      expect(await service.emailNoticePending()).toBe(false);
     });
 
     it('is false when the lookup fails', async () => {
-      settings.getCurrentUsersSettingByType.and.rejectWith(new Error('boom'));
-      expect(await service.emailNoticePending()).toBeFalse();
+      settings.getCurrentUsersSettingByType.mockRejectedValue(
+        new Error('boom')
+      );
+      expect(await service.emailNoticePending()).toBe(false);
     });
   });
 
   describe('hasEarned', () => {
     it('is true only for a family with tiers', () => {
       const me = achievements(['first-printer']);
-      expect(OnboardingService.hasEarned(me, 'first-printer')).toBeTrue();
-      expect(OnboardingService.hasEarned(me, 'first-print')).toBeFalse();
-      expect(OnboardingService.hasEarned(me, 'missing')).toBeFalse();
+      expect(OnboardingService.hasEarned(me, 'first-printer')).toBe(true);
+      expect(OnboardingService.hasEarned(me, 'first-print')).toBe(false);
+      expect(OnboardingService.hasEarned(me, 'missing')).toBe(false);
     });
   });
 });

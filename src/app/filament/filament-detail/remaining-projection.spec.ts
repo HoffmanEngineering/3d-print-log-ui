@@ -12,9 +12,9 @@ const TEN_METERS_MG = 10 * Math.PI * (1.75 / 2 / 10) ** 2 * 100 * 1.24 * 1000;
 
 function baseInput(overrides: Partial<ProjectionInput> = {}): ProjectionInput {
   return {
-    serverRemainingMg: 412_000,
-    serverNominalMg: 1_000_000,
-    formNominalMg: 1_000_000,
+    serverRemainingMg: 412000,
+    serverNominalMg: 1000000,
+    formNominalMg: 1000000,
     serverAdjustments: [],
     formAdjustments: [],
     source: PrintFilamentSourceMeasurement.Weight,
@@ -31,8 +31,8 @@ function weightAdjustment(amountMg: number): AdjustmentRow {
 describe('projectRemainingMg', () => {
   it('returns the server value unchanged when nothing was edited', () => {
     const result = projectRemainingMg(baseInput());
-    expect(result.projectedMg).toBe(412_000);
-    expect(result.isSuppressed).toBeFalse();
+    expect(result.projectedMg).toBe(412000);
+    expect(result.isSuppressed).toBe(false);
   });
 
   it('returns the server value when the stored nominal weight is zero', () => {
@@ -42,35 +42,35 @@ describe('projectRemainingMg', () => {
       baseInput({
         serverNominalMg: 0,
         formNominalMg: null,
-        serverRemainingMg: -50_000,
+        serverRemainingMg: -50000,
       })
     );
-    expect(result.projectedMg).toBe(-50_000);
+    expect(result.projectedMg).toBe(-50000);
   });
 
   it('adds an unsaved adjustment', () => {
     const result = projectRemainingMg(
-      baseInput({ formAdjustments: [weightAdjustment(-32_000)] })
+      baseInput({ formAdjustments: [weightAdjustment(-32000)] })
     );
-    expect(result.projectedMg).toBe(380_000);
+    expect(result.projectedMg).toBe(380000);
   });
 
   it('ignores an adjustment that was already saved', () => {
-    const saved = weightAdjustment(-32_000);
+    const saved = weightAdjustment(-32000);
     const result = projectRemainingMg(
       baseInput({ serverAdjustments: [saved], formAdjustments: [saved] })
     );
-    expect(result.projectedMg).toBe(412_000);
+    expect(result.projectedMg).toBe(412000);
   });
 
   it('subtracts a removed adjustment', () => {
     const result = projectRemainingMg(
       baseInput({
-        serverAdjustments: [weightAdjustment(-32_000)],
+        serverAdjustments: [weightAdjustment(-32000)],
         formAdjustments: [],
       })
     );
-    expect(result.projectedMg).toBe(444_000);
+    expect(result.projectedMg).toBe(444000);
   });
 
   it('converts a length-sourced adjustment row rather than reading its stale milligrams', () => {
@@ -81,13 +81,13 @@ describe('projectRemainingMg', () => {
             source: PrintFilamentSourceMeasurement.Length,
             lengthInM: 10,
             // Stale: what the server derived for a DIFFERENT length last save.
-            amountMg: 999_999,
+            amountMg: 999999,
           },
         ],
       })
     );
-    expect(result.projectedMg).toBeCloseTo(412_000 + TEN_METERS_MG, 0);
-    expect(result.projectedMg).not.toBeCloseTo(412_000 + 999_999, 0);
+    expect(result.projectedMg).toBeCloseTo(412000 + TEN_METERS_MG, 0);
+    expect(result.projectedMg).not.toBeCloseTo(412000 + 999999, 0);
   });
 
   it('suppresses the projection when density or diameter were edited', () => {
@@ -100,8 +100,8 @@ describe('projectRemainingMg', () => {
         serverFilament: PLA,
       })
     );
-    expect(result.isSuppressed).toBeTrue();
-    expect(result.projectedMg).toBe(412_000);
+    expect(result.isSuppressed).toBe(true);
+    expect(result.projectedMg).toBe(412000);
   });
 
   it('does not suppress on a density edit when nothing needs converting', () => {
@@ -109,16 +109,16 @@ describe('projectRemainingMg', () => {
       baseInput({
         filament: { materialDensityGramPerCubicCm: 1.3, diameterMm: 1.75 },
         serverFilament: PLA,
-        formAdjustments: [weightAdjustment(-32_000)],
+        formAdjustments: [weightAdjustment(-32000)],
       })
     );
-    expect(result.isSuppressed).toBeFalse();
-    expect(result.projectedMg).toBe(380_000);
+    expect(result.isSuppressed).toBe(false);
+    expect(result.projectedMg).toBe(380000);
   });
 
   it('tracks an edited nominal weight', () => {
-    const result = projectRemainingMg(baseInput({ formNominalMg: 1_200_000 }));
-    expect(result.projectedMg).toBe(612_000);
+    const result = projectRemainingMg(baseInput({ formNominalMg: 1200000 }));
+    expect(result.projectedMg).toBe(612000);
   });
 
   it('is null when the server reports an untracked spool', () => {
@@ -141,7 +141,7 @@ describe('projectRemainingMg', () => {
         formNominalM: 340,
       })
     );
-    expect(result.projectedMg).toBeCloseTo(412_000 + TEN_METERS_MG, 0);
+    expect(result.projectedMg).toBeCloseTo(412000 + TEN_METERS_MG, 0);
   });
 
   it('suppresses the projection when an edit needs a conversion density cannot support', () => {
@@ -155,8 +155,8 @@ describe('projectRemainingMg', () => {
         formNominalM: 340,
       })
     );
-    expect(result.isSuppressed).toBeTrue();
-    expect(result.projectedMg).toBe(412_000);
+    expect(result.isSuppressed).toBe(true);
+    expect(result.projectedMg).toBe(412000);
   });
 
   it('does not suppress an untouched spool whose density is missing', () => {
@@ -172,8 +172,8 @@ describe('projectRemainingMg', () => {
         formNominalM: 330,
       })
     );
-    expect(result.isSuppressed).toBeFalse();
-    expect(result.projectedMg).toBe(412_000);
+    expect(result.isSuppressed).toBe(false);
+    expect(result.projectedMg).toBe(412000);
   });
 
   it('suppresses when a volume-sourced adjustment cannot be converted', () => {
@@ -187,8 +187,8 @@ describe('projectRemainingMg', () => {
         ],
       })
     );
-    expect(result.isSuppressed).toBeTrue();
-    expect(result.projectedMg).toBe(412_000);
+    expect(result.isSuppressed).toBe(true);
+    expect(result.projectedMg).toBe(412000);
   });
 
   it('treats an AsRecorded adjustment as a weight row rather than coercing it away', () => {
@@ -197,12 +197,12 @@ describe('projectRemainingMg', () => {
         formAdjustments: [
           {
             source: PrintFilamentSourceMeasurement.AsRecorded,
-            amountMg: -32_000,
+            amountMg: -32000,
           },
         ],
       })
     );
-    expect(result.isSuppressed).toBeFalse();
-    expect(result.projectedMg).toBe(380_000);
+    expect(result.isSuppressed).toBe(false);
+    expect(result.projectedMg).toBe(380000);
   });
 });

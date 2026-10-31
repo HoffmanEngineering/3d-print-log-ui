@@ -54,7 +54,7 @@ describe('FilamentService image gateway', () => {
       `${api}/api/Filaments/${FILAMENT_ID}/images`
     );
     expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBeTrue();
+    expect(req.request.body instanceof FormData).toBe(true);
     req.flush({});
   });
 

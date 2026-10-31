@@ -218,7 +218,7 @@ describe('tagPrefill with hostile input', () => {
       null
     );
 
-    expect(Object.values(values).includes(null)).toBeFalse();
+    expect(Object.values(values).includes(null)).toBe(false);
     expect(values).toEqual({});
   });
 });

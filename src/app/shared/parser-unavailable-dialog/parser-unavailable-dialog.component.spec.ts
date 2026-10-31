@@ -11,14 +11,12 @@ describe('ParserUnavailableDialogComponent', () => {
   let fixture: ComponentFixture<ParserUnavailableDialogComponent>;
 
   beforeEach(async () => {
-    const mockFeedbackService = jasmine.createSpyObj<FeedbackService>(
-      'FeedbackService',
-      ['addFeedback']
-    );
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['success']
-    );
+    const mockFeedbackService = {
+      addFeedback: vi.fn().mockName('FeedbackService.addFeedback'),
+    };
+    const mockToastrService = {
+      success: vi.fn().mockName('ToastrService.success'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [ParserUnavailableDialogComponent],

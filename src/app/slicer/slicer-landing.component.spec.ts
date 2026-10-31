@@ -7,9 +7,9 @@ import { MetaTagService } from '../core/services/meta-tag.service';
 
 describe('SlicerLandingComponent', () => {
   it('renders the H1 and steps for the route config and sets SEO tags', async () => {
-    const meta = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setSeoTags',
-    ]);
+    const meta = {
+      setSeoTags: vi.fn().mockName('MetaTagService.setSeoTags'),
+    };
     await TestBed.configureTestingModule({
       imports: [
         SlicerLandingComponent,
@@ -31,7 +31,7 @@ describe('SlicerLandingComponent', () => {
     expect(text).toContain('Log 3D Prints from OrcaSlicer');
     expect(text).toContain('post-processing script');
     expect(meta.setSeoTags).toHaveBeenCalledWith(
-      jasmine.objectContaining({ title: jasmine.stringMatching(/OrcaSlicer/) })
+      expect.objectContaining({ title: expect.stringMatching(/OrcaSlicer/) })
     );
   });
 });

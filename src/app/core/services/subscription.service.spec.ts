@@ -30,7 +30,7 @@ describe('SubscriptionService', () => {
   });
 
   it('should default isPro to false', () => {
-    expect(service.isPro()).toBeFalse();
+    expect(service.isPro()).toBe(false);
   });
 
   it('should default maxImages to the free cap, not the pro one', () => {
@@ -98,7 +98,7 @@ describe('SubscriptionService', () => {
       expect(req.request.method).toBe('GET');
       req.flush(mockDto);
 
-      expect(service.isPro()).toBeTrue();
+      expect(service.isPro()).toBe(true);
       expect(service.status()).toBe('active');
       expect(service.plan()).toBe('pro_monthly');
     });
@@ -157,7 +157,7 @@ describe('SubscriptionService in the iOS app', () => {
       error: () => (failed = true),
     });
 
-    expect(failed).toBeTrue();
+    expect(failed).toBe(true);
     httpMock.expectNone(() => true);
   });
 
@@ -165,7 +165,7 @@ describe('SubscriptionService in the iOS app', () => {
     let failed = false;
     service.createPortalSession().subscribe({ error: () => (failed = true) });
 
-    expect(failed).toBeTrue();
+    expect(failed).toBe(true);
     httpMock.expectNone(() => true);
   });
 });

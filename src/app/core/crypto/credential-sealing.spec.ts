@@ -54,8 +54,14 @@ const file = vectorsFile as unknown as {
   };
   vectors: Vector[];
   mustNotOpen: MustNotOpen[];
-  invalidPublicKeys: { value: string; why: string }[];
-  invalidSealedValues: { value: string; why: string }[];
+  invalidPublicKeys: {
+    value: string;
+    why: string;
+  }[];
+  invalidSealedValues: {
+    value: string;
+    why: string;
+  }[];
 };
 const recipient = file.recipient;
 const P256 = { name: 'ECDH', namedCurve: 'P-256' } as const;
@@ -134,7 +140,7 @@ describe('credential sealing (printlog-credential v1)', () => {
     for (const bad of file.invalidPublicKeys) {
       it(`refuses an invalid public key: ${bad.why}`, async () => {
         const error = await rejection(importBridgeKey(bad.value));
-        expect(error).toEqual(jasmine.any(CredentialSealingError));
+        expect(error).toEqual(expect.any(CredentialSealingError));
         expect((error as CredentialSealingError).reason).toBe('invalid_key');
       });
     }
@@ -212,7 +218,7 @@ describe('credential sealing (printlog-credential v1)', () => {
   for (const n of file.mustNotOpen) {
     it(`does not open: ${n.why} (${n.reason})`, async () => {
       const error = await rejection(open(n.sealed, n.associatedData));
-      expect(error).toEqual(jasmine.any(CredentialDidNotOpen));
+      expect(error).toEqual(expect.any(CredentialDidNotOpen));
       expect((error as CredentialDidNotOpen).reason).toBe(n.reason);
     });
   }
@@ -222,7 +228,7 @@ describe('credential sealing (printlog-credential v1)', () => {
       const error = await rejection(
         open(bad.value, 'printlog-credential:v1:42:7:access_code')
       );
-      expect(error).toEqual(jasmine.any(CredentialDidNotOpen));
+      expect(error).toEqual(expect.any(CredentialDidNotOpen));
       expect((error as CredentialDidNotOpen).reason).toBe('shape');
     });
   }
@@ -232,7 +238,7 @@ describe('credential sealing (printlog-credential v1)', () => {
       try {
         prepareCredential(field, typed);
       } catch (error) {
-        expect(error).toEqual(jasmine.any(InvalidCredentialError));
+        expect(error).toEqual(expect.any(InvalidCredentialError));
         return (error as InvalidCredentialError).reason;
       }
       return null;
@@ -311,7 +317,7 @@ describe('credential sealing (printlog-credential v1)', () => {
     it('checks the plaintext again: the bytes are what count', async () => {
       for (const bad of ['', 'a\nb', 'x'.repeat(257), 'a\ud800']) {
         const error = await rejection(sealCredential(key, target, bad));
-        expect(error).toEqual(jasmine.any(InvalidCredentialError));
+        expect(error).toEqual(expect.any(InvalidCredentialError));
       }
     });
 

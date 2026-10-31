@@ -51,11 +51,15 @@ describe('DeviceGrantsService', () => {
     const req = http.expectOne(`${base}/7`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null, { status: 204, statusText: 'No Content' });
-    expect(done).toBeTrue();
+    expect(done).toBe(true);
   });
 
   it('revokes every paired device and returns the count', () => {
-    let result: { revoked: number } | undefined;
+    let result:
+      | {
+          revoked: number;
+        }
+      | undefined;
     service.revokeAll().subscribe((r) => (result = r));
 
     const req = http.expectOne(base);

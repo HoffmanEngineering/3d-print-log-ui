@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -10,22 +11,28 @@ import { GcodeViewerModalComponent } from './gcode-viewer-modal.component';
 describe('GcodeViewerModalComponent', () => {
   let component: GcodeViewerModalComponent;
   let fixture: ComponentFixture<GcodeViewerModalComponent>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<GcodeViewerModalComponent>>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let dialogRef: MockedObject<MatDialogRef<GcodeViewerModalComponent>>;
+  let logging: MockedObject<LoggingService>;
 
   beforeEach(async () => {
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
-    const mockUserSettingsService = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      { getCurrentUsersSettingByType: Promise.resolve(null) }
-    );
-    const mockPrinterService = jasmine.createSpyObj<PrinterService>(
-      'PrinterService',
-      { getPrinterDetail: of(null) }
-    );
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<MatDialogRef<GcodeViewerModalComponent, any>>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
+    const mockUserSettingsService = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType')
+        .mockReturnValue(Promise.resolve(null)),
+    };
+    const mockPrinterService = {
+      getPrinterDetail: vi
+        .fn()
+        .mockName('PrinterService.getPrinterDetail')
+        .mockReturnValue(of(null)),
+    };
 
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule],
@@ -93,7 +100,7 @@ describe('GcodeViewerModalComponent', () => {
       },
     });
 
-    const print = dialogRef.close.calls.mostRecent().args[0];
+    const print = vi.mocked(dialogRef.close).mock.lastCall[0];
     expect(print.estimatedPrintTimeInSeconds).toBe(1234);
     expect(print.filamentUsage.length).toBe(2);
     expect(print.filamentUsage[0].estimatedLengthInM).toBe(1);
@@ -123,7 +130,7 @@ Estimated time is a floor — actual time is typically 15–40% longer.
         },
       },
     });
-    const print = dialogRef.close.calls.mostRecent().args[0];
+    const print = vi.mocked(dialogRef.close).mock.lastCall[0];
     expect(print.filamentUsage.length).toBe(1);
     expect(print.filamentUsage[0].estimatedLengthInM).toBe(2.5);
   });

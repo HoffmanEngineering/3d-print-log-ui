@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
@@ -51,7 +52,7 @@ const aPrinter = (
 describe('PrinterListComponent', () => {
   let component: PrinterListComponent;
   let fixture: ComponentFixture<PrinterListComponent>;
-  let printerService: jasmine.SpyObj<PrinterService>;
+  let printerService: MockedObject<PrinterService>;
 
   /**
    * `later` makes the service answer only when the test says so, the way HTTP
@@ -62,20 +63,24 @@ describe('PrinterListComponent', () => {
     items: Partial<PrinterSummarySimple>[],
     later?: Subject<PagedList<PrinterSummarySimple>>
   ) => {
-    printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'getCurrentUserPrinterSummaries',
-      'unloadFilament',
-      'deletePrinter',
-    ]);
-    printerService.getCurrentUserPrinterSummaries.and.returnValue(
+    printerService = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+      unloadFilament: vi.fn().mockName('PrinterService.unloadFilament'),
+      deletePrinter: vi.fn().mockName('PrinterService.deletePrinter'),
+    } as unknown as MockedObject<PrinterService>;
+    printerService.getCurrentUserPrinterSummaries.mockReturnValue(
       later ?? of(page(items))
     );
 
-    const toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    const toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    };
+    const dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [
@@ -125,13 +130,13 @@ describe('PrinterListComponent', () => {
   it('reports an active search only when the box has non-whitespace text', async () => {
     await setUp([aPrinter()]);
 
-    expect(component.hasActiveSearch).toBeFalse();
+    expect(component.hasActiveSearch).toBe(false);
 
     component.searchText = '   ';
-    expect(component.hasActiveSearch).toBeFalse();
+    expect(component.hasActiveSearch).toBe(false);
 
     component.searchText = 'voron';
-    expect(component.hasActiveSearch).toBeTrue();
+    expect(component.hasActiveSearch).toBe(true);
   });
 
   describe('default photo thumbnail', () => {

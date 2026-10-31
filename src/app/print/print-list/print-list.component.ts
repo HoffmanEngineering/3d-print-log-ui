@@ -407,17 +407,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * The desktop table and the mobile card list are two renderings of the same
    * rows, and only one of them is ever wanted.
    *
-   * This is a template `@if` rather than `fxHide`, because ngx-layout writes
-   * `display: none` from `ngAfterViewInit` — after the browser has already
-   * painted. On a cold load nothing is on screen yet so that is invisible, but
-   * switching back from Grouped by Project rebuilds this whole subtree, and the
-   * cards were flashing up at desktop width before the hide caught up.
-   * Rendering one branch also halves the work: the hidden half was being built
-   * and laid out for nothing, which is most of a ~700ms blocking task at 100
-   * rows.
+   * This is a template `@if` rather than hiding one of them with CSS, because
+   * rendering one branch halves the work: a hidden half is still built and
+   * laid out, which was most of a ~700ms blocking task at 100 rows. (It began
+   * as a fix for ngx-layout's `fxHide`, which wrote `display: none` after the
+   * browser had painted, so switching back from Grouped by Project flashed the
+   * cards at desktop width.)
    *
-   * 959.98px is the width `fxHide.gt-sm` / `fxHide.lt-md` switched at, kept
-   * exactly so the layout still changes where it always did.
+   * 959.98px is where this list has always switched (the layout library's
+   * `gt-sm` / `lt-md` boundary), kept exactly so nothing moves.
    */
   private static readonly HANDSET_QUERY = '(max-width: 959.98px)';
 

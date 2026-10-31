@@ -1,7 +1,6 @@
 ﻿import { ClipboardModule } from '@angular/cdk/clipboard';
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
-import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatBadgeModule } from '@angular/material/badge';
@@ -75,7 +74,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     MatDatepickerModule,
     MatNativeDateModule,
     MatPaginatorModule,
-    FlexLayoutModule,
     MatCardModule,
     MatCheckboxModule,
     RouterModule.forChild([]),
@@ -139,7 +137,6 @@ import { FilamentColorSwatchStylePipe } from './pipes/filament-color-swatch-styl
     MatNativeDateModule,
     MatPaginatorModule,
     MatDividerModule,
-    FlexLayoutModule,
     MatCardModule,
     MatCheckboxModule,
     FormsModule,

@@ -53,7 +53,6 @@
     "@angular/youtube-player": "^21.2.14",
     "@auth0/auth0-spa-js": "^2.19.2",
     "@microsoft/applicationinsights-web": "^3.4.1",
-    "@ngbracket/ngx-layout": "^21.0.0",
     "@ngx-loading-bar/core": "^7.0.1",
     "@ngx-loading-bar/http-client": "^7.0.1",
     "@ngx-loading-bar/router": "^7.0.1",

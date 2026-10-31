@@ -1,14 +1,20 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router, Routes } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { docsAliasRedirect, movedAnchorGuard } from './moved-anchor.guard';
 
-@Component({ template: 'materials' })
+@Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: 'materials',
+})
 class MaterialsStubComponent {}
 
-@Component({ template: 'reference' })
+@Component({
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: 'reference',
+})
 class ReferenceStubComponent {}
 
 /**

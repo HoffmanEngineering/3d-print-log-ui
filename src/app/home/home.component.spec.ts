@@ -1,7 +1,7 @@
 import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AdsenseModule } from 'ng2-adsense';
 
@@ -47,7 +47,7 @@ describe('HomeComponent', () => {
         provideRouter([]),
         // <app-ad> -> SubscriptionService -> HttpClient. Nothing provides it by
         // default in a standalone TestBed.
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: auth },
         { provide: MetaTagService, useValue: meta },

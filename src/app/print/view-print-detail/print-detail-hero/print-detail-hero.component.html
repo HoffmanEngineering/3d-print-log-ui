@@ -19,7 +19,7 @@
   @if (showThumbnails()) {
     <app-image-thumbnail-strip
       [images]="images()"
-      [selectedId]="selectedImage()?.id"
+      [selectedId]="$safeNavigationMigration(selectedImage()?.id)"
       (imageSelected)="onImageSelected($event)"
     />
   }

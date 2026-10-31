@@ -88,8 +88,8 @@
         </div>
         <app-image-thumbnail-strip
           [images]="cachedImagesForStrip"
-          [selectedId]="selectedImage?.value?.id"
-          [selectedUrl]="selectedImage?.value?.url"
+          [selectedId]="$safeNavigationMigration(selectedImage?.value?.id)"
+          [selectedUrl]="$safeNavigationMigration(selectedImage?.value?.url)"
           [editable]="true"
           [maxImages]="maxImages()"
           (imageSelected)="onThumbnailSelected($event)"
@@ -422,7 +422,9 @@
                           <a
                             [href]="
                               '/materials/' +
-                              printFilament.get('filament').value?.id
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value?.id
+                              )
                             "
                             target="_blank"
                             rel="noopener noreferrer"
@@ -453,8 +455,10 @@
                       @if (hasRealSpool(printFilament.get('filament').value)) {
                         <div class="filament-section info-line">
                           {{
-                            printFilament.get('filament').value
-                              ?.filamentRemaining
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentRemaining
+                            )
                               | remaining
                                 : { divisor: 1000, unit: ' (g) remaining' }
                           }}
@@ -462,36 +466,44 @@
                       }
                       @if (
                         isRemainingTracked(
-                          printFilament.get('filament').value
-                            ?.filamentLengthRemainingInM
+                          $safeNavigationMigration(
+                            printFilament.get('filament').value
+                              ?.filamentLengthRemainingInM
+                          )
                         )
                       ) {
                         <div class="filament-section info-line">
                           {{
-                            printFilament.get('filament').value
-                              ?.filamentLengthRemainingInM
-                              | remaining: { unit: ' (m) remaining' }
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentLengthRemainingInM
+                            ) | remaining: { unit: ' (m) remaining' }
                           }}
                         </div>
                       }
                       @if (
                         isRemainingTracked(
-                          printFilament.get('filament').value
-                            ?.filamentVolumeRemainingInMl
+                          $safeNavigationMigration(
+                            printFilament.get('filament').value
+                              ?.filamentVolumeRemainingInMl
+                          )
                         )
                       ) {
                         <div class="filament-section info-line">
                           {{
-                            printFilament.get('filament').value
-                              ?.filamentVolumeRemainingInMl
-                              | remaining: { unit: ' (mL) remaining' }
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentVolumeRemainingInMl
+                            ) | remaining: { unit: ' (mL) remaining' }
                           }}
                         </div>
                       }
                       @if (
                         printFilament.get('filament').value !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue !== null &&
+                        $safeNavigationMigration(
+                          printFilament.get('filament').value
+                            ?.purchasePriceValue
+                        ) !== null &&
                         printFilament.get('filament').value
                           ?.purchasePriceValue !== ''
                       ) {
@@ -505,9 +517,13 @@
                       }
                       @if (
                         printFilament.get('filament').value !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue === null &&
-                        defaultFilamentPriceSetting?.value !== null
+                        $safeNavigationMigration(
+                          printFilament.get('filament').value
+                            ?.purchasePriceValue
+                        ) === null &&
+                        $safeNavigationMigration(
+                          defaultFilamentPriceSetting?.value
+                        ) !== null
                       ) {
                         <div
                           class="filament-section info-line"
@@ -532,7 +548,9 @@
                         >
                           <mat-icon>swap_horiz</mat-icon>
                           {{
-                            printFilament.get('filament')?.value !== null
+                            $safeNavigationMigration(
+                              printFilament.get('filament')?.value
+                            ) !== null
                               ? 'Change'
                               : 'Select'
                           }}
@@ -963,8 +981,10 @@
                               defaultFilamentPriceSetting?.value
                             }}"
                             [matTooltipDisabled]="
-                              printFilament.get('filament').value
-                                ?.purchasePriceValue !== null
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value
+                                  ?.purchasePriceValue
+                              ) !== null
                             "
                             [class.price-error]="
                               getEstimatedPrice($any(printFilament)).includes(
@@ -1005,8 +1025,10 @@
                                 preferredCurrency?.symbol
                               }}{{ defaultFilamentPriceSetting?.value }}"
                               [matTooltipDisabled]="
-                                printFilament.get('filament').value
-                                  ?.purchasePriceValue !== null
+                                $safeNavigationMigration(
+                                  printFilament.get('filament').value
+                                    ?.purchasePriceValue
+                                ) !== null
                               "
                               [class.price-error]="
                                 getActualPrice($any(printFilament)).includes(
@@ -1137,7 +1159,7 @@
         <!-- File Attachments Section -->
         @if (printForm.get('id')?.value) {
           <app-file-attachment-section
-            [printId]="printForm.get('id')?.value"
+            [printId]="$safeNavigationMigration(printForm.get('id')?.value)"
             [editable]="true"
             [isOwner]="true"
             [allowFileDownloads]="

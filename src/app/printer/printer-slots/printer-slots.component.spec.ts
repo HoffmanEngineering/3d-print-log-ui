@@ -1,6 +1,6 @@
 import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -72,7 +72,7 @@ describe('PrinterSlotsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PrinterSlotsComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: MatDialog, useValue: dialog },
         { provide: ToastrService, useValue: toastr },

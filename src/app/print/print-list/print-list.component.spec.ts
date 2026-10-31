@@ -1,7 +1,12 @@
 import type { MockedObject } from 'vitest';
 import { AdsenseModule } from 'ng2-adsense';
 import { MediaMatcher } from '@angular/cdk/layout';
-import { Component, NO_ERRORS_SCHEMA, output } from '@angular/core';
+import {
+  Component,
+  NO_ERRORS_SCHEMA,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -43,7 +48,11 @@ import {
 import { PrintListHintSlotComponent } from './print-list-hint-slot/print-list-hint-slot.component';
 import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
 
-@Component({ selector: 'app-print-list-hint-slot', template: '' })
+@Component({
+  selector: 'app-print-list-hint-slot',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '',
+})
 class StubHintSlotComponent {
   readonly checklistActive = output<boolean>();
   readonly printerAdded = output<void>();

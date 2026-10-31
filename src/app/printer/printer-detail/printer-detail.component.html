@@ -378,13 +378,22 @@
                           <div
                             class="filament-color-cell"
                             [style]="
-                              printFilament.get('filament').value?.colors
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value?.colors
+                              )
                                 | filamentColorSwatchStyle
-                                  : printFilament.get('filament').value
-                                      ?.colorPattern
-                                  : printFilament.get('filament').value
-                                      ?.finishType
-                                  : printFilament.get('filament').value?.effects
+                                  : $safeNavigationMigration(
+                                      printFilament.get('filament').value
+                                        ?.colorPattern
+                                    )
+                                  : $safeNavigationMigration(
+                                      printFilament.get('filament').value
+                                        ?.finishType
+                                    )
+                                  : $safeNavigationMigration(
+                                      printFilament.get('filament').value
+                                        ?.effects
+                                    )
                             "
                           ></div>
                         </div>
@@ -415,9 +424,10 @@
                         ) {
                           <div class="grow">
                             {{
-                              printFilament.get('filament').value
-                                ?.filamentVolumeRemainingInMl
-                                | remaining: { unit: ' (mL) remaining' }
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value
+                                  ?.filamentVolumeRemainingInMl
+                              ) | remaining: { unit: ' (mL) remaining' }
                             }}
                           </div>
                         } @else if (
@@ -425,8 +435,10 @@
                         ) {
                           <div class="grow">
                             {{
-                              printFilament.get('filament').value
-                                ?.filamentRemaining
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value
+                                  ?.filamentRemaining
+                              )
                                 | remaining
                                   : { divisor: 1000, unit: ' (g) remaining' }
                             }}
@@ -434,15 +446,18 @@
                         }
                         @if (
                           isRemainingTracked(
-                            printFilament.get('filament').value
-                              ?.filamentLengthRemainingInM
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentLengthRemainingInM
+                            )
                           )
                         ) {
                           <div class="grow">
                             {{
-                              printFilament.get('filament').value
-                                ?.filamentLengthRemainingInM
-                                | remaining: { unit: ' (m) remaining' }
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value
+                                  ?.filamentLengthRemainingInM
+                              ) | remaining: { unit: ' (m) remaining' }
                             }}
                           </div>
                         }

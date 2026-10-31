@@ -6,6 +6,7 @@ import { UserService } from './user.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('UserService', () => {
@@ -18,7 +19,7 @@ describe('UserService', () => {
       imports: [],
       providers: [
         { provide: ImageResizerService, useValue: mockImageResizer },
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

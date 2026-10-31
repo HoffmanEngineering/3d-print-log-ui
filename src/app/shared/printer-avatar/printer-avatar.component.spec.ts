@@ -1,6 +1,6 @@
 import type { MockedObject } from 'vitest';
 import { WritableSignal, signal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -165,7 +165,7 @@ describe('PrinterAvatarComponent with the real store', () => {
     await TestBed.configureTestingModule({
       imports: [PrinterAvatarComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { loggedIn: true } },
       ],

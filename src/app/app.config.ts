@@ -2,6 +2,7 @@ import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import {
   ApplicationConfig,
@@ -12,6 +13,7 @@ import { MAT_DATE_LOCALE } from '@angular/material/core';
 import {
   provideClientHydration,
   withEventReplay,
+  withNoIncrementalHydration,
 } from '@angular/platform-browser';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideLoadingBarInterceptor } from '@ngx-loading-bar/http-client';
@@ -31,7 +33,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideAppRouter(),
     provideAnimations(),
-    provideHttpClient(withInterceptorsFromDi()),
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
     // Interceptors run in the order they are provided. The loading bar came
     // first when it was an imported module, so it stays first.
     provideLoadingBarInterceptor(),
@@ -61,7 +63,7 @@ export const appConfig: ApplicationConfig = {
     ),
     { provide: CelebrationPresenter, useClass: LazyCelebrationPresenter },
     { provide: ErrorHandler, useClass: ErrorHandlerService },
-    provideClientHydration(withEventReplay()),
+    provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
     {
       provide: MAT_DATE_LOCALE,
       useFactory: () =>

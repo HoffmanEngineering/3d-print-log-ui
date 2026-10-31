@@ -41,7 +41,11 @@ interface Rung {
         [category]="family().category"
         [tier]="highest() || 1"
         [oneTime]="oneTime()"
-        [numeral]="family().tiers[(highest() || 1) - 1]?.threshold"
+        [numeral]="
+          $safeNavigationMigration(
+            family().tiers[(highest() || 1) - 1]?.threshold
+          )
+        "
         [locked]="highest() === 0"
         [label]="family().title"
         size="lg"

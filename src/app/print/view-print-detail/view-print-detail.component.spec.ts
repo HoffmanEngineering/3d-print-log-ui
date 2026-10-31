@@ -3,7 +3,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { Location } from '@angular/common';
 import {
   ActivatedRoute,
@@ -208,7 +208,7 @@ describe('ViewPrintDetailComponent', () => {
         AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
       ],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: PrintService, useValue: printService },
         { provide: PrintDetailLoaderService, useValue: loaderSpy },

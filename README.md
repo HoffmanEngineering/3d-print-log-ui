@@ -32,7 +32,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for local setup, configuration, and runni
 
 ## Tech Stack
 
-- Angular 21 (with static prerendering/SSG of marketing routes via `@angular/ssr`)
+- Angular 22 (with static prerendering/SSG of marketing routes via `@angular/ssr`)
 - Angular Material
 - Auth0 SPA SDK
 - Azure Static Web Apps

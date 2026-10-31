@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -23,7 +23,7 @@ describe('PricingComponent', () => {
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, PricingComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: LoggingService,
@@ -97,7 +97,7 @@ describe('PricingComponent in the iOS app', () => {
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule, PricingComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: LoggingService,

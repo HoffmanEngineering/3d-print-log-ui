@@ -1,7 +1,7 @@
 import type { MockedObject } from 'vitest';
 import { PLATFORM_ID, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -59,7 +59,7 @@ describe('NotifierNoticeComponent', () => {
       imports: [NotifierNoticeComponent],
       providers: [
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: PLATFORM_ID, useValue: platform },
         { provide: AuthService, useValue: { userProfile: user } },

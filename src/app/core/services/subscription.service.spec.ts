@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { SubscriptionService, SubscriptionDto } from './subscription.service';
 import { environment } from 'src/environments/environment';
 import { CAN_PURCHASE_PRO } from '../pricing/pro-purchase';
@@ -15,7 +15,7 @@ describe('SubscriptionService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(SubscriptionService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -137,7 +137,7 @@ describe('SubscriptionService in the iOS app', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: CAN_PURCHASE_PRO, useValue: false },
       ],

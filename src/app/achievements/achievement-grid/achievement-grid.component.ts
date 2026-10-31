@@ -79,7 +79,11 @@ interface Section {
                 [category]="cell.family.category"
                 [tier]="cell.shown"
                 [oneTime]="cell.family.tiers.length === 1"
-                [numeral]="cell.family.tiers[cell.shown - 1]?.threshold"
+                [numeral]="
+                  $safeNavigationMigration(
+                    cell.family.tiers[cell.shown - 1]?.threshold
+                  )
+                "
                 [locked]="cell.held === 0"
                 [label]="cell.family.title"
                 size="md"

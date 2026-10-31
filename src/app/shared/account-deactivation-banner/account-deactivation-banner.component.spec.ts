@@ -1,6 +1,7 @@
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -10,7 +11,7 @@ import { AccountDeactivationBannerComponent } from './account-deactivation-banne
 
 describe('AccountDeactivationBannerComponent', () => {
   let fixture: ComponentFixture<AccountDeactivationBannerComponent>;
-  let userProfile$: BehaviorSubject<UserProfileInfo | null>;
+  let userProfile: WritableSignal<UserProfileInfo | null>;
   let auth: jasmine.SpyObj<AuthService>;
   let userService: jasmine.SpyObj<UserService>;
 
@@ -19,11 +20,11 @@ describe('AccountDeactivationBannerComponent', () => {
   } as UserProfileInfo;
 
   const render = (profile: UserProfileInfo | null) => {
-    userProfile$ = new BehaviorSubject(profile);
+    userProfile = signal(profile);
     auth = jasmine.createSpyObj<AuthService>(
       'AuthService',
       ['updateCurrentUserDeactivationDate'],
-      { userProfile$ }
+      { userProfile }
     );
     TestBed.configureTestingModule({
       imports: [AccountDeactivationBannerComponent],
@@ -66,7 +67,7 @@ describe('AccountDeactivationBannerComponent', () => {
   it('appears when the account is deactivated while the page is open', () => {
     render({ deactivationDateTime: null } as UserProfileInfo);
 
-    userProfile$.next(deactivated);
+    userProfile.set(deactivated);
     fixture.detectChanges();
 
     expect(
@@ -87,13 +88,5 @@ describe('AccountDeactivationBannerComponent', () => {
     expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledOnceWith(
       null
     );
-  });
-
-  it('stops listening to the user profile once destroyed', () => {
-    render(null);
-
-    fixture.destroy();
-
-    expect(userProfile$.observed).toBeFalse();
   });
 });

@@ -95,9 +95,7 @@ export class UserProfileComponent implements OnInit {
 
   readonly userDetail = signal<UserDetailDto>(null);
 
-  readonly currentUser = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  readonly currentUser = this.authService.userProfile;
 
   public profileViewStatusTypes = ProfileViewStatus;
 

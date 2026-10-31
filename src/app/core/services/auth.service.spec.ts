@@ -9,7 +9,6 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { GoogleAnalyticsService } from './google-analytics.service';
 import { defer, NEVER, of, throwError } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
@@ -77,36 +76,25 @@ describe('AuthService', () => {
       expect(setUser).toHaveBeenCalledWith(1);
     });
 
-    it('should emit mock user profile and set loggedIn=true when devAuthBypass is true', (done) => {
+    it('should set the mock user profile and loggedIn=true when devAuthBypass is true', () => {
       const service = TestBed.inject(AuthService);
 
       service.localAuthSetup();
 
-      service.userProfile$
-        .pipe(
-          filter((profile) => profile !== null),
-          take(1)
-        )
-        .subscribe((profile) => {
-          expect(profile).not.toBeNull();
-          expect(service.loggedIn).toBeTrue();
-          expect(service.isLoggedIn()).toBeTrue();
-          done();
-        });
+      expect(service.userProfile()).not.toBeNull();
+      expect(service.loggedIn).toBeTrue();
+      expect(service.isLoggedIn()).toBeTrue();
     });
 
     it('sets loggedIn=false and emits no profile when the dev anonymous flag is set', () => {
       sessionStorage.setItem('devUserId', 'anonymous');
       const service = TestBed.inject(AuthService);
 
-      let latestProfile: unknown = 'unset';
-      service.userProfile$.subscribe((p) => (latestProfile = p));
-
       service.localAuthSetup();
 
       expect(service.loggedIn).toBeFalse();
       expect(service.isLoggedIn()).toBeFalse();
-      expect(latestProfile).toBeNull(); // BehaviorSubject initial null, never overwritten
+      expect(service.userProfile()).toBeNull();
 
       sessionStorage.removeItem('devUserId');
     });

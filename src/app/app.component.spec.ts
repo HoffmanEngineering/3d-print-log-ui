@@ -2,7 +2,7 @@ import { TestBed, waitForAsync } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
 import { ThemeService } from './core/services/theme.service';
-import { AuthService } from './core/services/auth.service';
+import { AuthService, UserProfileInfo } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
@@ -10,10 +10,11 @@ import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { PushRegistrationService } from './core/services/push-registration.service';
 import { NativeBridgeService } from './core/services/native-bridge.service';
 import { of } from 'rxjs';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal, WritableSignal } from '@angular/core';
 
 describe('AppComponent (ThemeService)', () => {
   let mockAuthService: jasmine.SpyObj<AuthService>;
+  let userProfile: WritableSignal<UserProfileInfo | null>;
   let mockGoogleAnalyticsService: jasmine.SpyObj<GoogleAnalyticsService>;
   let mockLoggingService: jasmine.SpyObj<LoggingService>;
   let mockReleaseNotesService: jasmine.SpyObj<VersionReleaseNoteDialogService>;
@@ -22,11 +23,12 @@ describe('AppComponent (ThemeService)', () => {
   let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
 
   beforeEach(waitForAsync(() => {
-    mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'localAuthSetup',
-      'getTokenSilently$',
-    ]);
-    mockAuthService.userProfile$ = of(null);
+    userProfile = signal<UserProfileInfo | null>(null);
+    mockAuthService = jasmine.createSpyObj<AuthService>(
+      'AuthService',
+      ['localAuthSetup', 'getTokenSilently$'],
+      { userProfile }
+    );
     mockAuthService.getTokenSilently$.and.returnValue(of('bearer-abc'));
 
     mockPushRegistration = jasmine.createSpyObj<PushRegistrationService>(
@@ -132,7 +134,7 @@ describe('AppComponent (ThemeService)', () => {
     });
 
     it('registers with a bearer once a profile is emitted', () => {
-      mockAuthService.userProfile$ = of({ id: 1 } as never);
+      userProfile.set({ id: 1 } as UserProfileInfo);
 
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();
@@ -182,7 +184,7 @@ describe('AppComponent (ThemeService)', () => {
      */
     it('retries installing the tap listener when the bridge was not ready', () => {
       mockNativeBridge.onPendingTap.and.returnValue(false);
-      mockAuthService.userProfile$ = of({ id: 1 } as never);
+      userProfile.set({ id: 1 } as UserProfileInfo);
 
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();
@@ -192,7 +194,7 @@ describe('AppComponent (ThemeService)', () => {
 
     it('does not reinstall the tap listener once one is installed', () => {
       mockNativeBridge.onPendingTap.and.returnValue(true);
-      mockAuthService.userProfile$ = of({ id: 1 } as never);
+      userProfile.set({ id: 1 } as UserProfileInfo);
 
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();

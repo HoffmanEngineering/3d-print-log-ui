@@ -4,7 +4,6 @@ import {
   computed,
   inject,
 } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { RouterModule } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -41,9 +40,7 @@ export class NavbarComponent {
 
   public versionNumber = environment.version;
 
-  private readonly user = toSignal(this.auth.userProfile$, {
-    initialValue: null,
-  });
+  private readonly user = this.auth.userProfile;
   readonly profilePictureUrl = computed(
     () => this.user()?.profilePicture || null
   );

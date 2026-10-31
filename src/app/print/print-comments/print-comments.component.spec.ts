@@ -1,8 +1,9 @@
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrService } from 'ngx-toastr';
 
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -14,13 +15,13 @@ import { PrintCommentsComponent } from './print-comments.component';
 describe('PrintCommentsComponent', () => {
   let component: PrintCommentsComponent;
   let fixture: ComponentFixture<PrintCommentsComponent>;
-  let userProfile$: BehaviorSubject<UserProfileInfo | null>;
+  let userProfile: WritableSignal<UserProfileInfo | null>;
 
   beforeEach(waitForAsync(() => {
-    userProfile$ = new BehaviorSubject<UserProfileInfo | null>(null);
+    userProfile = signal<UserProfileInfo | null>(null);
     const mockAuthService = {
       ...jasmine.createSpyObj<AuthService>('AuthService', ['getUser$']),
-      userProfile$: userProfile$.asObservable(),
+      userProfile,
     };
 
     const mockPrintService = jasmine.createSpyObj<PrintService>(
@@ -72,7 +73,7 @@ describe('PrintCommentsComponent', () => {
     });
 
     it('appears once the visitor signs in', () => {
-      userProfile$.next({ id: 4, profilePicture: '' } as UserProfileInfo);
+      userProfile.set({ id: 4, profilePicture: '' } as UserProfileInfo);
       fixture.detectChanges();
 
       expect(replyBox()).not.toBeNull();
@@ -80,22 +81,14 @@ describe('PrintCommentsComponent', () => {
     });
 
     it('goes away again when the user signs out', () => {
-      userProfile$.next({ id: 4, profilePicture: '' } as UserProfileInfo);
+      userProfile.set({ id: 4, profilePicture: '' } as UserProfileInfo);
       fixture.detectChanges();
 
-      userProfile$.next(null);
+      userProfile.set(null);
       fixture.detectChanges();
 
       expect(replyBox()).toBeNull();
     });
-  });
-
-  it('unsubscribes from the user profile when destroyed', () => {
-    expect(userProfile$.observed).toBeTrue();
-
-    fixture.destroy();
-
-    expect(userProfile$.observed).toBeFalse();
   });
 
   /**

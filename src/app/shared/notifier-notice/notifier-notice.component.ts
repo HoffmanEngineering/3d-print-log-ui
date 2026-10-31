@@ -9,17 +9,10 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
-import {
-  catchError,
-  distinctUntilChanged,
-  forkJoin,
-  map,
-  of,
-  switchMap,
-} from 'rxjs';
+import { catchError, forkJoin, of, switchMap } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import {
@@ -55,6 +48,9 @@ export class NotifierNoticeComponent implements OnInit {
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly signedIn$ = toObservable(
+    computed(() => !!this.auth.userProfile())
+  );
 
   /** The connections whose printer still has the notifier or the webhook sending events. */
   protected readonly connections = signal<Connection[]>([]);
@@ -66,10 +62,8 @@ export class NotifierNoticeComponent implements OnInit {
       return;
     }
 
-    this.auth.userProfile$
+    this.signedIn$
       .pipe(
-        map((user) => !!user),
-        distinctUntilChanged(),
         switchMap((signedIn) =>
           signedIn
             ? this.connectionService.getConnections().pipe(

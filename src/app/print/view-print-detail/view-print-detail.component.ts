@@ -182,9 +182,7 @@ export class ViewPrintDetailComponent {
     { initialValue: SEO_PENDING as SeoLookupState }
   );
 
-  private readonly currentUser = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  private readonly currentUser = this.authService.userProfile;
 
   private readonly pageRoot = viewChild<ElementRef<HTMLElement>>('pageRoot');
 
@@ -207,9 +205,8 @@ export class ViewPrintDetailComponent {
    * separately-loaded user, which is null when getUserSummary fails.
    * Not "is logged in": a signed-in stranger sees what an anonymous visitor sees.
    *
-   * Ownership reveals ADDITIVELY. userProfile$ is a BehaviorSubject seeded with
-   * null that emits synchronously, so there is no reliable "auth has settled"
-   * moment to gate on — any such gate would open instantly and gate nothing.
+   * Ownership reveals ADDITIVELY. The profile is null until it loads, and
+   * nothing marks "auth has settled", so there is no reliable moment to gate on — any such gate would open instantly and gate nothing.
    * isOwner therefore starts false and can only flip to true.
    *
    * That direction is the safe one: owner-only content is never shown and then

@@ -2,13 +2,18 @@ import { UserPrintsComponent } from '../user-prints/user-prints.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { AchievementStripComponent } from '../achievement-strip/achievement-strip.component';
 import { StatsComponent } from '../stats/stats.component';
-import { NO_ERRORS_SCHEMA, provideZoneChangeDetection } from '@angular/core';
+import {
+  NO_ERRORS_SCHEMA,
+  provideZoneChangeDetection,
+  signal,
+  WritableSignal,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MatMenuModule } from '@angular/material/menu';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { of, Subject } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -31,7 +36,7 @@ import { UserProfileComponent } from './user-profile.component';
 describe('UserProfileComponent', () => {
   let fixture: ComponentFixture<UserProfileComponent>;
   let component: UserProfileComponent;
-  let userProfile$: BehaviorSubject<null>;
+
   let userService: jasmine.SpyObj<UserService>;
   let authService: jasmine.SpyObj<AuthService>;
   let metaTags: jasmine.SpyObj<MetaTagService>;
@@ -83,7 +88,7 @@ describe('UserProfileComponent', () => {
     authService = jasmine.createSpyObj<AuthService>(
       'AuthService',
       ['updateCurrentUserCoverPicture'],
-      { userProfile$: (userProfile$ = new BehaviorSubject(null)) }
+      { userProfile: signal(null) }
     );
     metaTags = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
       'setTitle',
@@ -183,12 +188,6 @@ describe('UserProfileComponent', () => {
         authService.updateCurrentUserCoverPicture
       ).toHaveBeenCalledOnceWith(null);
     });
-
-    it('stops listening to the signed-in user once destroyed', () => {
-      fixture.destroy();
-
-      expect(userProfile$.observed).toBeFalse();
-    });
   });
 
   describe('metadata from /seo', () => {
@@ -244,7 +243,7 @@ describe('UserProfileComponent', () => {
  */
 describe('UserProfileComponent rendering', () => {
   let fixture: ComponentFixture<UserProfileComponent>;
-  let signedIn: BehaviorSubject<UserProfileInfo | null>;
+  let signedIn: WritableSignal<UserProfileInfo | null>;
   let saved: Subject<UserDetailDto>;
 
   const ada = {
@@ -262,7 +261,7 @@ describe('UserProfileComponent rendering', () => {
     );
 
   beforeEach(async () => {
-    signedIn = new BehaviorSubject<UserProfileInfo | null>(null);
+    signedIn = signal<UserProfileInfo | null>(null);
     saved = new Subject();
     const userService = jasmine.createSpyObj<UserService>('UserService', [
       'updateCurrentUserDetail',
@@ -277,7 +276,7 @@ describe('UserProfileComponent rendering', () => {
           provide: ActivatedRoute,
           useValue: { data: of({ userDetail: ada }) },
         },
-        { provide: AuthService, useValue: { userProfile$: signedIn } },
+        { provide: AuthService, useValue: { userProfile: signedIn } },
         { provide: UserService, useValue: userService },
         { provide: ToastrService, useValue: {} },
         {
@@ -321,14 +320,14 @@ describe('UserProfileComponent rendering', () => {
   it('offers Edit Bio once the owner turns out to be signed in', () => {
     expect(button('Edit Bio')).toBeUndefined();
 
-    signedIn.next({ id: 12 } as UserProfileInfo);
+    signedIn.set({ id: 12 } as UserProfileInfo);
     fixture.detectChanges();
 
     expect(button('Edit Bio')).toBeDefined();
   });
 
   it('shows the new bio once the save comes back', async () => {
-    signedIn.next({ id: 12 } as UserProfileInfo);
+    signedIn.set({ id: 12 } as UserProfileInfo);
     fixture.detectChanges();
     button('Edit Bio')!.click();
     fixture.detectChanges();

@@ -64,11 +64,11 @@
         matBadgeColor="accent"
         matBadgeSize="small"
         [matBadgeHidden]="activeFilterCount() === 0"
-        [attr.aria-expanded]="isFilterPanelOpen"
+        [attr.aria-expanded]="isFilterPanelOpen()"
         aria-controls="filter-panel"
         (click)="toggleFilterPanel()"
       >
-        <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
+        <mat-icon>{{ isFilterPanelOpen() ? 'expand_less' : 'tune' }}</mat-icon>
         Filters
       </button>
     </div>
@@ -77,7 +77,7 @@
     <div
       id="filter-panel"
       class="filter-panel"
-      [class.filter-panel--open]="isFilterPanelOpen"
+      [class.filter-panel--open]="isFilterPanelOpen()"
     >
       <div class="filter-panel-inner">
         <mat-form-field class="filter-field" subscriptSizing="dynamic">

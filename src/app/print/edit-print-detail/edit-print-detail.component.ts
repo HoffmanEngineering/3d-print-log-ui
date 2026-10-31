@@ -684,6 +684,10 @@ export class EditPrintDetailComponent
           data.print.print
         );
       }
+
+      // The form and the print are plain fields, and the data emits again when
+      // this component is reused for another print's edit route.
+      this.changeDetector.markForCheck();
     });
 
     this.userSettingService

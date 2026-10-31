@@ -1,3 +1,4 @@
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
@@ -24,6 +25,11 @@ describe('FilamentListContainerComponent (isolated)', () => {
     // Construct with minimal stubs — only testing pure methods
     TestBed.configureTestingModule({
       providers: [
+        // Built outside a view, so there is none to mark: a no-op stands in.
+        {
+          provide: ChangeDetectorRef,
+          useValue: { markForCheck: () => undefined },
+        },
         { provide: ActivatedRoute, useValue: {} },
         { provide: FilamentService, useValue: null },
         { provide: Title, useValue: null },

@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   signal,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { PageEvent, MatPaginator } from '@angular/material/paginator';
@@ -179,6 +180,7 @@ export function resetAddPrinterToastShown(): void {
 })
 export class PrintListComponent implements OnInit, OnDestroy {
   private activatedRoute = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private printerService = inject(PrinterService);
   private toastrService = inject(ToastrService);
   private titleService = inject(Title);
@@ -476,8 +478,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
     () => this.loadingIndicator.visible() && this.hasLoadedOnce()
   );
 
-  public isFilterPanelOpen =
-    typeof window !== 'undefined' && window.innerWidth >= 600;
+  // A signal: the route data opens it after first render, which nothing
+  // else would repaint without zone.js.
+  readonly isFilterPanelOpen = signal(
+    typeof window !== 'undefined' && window.innerWidth >= 600
+  );
 
   readonly activeFilterCount = computed(() => {
     let count = 0;
@@ -501,7 +506,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public toggleFilterPanel(): void {
-    this.isFilterPanelOpen = !this.isFilterPanelOpen;
+    this.isFilterPanelOpen.update((open) => !open);
   }
 
   public printSearchSubscription: Subscription | null = null;
@@ -625,6 +630,10 @@ export class PrintListComponent implements OnInit, OnDestroy {
         this.filterByFilamentIds,
         params.getAll('filterByFilamentId')
       );
+
+      // searchText and the sort are plain fields, and the params change after
+      // first render too (back and forward): nothing else would mark this view.
+      this.changeDetector.markForCheck();
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -648,7 +657,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       );
 
       if (this.activeFilterCount() > 0) {
-        this.isFilterPanelOpen = true;
+        this.isFilterPanelOpen.set(true);
       }
     });
 

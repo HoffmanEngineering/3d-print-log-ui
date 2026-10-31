@@ -858,14 +858,49 @@ describe('EditPrintDetailComponent', () => {
       expect(component.getPrintFromForm().curaSettingId).toBe('setting-1');
     });
 
-    it('should reset saving to false after handleSaveSuccess', () => {
-      const router = TestBed.inject(Router);
-      spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    // The print list is still loading after the save; a Submit that looks idle invites a
+    // second click.
+    describe('after the save, while the print list loads', () => {
+      let finishNavigation: (navigated: boolean) => void;
+      let failNavigation: (error: Error) => void;
 
-      component.saving.set(true);
-      component['handleSaveSuccess']({ id: 1 } as any);
+      beforeEach(() => {
+        spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+          new Promise<boolean>((resolve, reject) => {
+            finishNavigation = resolve;
+            failNavigation = reject;
+          })
+        );
+        component.saving.set(true);
+        component['handleSaveSuccess']({ id: 1 } as never);
+      });
 
-      expect(component.saving()).toBe(false);
+      it('keeps the spinner until the list has loaded', async () => {
+        expect(component.saving()).withContext('navigating').toBeTrue();
+
+        finishNavigation(true);
+        await fixture.whenStable();
+
+        expect(component.saving()).toBeTrue();
+        expect(
+          (TestBed.inject(ToastrService) as jasmine.SpyObj<ToastrService>)
+            .success
+        ).toHaveBeenCalledWith('Save successful!');
+      });
+
+      it('stops the spinner when the navigation is canceled', async () => {
+        finishNavigation(false);
+        await fixture.whenStable();
+
+        expect(component.saving()).toBeFalse();
+      });
+
+      it('stops the spinner when the navigation fails', async () => {
+        failNavigation(new Error('chunk load failed'));
+        await fixture.whenStable();
+
+        expect(component.saving()).toBeFalse();
+      });
     });
   });
 
@@ -1106,7 +1141,7 @@ describe('EditPrintDetailComponent', () => {
       form.onSubmit();
 
       expect(printService.patchPrint).not.toHaveBeenCalled();
-      expect(form.saving()).toBeFalse();
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/prints']);
     });
 
     it('clears a field the user emptied', () => {
@@ -1263,6 +1298,77 @@ describe('EditPrintDetailComponent', () => {
       const [, patch] = printService.patchPrint.calls.mostRecent().args;
       expect(Object.keys(patch)).toEqual(['startDate']);
       expect(patch.startDate).toEqual(form.getCombinedStartDateTime());
+    });
+
+    // A G-code import leaves the actual amount unset. It loaded as undefined / 1000 = NaN, which
+    // the Weight input's pattern rejects once the row shows Weight.
+    it('loads an amount that was never recorded as empty, not NaN', () => {
+      const form = openEditor({
+        ...existingPrint,
+        filamentUsageMg: undefined,
+        filamentUsage: [
+          { ...usageRow, amountMg: undefined, estimatedAmountMg: undefined },
+        ],
+      } as unknown as PrintDetail);
+
+      const row = form.filamentUsage.at(0);
+      expect(row.get('amountG')!.value).toBeNull();
+      expect(row.get('estimatedAmountG')!.value).toBeNull();
+      expect(form.printForm.controls.filamentUsageG.value).toBeNull();
+    });
+
+    describe('submitting an invalid form', () => {
+      let toastr: jasmine.SpyObj<ToastrService>;
+
+      beforeEach(() => {
+        toastr = TestBed.inject(ToastrService) as jasmine.SpyObj<ToastrService>;
+      });
+
+      // Swap Data sets a row's usage and its measure in one setValue. The Weight input's pattern
+      // judges the value while that input is still on the page; once the row shows Length the
+      // input and its validator are gone, but Angular never re-checks the control.
+      it('saves when the only error belonged to an input that is gone', () => {
+        const form = openEditor(existingPrint);
+        const row = form.filamentUsage.at(0);
+        row.patchValue({
+          amountG: 'abc' as never,
+          source: PrintFilamentSourceMeasurement.Length,
+        });
+        expect(row.invalid).withContext('stale status').toBeTrue();
+        editor!.detectChanges();
+
+        form.onSubmit();
+
+        expect(printService.patchPrint).toHaveBeenCalled();
+      });
+
+      it('focuses the invalid field inside a usage row', () => {
+        const form = openEditor(existingPrint);
+        form.filamentUsage
+          .at(0)
+          .get('amountG')!
+          .setValue('abc' as never);
+        editor!.detectChanges();
+
+        form.onSubmit();
+
+        expect(document.activeElement?.id).toBe(
+          'edit-print-actual-filament-used-gram-0'
+        );
+        expect(printService.patchPrint).not.toHaveBeenCalled();
+        expect(form.saving()).toBeFalse();
+      });
+
+      it('says why when the invalid field is not on the page', () => {
+        const form = openEditor(existingPrint);
+        form.printForm.controls.estimatedFilamentUsageG.setValue(-1);
+
+        expect(() => form.onSubmit()).not.toThrow();
+
+        expect(printService.patchPrint).not.toHaveBeenCalled();
+        expect(toastr.error).toHaveBeenCalledTimes(1);
+        expect(form.saving()).toBeFalse();
+      });
     });
 
     it('creates a new project first, then assigns it', () => {

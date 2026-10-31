@@ -27,7 +27,9 @@ describe('ErrorHandlerService', () => {
     (environment as { production: boolean }).production = production;
   });
 
-  it('reports uncaught errors to logging in production', () => {
+  // A click handler that throws in production otherwise looks like a button that does nothing,
+  // with nothing in the console to say why.
+  it('reports uncaught errors to logging and the console in production', () => {
     (environment as { production: boolean }).production = true;
     const consoleHandler = spyOn(ErrorHandler.prototype, 'handleError');
     const error = new Error('boom');
@@ -35,7 +37,7 @@ describe('ErrorHandlerService', () => {
     service.handleError(error);
 
     expect(loggingService.logException).toHaveBeenCalledOnceWith(error);
-    expect(consoleHandler).not.toHaveBeenCalled();
+    expect(consoleHandler).toHaveBeenCalledOnceWith(error);
   });
 
   it('leaves uncaught errors to the console outside production', () => {

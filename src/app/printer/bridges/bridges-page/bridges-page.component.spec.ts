@@ -308,8 +308,7 @@ describe('BridgesPageComponent', () => {
 
   it('refreshes while open', async () => {
     vi.useFakeTimers();
-    void configure({ idleMs: 1000, scanningMs: 100 });
-    await vi.advanceTimersByTimeAsync(0);
+    await configure({ idleMs: 1000, scanningMs: 100 });
     fixture = TestBed.createComponent(BridgesPageComponent);
     fixture.detectChanges();
     await vi.advanceTimersByTimeAsync(0);

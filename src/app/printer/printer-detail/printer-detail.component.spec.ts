@@ -790,9 +790,9 @@ describe('PrinterDetailComponent', () => {
     });
 
     it('feeds the make-and-model search from catalog.search after a 150 ms debounce', async () => {
+      // Set up on real timers: only the debounce, which typing starts, needs faking.
+      await setUp(null);
       vi.useFakeTimers();
-      void setUp(null);
-      await vi.advanceTimersByTimeAsync(0);
 
       typeInto('edit-printer-catalog-search', 'P1');
       await vi.advanceTimersByTimeAsync(149);

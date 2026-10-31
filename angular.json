@@ -192,13 +192,14 @@
             "runnerConfig": "vitest-base.config.ts",
             "browsers": ["chromiumHeadless"],
             "browserViewport": "800x600",
-            "coverageReporters": ["html", "lcovonly", "text-summary"]
-          },
-          "configurations": {
-            "coverage": {
-              "coverage": true,
-              "runnerConfig": "vitest-coverage.config.ts"
-            }
+            "coverageReporters": ["html", "lcovonly", "text-summary"],
+            "coverageExclude": [
+              "**/*.html",
+              "**/*.json",
+              "src/**/*.spec.ts",
+              "src/test-setup.ts",
+              "src/test-providers.ts"
+            ]
           }
         },
         "lint": {

@@ -743,13 +743,13 @@ describe('PrintListComponent', () => {
   it('should keep the filter panel open when resetFilters is called', () => {
     // Arrange
     fixture.detectChanges();
-    component.isFilterPanelOpen = true;
+    component.isFilterPanelOpen.set(true);
 
     // Act
     component.resetFilters();
 
     // Assert
-    expect(component.isFilterPanelOpen).toBeTrue();
+    expect(component.isFilterPanelOpen()).toBeTrue();
   });
 
   it('should redirect to printers/new when the Printer Redirect toast is tapped.', () => {

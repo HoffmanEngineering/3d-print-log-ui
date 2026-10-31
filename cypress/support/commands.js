@@ -194,14 +194,30 @@ Cypress.Commands.add('createProject', (name) => {
     .then((response) => response.body);
 });
 
-Cypress.Commands.add('openFilterPanel', () => {
-  cy.get('#filter-panel').then(($panel) => {
-    if (!$panel.hasClass('filter-panel--open')) {
-      cy.get('[aria-controls="filter-panel"]').click();
+// The Filters toggle, once the print list has rendered its state. Without zone.js
+// a routed component's elements can reach the DOM a pass before its bindings, so
+// the panel's class read at that moment says "closed" whatever the state is, and
+// a click "to open it" closes it. aria-expanded is itself a binding: once it is
+// there, the panel's class is current too.
+const filterToggle = () =>
+  cy
+    .get('[aria-controls="filter-panel"]')
+    .should(($toggle) => expect($toggle).to.have.attr('aria-expanded'));
+
+const setFilterPanel = (open) => {
+  filterToggle().then(($toggle) => {
+    if (($toggle.attr('aria-expanded') === 'true') !== open) {
+      cy.wrap($toggle).click();
     }
   });
-  cy.get('#filter-panel').should('have.class', 'filter-panel--open');
-});
+  cy.get('#filter-panel').should(
+    open ? 'have.class' : 'not.have.class',
+    'filter-panel--open'
+  );
+};
+
+Cypress.Commands.add('openFilterPanel', () => setFilterPanel(true));
+Cypress.Commands.add('closeFilterPanel', () => setFilterPanel(false));
 
 // User settings are stored per user on the API, and every spec in this suite
 // runs against the same dev user. A spec that changes a setting therefore

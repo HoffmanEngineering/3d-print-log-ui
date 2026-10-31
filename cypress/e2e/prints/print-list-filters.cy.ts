@@ -8,12 +8,7 @@ describe('Print List Filters', () => {
 
     // The panel auto-opens on viewports ≥ 600px wide; close it to test the
     // open transition from a known closed state.
-    cy.get('#filter-panel').then(($panel) => {
-      if ($panel.hasClass('filter-panel--open')) {
-        cy.get('[aria-controls="filter-panel"]').click();
-      }
-    });
-    cy.get('#filter-panel').should('not.have.class', 'filter-panel--open');
+    cy.closeFilterPanel();
 
     cy.get('[aria-controls="filter-panel"]').click();
     cy.get('#filter-panel').should('have.class', 'filter-panel--open');

@@ -2,7 +2,6 @@ import {
   inject,
   Injectable,
   Injector,
-  NgZone,
   PLATFORM_ID,
   signal,
 } from '@angular/core';
@@ -82,7 +81,6 @@ export class AuthService {
   private router = inject(Router);
   private userService = inject(UserService);
   private notificationService = inject(NotificationService);
-  private ngZone = inject(NgZone);
 
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -159,9 +157,7 @@ export class AuthService {
         // Called by cordova-plugin-customurlscheme when the app receives a callback URL
         if (url && url.indexOf('/callback?') !== -1) {
           const qs = url.substring(url.indexOf('?'));
-          this.ngZone.run(() => {
-            this.router.navigateByUrl('/callback' + qs);
-          });
+          this.router.navigateByUrl('/callback' + qs);
         }
       };
     }

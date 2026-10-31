@@ -213,9 +213,9 @@ describe('ProjectDetailComponent', () => {
       afterClosed: () => of(true),
       componentInstance: {},
     } as any;
-    // Spy directly on the component's injected dialog instance — SharedModule provides
-    // the real MatDialog via MatDialogModule, which shadows the root-injector mock.
-    spyOn((component as any).dialog, 'open').and.returnValue(mockDialogRef);
+    (TestBed.inject(MatDialog).open as jasmine.Spy).and.returnValue(
+      mockDialogRef
+    );
 
     const print: PrintSummary = {
       id: 7,

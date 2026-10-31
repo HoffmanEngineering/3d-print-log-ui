@@ -42,7 +42,20 @@ import { UserSetting } from 'src/app/core/services/user-setting.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { DecimalPipe } from '@angular/common';
+import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
+import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
+import { FilamentUsageSummaryComponent } from 'src/app/shared/filament-usage-summary/filament-usage-summary.component';
+import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
+import { PrintImageComponent } from 'src/app/shared/print-image/print-image.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
@@ -79,7 +92,20 @@ function sameIds<T>(a: T[], b: T[]): boolean {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     PrinterAvatarComponent,
-    SharedModule,
+    DecimalPipe,
+    DurationPipe,
+    FilamentColorSwatchStylePipe,
+    FilamentUsageSummaryComponent,
+    LocaleDatePipe,
+    PrintImageComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatMenuModule,
+    MatPaginatorModule,
+    MatProgressBarModule,
+    MatTableModule,
+    MatTooltipModule,
     ProjectChipComponent,
     RouterLink,
     ProjectImageComponent,

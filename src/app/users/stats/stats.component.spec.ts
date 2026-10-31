@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
-import { SharedModule } from 'src/app/shared/shared.module';
 
 import { StatsComponent } from './stats.component';
 
@@ -33,7 +32,7 @@ describe('StatsComponent', () => {
     );
 
     TestBed.configureTestingModule({
-      imports: [SharedModule, StatsComponent],
+      imports: [StatsComponent],
       providers: [{ provide: UsersPrintsStatsService, useValue: stats }],
     });
     fixture = TestBed.createComponent(StatsComponent);

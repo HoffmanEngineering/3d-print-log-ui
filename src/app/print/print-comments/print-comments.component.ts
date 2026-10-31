@@ -12,13 +12,25 @@ import { ToastrService } from 'ngx-toastr';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { Comment } from 'src/app/core/services/comment.service';
 import { PrintService } from 'src/app/core/services/print.service';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { CommentComponent } from 'src/app/shared/comments/comment/comment.component';
+import { FormsModule } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 
 @Component({
   selector: 'app-print-comments',
   templateUrl: './print-comments.component.html',
   styleUrls: ['./print-comments.component.scss'],
-  imports: [SharedModule],
+  imports: [
+    CommentComponent,
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PrintCommentsComponent {

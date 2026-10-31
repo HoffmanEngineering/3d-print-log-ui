@@ -12,7 +12,6 @@ import {
 import { MaterialCategoryService } from 'src/app/core/services/material-categories.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
-import { SharedModule } from '../shared.module';
 
 describe('FilamentListComponent', () => {
   let component: FilamentListComponent;
@@ -279,7 +278,7 @@ describe('FilamentListComponent thumbnail column', () => {
     materialCategoryService.getMaterialCategories.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [NoopAnimationsModule, RouterTestingModule],
       providers: [
         { provide: FilamentService, useValue: filamentService },
         {
@@ -358,7 +357,7 @@ describe('FilamentListComponent once responses arrive', () => {
     materialCategoryService.getMaterialCategories.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [NoopAnimationsModule, RouterTestingModule],
       providers: [
         provideZoneChangeDetection(),
         { provide: FilamentService, useValue: filamentService },
@@ -489,7 +488,7 @@ describe('FilamentListComponent selection', () => {
     materialCategoryService.getMaterialCategories.and.returnValue(of([]));
 
     await TestBed.configureTestingModule({
-      imports: [SharedModule, NoopAnimationsModule, RouterTestingModule],
+      imports: [NoopAnimationsModule, RouterTestingModule],
       providers: [
         { provide: FilamentService, useValue: filamentService },
         { provide: MaterialCategoryService, useValue: materialCategoryService },

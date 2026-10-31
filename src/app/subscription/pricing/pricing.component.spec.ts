@@ -8,7 +8,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { PricingComponent } from './pricing.component';
 import { CAN_PURCHASE_PRO } from '../../core/pricing/pro-purchase';
-import { SharedModule } from '../../shared/shared.module';
 import { LoggingService } from '../../core/services/logging.service';
 import {
   annualPricePerMonth,
@@ -22,12 +21,7 @@ describe('PricingComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        SharedModule,
-        NoopAnimationsModule,
-        RouterTestingModule,
-        PricingComponent,
-      ],
+      imports: [NoopAnimationsModule, RouterTestingModule, PricingComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -98,12 +92,7 @@ describe('PricingComponent in the iOS app', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        SharedModule,
-        NoopAnimationsModule,
-        RouterTestingModule,
-        PricingComponent,
-      ],
+      imports: [NoopAnimationsModule, RouterTestingModule, PricingComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),

@@ -49,3 +49,10 @@ table {
   border-radius: 4px;
   overflow: hidden;
 }
+
+// Swatch, then name: one material per row, in slot order.
+.loaded-materials {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  gap: 10px;
+}

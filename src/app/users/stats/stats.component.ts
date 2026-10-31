@@ -8,13 +8,6 @@ import {
   untracked,
 } from '@angular/core';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
-import {
-  DefaultGridColumnsDirective,
-  DefaultGridRowsDirective,
-  DefaultGridGapDirective,
-  DefaultGridColumnDirective,
-  DefaultGridRowDirective,
-} from '@ngbracket/ngx-layout/grid';
 import { StatPanelComponent } from '../../shared/panels/stat-panel/stat-panel.component';
 
 @Component({
@@ -22,14 +15,7 @@ import { StatPanelComponent } from '../../shared/panels/stat-panel/stat-panel.co
   templateUrl: './stats.component.html',
   styleUrls: ['./stats.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    DefaultGridColumnsDirective,
-    DefaultGridRowsDirective,
-    DefaultGridGapDirective,
-    StatPanelComponent,
-    DefaultGridColumnDirective,
-    DefaultGridRowDirective,
-  ],
+  imports: [StatPanelComponent],
 })
 export class StatsComponent {
   private readonly userPrintsService = inject(UsersPrintsStatsService);

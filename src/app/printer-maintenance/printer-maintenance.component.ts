@@ -26,12 +26,6 @@ import { PagedList } from '../core/types/paging';
 import { SortDirection } from '../core/types/sort-request';
 import { openSimpleDialog } from '../shared/simple-dialog/simple-dialog.component';
 import { toSortHeaderIds } from '../core/utils/sort-header-ids';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatButton, MatIconButton } from '@angular/material/button';
 import {
   MatFormField,
@@ -43,7 +37,6 @@ import { MatInput } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { MatSelect, MatOption } from '@angular/material/select';
 import { PrinterAvatarComponent } from '../shared/printer-avatar/printer-avatar.component';
-import { DefaultStyleDirective } from '@ngbracket/ngx-layout/extended';
 import {
   MatTable,
   MatColumnDef,
@@ -76,10 +69,6 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
   templateUrl: './printer-maintenance.component.html',
   styleUrls: ['./printer-maintenance.component.scss'],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
     MatButton,
     MatFormField,
     MatLabel,
@@ -88,7 +77,6 @@ import { LocaleDatePipe } from '../shared/pipes/locale-date.pipe';
     MatSelect,
     MatOption,
     PrinterAvatarComponent,
-    DefaultStyleDirective,
     MatTable,
     MatSort,
     MatColumnDef,

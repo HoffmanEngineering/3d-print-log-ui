@@ -58,11 +58,6 @@ import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-mod
 import { PrintBulkActionsService } from '../services/print-bulk-actions.service';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
 import { BLOCK_SCROLL_WHILE_MENU_OPEN } from 'src/app/shared/menu/menu-scroll.provider';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
@@ -131,8 +126,6 @@ export function resetAddPrinterToastShown(): void {
   styleUrls: ['./print-list.component.scss'],
   providers: [PrintBulkActionsService, BLOCK_SCROLL_WHILE_MENU_OPEN],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatButton,
     RouterLink,
     MatMenuTrigger,
@@ -161,7 +154,6 @@ export function resetAddPrinterToastShown(): void {
     PrintListSkeletonComponent,
     PrintCardComponent,
     MatTable,
-    DefaultFlexDirective,
     MatSort,
     MatColumnDef,
     MatHeaderCellDef,

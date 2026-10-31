@@ -2,3 +2,73 @@
   min-width: 30ch;
   margin-bottom: 10px;
 }
+
+// Layout (formerly ngx-layout attributes; same values, same breakpoints).
+.page {
+  display: flex;
+  justify-content: center;
+}
+
+.keys-card {
+  flex: 1 1 80vw;
+  min-width: 80vw;
+  max-width: 80vw;
+
+  @media (max-width: 599.98px) {
+    flex: 1 1 100%;
+    min-width: auto;
+    max-width: 100%;
+  }
+}
+
+.keys-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+// Grows to fill its column, as fxFlex="grow" did.
+.fill-column {
+  flex: 1 1 100%;
+  max-height: 100%;
+}
+
+.keys-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.keys-content,
+.keys-table {
+  width: 100%;
+  height: 100%;
+}
+
+.add-key {
+  align-self: flex-start;
+}
+
+.new-key-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.private-key {
+  display: flex;
+}
+
+.private-key-field {
+  flex: 1 1 100%;
+  max-width: 40ch;
+}
+
+.copy-key {
+  flex: 1 1 60px;
+  min-width: 60px;
+  max-width: 60px;
+}

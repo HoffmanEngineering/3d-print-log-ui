@@ -1,4 +1,4 @@
-<div fxLayout="column" fxLayoutAlign="center" data-cy="capture-print-list">
+<div class="print-list" data-cy="capture-print-list">
   <!-- Header: always visible regardless of view mode -->
   <div class="header" data-cy="capture-print-filters">
     <!-- Row 1: Always visible — action buttons, search, filter toggle -->
@@ -284,7 +284,7 @@
         data-cy="capture-print-table"
         [class.loading]="showSkeleton()"
         [class.refreshing]="showRefreshing()"
-        fxFlex="grow"
+        class="print-table"
         aria-label="Print List"
         [attr.aria-busy]="showRefreshing() ? 'true' : null"
         [attr.aria-live]="showSkeleton() ? 'off' : 'polite'"

@@ -2,12 +2,7 @@ import { UserPrintsComponent } from '../user-prints/user-prints.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { AchievementStripComponent } from '../achievement-strip/achievement-strip.component';
 import { StatsComponent } from '../stats/stats.component';
-import {
-  NO_ERRORS_SCHEMA,
-  provideZoneChangeDetection,
-  signal,
-  WritableSignal,
-} from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MatMenuModule } from '@angular/material/menu';
@@ -238,8 +233,8 @@ describe('UserProfileComponent', () => {
 
 /**
  * The real template, with responses that arrive after the first render the way
- * HTTP does. Zone change detection like the app, and startup settled first, so
- * a view that is not repainted shows up as stale.
+ * HTTP does. Zoneless change detection like the app (the TestBed default), and
+ * startup settled first, so a view that is not repainted shows up as stale.
  */
 describe('UserProfileComponent rendering', () => {
   let fixture: ComponentFixture<UserProfileComponent>;
@@ -271,7 +266,6 @@ describe('UserProfileComponent rendering', () => {
     TestBed.configureTestingModule({
       imports: [FormsModule, MatMenuModule, UserProfileComponent],
       providers: [
-        provideZoneChangeDetection(),
         {
           provide: ActivatedRoute,
           useValue: { data: of({ userDetail: ada }) },

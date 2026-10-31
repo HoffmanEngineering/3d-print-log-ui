@@ -1,7 +1,6 @@
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideZoneChangeDetection } from '@angular/core';
 import {
   ComponentFixture,
   TestBed,
@@ -91,14 +90,13 @@ describe('PrinterDetailComponent', () => {
   /**
    * `printer` is null for the create route, which the resolver models the same way.
    *
-   * `zone` runs the component under zone change detection like the app, with startup
-   * settled first, so a view that is not repainted after a later response shows up
-   * as stale.
+   * `settle` lets startup finish first (the TestBed is zoneless, like the app), so a
+   * view that is not repainted after a later response shows up as stale.
    */
   const setUp = async (
     printer: PrinterDetail | null,
     {
-      zone = false,
+      settle = false,
       data = undefined as Observable<unknown> | undefined,
       linked = null as PrinterModel | null,
     } = {}
@@ -160,7 +158,6 @@ describe('PrinterDetailComponent', () => {
         PrinterDetailComponent,
       ],
       providers: [
-        ...(zone ? [provideZoneChangeDetection()] : []),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: PrinterService, useValue: printerService },
@@ -190,7 +187,7 @@ describe('PrinterDetailComponent', () => {
     fixture = TestBed.createComponent(PrinterDetailComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    if (zone) {
+    if (settle) {
       await fixture.whenStable();
       fixture.detectChanges();
     }
@@ -563,7 +560,7 @@ describe('PrinterDetailComponent', () => {
         materialCategories: [],
       });
       const data = new BehaviorSubject<unknown>(resolved(null));
-      await setUp(null, { zone: true, data });
+      await setUp(null, { settle: true, data });
       expect(text()).toContain('Add 3D Printer');
 
       data.next(resolved(aPrinterDetail()));
@@ -573,7 +570,7 @@ describe('PrinterDetailComponent', () => {
     });
 
     it('re-enables Save when the save fails', async () => {
-      await setUp(aPrinterDetail(), { zone: true });
+      await setUp(aPrinterDetail(), { settle: true });
       const saved = new Subject<PrinterDetail>();
       printerService.updatePrinter.and.returnValue(saved);
 
@@ -614,7 +611,7 @@ describe('PrinterDetailComponent', () => {
           filamentRemaining: null,
           filamentLengthRemainingInM: null,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('Not tracked');
@@ -628,7 +625,7 @@ describe('PrinterDetailComponent', () => {
           filamentRemaining: 250_000,
           filamentLengthRemainingInM: 84,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('250 (g) remaining');
@@ -644,7 +641,7 @@ describe('PrinterDetailComponent', () => {
           filamentLengthRemainingInM: null,
           filamentVolumeRemainingInMl: 850,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('850 (mL) remaining');
@@ -659,7 +656,7 @@ describe('PrinterDetailComponent', () => {
           filamentLengthRemainingInM: 84,
           filamentVolumeRemainingInMl: 201,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('250 (g) remaining');
@@ -676,7 +673,7 @@ describe('PrinterDetailComponent', () => {
           filamentVolumeRemainingInMl: 850,
           source: FilamentSourceMeasurement.Volume,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('850 (mL) remaining');
@@ -691,7 +688,7 @@ describe('PrinterDetailComponent', () => {
           filamentVolumeRemainingInMl: 201,
           source: FilamentSourceMeasurement.Weight,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('250 (g) remaining');
@@ -706,7 +703,7 @@ describe('PrinterDetailComponent', () => {
           filamentVolumeRemainingInMl: 850,
           source: null,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('850 (mL) remaining');
@@ -720,7 +717,7 @@ describe('PrinterDetailComponent', () => {
           filamentLengthRemainingInM: null,
           filamentVolumeRemainingInMl: null,
         }),
-        { zone: true }
+        { settle: true }
       );
 
       expect(text()).toContain('Not tracked');
@@ -728,7 +725,7 @@ describe('PrinterDetailComponent', () => {
     });
 
     it('lists a spool picked in the filament dialog', async () => {
-      await setUp(aPrinterDetail(), { zone: true });
+      await setUp(aPrinterDetail(), { settle: true });
       const closed = new Subject<unknown>();
       dialog.open.and.returnValue({
         componentInstance: { dialogRef: { afterClosed: () => closed } },

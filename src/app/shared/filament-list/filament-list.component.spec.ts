@@ -1,4 +1,3 @@
-import { provideZoneChangeDetection } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { FilamentListComponent } from './filament-list.component';
@@ -359,7 +358,6 @@ describe('FilamentListComponent once responses arrive', () => {
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule],
       providers: [
-        provideZoneChangeDetection(),
         { provide: FilamentService, useValue: filamentService },
         {
           provide: MaterialCategoryService,

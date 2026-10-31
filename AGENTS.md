@@ -164,14 +164,18 @@ Angular throws **NG0600** for a signal write during `computed()` evaluation, and
 
 If a lazily-loading store must be readable from a computed, keep the read pure and schedule the work.
 
-### Every component is OnPush
+### Every component is OnPush, and the app is zoneless
 
-An OnPush component repaints only when an input changes, a template event fires, a signal it read changes, or something calls `markForCheck()`. One that is not dirty is skipped on a zone tick, and so is everything it renders. A plain field set from an HTTP response, a dialog's `afterClosed()` or a `FileReader` callback therefore changes nothing on screen, and no test fails unless it looks at the DOM after that callback.
+The app runs without zone.js (`provideZonelessChangeDetection()` in `main.ts`; the server bootstrap never had it). Change detection runs only when a signal a template reads changes, an input changes, a template event fires, or something calls `markForCheck()`, and only dirty views are checked. A plain field set from an HTTP response, a route's `queryParamMap` or `data`, a dialog's `afterClosed()`, a timer or a `FileReader` callback therefore changes nothing on screen, and no test fails unless it looks at the DOM after that callback. Nothing patches the browser's async APIs, so there is no `NgZone.run` to reach for: hold the state in a signal.
+
+zone.js is still loaded in the unit tests only (the `test` target's polyfills), because `fakeAsync`/`tick` need it. It does not drive change detection there either: the TestBed is zoneless, like the app.
+
+In end-to-end tests, a routed component's elements can reach the DOM a pass before its bindings. Read state from something that is itself bound (an `aria-*` attribute set by the template), not from a class or text that might not be applied yet; see `cy.openFilterPanel()`.
 
 - Hold displayed state in signals. Where a template reads a value signals can't hold, such as a reactive form you push controls into or an array you mutate in place, call `ChangeDetectorRef.markForCheck()` after the mutation (see `edit-print-detail.component.ts`). Replace a row in a list rather than mutating it, so an OnPush row component sees a new input.
 - The `prefer-on-push-component-change-detection` lint rule is an error everywhere except specs, and nothing is exempt. New components are OnPush.
 - `scripts/onpush-hosts.test.mjs` (run by `npm run test:scripts`) fails when an OnPush component renders a Default one or a `<router-outlet>`, which catches a Default component that slips past lint with a disable comment.
-- A conversion's test is a DOM assertion after a response that arrives once the component has rendered (a `Subject`, not `of`). The zoneless TestBed often reports the stale paint as NG0100, but not always: a Material form field calls `markForCheck()` during startup, which dirties every ancestor and hides the bug. When the test passes with the OnPush flag set and no signals, add `provideZoneChangeDetection()` to the providers and settle startup (`detectChanges()`, `await whenStable()`, `detectChanges()`) before emitting. Pattern: `filament-list.component.spec.ts`.
+- A conversion's test is a DOM assertion after a response that arrives once the component has rendered (a `Subject`, not `of`). The TestBed often reports the stale paint as NG0100, but not always: a Material form field calls `markForCheck()` during startup, which dirties every ancestor and hides the bug. Settle startup (`detectChanges()`, `await whenStable()`, `detectChanges()`) before emitting, so that startup marking is spent. Pattern: `filament-list.component.spec.ts`.
 
 ### A component input beats a `::ng-deep` override
 

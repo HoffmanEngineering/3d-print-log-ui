@@ -880,14 +880,49 @@ describe('EditPrintDetailComponent', () => {
       expect(component.getPrintFromForm().curaSettingId).toBe('setting-1');
     });
 
-    it('should reset saving to false after handleSaveSuccess', () => {
-      const router = TestBed.inject(Router);
-      vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+    // The print list is still loading after the save; a Submit that looks idle invites a
+    // second click.
+    describe('after the save, while the print list loads', () => {
+      let finishNavigation: (navigated: boolean) => void;
+      let failNavigation: (error: Error) => void;
 
-      component.saving.set(true);
-      component['handleSaveSuccess']({ id: 1 } as any);
+      beforeEach(() => {
+        vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
+          new Promise<boolean>((resolve, reject) => {
+            finishNavigation = resolve;
+            failNavigation = reject;
+          })
+        );
+        component.saving.set(true);
+        component['handleSaveSuccess']({ id: 1 } as never);
+      });
 
-      expect(component.saving()).toBe(false);
+      it('keeps the spinner until the list has loaded', async () => {
+        expect(component.saving(), 'navigating').toBe(true);
+
+        finishNavigation(true);
+        await fixture.whenStable();
+
+        expect(component.saving()).toBe(true);
+        expect(
+          (TestBed.inject(ToastrService) as MockedObject<ToastrService>)
+            .success
+        ).toHaveBeenCalledWith('Save successful!');
+      });
+
+      it('stops the spinner when the navigation is canceled', async () => {
+        finishNavigation(false);
+        await fixture.whenStable();
+
+        expect(component.saving()).toBe(false);
+      });
+
+      it('stops the spinner when the navigation fails', async () => {
+        failNavigation(new Error('chunk load failed'));
+        await fixture.whenStable();
+
+        expect(component.saving()).toBe(false);
+      });
     });
   });
 
@@ -1124,7 +1159,7 @@ describe('EditPrintDetailComponent', () => {
       form.onSubmit();
 
       expect(printService.patchPrint).not.toHaveBeenCalled();
-      expect(form.saving()).toBe(false);
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/prints']);
     });
 
     it('clears a field the user emptied', () => {
@@ -1286,6 +1321,77 @@ describe('EditPrintDetailComponent', () => {
       const [, patch] = vi.mocked(printService.patchPrint).mock.lastCall;
       expect(Object.keys(patch)).toEqual(['startDate']);
       expect(patch.startDate).toEqual(form.getCombinedStartDateTime());
+    });
+
+    // A G-code import leaves the actual amount unset. It loaded as undefined / 1000 = NaN, which
+    // the Weight input's pattern rejects once the row shows Weight.
+    it('loads an amount that was never recorded as empty, not NaN', () => {
+      const form = openEditor({
+        ...existingPrint,
+        filamentUsageMg: undefined,
+        filamentUsage: [
+          { ...usageRow, amountMg: undefined, estimatedAmountMg: undefined },
+        ],
+      } as unknown as PrintDetail);
+
+      const row = form.filamentUsage.at(0);
+      expect(row.get('amountG')!.value).toBeNull();
+      expect(row.get('estimatedAmountG')!.value).toBeNull();
+      expect(form.printForm.controls.filamentUsageG.value).toBeNull();
+    });
+
+    describe('submitting an invalid form', () => {
+      let toastr: MockedObject<ToastrService>;
+
+      beforeEach(() => {
+        toastr = TestBed.inject(ToastrService) as MockedObject<ToastrService>;
+      });
+
+      // Swap Data sets a row's usage and its measure in one setValue. The Weight input's pattern
+      // judges the value while that input is still on the page; once the row shows Length the
+      // input and its validator are gone, but Angular never re-checks the control.
+      it('saves when the only error belonged to an input that is gone', () => {
+        const form = openEditor(existingPrint);
+        const row = form.filamentUsage.at(0);
+        row.patchValue({
+          amountG: 'abc' as never,
+          source: PrintFilamentSourceMeasurement.Length,
+        });
+        expect(row.invalid, 'stale status').toBe(true);
+        editor!.detectChanges();
+
+        form.onSubmit();
+
+        expect(printService.patchPrint).toHaveBeenCalled();
+      });
+
+      it('focuses the invalid field inside a usage row', () => {
+        const form = openEditor(existingPrint);
+        form.filamentUsage
+          .at(0)
+          .get('amountG')!
+          .setValue('abc' as never);
+        editor!.detectChanges();
+
+        form.onSubmit();
+
+        expect(document.activeElement?.id).toBe(
+          'edit-print-actual-filament-used-gram-0'
+        );
+        expect(printService.patchPrint).not.toHaveBeenCalled();
+        expect(form.saving()).toBe(false);
+      });
+
+      it('says why when the invalid field is not on the page', () => {
+        const form = openEditor(existingPrint);
+        form.printForm.controls.estimatedFilamentUsageG.setValue(-1);
+
+        expect(() => form.onSubmit()).not.toThrow();
+
+        expect(printService.patchPrint).not.toHaveBeenCalled();
+        expect(toastr.error).toHaveBeenCalledTimes(1);
+        expect(form.saving()).toBe(false);
+      });
     });
 
     it('creates a new project first, then assigns it', () => {

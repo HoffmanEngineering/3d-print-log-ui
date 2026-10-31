@@ -84,9 +84,7 @@
             <input
               matInput
               [matDatepicker]="picker"
-              [value]="entry.date"
-              (dateChange)="updateDate(entry, $event)"
-              [disabled]="editId() !== entry.id"
+              [formControl]="editForm.controls.date"
             />
             <mat-datepicker-toggle
               matSuffix
@@ -118,12 +116,7 @@
         @if (entry.id === editId()) {
           <mat-form-field class="edit-field">
             <mat-label> Printer </mat-label>
-            <mat-select
-              [(ngModel)]="entry.printerId"
-              (ngModelChange)="updatePrinter(entry, $event)"
-              [disabled]="editId() !== entry.id"
-              #printerValue="ngModel"
-            >
+            <mat-select [formControl]="editForm.controls.printerId">
               @for (printer of printers(); track printer.id) {
                 <mat-option [value]="printer.id">
                   <app-printer-avatar
@@ -160,9 +153,7 @@
           <mat-form-field class="edit-field">
             <input
               matInput
-              [(ngModel)]="entry.category"
-              (ngModelChange)="filterCategories($event)"
-              [disabled]="editId() !== entry.id"
+              [formControl]="editForm.controls.category"
               [matAutocomplete]="autoCategories"
             />
             <mat-autocomplete #autoCategories="matAutocomplete">
@@ -186,11 +177,7 @@
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
           <mat-form-field class="edit-field">
-            <input
-              matInput
-              [(ngModel)]="entry.description"
-              [disabled]="editId() !== entry.id"
-            />
+            <input matInput [formControl]="editForm.controls.description" />
           </mat-form-field>
         }
         @if (entry.id !== editId()) {
@@ -208,12 +195,9 @@
             <input
               name="maintenance-price"
               matInput
-              [(ngModel)]="entry.priceValue"
-              [disabled]="editId() !== entry.id"
-              pattern="[0-9,.]*"
-              #purchasePriceValue="ngModel"
+              [formControl]="editForm.controls.priceValue"
             />
-            @if (purchasePriceValue.hasError('pattern')) {
+            @if (editForm.controls.priceValue.hasError('pattern')) {
               <mat-error> Only numeric prices are allowed. </mat-error>
             }
           </mat-form-field>
@@ -230,11 +214,7 @@
       <td mat-cell *matCellDef="let entry">
         @if (entry.id === editId()) {
           <mat-form-field class="edit-field">
-            <input
-              matInput
-              [(ngModel)]="entry.notes"
-              [disabled]="editId() !== entry.id"
-            />
+            <input matInput [formControl]="editForm.controls.notes" />
           </mat-form-field>
         }
         @if (entry.id !== editId()) {

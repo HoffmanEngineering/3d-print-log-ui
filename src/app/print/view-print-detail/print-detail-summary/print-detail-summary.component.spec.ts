@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -16,7 +17,7 @@ import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-sto
 
 describe('PrintDetailSummaryComponent', () => {
   let fixture: ComponentFixture<PrintDetailSummaryComponent>;
-  let thumbnailStore: jasmine.SpyObj<PrinterThumbnailStore>;
+  let thumbnailStore: MockedObject<PrinterThumbnailStore>;
 
   const print = {
     id: 1,
@@ -47,21 +48,25 @@ describe('PrintDetailSummaryComponent', () => {
     // calculatePrintCost MUST be included: this spec renders the real
     // FilamentUsageSummaryComponent, which calls it per row whenever
     // showPrices is true (filament-usage-summary.component.ts:47,61). A
-    // createSpyObj list omitting it leaves the method undefined, and every
+    // mock omitting it leaves the method undefined, and every
     // owner-path assertion below dies with "not a function".
-    const printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'calculateElectricityCost',
-      'calculateTotalPrintCost',
-      'calculatePrintCost',
-    ]);
-    printService.calculatePrintCost.and.returnValue({
+    const printService = {
+      calculateElectricityCost: vi
+        .fn()
+        .mockName('PrintService.calculateElectricityCost'),
+      calculateTotalPrintCost: vi
+        .fn()
+        .mockName('PrintService.calculateTotalPrintCost'),
+      calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+    };
+    printService.calculatePrintCost.mockReturnValue({
       valid: true,
       price: currency(0.42),
       formattedPrice: '$0.42',
       symbol: '$',
       usesDefaultPrice: false,
     });
-    printService.calculateElectricityCost.and.returnValue({
+    printService.calculateElectricityCost.mockReturnValue({
       valid: true,
       cost: currency(0.21),
       formattedCost: '$0.21',
@@ -73,7 +78,7 @@ describe('PrintDetailSummaryComponent', () => {
     // calculateTotalPrintCost returns { prices, total } — the cost fields are
     // nested under `total`. No `as any` cast: the cast is what would let a
     // wrong shape through undetected.
-    printService.calculateTotalPrintCost.and.returnValue({
+    printService.calculateTotalPrintCost.mockReturnValue({
       prices: [],
       total: {
         valid: true,
@@ -84,11 +89,14 @@ describe('PrintDetailSummaryComponent', () => {
       },
     });
 
-    thumbnailStore = jasmine.createSpyObj<PrinterThumbnailStore>(
-      'PrinterThumbnailStore',
-      ['thumbnailFor', 'invalidate', 'noteLoadFailure']
-    );
-    thumbnailStore.thumbnailFor.and.returnValue(
+    thumbnailStore = {
+      thumbnailFor: vi.fn().mockName('PrinterThumbnailStore.thumbnailFor'),
+      invalidate: vi.fn().mockName('PrinterThumbnailStore.invalidate'),
+      noteLoadFailure: vi
+        .fn()
+        .mockName('PrinterThumbnailStore.noteLoadFailure'),
+    } as unknown as MockedObject<PrinterThumbnailStore>;
+    thumbnailStore.thumbnailFor.mockReturnValue(
       'https://blob.example/printer.webp?sig=x'
     );
 
@@ -239,9 +247,9 @@ describe('PrintDetailSummaryComponent', () => {
   it('marks the material total partial when some rows have no price', () => {
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
+    ) as MockedObject<PrintService>;
     // Two materials on the print, only one of which priced successfully.
-    printService.calculateTotalPrintCost.and.returnValue({
+    printService.calculateTotalPrintCost.mockReturnValue({
       prices: [{ valid: true } as any, { valid: false } as any],
       total: {
         valid: true,
@@ -267,8 +275,8 @@ describe('PrintDetailSummaryComponent', () => {
   it('does not mark the total partial when every row priced', () => {
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
-    printService.calculateTotalPrintCost.and.returnValue({
+    ) as MockedObject<PrintService>;
+    printService.calculateTotalPrintCost.mockReturnValue({
       prices: [{ valid: true } as any],
       total: {
         valid: true,
@@ -302,8 +310,8 @@ describe('PrintDetailSummaryComponent', () => {
   it('resolves each marker to visible legend text', () => {
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
-    printService.calculateTotalPrintCost.and.returnValue({
+    ) as MockedObject<PrintService>;
+    printService.calculateTotalPrintCost.mockReturnValue({
       prices: [],
       total: {
         valid: true,
@@ -313,7 +321,7 @@ describe('PrintDetailSummaryComponent', () => {
         usesDefaultPrice: true,
       },
     });
-    printService.calculateElectricityCost.and.returnValue({
+    printService.calculateElectricityCost.mockReturnValue({
       valid: true,
       cost: currency(0.21),
       formattedCost: '$0.21',
@@ -349,9 +357,7 @@ describe('PrintDetailSummaryComponent', () => {
       // aria-describedby points at a CDK message element rendered into a global
       // container outside this component.
       const target = document.querySelector(`#${id}`);
-      expect(target)
-        .withContext(`aria-describedby target #${id} must exist`)
-        .toBeTruthy();
+      expect(target, `aria-describedby target #${id} must exist`).toBeTruthy();
       expect(target!.textContent!.trim().length).toBeGreaterThan(0);
     });
   });

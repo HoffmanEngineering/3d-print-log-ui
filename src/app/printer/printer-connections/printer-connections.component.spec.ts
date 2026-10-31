@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -19,11 +20,11 @@ import { PrinterConnectionsComponent } from './printer-connections.component';
 describe('PrinterConnectionsComponent', () => {
   let fixture: ComponentFixture<PrinterConnectionsComponent>;
   let httpMock: HttpTestingController;
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialog: MockedObject<MatDialog>;
   let confirm: boolean | undefined;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let clipboard: jasmine.SpyObj<Clipboard>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
+  let clipboard: MockedObject<Clipboard>;
 
   const fff = { nickname: 'FFF' } as PrinterCategory;
   const sla = { nickname: 'SLA' } as PrinterCategory;
@@ -51,24 +52,28 @@ describe('PrinterConnectionsComponent', () => {
 
   beforeEach(async () => {
     confirm = true;
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.callFake(
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockImplementation(
       () =>
         ({
           afterClosed: () => of(confirm),
         }) as any
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
-    clipboard = jasmine.createSpyObj<Clipboard>('Clipboard', ['copy']);
-    clipboard.copy.and.returnValue(true);
+    clipboard = {
+      copy: vi.fn().mockName('Clipboard.copy'),
+    } as unknown as MockedObject<Clipboard>;
+    clipboard.copy.mockReturnValue(true);
 
     await TestBed.configureTestingModule({
       imports: [PrinterConnectionsComponent, NoopAnimationsModule],
@@ -476,7 +481,7 @@ describe('PrinterConnectionsComponent', () => {
       ).click();
 
       expect(clipboard.copy).toHaveBeenCalledWith(
-        jasmine.stringContaining('adapter = prusalink')
+        expect.stringContaining('adapter = prusalink')
       );
       expect(toastr.success).toHaveBeenCalled();
       expect(logging.logEvent).toHaveBeenCalledWith(
@@ -535,7 +540,7 @@ describe('PrinterConnectionsComponent', () => {
     expect(toastr.success).toHaveBeenCalled();
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterConnections_Deleted',
-      jasmine.objectContaining({ kind: 'moonraker' })
+      expect.objectContaining({ kind: 'moonraker' })
     );
   });
 

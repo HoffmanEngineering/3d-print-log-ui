@@ -99,10 +99,10 @@ describe('buildSwatchDescriptor', () => {
       [FilamentEffect.Translucent, FilamentEffect.GlowInDark]
     );
 
-    expect(descriptor.shimmer).toBeTrue();
-    expect(descriptor.desaturate).toBeFalse();
+    expect(descriptor.shimmer).toBe(true);
+    expect(descriptor.desaturate).toBe(false);
     expect(descriptor.opacity).toBe(0.7);
-    expect(descriptor.glow).toBeTrue();
+    expect(descriptor.glow).toBe(true);
   });
 });
 

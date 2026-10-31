@@ -79,28 +79,36 @@ describe('ImageCarouselComponent', () => {
   describe('arrow click navigation', () => {
     it('should emit previous index when left arrow clicked', () => {
       setup(3, 2);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       fixture.nativeElement.querySelector('.nav-arrow--left').click();
       expect(spy).toHaveBeenCalledWith(1);
     });
 
     it('should emit next index when right arrow clicked', () => {
       setup(3, 1);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       fixture.nativeElement.querySelector('.nav-arrow--right').click();
       expect(spy).toHaveBeenCalledWith(2);
     });
 
     it('should not emit when prev() called at index 0', () => {
       setup(3, 0);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       component.prev();
       expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not emit when next() called at last index', () => {
       setup(3, 2);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       component.next();
       expect(spy).not.toHaveBeenCalled();
     });
@@ -127,35 +135,45 @@ describe('ImageCarouselComponent', () => {
 
     it('should navigate next on swipe left (delta >= 50px)', () => {
       setup(3, 1);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       swipe(200, 100);
       expect(spy).toHaveBeenCalledWith(2);
     });
 
     it('should navigate prev on swipe right (delta >= 50px)', () => {
       setup(3, 1);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       swipe(100, 200);
       expect(spy).toHaveBeenCalledWith(0);
     });
 
     it('should not navigate when swipe delta < 50px', () => {
       setup(3, 1);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       swipe(100, 130);
       expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not navigate past last image on swipe left', () => {
       setup(3, 2);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       swipe(200, 100);
       expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not navigate before first image on swipe right', () => {
       setup(3, 0);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       swipe(100, 200);
       expect(spy).not.toHaveBeenCalled();
     });
@@ -173,35 +191,45 @@ describe('ImageCarouselComponent', () => {
 
     it('should emit prev index on ArrowLeft', () => {
       setup(3, 2);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       pressKey('ArrowLeft');
       expect(spy).toHaveBeenCalledWith(1);
     });
 
     it('should emit next index on ArrowRight', () => {
       setup(3, 1);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       pressKey('ArrowRight');
       expect(spy).toHaveBeenCalledWith(2);
     });
 
     it('should not emit on ArrowLeft when at first image', () => {
       setup(3, 0);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       pressKey('ArrowLeft');
       expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not emit on ArrowRight when at last image', () => {
       setup(3, 2);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       pressKey('ArrowRight');
       expect(spy).not.toHaveBeenCalled();
     });
 
     it('should not emit on unrelated keys', () => {
       setup(3, 1);
-      const spy = spyOn(component.indexChange, 'emit');
+      const spy = vi
+        .spyOn(component.indexChange, 'emit')
+        .mockReturnValue(undefined);
       pressKey('Enter');
       expect(spy).not.toHaveBeenCalled();
     });

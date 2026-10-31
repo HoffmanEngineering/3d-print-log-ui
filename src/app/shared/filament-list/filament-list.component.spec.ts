@@ -16,22 +16,25 @@ describe('FilamentListComponent', () => {
   let component: FilamentListComponent;
   let fixture: ComponentFixture<FilamentListComponent>;
 
-  const mockFilamentService = jasmine.createSpyObj<FilamentService>(
-    'FilamentService',
-    ['getCurrentUserFilamentSummaries', 'changeFavorite']
-  );
-  mockFilamentService.getCurrentUserFilamentSummaries.and.returnValue(
+  const mockFilamentService = {
+    getCurrentUserFilamentSummaries: vi
+      .fn()
+      .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+    changeFavorite: vi.fn().mockName('FilamentService.changeFavorite'),
+  };
+  mockFilamentService.getCurrentUserFilamentSummaries.mockReturnValue(
     of({
       items: [],
       paging: { currentPage: 1, pageSize: 10, totalCount: 0 },
     } as any)
   );
 
-  const mockMaterialCategoryService =
-    jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
-      'getMaterialCategories',
-    ]);
-  mockMaterialCategoryService.getMaterialCategories.and.returnValue(of([]));
+  const mockMaterialCategoryService = {
+    getMaterialCategories: vi
+      .fn()
+      .mockName('MaterialCategoryService.getMaterialCategories'),
+  };
+  mockMaterialCategoryService.getMaterialCategories.mockReturnValue(of([]));
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -76,7 +79,7 @@ describe('FilamentListComponent', () => {
       const c = TestBed.createComponent(
         FilamentListComponent
       ).componentInstance;
-      expect(c.isFilterPanelOpen).toBeTrue();
+      expect(c.isFilterPanelOpen).toBe(true);
     });
 
     it('should default to false when viewport is < 600px', () => {
@@ -88,7 +91,7 @@ describe('FilamentListComponent', () => {
       const c = TestBed.createComponent(
         FilamentListComponent
       ).componentInstance;
-      expect(c.isFilterPanelOpen).toBeFalse();
+      expect(c.isFilterPanelOpen).toBe(false);
     });
 
     it('toggleFilterPanel should flip the value', () => {
@@ -100,11 +103,11 @@ describe('FilamentListComponent', () => {
       const c = TestBed.createComponent(
         FilamentListComponent
       ).componentInstance;
-      expect(c.isFilterPanelOpen).toBeTrue();
+      expect(c.isFilterPanelOpen).toBe(true);
       c.toggleFilterPanel();
-      expect(c.isFilterPanelOpen).toBeFalse();
+      expect(c.isFilterPanelOpen).toBe(false);
       c.toggleFilterPanel();
-      expect(c.isFilterPanelOpen).toBeTrue();
+      expect(c.isFilterPanelOpen).toBe(true);
     });
   });
 
@@ -196,9 +199,9 @@ describe('FilamentListComponent', () => {
       ).componentInstance;
       c.filterByColorPatterns = [ColorPatternType.Gradient];
       c.updateFilter();
-      const callArgs =
-        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
-          .args;
+      const callArgs = vi.mocked(
+        mockFilamentService.getCurrentUserFilamentSummaries
+      ).mock.lastCall;
       // colorPatterns is the 11th argument (index 10)
       expect(callArgs[10]).toEqual([ColorPatternType.Gradient]);
     });
@@ -209,9 +212,9 @@ describe('FilamentListComponent', () => {
       ).componentInstance;
       c.filterByColorPatterns = [];
       c.updateFilter();
-      const callArgs =
-        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
-          .args;
+      const callArgs = vi.mocked(
+        mockFilamentService.getCurrentUserFilamentSummaries
+      ).mock.lastCall;
       expect(callArgs[10]).toBeUndefined();
     });
 
@@ -221,9 +224,9 @@ describe('FilamentListComponent', () => {
       ).componentInstance;
       c.filterByFinishTypes = [FilamentFinishType.Matte];
       c.updateFilter();
-      const callArgs =
-        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
-          .args;
+      const callArgs = vi.mocked(
+        mockFilamentService.getCurrentUserFilamentSummaries
+      ).mock.lastCall;
       expect(callArgs[11]).toEqual([FilamentFinishType.Matte]);
     });
 
@@ -233,9 +236,9 @@ describe('FilamentListComponent', () => {
       ).componentInstance;
       c.filterByEffects = [FilamentEffect.GlowInDark];
       c.updateFilter();
-      const callArgs =
-        mockFilamentService.getCurrentUserFilamentSummaries.calls.mostRecent()
-          .args;
+      const callArgs = vi.mocked(
+        mockFilamentService.getCurrentUserFilamentSummaries
+      ).mock.lastCall;
       expect(callArgs[12]).toEqual([FilamentEffect.GlowInDark]);
     });
   });
@@ -257,11 +260,13 @@ describe('FilamentListComponent thumbnail column', () => {
   } as unknown as FilamentSummary;
 
   const setUp = async (defaultImageThumbnailUrl: string | null) => {
-    const filamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getCurrentUserFilamentSummaries', 'changeFavorite']
-    );
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+    const filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+      changeFavorite: vi.fn().mockName('FilamentService.changeFavorite'),
+    };
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(
       of({
         // ngOnInit refetches and overwrites `filaments`, so the row has to come
         // back from the service rather than being assigned onto the component.
@@ -270,11 +275,12 @@ describe('FilamentListComponent thumbnail column', () => {
       } as any)
     );
 
-    const materialCategoryService =
-      jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
-        'getMaterialCategories',
-      ]);
-    materialCategoryService.getMaterialCategories.and.returnValue(of([]));
+    const materialCategoryService = {
+      getMaterialCategories: vi
+        .fn()
+        .mockName('MaterialCategoryService.getMaterialCategories'),
+    };
+    materialCategoryService.getMaterialCategories.mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule],
@@ -341,19 +347,22 @@ describe('FilamentListComponent once responses arrive', () => {
   beforeEach(async () => {
     summaries = new Subject();
     favorite = new Subject();
-    const filamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getCurrentUserFilamentSummaries', 'changeFavorite']
-    );
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+    const filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+      changeFavorite: vi.fn().mockName('FilamentService.changeFavorite'),
+    };
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(
       summaries as never
     );
-    filamentService.changeFavorite.and.returnValue(favorite as never);
-    const materialCategoryService =
-      jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
-        'getMaterialCategories',
-      ]);
-    materialCategoryService.getMaterialCategories.and.returnValue(of([]));
+    filamentService.changeFavorite.mockReturnValue(favorite as never);
+    const materialCategoryService = {
+      getMaterialCategories: vi
+        .fn()
+        .mockName('MaterialCategoryService.getMaterialCategories'),
+    };
+    materialCategoryService.getMaterialCategories.mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule],
@@ -469,21 +478,24 @@ describe('FilamentListComponent selection', () => {
     )[n];
 
   beforeEach(async () => {
-    const filamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getCurrentUserFilamentSummaries', 'changeFavorite']
-    );
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+    const filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+      changeFavorite: vi.fn().mockName('FilamentService.changeFavorite'),
+    };
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(
       of({
         items: rows,
         paging: { currentPage: 1, pageSize: 10, totalCount: 2 },
       } as any)
     );
-    const materialCategoryService =
-      jasmine.createSpyObj<MaterialCategoryService>('MaterialCategoryService', [
-        'getMaterialCategories',
-      ]);
-    materialCategoryService.getMaterialCategories.and.returnValue(of([]));
+    const materialCategoryService = {
+      getMaterialCategories: vi
+        .fn()
+        .mockName('MaterialCategoryService.getMaterialCategories'),
+    };
+    materialCategoryService.getMaterialCategories.mockReturnValue(of([]));
 
     await TestBed.configureTestingModule({
       imports: [NoopAnimationsModule, RouterTestingModule],
@@ -503,8 +515,8 @@ describe('FilamentListComponent selection', () => {
     fixture.componentRef.setInput('selectedIds', new Set(['f2']));
     fixture.detectChanges();
 
-    expect(checkbox(0).checked).toBeFalse();
-    expect(checkbox(1).checked).toBeTrue();
+    expect(checkbox(0).checked).toBe(false);
+    expect(checkbox(1).checked).toBe(true);
   });
 
   it('emits selectionToggled for a row click instead of keeping its own selection', () => {
@@ -519,6 +531,6 @@ describe('FilamentListComponent selection', () => {
 
     expect(toggled).toEqual(['f1']);
     // Checked only once the caller says so.
-    expect(checkbox(0).checked).toBeFalse();
+    expect(checkbox(0).checked).toBe(false);
   });
 });

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ResolveFn } from '@angular/router';
 import {
@@ -83,12 +84,14 @@ const passFailureThrough: Case[] = [
 ];
 
 describe('user setting resolvers', () => {
-  let settings: jasmine.SpyObj<UserSettingService>;
+  let settings: MockedObject<UserSettingService>;
 
   beforeEach(() => {
-    settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
-      'getCurrentUsersSettingByType',
-    ]);
+    settings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+    } as unknown as MockedObject<UserSettingService>;
     TestBed.configureTestingModule({
       providers: [{ provide: UserSettingService, useValue: settings }],
     });
@@ -100,28 +103,27 @@ describe('user setting resolvers', () => {
   ]) {
     it(`${name} resolves the ${UserSettingType[type]} setting`, async () => {
       const setting = { value: 'x' } as UserSetting;
-      settings.getCurrentUsersSettingByType.and.resolveTo(setting);
+      settings.getCurrentUsersSettingByType.mockResolvedValue(setting);
 
-      await expectAsync(resolveValue(resolver)).toBeResolvedTo(setting);
-      expect(settings.getCurrentUsersSettingByType).toHaveBeenCalledOnceWith(
-        type
-      );
+      await expect(resolveValue(resolver)).resolves.toEqual(setting);
+      expect(settings.getCurrentUsersSettingByType).toHaveBeenCalledTimes(1);
+      expect(settings.getCurrentUsersSettingByType).toHaveBeenCalledWith(type);
     });
   }
 
   for (const [name, resolver] of neverReject) {
     it(`${name} resolves null when the settings call fails`, async () => {
-      settings.getCurrentUsersSettingByType.and.rejectWith(new Error('500'));
+      settings.getCurrentUsersSettingByType.mockRejectedValue(new Error('500'));
 
-      await expectAsync(resolveValue(resolver)).toBeResolvedTo(null);
+      await expect(resolveValue(resolver)).resolves.toEqual(null);
     });
   }
 
   for (const [name, resolver] of passFailureThrough) {
     it(`${name} rejects when the settings call fails`, async () => {
-      settings.getCurrentUsersSettingByType.and.rejectWith(new Error('500'));
+      settings.getCurrentUsersSettingByType.mockRejectedValue(new Error('500'));
 
-      await expectAsync(resolveValue(resolver)).toBeRejected();
+      await expect(resolveValue(resolver)).rejects.toThrow();
     });
   }
 });

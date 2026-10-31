@@ -10,10 +10,9 @@ import {
 
 describe('UserService', () => {
   beforeEach(() => {
-    const mockImageResizer = jasmine.createSpyObj<ImageResizerService>(
-      'ImageResizerService',
-      ['resizeImage']
-    );
+    const mockImageResizer = {
+      resizeImage: vi.fn().mockName('ImageResizerService.resizeImage'),
+    };
 
     TestBed.configureTestingModule({
       imports: [],

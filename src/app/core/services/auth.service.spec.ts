@@ -1,10 +1,5 @@
-import {
-  fakeAsync,
-  flush,
-  flushMicrotasks,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import type { Mock, MockedObject } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { GoogleAnalyticsService } from './google-analytics.service';
@@ -19,22 +14,25 @@ import { OnboardingService } from '../../onboarding/onboarding.service';
 import { PrinterThumbnailStore } from '../stores/printer-thumbnail-store.service';
 
 describe('AuthService', () => {
-  let mockUserService: jasmine.SpyObj<UserService>;
-  let mockNotificationService: jasmine.SpyObj<NotificationService>;
-  let mockSubscriptionService: jasmine.SpyObj<SubscriptionService>;
+  let mockUserService: MockedObject<UserService>;
+  let mockNotificationService: MockedObject<NotificationService>;
+  let mockSubscriptionService: MockedObject<SubscriptionService>;
 
   beforeEach(() => {
-    mockUserService = jasmine.createSpyObj<UserService>('UserService', [
-      'getCurrentUserDetail',
-    ]);
-    mockNotificationService = jasmine.createSpyObj<NotificationService>(
-      'NotificationService',
-      ['stopPolling', 'startPolling']
-    );
-    mockSubscriptionService = jasmine.createSpyObj<SubscriptionService>(
-      'SubscriptionService',
-      ['loadSubscription']
-    );
+    mockUserService = {
+      getCurrentUserDetail: vi
+        .fn()
+        .mockName('UserService.getCurrentUserDetail'),
+    } as unknown as MockedObject<UserService>;
+    mockNotificationService = {
+      stopPolling: vi.fn().mockName('NotificationService.stopPolling'),
+      startPolling: vi.fn().mockName('NotificationService.startPolling'),
+    } as unknown as MockedObject<NotificationService>;
+    mockSubscriptionService = {
+      loadSubscription: vi
+        .fn()
+        .mockName('SubscriptionService.loadSubscription'),
+    } as unknown as MockedObject<SubscriptionService>;
 
     TestBed.configureTestingModule({
       imports: [RouterTestingModule],
@@ -68,7 +66,9 @@ describe('AuthService', () => {
 
     it('sets the telemetry user to the dev id', () => {
       const logging = TestBed.inject(LoggingService);
-      const setUser = spyOn(logging, 'setAuthenticatedUser');
+      const setUser = vi
+        .spyOn(logging, 'setAuthenticatedUser')
+        .mockReturnValue(undefined);
       const service = TestBed.inject(AuthService);
 
       service.localAuthSetup();
@@ -82,8 +82,8 @@ describe('AuthService', () => {
       service.localAuthSetup();
 
       expect(service.userProfile()).not.toBeNull();
-      expect(service.loggedIn).toBeTrue();
-      expect(service.isLoggedIn()).toBeTrue();
+      expect(service.loggedIn).toBe(true);
+      expect(service.isLoggedIn()).toBe(true);
     });
 
     it('sets loggedIn=false and emits no profile when the dev anonymous flag is set', () => {
@@ -92,8 +92,8 @@ describe('AuthService', () => {
 
       service.localAuthSetup();
 
-      expect(service.loggedIn).toBeFalse();
-      expect(service.isLoggedIn()).toBeFalse();
+      expect(service.loggedIn).toBe(false);
+      expect(service.isLoggedIn()).toBe(false);
       expect(service.userProfile()).toBeNull();
 
       sessionStorage.removeItem('devUserId');
@@ -107,18 +107,20 @@ describe('AuthService', () => {
      * asserted rather than assumed.
      */
     function trackAuth0Logout(service: AuthService, order: string[]) {
-      (service as unknown as { auth0Client$: unknown }).auth0Client$ = defer(
-        () => {
-          order.push('auth0-logout');
-          return of({ logout: () => undefined });
+      (
+        service as unknown as {
+          auth0Client$: unknown;
         }
-      );
+      ).auth0Client$ = defer(() => {
+        order.push('auth0-logout');
+        return of({ logout: () => undefined });
+      });
     }
 
     it('awaits the push teardown hook before Auth0 logout, with a live bearer', async () => {
       const service = TestBed.inject(AuthService);
       const order: string[] = [];
-      spyOn(service, 'getTokenSilently$').and.returnValue(of('bearer-abc'));
+      vi.spyOn(service, 'getTokenSilently$').mockReturnValue(of('bearer-abc'));
       trackAuth0Logout(service, order);
 
       service.pushTeardown = async (token) => {
@@ -135,10 +137,12 @@ describe('AuthService', () => {
     // photos stay on screen in any session that outlives the Auth0 redirect.
     it('clears the printer thumbnail map on logout', async () => {
       const service = TestBed.inject(AuthService);
-      spyOn(service, 'getTokenSilently$').and.returnValue(of('bearer-abc'));
+      vi.spyOn(service, 'getTokenSilently$').mockReturnValue(of('bearer-abc'));
       trackAuth0Logout(service, []);
       const store = TestBed.inject(PrinterThumbnailStore);
-      const invalidate = spyOn(store, 'invalidate');
+      const invalidate = vi
+        .spyOn(store, 'invalidate')
+        .mockReturnValue(undefined);
 
       await service.logout();
 
@@ -149,8 +153,12 @@ describe('AuthService', () => {
       const service = TestBed.inject(AuthService);
       trackAuth0Logout(service, []);
       const logging = TestBed.inject(LoggingService);
-      const clearUser = spyOn(logging, 'clearAuthenticatedUser');
-      const clearOnboarding = spyOn(TestBed.inject(OnboardingService), 'clear');
+      const clearUser = vi
+        .spyOn(logging, 'clearAuthenticatedUser')
+        .mockReturnValue(undefined);
+      const clearOnboarding = vi
+        .spyOn(TestBed.inject(OnboardingService), 'clear')
+        .mockReturnValue(undefined);
 
       await service.logout();
 
@@ -161,7 +169,7 @@ describe('AuthService', () => {
     it('still logs the user out when the teardown hook throws', async () => {
       const service = TestBed.inject(AuthService);
       const order: string[] = [];
-      spyOn(service, 'getTokenSilently$').and.returnValue(of('bearer-abc'));
+      vi.spyOn(service, 'getTokenSilently$').mockReturnValue(of('bearer-abc'));
       trackAuth0Logout(service, order);
 
       service.pushTeardown = () => Promise.reject(new Error('native gone'));
@@ -174,10 +182,12 @@ describe('AuthService', () => {
     it('still logs the user out when no token can be minted', async () => {
       const service = TestBed.inject(AuthService);
       const order: string[] = [];
-      spyOn(service, 'getTokenSilently$').and.throwError('no refresh token');
+      vi.spyOn(service, 'getTokenSilently$').mockImplementation(() => {
+        throw new Error('no refresh token');
+      });
       trackAuth0Logout(service, order);
 
-      service.pushTeardown = jasmine.createSpy('pushTeardown').and.resolveTo();
+      service.pushTeardown = vi.fn().mockResolvedValue(undefined);
 
       await service.logout();
 
@@ -188,64 +198,71 @@ describe('AuthService', () => {
 
   describe('telemetry user', () => {
     function stubClient(service: AuthService) {
-      (service as unknown as { auth0Client$: unknown }).auth0Client$ = of({
+      (
+        service as unknown as {
+          auth0Client$: unknown;
+        }
+      ).auth0Client$ = of({
         getUser: () => Promise.resolve({ nickname: 'nick', picture: 'p' }),
       });
     }
 
-    it('sets the telemetry user when the profile loads', (done) => {
+    it('sets the telemetry user when the profile loads', async () => {
       const service = TestBed.inject(AuthService);
-      const setUser = spyOn(
-        TestBed.inject(LoggingService),
-        'setAuthenticatedUser'
-      );
+      const setUser = vi
+        .spyOn(TestBed.inject(LoggingService), 'setAuthenticatedUser')
+        .mockReturnValue(undefined);
       stubClient(service);
-      mockUserService.getCurrentUserDetail.and.returnValue(
+      mockUserService.getCurrentUserDetail.mockReturnValue(
         of({ id: 77, displayName: 'Named' } as any)
       );
 
       service.getUser$().subscribe(() => {
         expect(setUser).toHaveBeenCalledWith(77);
-        done();
       });
     });
 
-    it('sets the telemetry user after the first-login displayName update', (done) => {
+    it('sets the telemetry user after the first-login displayName update', async () => {
       const service = TestBed.inject(AuthService);
-      const setUser = spyOn(
-        TestBed.inject(LoggingService),
-        'setAuthenticatedUser'
-      );
+      const setUser = vi
+        .spyOn(TestBed.inject(LoggingService), 'setAuthenticatedUser')
+        .mockReturnValue(undefined);
       stubClient(service);
-      mockUserService.getCurrentUserDetail.and.returnValue(
+      mockUserService.getCurrentUserDetail.mockReturnValue(
         of({ id: 78, displayName: null } as any)
       );
-      (mockUserService as any).updateCurrentUserDetail = jasmine
-        .createSpy()
-        .and.returnValue(of({ id: 78, displayName: 'nick' }));
+      (mockUserService as any).updateCurrentUserDetail = vi
+        .fn()
+        .mockReturnValue(of({ id: 78, displayName: 'nick' }));
 
       service.getUser$().subscribe(() => {
         expect(setUser).toHaveBeenCalledWith(78);
-        done();
       });
     });
   });
 
   describe('login screen_hint', () => {
     let service: AuthService;
-    let client: jasmine.SpyObj<{ loginWithRedirect: (o: unknown) => void }>;
+    let client: MockedObject<{
+      loginWithRedirect: (o: unknown) => void;
+    }>;
 
     beforeEach(() => {
       service = TestBed.inject(AuthService);
-      client = jasmine.createSpyObj('Auth0Client', ['loginWithRedirect']);
-      (service as unknown as { auth0Client$: unknown }).auth0Client$ =
-        of(client);
+      client = {
+        loginWithRedirect: vi.fn().mockName('Auth0Client.loginWithRedirect'),
+      };
+      (
+        service as unknown as {
+          auth0Client$: unknown;
+        }
+      ).auth0Client$ = of(client);
     });
 
     it('omits screen_hint for an ordinary login', () => {
       service.login('/prints');
 
-      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
+      const params = vi.mocked(client.loginWithRedirect).mock.lastCall[0] as {
         authorizationParams: Record<string, unknown>;
       };
       expect(params.authorizationParams['screen_hint']).toBeUndefined();
@@ -254,7 +271,7 @@ describe('AuthService', () => {
     it('sends screen_hint=signup when asked for signup', () => {
       service.login('/prints', { signup: true });
 
-      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
+      const params = vi.mocked(client.loginWithRedirect).mock.lastCall[0] as {
         authorizationParams: Record<string, unknown>;
       };
       expect(params.authorizationParams['screen_hint']).toBe('signup');
@@ -263,8 +280,10 @@ describe('AuthService', () => {
     it('still carries the redirect target through appState', () => {
       service.login('/prints', { signup: true });
 
-      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
-        appState: { target: string };
+      const params = vi.mocked(client.loginWithRedirect).mock.lastCall[0] as {
+        appState: {
+          target: string;
+        };
       };
       expect(params.appState.target).toBe('/prints');
     });
@@ -272,8 +291,11 @@ describe('AuthService', () => {
     it('carries the sign-up source through appState', () => {
       service.login('/prints', { signup: true, source: 'home' });
 
-      const params = client.loginWithRedirect.calls.mostRecent().args[0] as {
-        appState: { target: string; source?: string };
+      const params = vi.mocked(client.loginWithRedirect).mock.lastCall[0] as {
+        appState: {
+          target: string;
+          source?: string;
+        };
       };
       expect(params.appState).toEqual({ target: '/prints', source: 'home' });
     });
@@ -281,57 +303,62 @@ describe('AuthService', () => {
 
   describe('new-user display name', () => {
     function stubClient(service: AuthService, user: unknown) {
-      (service as unknown as { auth0Client$: unknown }).auth0Client$ = of({
+      (
+        service as unknown as {
+          auth0Client$: unknown;
+        }
+      ).auth0Client$ = of({
         getUser: () => Promise.resolve(user),
       });
     }
 
-    let update: jasmine.Spy;
+    let update: Mock;
 
     beforeEach(() => {
-      mockUserService.getCurrentUserDetail.and.returnValue(
+      mockUserService.getCurrentUserDetail.mockReturnValue(
         of({ id: 90, displayName: null } as any)
       );
-      update = jasmine
-        .createSpy('updateCurrentUserDetail')
-        .and.returnValue(of({ id: 90, displayName: 'x' }));
+      update = vi.fn().mockReturnValue(of({ id: 90, displayName: 'x' }));
       (mockUserService as any).updateCurrentUserDetail = update;
     });
 
-    it('leaves the name null when Auth0 has no nickname', fakeAsync(() => {
+    it('leaves the name null when Auth0 has no nickname', async () => {
+      vi.useFakeTimers();
       const service = TestBed.inject(AuthService);
       stubClient(service, { picture: 'p' });
 
       service.getUser$().subscribe();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(update).toHaveBeenCalledWith(
-        jasmine.objectContaining({ displayName: null, profilePicture: 'p' })
+        expect.objectContaining({ displayName: null, profilePicture: 'p' })
       );
-    }));
+    });
 
-    it('truncates a long nickname to 29 characters', fakeAsync(() => {
+    it('truncates a long nickname to 29 characters', async () => {
+      vi.useFakeTimers();
       const service = TestBed.inject(AuthService);
       stubClient(service, { nickname: 'n'.repeat(40), picture: 'p' });
 
       service.getUser$().subscribe();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(update).toHaveBeenCalledWith(
-        jasmine.objectContaining({ displayName: 'n'.repeat(29) })
+        expect.objectContaining({ displayName: 'n'.repeat(29) })
       );
-    }));
+    });
 
-    it('sends the PUT once per page load when getUser$ runs twice', fakeAsync(() => {
+    it('sends the PUT once per page load when getUser$ runs twice', async () => {
+      vi.useFakeTimers();
       const service = TestBed.inject(AuthService);
       stubClient(service, { nickname: 'nick', picture: 'p' });
 
       service.getUser$().subscribe();
       service.getUser$().subscribe();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(0);
 
       expect(update).toHaveBeenCalledTimes(1);
-    }));
+    });
   });
 
   describe('auth callback', () => {
@@ -341,15 +368,15 @@ describe('AuthService', () => {
 
     let service: AuthService;
     let onboarding: OnboardingService;
-    let status: jasmine.Spy;
-    let shouldShowWelcome: jasmine.Spy;
-    let logEvent: jasmine.Spy;
-    let logException: jasmine.Spy;
-    let gaEvent: jasmine.Spy;
-    let navigate: jasmine.Spy;
+    let status: Mock;
+    let shouldShowWelcome: Mock;
+    let logEvent: Mock;
+    let logException: Mock;
+    let gaEvent: Mock;
+    let navigate: Mock;
 
     function statusCreated(msAgo: number | null) {
-      status.and.resolveTo({
+      status.mockResolvedValue({
         onboardingEligible: true,
         createdDate:
           msAgo === null ? null : new Date(Date.now() - msAgo).toISOString(),
@@ -357,7 +384,7 @@ describe('AuthService', () => {
       });
     }
 
-    function runCallback(appState: { target?: string; source?: string }) {
+    async function runCallback(appState: { target?: string; source?: string }) {
       const fields = service as unknown as Record<string, unknown>;
       fields['handleRedirectCallback$'] = of({ appState });
       fields['isAuthenticated$'] = of(true);
@@ -365,34 +392,43 @@ describe('AuthService', () => {
         getUser: () => Promise.resolve({ nickname: 'nick', picture: 'p' }),
       });
       service.handleAuthCallback();
-      flushMicrotasks();
+      await vi.advanceTimersByTimeAsync(0);
     }
 
     function signupLogs() {
-      return logEvent.calls
-        .allArgs()
-        .filter(([name]) => name === 'Auth_SignedUp');
+      return vi
+        .mocked(logEvent)
+        .mock.calls.filter(([name]) => name === 'Auth_SignedUp');
     }
 
     beforeEach(() => {
       localStorage.removeItem(SIGNUP_KEY);
-      mockUserService.getCurrentUserDetail.and.returnValue(
+      mockUserService.getCurrentUserDetail.mockReturnValue(
         of({ id: PROFILE_ID, displayName: 'Named' } as any)
       );
       service = TestBed.inject(AuthService);
       onboarding = TestBed.inject(OnboardingService);
-      status = spyOn(onboarding, 'status');
+      status = vi.spyOn(onboarding, 'status').mockReturnValue(undefined);
       statusCreated(1 * MINUTE);
-      shouldShowWelcome = spyOn(onboarding, 'shouldShowWelcome').and.resolveTo(
-        false
-      );
-      logEvent = spyOn(TestBed.inject(LoggingService), 'logEvent');
-      spyOn(TestBed.inject(LoggingService), 'setAuthenticatedUser');
-      logException = spyOn(TestBed.inject(LoggingService), 'logException');
-      gaEvent = spyOn(TestBed.inject(GoogleAnalyticsService), 'eventEmitter');
-      navigate = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(
-        true
-      );
+      shouldShowWelcome = vi
+        .spyOn(onboarding, 'shouldShowWelcome')
+        .mockResolvedValue(false);
+      logEvent = vi
+        .spyOn(TestBed.inject(LoggingService), 'logEvent')
+        .mockReturnValue(undefined);
+      vi.spyOn(
+        TestBed.inject(LoggingService),
+        'setAuthenticatedUser'
+      ).mockReturnValue(undefined);
+      logException = vi
+        .spyOn(TestBed.inject(LoggingService), 'logException')
+        .mockReturnValue(undefined);
+      gaEvent = vi
+        .spyOn(TestBed.inject(GoogleAnalyticsService), 'eventEmitter')
+        .mockReturnValue(undefined);
+      navigate = vi
+        .spyOn(TestBed.inject(Router), 'navigateByUrl')
+        .mockResolvedValue(true);
     });
 
     afterEach(() => {
@@ -400,168 +436,203 @@ describe('AuthService', () => {
     });
 
     describe('sign-up logging', () => {
-      it('logs Auth_SignedUp once for a new account and sets the key', fakeAsync(() => {
-        runCallback({ target: '/prints', source: 'home' });
+      it('logs Auth_SignedUp once for a new account and sets the key', async () => {
+        vi.useFakeTimers();
+        await runCallback({ target: '/prints', source: 'home' });
 
         expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'home' }]]);
-        expect(gaEvent).toHaveBeenCalledOnceWith(
+        expect(gaEvent).toHaveBeenCalledTimes(1);
+        expect(gaEvent).toHaveBeenCalledWith(
           'sign_up',
           'engagement',
           'sign_up',
           'home'
         );
         expect(localStorage.getItem(SIGNUP_KEY)).not.toBeNull();
-      }));
+      });
 
-      it('does not log twice for the same account', fakeAsync(() => {
-        runCallback({ target: '/prints', source: 'home' });
-        runCallback({ target: '/prints', source: 'home' });
+      it('does not log twice for the same account', async () => {
+        vi.useFakeTimers();
+        await runCallback({ target: '/prints', source: 'home' });
+        await runCallback({ target: '/prints', source: 'home' });
 
         expect(signupLogs().length).toBe(1);
-      }));
+      });
 
-      it('does not log when createdDate is older than 10 minutes', fakeAsync(() => {
+      it('does not log when createdDate is older than 10 minutes', async () => {
+        vi.useFakeTimers();
         statusCreated(11 * MINUTE);
 
-        runCallback({ target: '/prints', source: 'home' });
+        await runCallback({ target: '/prints', source: 'home' });
 
         expect(signupLogs()).toEqual([]);
         expect(gaEvent).not.toHaveBeenCalled();
-      }));
+      });
 
-      it('does not log when createdDate is unknown', fakeAsync(() => {
+      it('does not log when createdDate is unknown', async () => {
+        vi.useFakeTimers();
         statusCreated(null);
 
-        runCallback({ target: '/prints' });
+        await runCallback({ target: '/prints' });
 
         expect(signupLogs()).toEqual([]);
-      }));
+      });
 
-      it('does not log when the key already exists', fakeAsync(() => {
+      it('does not log when the key already exists', async () => {
+        vi.useFakeTimers();
         localStorage.setItem(SIGNUP_KEY, '1');
 
-        runCallback({ target: '/prints', source: 'home' });
+        await runCallback({ target: '/prints', source: 'home' });
 
         expect(signupLogs()).toEqual([]);
         expect(gaEvent).not.toHaveBeenCalled();
-      }));
+      });
 
-      it('uses the source from appState', fakeAsync(() => {
-        runCallback({ target: '/prints/new/cura?x=1', source: 'home' });
+      it('uses the source from appState', async () => {
+        vi.useFakeTimers();
+        await runCallback({ target: '/prints/new/cura?x=1', source: 'home' });
 
         expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'home' }]]);
-      }));
+      });
 
-      it('uses slicer for a Cura hand-off target with no source', fakeAsync(() => {
-        runCallback({ target: '/prints/new/cura?gcode=abc' });
+      it('uses slicer for a Cura hand-off target with no source', async () => {
+        vi.useFakeTimers();
+        await runCallback({ target: '/prints/new/cura?gcode=abc' });
 
         expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'slicer' }]]);
-      }));
+      });
 
-      it('uses direct otherwise', fakeAsync(() => {
-        runCallback({ target: '/settings' });
+      it('uses direct otherwise', async () => {
+        vi.useFakeTimers();
+        await runCallback({ target: '/settings' });
 
         expect(signupLogs()).toEqual([['Auth_SignedUp', { source: 'direct' }]]);
-      }));
+      });
     });
 
     describe('welcome redirect', () => {
-      it('navigates to /welcome when shouldShowWelcome is true', fakeAsync(() => {
-        shouldShowWelcome.and.resolveTo(true);
+      it('navigates to /welcome when shouldShowWelcome is true', async () => {
+        vi.useFakeTimers();
+        shouldShowWelcome.mockResolvedValue(true);
 
-        runCallback({ target: '/prints' });
+        await runCallback({ target: '/prints' });
 
         expect(shouldShowWelcome).toHaveBeenCalledWith('/prints');
-        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+        expect(navigate).toHaveBeenCalledTimes(1);
+        expect(navigate).toHaveBeenCalledWith('/welcome', {
           state: { entry: 'callback' },
         });
-      }));
+      });
 
-      it('navigates to the target when shouldShowWelcome is false', fakeAsync(() => {
-        runCallback({ target: '/prints' });
+      it('navigates to the target when shouldShowWelcome is false', async () => {
+        vi.useFakeTimers();
+        await runCallback({ target: '/prints' });
 
-        expect(navigate).toHaveBeenCalledOnceWith('/prints');
-      }));
+        expect(navigate).toHaveBeenCalledTimes(1);
 
-      it('navigates to the target when shouldShowWelcome rejects', fakeAsync(() => {
-        shouldShowWelcome.and.rejectWith(new Error('boom'));
+        expect(navigate).toHaveBeenCalledWith('/prints');
+      });
 
-        runCallback({ target: '/prints' });
+      it('navigates to the target when shouldShowWelcome rejects', async () => {
+        vi.useFakeTimers();
+        shouldShowWelcome.mockRejectedValue(new Error('boom'));
 
-        expect(navigate).toHaveBeenCalledOnceWith('/prints');
-      }));
+        await runCallback({ target: '/prints' });
 
-      it('defaults the target to / when appState has none', fakeAsync(() => {
-        runCallback({});
+        expect(navigate).toHaveBeenCalledTimes(1);
 
-        expect(navigate).toHaveBeenCalledOnceWith('/');
-      }));
+        expect(navigate).toHaveBeenCalledWith('/prints');
+      });
 
-      it('falls back to the target after 3 s when the lookups hang', fakeAsync(() => {
-        shouldShowWelcome.and.returnValue(new Promise<boolean>(() => {}));
-        status.and.returnValue(new Promise(() => {}));
+      it('defaults the target to / when appState has none', async () => {
+        vi.useFakeTimers();
+        await runCallback({});
 
-        runCallback({ target: '/prints' });
+        expect(navigate).toHaveBeenCalledTimes(1);
+
+        expect(navigate).toHaveBeenCalledWith('/');
+      });
+
+      it('falls back to the target after 3 s when the lookups hang', async () => {
+        vi.useFakeTimers();
+        shouldShowWelcome.mockReturnValue(new Promise<boolean>(() => {}));
+        status.mockReturnValue(new Promise(() => {}));
+
+        await runCallback({ target: '/prints' });
         expect(navigate).not.toHaveBeenCalled();
 
-        tick(3000);
+        await vi.advanceTimersByTimeAsync(3000);
 
-        expect(navigate).toHaveBeenCalledOnceWith('/prints');
-        flush(); // the sign-up logging gives up on its own, later
-      }));
+        expect(navigate).toHaveBeenCalledTimes(1);
 
-      it('still navigates when the sign-up check rejects', fakeAsync(() => {
-        status.and.rejectWith(new Error('down'));
+        expect(navigate).toHaveBeenCalledWith('/prints');
+        await vi.runAllTimersAsync(); // the sign-up logging gives up on its own, later
+      });
 
-        runCallback({ target: '/prints' });
+      it('still navigates when the sign-up check rejects', async () => {
+        vi.useFakeTimers();
+        status.mockRejectedValue(new Error('down'));
 
-        expect(navigate).toHaveBeenCalledOnceWith('/prints');
+        await runCallback({ target: '/prints' });
+
+        expect(navigate).toHaveBeenCalledTimes(1);
+
+        expect(navigate).toHaveBeenCalledWith('/prints');
         expect(signupLogs()).toEqual([]);
-      }));
+      });
 
-      it('goes to /welcome without waiting for a profile that never loads', fakeAsync(() => {
-        shouldShowWelcome.and.resolveTo(true);
-        mockUserService.getCurrentUserDetail.and.returnValue(NEVER);
+      it('goes to /welcome without waiting for a profile that never loads', async () => {
+        vi.useFakeTimers();
+        shouldShowWelcome.mockResolvedValue(true);
+        mockUserService.getCurrentUserDetail.mockReturnValue(NEVER);
 
-        runCallback({ target: '/prints' });
+        await runCallback({ target: '/prints' });
 
-        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+        expect(navigate).toHaveBeenCalledTimes(1);
+
+        expect(navigate).toHaveBeenCalledWith('/welcome', {
           state: { entry: 'callback' },
         });
-        tick(10000); // the background sign-up logging gives up on the profile
+        await vi.advanceTimersByTimeAsync(10000); // the background sign-up logging gives up on the profile
         expect(signupLogs()).toEqual([]);
         expect(logException).toHaveBeenCalled();
-      }));
+      });
 
-      it('goes to /welcome when the new-user PUT fails', fakeAsync(() => {
-        shouldShowWelcome.and.resolveTo(true);
-        mockUserService.getCurrentUserDetail.and.returnValue(
+      it('goes to /welcome when the new-user PUT fails', async () => {
+        vi.useFakeTimers();
+        shouldShowWelcome.mockResolvedValue(true);
+        mockUserService.getCurrentUserDetail.mockReturnValue(
           of({ id: PROFILE_ID, displayName: null } as any)
         );
-        (mockUserService as any).updateCurrentUserDetail = jasmine
-          .createSpy('updateCurrentUserDetail')
-          .and.returnValue(throwError(() => new Error('400')));
+        (mockUserService as any).updateCurrentUserDetail = vi
+          .fn()
+          .mockReturnValue(throwError(() => new Error('400')));
 
-        runCallback({ target: '/prints' });
+        await runCallback({ target: '/prints' });
 
-        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+        expect(navigate).toHaveBeenCalledTimes(1);
+
+        expect(navigate).toHaveBeenCalledWith('/welcome', {
           state: { entry: 'callback' },
         });
-        tick(10000); // the background sign-up logging gives up on the profile
+        await vi.advanceTimersByTimeAsync(10000); // the background sign-up logging gives up on the profile
         expect(logException).toHaveBeenCalled();
-      }));
+      });
 
-      it('goes to /welcome while the sign-up status lookup hangs', fakeAsync(() => {
-        shouldShowWelcome.and.resolveTo(true);
-        status.and.returnValue(new Promise(() => {}));
+      it('goes to /welcome while the sign-up status lookup hangs', async () => {
+        vi.useFakeTimers();
+        shouldShowWelcome.mockResolvedValue(true);
+        status.mockReturnValue(new Promise(() => {}));
 
-        runCallback({ target: '/prints' });
+        await runCallback({ target: '/prints' });
 
-        expect(navigate).toHaveBeenCalledOnceWith('/welcome', {
+        expect(navigate).toHaveBeenCalledTimes(1);
+
+        expect(navigate).toHaveBeenCalledWith('/welcome', {
           state: { entry: 'callback' },
         });
-        flush();
-      }));
+        await vi.runAllTimersAsync();
+      });
     });
   });
 });

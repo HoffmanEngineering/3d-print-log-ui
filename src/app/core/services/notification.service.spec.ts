@@ -6,12 +6,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import {
-  discardPeriodicTasks,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
 import { NotificationType } from '../types/notification';
@@ -36,23 +31,25 @@ describe('NotificationService', () => {
 
   afterEach(() => http.verify());
 
-  it('startPolling fetches immediately then every 30s', fakeAsync(() => {
+  it('startPolling fetches immediately then every 30s', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 0 });
 
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(30000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 2, unreadAchievementCount: 0 });
 
     expect(service.unreadCount()).toBe(2);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('poll sets unreadAchievementCount from response', fakeAsync(() => {
+  it('poll sets unreadAchievementCount from response', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
@@ -60,16 +57,17 @@ describe('NotificationService', () => {
 
     expect(service.unreadAchievementCount()).toBe(2);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('pollTick increments on every response even when counts are unchanged', fakeAsync(() => {
+  it('pollTick increments on every response even when counts are unchanged', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     const before = service.pollTick();
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 1 });
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(30000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 1 });
@@ -80,8 +78,8 @@ describe('NotificationService', () => {
 
     expect(service.pollTick()).toBe(before + 3);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
   it('getNotifications sends type param', () => {
     service
@@ -107,10 +105,11 @@ describe('NotificationService', () => {
       expect(req.request.body.notificationIds.length).toBe(size);
       req.flush(null);
     }
-    expect(done).toBeTrue();
+    expect(done).toBe(true);
   });
 
-  it('markMultipleAsRead decrements counts optimistically', fakeAsync(() => {
+  it('markMultipleAsRead decrements counts optimistically', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
@@ -122,40 +121,43 @@ describe('NotificationService', () => {
     expect(service.unreadCount()).toBe(2);
     expect(service.unreadAchievementCount()).toBe(0);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('stopPolling then startPolling runs exactly one poller', fakeAsync(() => {
+  it('stopPolling then startPolling runs exactly one poller', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http.expectOne(countUrl).flush({ unreadCount: 0 });
     service.stopPolling();
     service.startPolling();
     http.expectOne(countUrl).flush({ unreadCount: 0 });
 
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(30000);
     http.expectOne(countUrl).flush({ unreadCount: 0 });
 
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('a failed poll does not stop polling', fakeAsync(() => {
+  it('a failed poll does not stop polling', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
       .flush('down', { status: 503, statusText: 'Service Unavailable' });
 
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(30000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 2, unreadAchievementCount: 1 });
 
     expect(service.unreadAchievementCount()).toBe(1);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('stopPolling resets both counts', fakeAsync(() => {
+  it('stopPolling resets both counts', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
@@ -165,6 +167,6 @@ describe('NotificationService', () => {
 
     expect(service.unreadCount()).toBe(0);
     expect(service.unreadAchievementCount()).toBe(0);
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 });

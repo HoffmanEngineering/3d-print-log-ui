@@ -21,7 +21,11 @@ describe('GoogleAnalyticsService', () => {
   }
 
   afterEach(() => {
-    delete (window as unknown as { gtag?: unknown }).gtag;
+    delete (
+      window as unknown as {
+        gtag?: unknown;
+      }
+    ).gtag;
   });
 
   it('should be created', () => {
@@ -29,8 +33,12 @@ describe('GoogleAnalyticsService', () => {
   });
 
   it('sends a GA4 config pageview on NavigationEnd', () => {
-    const gtagSpy = jasmine.createSpy('gtag');
-    (window as unknown as { gtag: unknown }).gtag = gtagSpy;
+    const gtagSpy = vi.fn();
+    (
+      window as unknown as {
+        gtag: unknown;
+      }
+    ).gtag = gtagSpy;
 
     configure();
     events$.next(new NavigationEnd(1, '/prints', '/prints'));
@@ -43,8 +51,12 @@ describe('GoogleAnalyticsService', () => {
   });
 
   it('never sends an email token from the preferences page', () => {
-    const gtagSpy = jasmine.createSpy('gtag');
-    (window as unknown as { gtag: unknown }).gtag = gtagSpy;
+    const gtagSpy = vi.fn();
+    (
+      window as unknown as {
+        gtag: unknown;
+      }
+    ).gtag = gtagSpy;
 
     configure();
     events$.next(
@@ -63,7 +75,11 @@ describe('GoogleAnalyticsService', () => {
   });
 
   it('does not throw on NavigationEnd when gtag is unavailable', () => {
-    delete (window as unknown as { gtag?: unknown }).gtag;
+    delete (
+      window as unknown as {
+        gtag?: unknown;
+      }
+    ).gtag;
     configure();
     expect(() =>
       events$.next(new NavigationEnd(1, '/prints', '/prints'))
@@ -71,13 +87,21 @@ describe('GoogleAnalyticsService', () => {
   });
 
   it('does not throw from eventEmitter when gtag is unavailable', () => {
-    delete (window as unknown as { gtag?: unknown }).gtag;
+    delete (
+      window as unknown as {
+        gtag?: unknown;
+      }
+    ).gtag;
     const service = configure();
     expect(() => service.eventEmitter('name', 'cat', 'action')).not.toThrow();
   });
 
   it('does not throw from emitConversion when gtag is unavailable', () => {
-    delete (window as unknown as { gtag?: unknown }).gtag;
+    delete (
+      window as unknown as {
+        gtag?: unknown;
+      }
+    ).gtag;
     const service = configure();
     expect(() => service.emitConversion('AW-000/abc')).not.toThrow();
   });

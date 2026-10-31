@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import {
@@ -34,13 +35,13 @@ const EARNED: PublicAchievements = {
 
 describe('UserAchievementsComponent', () => {
   let fixture: ComponentFixture<UserAchievementsComponent>;
-  let forUser: jasmine.Spy;
+  let forUser: Mock;
 
   function render(
     dto: PublicAchievements,
     query: Record<string, string> = {}
   ): HTMLElement {
-    forUser = jasmine.createSpy('forUser').and.returnValue(of(dto));
+    forUser = vi.fn().mockReturnValue(of(dto));
     TestBed.configureTestingModule({
       imports: [UserAchievementsComponent],
       providers: [
@@ -54,7 +55,9 @@ describe('UserAchievementsComponent', () => {
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
         {
           provide: BreakpointObserver,
@@ -103,15 +106,15 @@ describe('UserAchievementsComponent', () => {
 
   it('selecting a badge updates ?badge without scrolling the page', () => {
     const el = render(EARNED);
-    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(
-      true
-    );
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockResolvedValue(true);
 
     (el.querySelector('[data-key="first-print"]') as HTMLButtonElement).click();
 
     expect(navigate).toHaveBeenCalledWith(
       [],
-      jasmine.objectContaining({
+      expect.objectContaining({
         queryParams: { badge: 'first-print' },
         replaceUrl: true,
         scroll: 'manual',

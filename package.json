@@ -10,7 +10,8 @@
     "build:dev": "node scripts/build-docs.mjs && ng build --verbose",
     "build": "node scripts/build-docs.mjs && ng build --configuration production --verbose && node scripts/generate-shells.mjs",
     "test": "node scripts/build-docs.mjs && ng test",
-    "test:ci": "node scripts/build-docs.mjs && ng test --no-watch --code-coverage --browsers ChromeHeadless",
+    "test:ci": "node scripts/build-docs.mjs && ng test --no-watch",
+    "test:coverage": "node scripts/build-docs.mjs && ng test --no-watch --coverage",
     "test:brief": "node scripts/build-docs.mjs && bash scripts/test-brief.sh",
     "test:scripts": "node scripts/build-docs.mjs && node scripts/validate-docs.mjs && node --test scripts/*.test.mjs",
     "typecheck:strict": "node scripts/typecheck-strict.mjs",
@@ -31,6 +32,7 @@
     "prettier": "prettier --check src/**/*.*",
     "prettier:fix": "prettier --write src/**/*.*",
     "prepare": "husky install",
+    "postinstall": "patch-package",
     "docs:generate": "node scripts/build-docs.mjs",
     "discovery:generate": "node scripts/generate-discovery.mjs",
     "discovery:sync-skill": "node scripts/sync-agent-skill.mjs",
@@ -68,8 +70,7 @@
     "parse-duration": "^2.1.9",
     "qrcode": "^1.5.4",
     "rxjs": "^7.8.1",
-    "tslib": "^2.3.1",
-    "zone.js": "^0.15.1"
+    "tslib": "^2.3.1"
   },
   "devDependencies": {
     "@angular-eslint/builder": "21.3.1",
@@ -81,9 +82,10 @@
     "@testing-library/cypress": "^10.1.3",
     "@types/cypress": "^1.1.6",
     "@types/d3": "^7.4.3",
-    "@types/jasmine": "^5.1.15",
     "@types/node": "^22.19.18",
     "@types/qrcode": "^1.5.5",
+    "@vitest/browser-playwright": "^4.1.12",
+    "@vitest/coverage-v8": "^4.1.12",
     "angular-eslint": "21.3.1",
     "axe-core": "^4.13.0",
     "baseline-browser-mapping": "^2.10.29",
@@ -92,16 +94,9 @@
     "esbuild": "0.27.3",
     "eslint": "^9.39.4",
     "husky": "^7.0.4",
-    "jasmine-core": "~5.1.2",
-    "jasmine-spec-reporter": "~7.0.0",
-    "karma": "^6.4.4",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "^2.2.1",
-    "karma-coverage-istanbul-reporter": "~3.0.2",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "^2.2.0",
-    "karma-junit-reporter": "^2.0.1",
     "lint-staged": "^15.5.2",
+    "patch-package": "^8.0.1",
+    "playwright": "^1.63.0",
     "prettier": "3.3.3",
     "sharp": "^0.35.3",
     "source-map-explorer": "^2.5.3",
@@ -109,7 +104,8 @@
     "tslint-config-prettier": "^1.18.0",
     "turndown": "^7.2.4",
     "typescript": "5.9.3",
-    "typescript-eslint": "^8.71.2"
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^4.1.12"
   },
   "lint-staged": {
     "*.{js,css,md,ts,scss}": "prettier --write"

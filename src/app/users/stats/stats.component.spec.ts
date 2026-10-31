@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, Subject } from 'rxjs';
 import { UsersPrintsStatsService } from 'src/app/core/services/users-prints-stats.service';
@@ -7,28 +8,31 @@ import { StatsComponent } from './stats.component';
 describe('StatsComponent', () => {
   let fixture: ComponentFixture<StatsComponent>;
   let component: StatsComponent;
-  let stats: jasmine.SpyObj<UsersPrintsStatsService>;
+  let stats: MockedObject<UsersPrintsStatsService>;
 
   const MIN_DATE = new Date('1910-01-01');
   const isAllTime = (from: Date) => from.getTime() === MIN_DATE.getTime();
 
   beforeEach(() => {
-    stats = jasmine.createSpyObj<UsersPrintsStatsService>(
-      'UsersPrintsStatsService',
-      [
-        'getUsersPrintCount',
-        'getUsersTotalPrintTimeInSeconds',
-        'getUsersTotalFilamentUsage',
-      ]
-    );
-    stats.getUsersPrintCount.and.callFake((_id, from) =>
+    stats = {
+      getUsersPrintCount: vi
+        .fn()
+        .mockName('UsersPrintsStatsService.getUsersPrintCount'),
+      getUsersTotalPrintTimeInSeconds: vi
+        .fn()
+        .mockName('UsersPrintsStatsService.getUsersTotalPrintTimeInSeconds'),
+      getUsersTotalFilamentUsage: vi
+        .fn()
+        .mockName('UsersPrintsStatsService.getUsersTotalFilamentUsage'),
+    } as unknown as MockedObject<UsersPrintsStatsService>;
+    stats.getUsersPrintCount.mockImplementation((_id, from) =>
       of(isAllTime(from) ? 40 : 6)
     );
-    stats.getUsersTotalPrintTimeInSeconds.and.callFake((_id, from) =>
-      of(isAllTime(from) ? 90_061 : 0)
+    stats.getUsersTotalPrintTimeInSeconds.mockImplementation((_id, from) =>
+      of(isAllTime(from) ? 90061 : 0)
     );
-    stats.getUsersTotalFilamentUsage.and.callFake((_id, from) =>
-      of(isAllTime(from) ? 12_500 : null)
+    stats.getUsersTotalFilamentUsage.mockImplementation((_id, from) =>
+      of(isAllTime(from) ? 12500 : null)
     );
 
     TestBed.configureTestingModule({
@@ -44,9 +48,9 @@ describe('StatsComponent', () => {
   it('loads all-time and last-30-day print counts for the user', () => {
     expect(component.printCountTotal()).toBe(40);
     expect(component.printCountLast30Days()).toBe(6);
-    expect(stats.getUsersPrintCount.calls.allArgs().map((a) => a[0])).toEqual([
-      7, 7,
-    ]);
+    expect(
+      vi.mocked(stats.getUsersPrintCount).mock.calls.map((a) => a[0])
+    ).toEqual([7, 7]);
   });
 
   it('spells out print time from years down to seconds', () => {
@@ -68,14 +72,14 @@ describe('StatsComponent', () => {
     fixture.componentRef.setInput('userId', 8);
     fixture.detectChanges();
 
-    expect(stats.getUsersPrintCount.calls.mostRecent().args[0]).toBe(8);
+    expect(vi.mocked(stats.getUsersPrintCount).mock.lastCall[0]).toBe(8);
   });
 
   it("shows another user's figures once they arrive", () => {
     const count = new Subject<number>();
-    stats.getUsersPrintCount.and.returnValue(count);
-    stats.getUsersTotalPrintTimeInSeconds.and.returnValue(new Subject());
-    stats.getUsersTotalFilamentUsage.and.returnValue(new Subject());
+    stats.getUsersPrintCount.mockReturnValue(count);
+    stats.getUsersTotalPrintTimeInSeconds.mockReturnValue(new Subject());
+    stats.getUsersTotalFilamentUsage.mockReturnValue(new Subject());
 
     fixture.componentRef.setInput('userId', 8);
     fixture.detectChanges();

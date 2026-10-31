@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { ChangeDetectorRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
@@ -19,20 +20,23 @@ import { ScanSpoolResult } from './scan-spool-sheet/scan-spool-sheet.component';
 /** Where the Materials list's Scan spool sheet sends the user. */
 describe('FilamentListContainerComponent Scan spool', () => {
   let component: FilamentListContainerComponent;
-  let router: { events: typeof EMPTY; navigate: jasmine.Spy };
-  let sheet: jasmine.SpyObj<MatBottomSheet>;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let logger: jasmine.SpyObj<LoggingService>;
+  let router: {
+    events: typeof EMPTY;
+    navigate: Mock;
+  };
+  let sheet: MockedObject<MatBottomSheet>;
+  let dialog: MockedObject<MatDialog>;
+  let logger: MockedObject<LoggingService>;
   let available: ReturnType<typeof signal<boolean>>;
 
   function sheetAnswers(result: ScanSpoolResult | undefined) {
-    sheet.open.and.returnValue({
+    sheet.open.mockReturnValue({
       afterDismissed: () => of(result),
     } as never);
   }
 
   function pickerAnswers(result: FilamentSummary | null) {
-    dialog.open.and.returnValue({
+    dialog.open.mockReturnValue({
       afterClosed: () => of(result),
     } as never);
   }
@@ -40,13 +44,17 @@ describe('FilamentListContainerComponent Scan spool', () => {
   beforeEach(() => {
     router = {
       events: EMPTY,
-      navigate: jasmine.createSpy('navigate').and.resolveTo(true),
+      navigate: vi.fn().mockResolvedValue(true),
     };
-    sheet = jasmine.createSpyObj<MatBottomSheet>('MatBottomSheet', ['open']);
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    sheet = {
+      open: vi.fn().mockName('MatBottomSheet.open'),
+    } as unknown as MockedObject<MatBottomSheet>;
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    logger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     available = signal(true);
 
     TestBed.configureTestingModule({
@@ -76,9 +84,9 @@ describe('FilamentListContainerComponent Scan spool', () => {
   });
 
   it('offers Scan spool only when tags can be read', () => {
-    expect(component.canScan()).toBeTrue();
+    expect(component.canScan()).toBe(true);
     available.set(false);
-    expect(component.canScan()).toBeFalse();
+    expect(component.canScan()).toBe(false);
   });
 
   it('a known tag opens that spool', () => {
@@ -107,8 +115,8 @@ describe('FilamentListContainerComponent Scan spool', () => {
 
     expect(dialog.open).toHaveBeenCalledWith(
       FilamentSearchModalComponent,
-      jasmine.objectContaining({
-        data: jasmine.objectContaining({
+      expect.objectContaining({
+        data: expect.objectContaining({
           pendingTagUid: '04A23F11',
           pendingTagReading: reading,
         }),

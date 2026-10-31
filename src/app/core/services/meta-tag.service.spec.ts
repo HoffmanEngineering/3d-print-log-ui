@@ -5,7 +5,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { MetaTagService } from './meta-tag.service';
 import { SeoMetadata } from './seo.service';
 
-/** Tags this suite writes into the shared Karma document; removed after each test. */
+/** Tags this suite writes into the shared test document; removed after each test. */
 const TOUCHED_SELECTORS = [
   'meta[name="description"]',
   'meta[property^="og:"]',
@@ -302,8 +302,8 @@ describe('MetaTagService social tags (aligned with the SEO Worker)', () => {
       'meta[name="twitter:image"]',
       'meta[name="twitter:image:alt"]',
     ]) {
-      expect(count(doc, selector)).withContext(selector).toBe(1);
-      expect(content(doc, selector)).withContext(selector).not.toBe('worker');
+      expect(count(doc, selector), selector).toBe(1);
+      expect(content(doc, selector), selector).not.toBe('worker');
     }
   });
 

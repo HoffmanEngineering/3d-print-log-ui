@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { WritableSignal, signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -15,7 +16,7 @@ import { PrinterAvatarComponent } from './printer-avatar.component';
 describe('PrinterAvatarComponent', () => {
   let component: PrinterAvatarComponent;
   let fixture: ComponentFixture<PrinterAvatarComponent>;
-  let store: jasmine.SpyObj<PrinterThumbnailStore>;
+  let store: MockedObject<PrinterThumbnailStore>;
   /** The real store reads a signal, so the stub does too - otherwise nothing would ever
    * mark the component's computed dirty and the recovery case could not be exercised. */
   let thumbnail: WritableSignal<string | null>;
@@ -27,14 +28,21 @@ describe('PrinterAvatarComponent', () => {
   const img = () => fixture.debugElement.query(By.css('img'));
 
   beforeEach(async () => {
-    store = jasmine.createSpyObj<PrinterThumbnailStore>(
-      'PrinterThumbnailStore',
-      ['thumbnailFor', 'invalidate', 'noteLoadFailure']
-    );
+    store = {
+      thumbnailFor: vi.fn().mockName('PrinterThumbnailStore.thumbnailFor'),
+      invalidate: vi.fn().mockName('PrinterThumbnailStore.invalidate'),
+      noteLoadFailure: vi
+        .fn()
+        .mockName('PrinterThumbnailStore.noteLoadFailure'),
+    } as unknown as MockedObject<PrinterThumbnailStore>;
     thumbnail = signal<string | null>(null);
     generation = signal(0);
-    store.thumbnailFor.and.callFake(() => thumbnail());
-    (store as { generation: WritableSignal<number> }).generation = generation;
+    store.thumbnailFor.mockImplementation(() => thumbnail());
+    (
+      store as {
+        generation: WritableSignal<number>;
+      }
+    ).generation = generation;
 
     await TestBed.configureTestingModule({
       imports: [PrinterAvatarComponent],
@@ -230,7 +238,7 @@ describe('PrinterAvatarComponent with the real store', () => {
       await settle();
       httpMock.expectOne(url).flush([{ printerId: 101, thumbnailUrl }]);
       await settle();
-      expect(img()).withContext('first paint').toBeTruthy();
+      expect(img(), 'first paint').toBeTruthy();
     };
 
     // The production bug: a deleted blob's url 404s, and every failure queued a refetch
@@ -251,7 +259,7 @@ describe('PrinterAvatarComponent with the real store', () => {
       }
 
       expect(refetches).toBe(1);
-      expect(img()).withContext('a dead url stays hidden').toBeNull();
+      expect(img(), 'a dead url stays hidden').toBeNull();
       httpMock.verify();
     });
 
@@ -265,7 +273,7 @@ describe('PrinterAvatarComponent with the real store', () => {
       await settle();
 
       // The same bucketed url, and this time it loads: no error event.
-      expect(img()).withContext('retried after the refresh').toBeTruthy();
+      expect(img(), 'retried after the refresh').toBeTruthy();
       expect((img().nativeElement as HTMLImageElement).src).toBe(flaky);
       httpMock.verify();
     });
@@ -293,7 +301,7 @@ describe('PrinterAvatarComponent with the real store', () => {
         .flush([{ printerId: 101, thumbnailUrl: uploaded }]);
       await settle();
 
-      expect(img()).withContext('the new photo').toBeTruthy();
+      expect(img(), 'the new photo').toBeTruthy();
       expect((img().nativeElement as HTMLImageElement).src).toBe(uploaded);
       httpMock.verify();
     });

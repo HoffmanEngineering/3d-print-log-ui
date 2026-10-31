@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { PLATFORM_ID, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -16,8 +17,8 @@ import { EmailNoticeComponent } from './email-notice.component';
 describe('EmailNoticeComponent', () => {
   let fixture: ComponentFixture<EmailNoticeComponent>;
   let user: WritableSignal<unknown>;
-  let settings: jasmine.SpyObj<UserSettingService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let settings: MockedObject<UserSettingService>;
+  let logging: MockedObject<LoggingService>;
   let seenAt: string | undefined;
   let noticeAcknowledged: WritableSignal<boolean>;
   let checklistShowing: WritableSignal<boolean>;
@@ -26,20 +27,24 @@ describe('EmailNoticeComponent', () => {
     platform: 'browser' | 'server' = 'browser',
     url: string | null = '/prints'
   ): Promise<HTMLElement> {
-    settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
-      'getCurrentUsersSettingByType',
-      'addOrUpdateSetting',
-    ]);
-    settings.getCurrentUsersSettingByType.and.callFake(async (type) =>
+    settings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting'),
+    } as unknown as MockedObject<UserSettingService>;
+    settings.getCurrentUsersSettingByType.mockImplementation(async (type) =>
       type === UserSettingType.Email_NoticeSeenAt && seenAt !== undefined
         ? ({ value: seenAt } as UserSetting)
         : null
     );
-    settings.addOrUpdateSetting.and.returnValue(Promise.resolve());
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    settings.addOrUpdateSetting.mockReturnValue(Promise.resolve());
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [EmailNoticeComponent, NoopAnimationsModule],
@@ -198,7 +203,7 @@ describe('EmailNoticeComponent', () => {
     ).click();
     await settle();
 
-    const [type, value] = settings.addOrUpdateSetting.calls.mostRecent().args;
+    const [type, value] = vi.mocked(settings.addOrUpdateSetting).mock.lastCall;
     expect(type).toBe(UserSettingType.Email_NoticeSeenAt);
     expect(new Date(value).toISOString()).toBe(value);
     expect(logging.logEvent).toHaveBeenCalledWith('EmailNotice_Dismissed', {
@@ -209,9 +214,9 @@ describe('EmailNoticeComponent', () => {
 
   it('"Email settings" records the time and opens the email section', async () => {
     await render();
-    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(
-      true
-    );
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockResolvedValue(true);
 
     (
       fixture.nativeElement.querySelector(
@@ -222,7 +227,7 @@ describe('EmailNoticeComponent', () => {
 
     expect(settings.addOrUpdateSetting).toHaveBeenCalledWith(
       UserSettingType.Email_NoticeSeenAt,
-      jasmine.any(String)
+      expect.any(String)
     );
     expect(logging.logEvent).toHaveBeenCalledWith('EmailNotice_Dismissed', {
       action: 'settings',

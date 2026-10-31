@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import {
@@ -15,14 +16,16 @@ import {
 import { filamentListResolver } from './filament-list.resolver';
 
 describe('filamentListResolver', () => {
-  let filamentService: jasmine.SpyObj<FilamentService>;
+  let filamentService: MockedObject<FilamentService>;
 
   beforeEach(() => {
     localStorage.removeItem('filament_list_page_size');
-    filamentService = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getCurrentUserFilamentSummaries',
-    ]);
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(of(null!));
+    filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+    } as unknown as MockedObject<FilamentService>;
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(of(null!));
     TestBed.configureTestingModule({
       providers: [{ provide: FilamentService, useValue: filamentService }],
     });
@@ -35,7 +38,11 @@ describe('filamentListResolver', () => {
 
     expect(
       filamentService.getCurrentUserFilamentSummaries
-    ).toHaveBeenCalledOnceWith(
+    ).toHaveBeenCalledTimes(1);
+
+    expect(
+      filamentService.getCurrentUserFilamentSummaries
+    ).toHaveBeenCalledWith(
       1,
       10,
       FilamentSortColumns.FilamentRemaining,
@@ -58,7 +65,8 @@ describe('filamentListResolver', () => {
     runResolver(filamentListResolver);
 
     expect(
-      filamentService.getCurrentUserFilamentSummaries.calls.mostRecent().args[1]
+      vi.mocked(filamentService.getCurrentUserFilamentSummaries).mock
+        .lastCall[1]
     ).toBe(25);
   });
 
@@ -77,8 +85,8 @@ describe('filamentListResolver', () => {
       })
     );
 
-    const args =
-      filamentService.getCurrentUserFilamentSummaries.calls.mostRecent().args;
+    const args = vi.mocked(filamentService.getCurrentUserFilamentSummaries).mock
+      .lastCall;
     expect(args[10]).toEqual([ColorPatternType.Solid]);
     expect(args[11]).toEqual([FilamentFinishType.Standard]);
     expect(args[12]).toEqual([

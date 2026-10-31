@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ParamMap } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -18,30 +19,25 @@ describe('CuraParserService', () => {
   };
 
   beforeEach(() => {
-    const mockv1pt0pt0Parser = jasmine.createSpyObj<CuraParserV1pt0pt0Service>(
-      'CuraParserV1pt0pt0Service',
-      ['parse']
-    );
+    const mockv1pt0pt0Parser = {
+      parse: vi.fn().mockName('CuraParserV1pt0pt0Service.parse'),
+    };
 
-    const mockv1pt1pt0Parser = jasmine.createSpyObj<CuraParserV1pt1pt0Service>(
-      'CuraParserV1pt1pt0Service',
-      ['parse']
-    );
+    const mockv1pt1pt0Parser = {
+      parse: vi.fn().mockName('CuraParserV1pt1pt0Service.parse'),
+    };
 
-    const mockv1pt2pt0Parser = jasmine.createSpyObj<CuraParserV1pt2pt0Service>(
-      'CuraParserV1pt2pt0Service',
-      ['parse']
-    );
+    const mockv1pt2pt0Parser = {
+      parse: vi.fn().mockName('CuraParserV1pt2pt0Service.parse'),
+    };
 
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['info']
-    );
+    const mockToastrService = {
+      info: vi.fn().mockName('ToastrService.info'),
+    };
 
-    const mockLoggingService = jasmine.createSpyObj<LoggingService>(
-      'LoggingService',
-      ['logEvent']
-    );
+    const mockLoggingService = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -55,11 +51,11 @@ describe('CuraParserService', () => {
     });
     service = TestBed.inject(CuraParserService);
 
-    jasmine.clock().mockDate(new Date('2020-09-20 14:00:00'));
+    vi.setSystemTime(new Date('2020-09-20 14:00:00'));
   });
 
   afterEach(() => {
-    jasmine.clock().uninstall();
+    vi.useRealTimers();
   });
 
   it('should be created', () => {
@@ -69,8 +65,8 @@ describe('CuraParserService', () => {
   it(`should parse using the v1.0.0 parser when the param's plugin_version is 1.0.0`, async () => {
     const mockv1pt0pt0Parser = TestBed.inject(
       CuraParserV1pt0pt0Service
-    ) as jasmine.SpyObj<CuraParserV1pt0pt0Service>;
-    mockv1pt0pt0Parser.parse.and.returnValue(null);
+    ) as MockedObject<CuraParserV1pt0pt0Service>;
+    mockv1pt0pt0Parser.parse.mockReturnValue(null);
 
     const testQueryString = 'plugin_version=1.0.0&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);
@@ -82,8 +78,8 @@ describe('CuraParserService', () => {
   it(`should parse using the v1.1.0 parser when the param's plugin_version is 1.1.0`, async () => {
     const mockv1pt1pt0Parser = TestBed.inject(
       CuraParserV1pt1pt0Service
-    ) as jasmine.SpyObj<CuraParserV1pt1pt0Service>;
-    mockv1pt1pt0Parser.parse.and.returnValue(null);
+    ) as MockedObject<CuraParserV1pt1pt0Service>;
+    mockv1pt1pt0Parser.parse.mockReturnValue(null);
 
     const testQueryString = 'plugin_version=1.1.0&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);
@@ -95,8 +91,8 @@ describe('CuraParserService', () => {
   it(`should parse using the v1.2.0 parser when the param's plugin_version is 1.2.0`, async () => {
     const mockv1pt2pt0Parser = TestBed.inject(
       CuraParserV1pt2pt0Service
-    ) as jasmine.SpyObj<CuraParserV1pt2pt0Service>;
-    mockv1pt2pt0Parser.parse.and.returnValue(null);
+    ) as MockedObject<CuraParserV1pt2pt0Service>;
+    mockv1pt2pt0Parser.parse.mockReturnValue(null);
 
     const testQueryString = 'plugin_version=1.2.0&cura_version=4.5.0';
     const params = createQueryParams(testQueryString);

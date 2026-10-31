@@ -139,6 +139,14 @@
                   "with": "src/environments/environment.lan.ts"
                 }
               ]
+            },
+            "test": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.unittest.ts"
+                }
+              ]
             }
           }
         },
@@ -174,21 +182,34 @@
           }
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": ["zone.js"],
+            "buildTarget": "print-log-ui:build:test",
             "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "assets": ["src/favicon_1293b2036.ico", "src/assets"],
-            "styles": ["src/styles/theme.scss", "src/styles.scss"],
-            "fileReplacements": [
-              {
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.unittest.ts"
-              }
+            "runner": "vitest",
+            "providersFile": "src/test-providers.ts",
+            "setupFiles": ["src/test-setup.ts"],
+            "runnerConfig": "vitest-base.config.ts",
+            "browsers": ["chromiumHeadless"],
+            "browserViewport": "800x600",
+            "coverageReporters": [
+              "html",
+              "lcovonly",
+              "text-summary",
+              "json-summary"
             ],
-            "scripts": []
+            "coverageExclude": [
+              "**/*.json",
+              "src/**/*.spec.ts",
+              "src/test-setup.ts",
+              "src/test-providers.ts"
+            ],
+            "coverageThresholds": {
+              "statements": 87,
+              "branches": 79,
+              "functions": 74,
+              "lines": 83
+            }
           }
         },
         "lint": {

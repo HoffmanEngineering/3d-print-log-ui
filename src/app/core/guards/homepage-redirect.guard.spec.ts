@@ -14,7 +14,11 @@ import { homepageRedirectGuard } from './homepage-redirect.guard';
 
 describe('homepageRedirectGuard', () => {
   afterEach(() => {
-    (environment as { devAuthBypass?: boolean }).devAuthBypass = false;
+    (
+      environment as {
+        devAuthBypass?: boolean;
+      }
+    ).devAuthBypass = false;
   });
 
   const redirectFor = async (
@@ -40,17 +44,21 @@ describe('homepageRedirectGuard', () => {
   };
 
   it('sends a signed-in user to their prints', async () => {
-    await expectAsync(redirectFor(true)).toBeResolvedTo('/prints');
+    await expect(redirectFor(true)).resolves.toEqual('/prints');
   });
 
   it('sends a signed-out visitor to the home page', async () => {
-    await expectAsync(redirectFor(false)).toBeResolvedTo('/home');
+    await expect(redirectFor(false)).resolves.toEqual('/home');
   });
 
   it('sends the dev auth bypass to prints even though auth never emits', async () => {
     // With the bypass there is no Auth0 client, so isAuthenticated$ is EMPTY.
-    (environment as { devAuthBypass?: boolean }).devAuthBypass = true;
+    (
+      environment as {
+        devAuthBypass?: boolean;
+      }
+    ).devAuthBypass = true;
 
-    await expectAsync(redirectFor(false, EMPTY)).toBeResolvedTo('/prints');
+    await expect(redirectFor(false, EMPTY)).resolves.toEqual('/prints');
   });
 });

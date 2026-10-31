@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import {
@@ -12,11 +13,11 @@ import {
 import { copyFilamentDetailResolver } from './copy-filament-detail.resolver';
 
 describe('copyFilamentDetailResolver', () => {
-  let filamentService: jasmine.SpyObj<FilamentService>;
+  let filamentService: MockedObject<FilamentService>;
 
   const aFilament = { id: 'orig', displayName: 'Blue PLA' } as FilamentDetail;
   const copyOf = (filament: Partial<FilamentDetail>) => {
-    filamentService.getFilamentDetail.and.returnValue(
+    filamentService.getFilamentDetail.mockReturnValue(
       of({ ...aFilament, ...filament } as FilamentDetail)
     );
     return resolveValue(
@@ -26,9 +27,9 @@ describe('copyFilamentDetailResolver', () => {
   };
 
   beforeEach(() => {
-    filamentService = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getFilamentDetail',
-    ]);
+    filamentService = {
+      getFilamentDetail: vi.fn().mockName('FilamentService.getFilamentDetail'),
+    } as unknown as MockedObject<FilamentService>;
     TestBed.configureTestingModule({
       providers: [{ provide: FilamentService, useValue: filamentService }],
     });
@@ -42,10 +43,12 @@ describe('copyFilamentDetailResolver', () => {
       ] as FilamentDetail['filamentAdjustments'],
     });
 
-    expect(filamentService.getFilamentDetail).toHaveBeenCalledOnceWith('orig');
+    expect(filamentService.getFilamentDetail).toHaveBeenCalledTimes(1);
+
+    expect(filamentService.getFilamentDetail).toHaveBeenCalledWith('orig');
     expect(copied!.displayName).toBe('Blue PLA');
     expect(copied!.id).toBeNull();
-    expect(copied!.isActive).toBeTrue();
+    expect(copied!.isActive).toBe(true);
     expect(copied!.filamentAdjustments).toEqual([]);
   });
 

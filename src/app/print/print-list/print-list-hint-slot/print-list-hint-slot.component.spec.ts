@@ -1,16 +1,11 @@
+import type { Mock, MockedObject } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
 import { Component, input, output, signal } from '@angular/core';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  flushMicrotasks,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
@@ -56,21 +51,24 @@ const settle = () => new Promise((resolve) => setTimeout(resolve));
 
 describe('PrintListHintSlotComponent', () => {
   let fixture: ComponentFixture<PrintListHintSlotComponent>;
-  let achievements: { me: jasmine.Spy; catalog: jasmine.Spy };
-  let onboarding: jasmine.SpyObj<OnboardingService>;
+  let achievements: {
+    me: Mock;
+    catalog: Mock;
+  };
+  let onboarding: MockedObject<OnboardingService>;
   let active: boolean[];
 
   function configure(me: () => Observable<MyAchievements>, visible: boolean) {
     achievements = {
-      me: jasmine.createSpy('me').and.callFake(me),
-      catalog: jasmine.createSpy('catalog'),
+      me: vi.fn().mockImplementation(me),
+      catalog: vi.fn(),
     };
-    onboarding = jasmine.createSpyObj<OnboardingService>(
-      'OnboardingService',
-      ['checklistVisible', 'dismissChecklist'],
-      { checklistShowing: signal(false) }
-    );
-    onboarding.checklistVisible.and.callFake(
+    onboarding = {
+      checklistVisible: vi.fn().mockName('OnboardingService.checklistVisible'),
+      dismissChecklist: vi.fn().mockName('OnboardingService.dismissChecklist'),
+      checklistShowing: signal(false),
+    } as unknown as MockedObject<OnboardingService>;
+    onboarding.checklistVisible.mockImplementation(
       async (m) => m !== null && visible
     );
     TestBed.configureTestingModule({
@@ -154,23 +152,23 @@ describe('PrintListHintSlotComponent', () => {
   it('reports checklistShowing to the onboarding service', async () => {
     configure(() => of(achievementsWith([])), true);
     await render();
-    expect(onboarding.checklistShowing()).toBeTrue();
+    expect(onboarding.checklistShowing()).toBe(true);
 
     checklist().componentInstance.dismissed.emit();
-    expect(onboarding.checklistShowing()).toBeFalse();
+    expect(onboarding.checklistShowing()).toBe(false);
   });
 
   it('leaves checklistShowing false when the hint shows', async () => {
     configure(() => of(achievementsWith([])), false);
     await render();
-    expect(onboarding.checklistShowing()).toBeFalse();
+    expect(onboarding.checklistShowing()).toBe(false);
   });
 
   it('clears checklistShowing when destroyed', async () => {
     configure(() => of(achievementsWith([])), true);
     await render();
     fixture.destroy();
-    expect(onboarding.checklistShowing()).toBeFalse();
+    expect(onboarding.checklistShowing()).toBe(false);
   });
 
   it('swaps to the hint when the checklist is dismissed', async () => {
@@ -188,7 +186,7 @@ describe('PrintListHintSlotComponent', () => {
   it('tells the list when the checklist adds a printer', async () => {
     configure(() => of(achievementsWith([])), true);
     await render();
-    const added = jasmine.createSpy('printerAdded');
+    const added = vi.fn();
     fixture.componentInstance.printerAdded.subscribe(added);
 
     checklist().componentInstance.printerAdded.emit();
@@ -210,29 +208,30 @@ describe('PrintListHintSlotComponent', () => {
     expect(checklist().componentInstance.me()).toBe(after);
   });
 
-  it('retries once after 2 s when first-printer has not appeared yet', fakeAsync(() => {
+  it('retries once after 2 s when first-printer has not appeared yet', async () => {
+    vi.useFakeTimers();
     const none = achievementsWith([]);
     const granted = achievementsWith(['first-printer']);
     const responses = [none, none, granted, granted];
     configure(() => of(responses.shift()!), true);
     fixture = TestBed.createComponent(PrintListHintSlotComponent);
     fixture.detectChanges();
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
 
     checklist().componentInstance.printerAdded.emit();
     expect(achievements.me).toHaveBeenCalledTimes(2);
 
-    tick(1999);
+    await vi.advanceTimersByTimeAsync(1999);
     expect(achievements.me).toHaveBeenCalledTimes(2);
-    tick(1);
+    await vi.advanceTimersByTimeAsync(1);
     fixture.detectChanges();
     expect(achievements.me).toHaveBeenCalledTimes(3);
     expect(checklist().componentInstance.me()).toBe(granted);
 
-    tick(5000);
+    await vi.advanceTimersByTimeAsync(5000);
     expect(achievements.me).toHaveBeenCalledTimes(3);
-  }));
+  });
 });
 
 /**
@@ -249,10 +248,10 @@ describe('PrintListHintSlotComponent with the real services', () => {
         provideRouter([]),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
         {
           provide: UserSettingService,
@@ -306,10 +305,10 @@ describe('PrintListHintSlotComponent with the real services', () => {
         provideRouter([]),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
         {
           provide: UserSettingService,
@@ -348,15 +347,15 @@ describe('PrintListHintSlotComponent with the real services', () => {
       el.querySelector('[data-testid="inline-email-notice"]')
     ).not.toBeNull();
     const onboarding = TestBed.inject(OnboardingService);
-    expect(onboarding.checklistShowing()).toBeTrue();
-    expect(onboarding.noticeAcknowledged()).toBeFalse();
+    expect(onboarding.checklistShowing()).toBe(true);
+    expect(onboarding.noticeAcknowledged()).toBe(false);
 
     (
       el.querySelector(
         'button[aria-label="Dismiss getting started"]'
       ) as HTMLButtonElement
     ).click();
-    expect(onboarding.noticeAcknowledged()).toBeTrue();
+    expect(onboarding.noticeAcknowledged()).toBe(true);
     http.match(() => true);
     http.verify();
   });

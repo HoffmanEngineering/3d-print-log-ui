@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideRouter } from '@angular/router';
@@ -49,10 +50,10 @@ describe('FilamentPrintRowComponent', () => {
   let fixture: ComponentFixture<FilamentPrintRowComponent>;
 
   beforeEach(async () => {
-    const printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'getPrintImage',
-    ]);
-    printService.getPrintImage.and.returnValue(of('data:image/png;base64,AAA'));
+    const printService = {
+      getPrintImage: vi.fn().mockName('PrintService.getPrintImage'),
+    };
+    printService.getPrintImage.mockReturnValue(of('data:image/png;base64,AAA'));
 
     await TestBed.configureTestingModule({
       imports: [FilamentPrintRowComponent],
@@ -73,7 +74,7 @@ describe('FilamentPrintRowComponent', () => {
   }
 
   it('links to the print', () => {
-    const el = render(printWith([usage(12_000)]));
+    const el = render(printWith([usage(12000)]));
     expect(el.querySelector('a')?.getAttribute('href')).toContain('/prints/7');
   });
 
@@ -106,36 +107,36 @@ describe('FilamentPrintRowComponent', () => {
   });
 
   it('sums every usage row for this filament, not just the first', () => {
-    const el = render(printWith([usage(12_000), usage(30_000)]));
+    const el = render(printWith([usage(12000), usage(30000)]));
     expect(el.textContent).toContain('42');
     expect(el.textContent).not.toContain('12 g');
   });
 
   it('ignores usage rows for other filaments', () => {
     const other = {
-      ...(usage(99_000) as object),
+      ...(usage(99000) as object),
       filament: { id: 'other' },
     } as never;
-    const el = render(printWith([usage(12_000), other]));
+    const el = render(printWith([usage(12000), other]));
     expect(el.textContent).toContain('12');
     expect(el.textContent).not.toContain('99');
   });
 
   it('marks estimated usage', () => {
-    const el = render(printWith([usage(undefined, 12_000)]));
+    const el = render(printWith([usage(undefined, 12000)]));
     expect(el.querySelector('.estimated-marker')).toBeTruthy();
   });
 
   it('sums a mixed actual and estimated pair', () => {
     // Resolving actual-else-estimated per row gives 12 + 30. Merging the rows'
     // columns first and preferring actual across the merge would show 12 alone.
-    const el = render(printWith([usage(12_000), usage(undefined, 30_000)]));
+    const el = render(printWith([usage(12000), usage(undefined, 30000)]));
     expect(el.textContent).toContain('42');
     expect(el.querySelector('.estimated-marker')).toBeTruthy();
   });
 
   it('does not mark a purely actual multi-row usage as estimated', () => {
-    const el = render(printWith([usage(12_000), usage(30_000)]));
+    const el = render(printWith([usage(12000), usage(30000)]));
     expect(el.querySelector('.estimated-marker')).toBeFalsy();
   });
 
@@ -155,7 +156,7 @@ describe('FilamentPrintRowComponent', () => {
       source: PrintFilamentSourceMeasurement.Length,
     } as never;
 
-    const el = render(printWith([usage(12_000), lengthRow]));
+    const el = render(printWith([usage(12000), lengthRow]));
 
     // 10 m of 1.75mm PLA is ~29.8 g, so the total is ~41.8 g, not 12 g.
     expect(el.textContent).not.toContain('12.0g');
@@ -182,19 +183,19 @@ describe('FilamentPrintRowComponent', () => {
   });
 
   it('renders a placeholder when the print has no image', () => {
-    const el = render(printWith([usage(12_000)], { defaultPrintImageId: 0 }));
+    const el = render(printWith([usage(12000)], { defaultPrintImageId: 0 }));
     expect(el.querySelector('.thumb-placeholder')).toBeTruthy();
   });
 
   it('loads the thumbnail when the API reports one', () => {
     render(
-      printWith([usage(12_000)], {
+      printWith([usage(12000)], {
         defaultPrintImageThumbnailUrl: '/api/Prints/7/image/3/thumbnail',
       })
     );
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
+    ) as MockedObject<PrintService>;
     expect(printService.getPrintImage).toHaveBeenCalledWith(
       7,
       3,
@@ -203,10 +204,10 @@ describe('FilamentPrintRowComponent', () => {
   });
 
   it('loads the full image from an API without thumbnails', () => {
-    render(printWith([usage(12_000)]));
+    render(printWith([usage(12000)]));
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
+    ) as MockedObject<PrintService>;
     expect(printService.getPrintImage).toHaveBeenCalledWith(7, 3);
   });
 });

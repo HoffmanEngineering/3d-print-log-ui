@@ -1,11 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import {
-  ComponentFixture,
-  discardPeriodicTasks,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { BehaviorSubject, delay, map, NEVER, of } from 'rxjs';
@@ -47,10 +42,10 @@ const ME: MyAchievements = {
 describe('MyAchievementsComponent', () => {
   let fixture: ComponentFixture<MyAchievementsComponent>;
   let queryParams: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let logging: MockedObject<LoggingService>;
   let me$ = of(ME);
   let wide$: BehaviorSubject<boolean>;
-  let router: jasmine.SpyObj<Router>;
+  let router: MockedObject<Router>;
 
   function create(): HTMLElement {
     TestBed.configureTestingModule({
@@ -88,13 +83,15 @@ describe('MyAchievementsComponent', () => {
 
   beforeEach(() => {
     queryParams = new BehaviorSubject(convertToParamMap({}));
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     me$ = of(ME);
     wide$ = new BehaviorSubject(true);
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    router.navigate.and.resolveTo(true);
+    router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+    } as unknown as MockedObject<Router>;
+    router.navigate.mockResolvedValue(true);
   });
 
   it('shows tiers earned out of the total and the next hint', () => {
@@ -126,7 +123,7 @@ describe('MyAchievementsComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(
       [],
-      jasmine.objectContaining({
+      expect.objectContaining({
         queryParams: { badge: 'mcp' },
         replaceUrl: true,
         scroll: 'manual',
@@ -134,22 +131,23 @@ describe('MyAchievementsComponent', () => {
     );
   });
 
-  it('skeleton deferred', fakeAsync(() => {
+  it('skeleton deferred', async () => {
+    vi.useFakeTimers();
     me$ = of(ME).pipe(delay(1000));
     const el = create();
 
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     fixture.detectChanges();
     expect(el.querySelector('app-skeleton')).toBeNull();
 
-    tick(150);
+    await vi.advanceTimersByTimeAsync(150);
     fixture.detectChanges();
     expect(el.querySelector('app-skeleton')).not.toBeNull();
 
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
     expect(el.querySelector('app-skeleton')).toBeNull();
     expect(el.querySelector('app-achievement-grid')).not.toBeNull();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 });

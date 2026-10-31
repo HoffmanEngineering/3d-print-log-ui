@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import {
   HttpHandler,
   HttpHeaders,
@@ -12,14 +13,14 @@ import { AuthService } from '../services/auth.service';
 import { AuthInterceptorService } from './auth-interceptor.service';
 
 describe('AuthInterceptorService', () => {
-  let mockAuthService: jasmine.SpyObj<AuthService>;
+  let mockAuthService: MockedObject<AuthService>;
   const originalApiUrl = environment.printLogApiUrl;
 
   beforeEach(() => {
-    mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'getTokenSilently$',
-    ]);
-    mockAuthService.getTokenSilently$.and.returnValue(of('test-token'));
+    mockAuthService = {
+      getTokenSilently$: vi.fn().mockName('AuthService.getTokenSilently$'),
+    } as unknown as MockedObject<AuthService>;
+    mockAuthService.getTokenSilently$.mockReturnValue(of('test-token'));
 
     TestBed.configureTestingModule({
       providers: [{ provide: AuthService, useValue: mockAuthService }],
@@ -40,11 +41,11 @@ describe('AuthInterceptorService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should add X-Dev-User-Id header when devAuthBypass is true', (done) => {
+  it('should add X-Dev-User-Id header when devAuthBypass is true', async () => {
     (environment as any).devAuthBypass = true;
 
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue(
       '?devUserId=2'
     );
 
@@ -56,7 +57,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('X-Dev-User-Id')).toBe('2');
         expect(r.headers.get('Authorization')).toBeNull();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -64,10 +64,10 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('should default X-Dev-User-Id to 1 when no devUserId param is present', (done) => {
+  it('should default X-Dev-User-Id to 1 when no devUserId param is present', async () => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue('');
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue('');
 
     const req = new HttpRequest(
       'GET',
@@ -76,7 +76,6 @@ describe('AuthInterceptorService', () => {
     const next: HttpHandler = {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('X-Dev-User-Id')).toBe('1');
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -84,10 +83,10 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('should strip allow-anonymous-request header when devAuthBypass is true', (done) => {
+  it('should strip allow-anonymous-request header when devAuthBypass is true', async () => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue('');
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue('');
 
     const req = new HttpRequest(
       'GET',
@@ -101,7 +100,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('allow-anonymous-request')).toBeNull();
         expect(r.headers.get('X-Dev-User-Id')).toBe('1');
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -109,10 +107,10 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('dispatches allow-anonymous requests without a dev user when devUserId=anonymous', (done) => {
+  it('dispatches allow-anonymous requests without a dev user when devUserId=anonymous', async () => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue(
       '?devUserId=anonymous'
     );
 
@@ -127,7 +125,6 @@ describe('AuthInterceptorService', () => {
         expect(r.headers.get('allow-anonymous-request')).toBeNull();
         expect(r.headers.get('X-Dev-User-Id')).toBeNull();
         expect(r.headers.get('Authorization')).toBeNull();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -135,10 +132,10 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('errors before dispatch for auth-required requests when devUserId=anonymous', (done) => {
+  it('errors before dispatch for auth-required requests when devUserId=anonymous', async () => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue(
       '?devUserId=anonymous'
     );
 
@@ -155,17 +152,16 @@ describe('AuthInterceptorService', () => {
     };
 
     interceptor.intercept(req, next).subscribe({
-      next: () => fail('should not emit a response'),
+      next: () => expect.unreachable('should not emit a response'),
       error: (err) => {
-        expect(handled).toBeFalse();
+        expect(handled).toBe(false);
         expect(err.error).toBe('missing_refresh_token');
-        done();
       },
     });
   });
 
-  it('attaches the bearer token for trusted API-origin requests', (done) => {
-    mockAuthService.getTokenSilently$.and.returnValue(of('test-token'));
+  it('attaches the bearer token for trusted API-origin requests', async () => {
+    mockAuthService.getTokenSilently$.mockReturnValue(of('test-token'));
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     const req = new HttpRequest(
@@ -175,7 +171,6 @@ describe('AuthInterceptorService', () => {
     const next: HttpHandler = {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBe('Bearer test-token');
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -183,7 +178,7 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('does not attach a token to untrusted (non-API) origins and never requests one', (done) => {
+  it('does not attach a token to untrusted (non-API) origins and never requests one', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     const req = new HttpRequest(
@@ -194,7 +189,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -202,7 +196,7 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('strips allow-anonymous-request before forwarding an untrusted request', (done) => {
+  it('strips allow-anonymous-request before forwarding an untrusted request', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     const req = new HttpRequest(
@@ -215,7 +209,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('allow-anonymous-request')).toBeNull();
         expect(r.headers.get('Authorization')).toBeNull();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -223,7 +216,7 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('treats relative URLs as untrusted', (done) => {
+  it('treats relative URLs as untrusted', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     const req = new HttpRequest('GET', '/assets/logo.png');
@@ -231,7 +224,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -239,7 +231,7 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('fails closed on a non-parseable URL', (done) => {
+  it('fails closed on a non-parseable URL', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     const req = new HttpRequest('GET', 'http://[invalid');
@@ -247,7 +239,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -255,7 +246,7 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('fails closed when the configured API origin is malformed', (done) => {
+  it('fails closed when the configured API origin is malformed', async () => {
     // Build the URL from the real origin BEFORE breaking the config, so the
     // request would be trusted if the API URL were parseable. afterEach restores it.
     const trustedUrl = `${environment.printLogApiUrl}/api/prints`;
@@ -267,15 +258,16 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
-    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+    interceptor
+      .intercept(req, next)
+      .subscribe({ error: (e) => expect.unreachable(String(e)) });
   });
 
-  it('treats a lookalike host as untrusted', (done) => {
+  it('treats a lookalike host as untrusted', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     // API host as a subdomain label of an attacker domain must NOT be trusted.
@@ -287,15 +279,16 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
-    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+    interceptor
+      .intercept(req, next)
+      .subscribe({ error: (e) => expect.unreachable(String(e)) });
   });
 
-  it('treats protocol-relative URLs as untrusted', (done) => {
+  it('treats protocol-relative URLs as untrusted', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     const req = new HttpRequest(
@@ -306,15 +299,16 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
-    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+    interceptor
+      .intercept(req, next)
+      .subscribe({ error: (e) => expect.unreachable(String(e)) });
   });
 
-  it('treats the API host on a non-default port as untrusted', (done) => {
+  it('treats the API host on a non-default port as untrusted', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     // Same host, different port => different origin => not trusted.
@@ -326,15 +320,16 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
-    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+    interceptor
+      .intercept(req, next)
+      .subscribe({ error: (e) => expect.unreachable(String(e)) });
   });
 
-  it('rejects a protocol-relative URL to the API host (scheme downgrade)', (done) => {
+  it('rejects a protocol-relative URL to the API host (scheme downgrade)', async () => {
     const interceptor = TestBed.inject(AuthInterceptorService);
 
     // `//host/...` resolves against the http placeholder base, so the scheme
@@ -347,15 +342,16 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
-    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+    interceptor
+      .intercept(req, next)
+      .subscribe({ error: (e) => expect.unreachable(String(e)) });
   });
 
-  it('preserves a caller-supplied Authorization header on untrusted requests', (done) => {
+  it('preserves a caller-supplied Authorization header on untrusted requests', async () => {
     // The gate only prevents credentials the interceptor itself adds; it does
     // not strip headers the caller set deliberately.
     const interceptor = TestBed.inject(AuthInterceptorService);
@@ -370,18 +366,19 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBe('Bearer caller-supplied');
         expect(mockAuthService.getTokenSilently$).not.toHaveBeenCalled();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
-    interceptor.intercept(req, next).subscribe({ error: (e) => fail(e) });
+    interceptor
+      .intercept(req, next)
+      .subscribe({ error: (e) => expect.unreachable(String(e)) });
   });
 
-  it('short-circuits above dev logic for untrusted URLs in dev mode', (done) => {
+  it('short-circuits above dev logic for untrusted URLs in dev mode', async () => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue(
       '?devUserId=2'
     );
 
@@ -393,7 +390,6 @@ describe('AuthInterceptorService', () => {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('X-Dev-User-Id')).toBeNull();
         expect(r.headers.get('Authorization')).toBeNull();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
@@ -401,10 +397,10 @@ describe('AuthInterceptorService', () => {
     interceptor.intercept(req, next).subscribe();
   });
 
-  it('does not throw for untrusted URLs in dev-anonymous mode', (done) => {
+  it('does not throw for untrusted URLs in dev-anonymous mode', async () => {
     (environment as any).devAuthBypass = true;
     const interceptor = TestBed.inject(AuthInterceptorService);
-    spyOn(interceptor as any, 'getLocationSearch').and.returnValue(
+    vi.spyOn(interceptor as any, 'getLocationSearch').mockReturnValue(
       '?devUserId=anonymous'
     );
 
@@ -415,13 +411,12 @@ describe('AuthInterceptorService', () => {
     const next: HttpHandler = {
       handle: (r: HttpRequest<any>) => {
         expect(r.headers.get('Authorization')).toBeNull();
-        done();
         return of(new HttpResponse({ status: 200 })) as any;
       },
     };
 
     interceptor.intercept(req, next).subscribe({
-      error: () => fail('untrusted request must not throw'),
+      error: () => expect.unreachable('untrusted request must not throw'),
     });
   });
 });

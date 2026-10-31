@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -8,10 +9,10 @@ import { PushPermissionState } from '../types/native-bridge';
 
 describe('PushPermissionPromptService', () => {
   let service: PushPermissionPromptService;
-  let bridge: jasmine.SpyObj<NativeBridgeService>;
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let bridge: MockedObject<NativeBridgeService>;
+  let dialog: MockedObject<MatDialog>;
   let dialogRef: {
-    afterClosed: jasmine.Spy;
+    afterClosed: Mock;
   };
 
   function withPermission(permission: PushPermissionState) {
@@ -22,24 +23,28 @@ describe('PushPermissionPromptService', () => {
   }
 
   function userAnswers(accepted: boolean) {
-    dialogRef.afterClosed.and.returnValue(of(accepted));
+    dialogRef.afterClosed.mockReturnValue(of(accepted));
   }
 
   beforeEach(() => {
     localStorage.clear();
-    bridge = jasmine.createSpyObj<NativeBridgeService>(
-      'NativeBridgeService',
-      ['isAvailable', 'requestPushPermission'],
-      { permission: 'default' }
-    );
-    bridge.isAvailable.and.returnValue(true);
-    bridge.requestPushPermission.and.resolveTo('granted');
+    bridge = {
+      isAvailable: vi.fn().mockName('NativeBridgeService.isAvailable'),
+      requestPushPermission: vi
+        .fn()
+        .mockName('NativeBridgeService.requestPushPermission'),
+      permission: 'default',
+    } as unknown as MockedObject<NativeBridgeService>;
+    bridge.isAvailable.mockReturnValue(true);
+    bridge.requestPushPermission.mockResolvedValue('granted');
 
     dialogRef = {
-      afterClosed: jasmine.createSpy('afterClosed').and.returnValue(of(true)),
+      afterClosed: vi.fn().mockReturnValue(of(true)),
     };
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.returnValue(dialogRef as unknown as MatDialogRef<unknown>);
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockReturnValue(dialogRef as unknown as MatDialogRef<unknown>);
 
     TestBed.configureTestingModule({
       providers: [
@@ -51,7 +56,7 @@ describe('PushPermissionPromptService', () => {
   });
 
   it('does nothing in an ordinary browser', async () => {
-    bridge.isAvailable.and.returnValue(false);
+    bridge.isAvailable.mockReturnValue(false);
 
     const result = await service.promptInContext('reason');
     expect(result.permission).toBe('default');
@@ -111,7 +116,7 @@ describe('PushPermissionPromptService', () => {
   it('does not show the explainer again soon after the user declined it', async () => {
     userAnswers(false);
     await service.promptInContext('reason');
-    dialog.open.calls.reset();
+    dialog.open.mockClear();
 
     await service.promptInContext('reason');
 
@@ -121,7 +126,7 @@ describe('PushPermissionPromptService', () => {
   it('suppresses across triggers, not just the one that was declined', async () => {
     userAnswers(false);
     await service.promptInContext('You just created an API key.');
-    dialog.open.calls.reset();
+    dialog.open.mockClear();
 
     await service.promptInContext('This print is still running.');
 
@@ -137,7 +142,7 @@ describe('PushPermissionPromptService', () => {
       'printlog.pushPromptDeclinedAt',
       String(thirtyOneDaysAgo)
     );
-    dialog.open.calls.reset();
+    dialog.open.mockClear();
     userAnswers(true);
 
     await service.promptInContext('reason');
@@ -148,7 +153,7 @@ describe('PushPermissionPromptService', () => {
   it('does not suppress after the user accepted the explainer', async () => {
     userAnswers(true);
     await service.promptInContext('reason');
-    dialog.open.calls.reset();
+    dialog.open.mockClear();
 
     await service.promptInContext('reason');
 
@@ -157,7 +162,9 @@ describe('PushPermissionPromptService', () => {
 
   /** Private browsing and blocked site data both make localStorage throw on access. */
   it('still prompts when storage cannot be read', async () => {
-    spyOn(localStorage, 'getItem').and.throwError('denied');
+    vi.spyOn(localStorage, 'getItem').mockImplementation(() => {
+      throw new Error('denied');
+    });
     userAnswers(true);
 
     await service.promptInContext('reason');
@@ -170,7 +177,9 @@ describe('PushPermissionPromptService', () => {
    * made an earlier version of this test pass with the write guard deleted.
    */
   it('survives storage that cannot be written', async () => {
-    const setItem = spyOn(localStorage, 'setItem').and.throwError('denied');
+    const setItem = vi.spyOn(localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('denied');
+    });
     userAnswers(false);
 
     const result = await service.promptInContext('reason');
@@ -184,7 +193,7 @@ describe('PushPermissionPromptService', () => {
     it('ignores the cooldown, so Settings still works after a decline', async () => {
       userAnswers(false);
       await service.promptInContext('reason');
-      dialog.open.calls.reset();
+      dialog.open.mockClear();
       userAnswers(true);
 
       const result = await service.promptOnUserRequest('from settings');
@@ -203,7 +212,7 @@ describe('PushPermissionPromptService', () => {
      */
     it('opens one explainer, not one per caller', async () => {
       const closed = new Subject<boolean>();
-      dialogRef.afterClosed.and.returnValue(closed.asObservable());
+      dialogRef.afterClosed.mockReturnValue(closed.asObservable());
 
       const first = service.promptInContext('api key');
       const second = service.promptInContext('running print');
@@ -220,7 +229,7 @@ describe('PushPermissionPromptService', () => {
       userAnswers(true);
       await service.promptInContext('first');
       withPermission('default');
-      dialog.open.calls.reset();
+      dialog.open.mockClear();
 
       await service.promptInContext('second');
 
@@ -235,7 +244,7 @@ describe('PushPermissionPromptService', () => {
    */
   it('does not re-ask the OS when permission arrived while the dialog was open', async () => {
     const closed = new Subject<boolean>();
-    dialogRef.afterClosed.and.returnValue(closed.asObservable());
+    dialogRef.afterClosed.mockReturnValue(closed.asObservable());
 
     const pending = service.promptInContext('reason');
     withPermission('granted');

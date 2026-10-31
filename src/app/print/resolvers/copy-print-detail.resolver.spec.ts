@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import {
@@ -12,7 +13,7 @@ import {
 import { copyPrintDetailResolver } from './copy-print-detail.resolver';
 
 describe('copyPrintDetailResolver', () => {
-  let printService: jasmine.SpyObj<PrintService>;
+  let printService: MockedObject<PrintService>;
 
   const original = {
     id: 7,
@@ -28,12 +29,12 @@ describe('copyPrintDetailResolver', () => {
     resolveValue(copyPrintDetailResolver, routeSnapshot({ params: { id } }));
 
   beforeEach(() => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'getPrintDetail',
-      'getPrintImage',
-    ]);
-    printService.getPrintDetail.and.returnValue(of(original));
-    printService.getPrintImage.and.callFake((_printId, imageId) =>
+    printService = {
+      getPrintDetail: vi.fn().mockName('PrintService.getPrintDetail'),
+      getPrintImage: vi.fn().mockName('PrintService.getPrintImage'),
+    } as unknown as MockedObject<PrintService>;
+    printService.getPrintDetail.mockReturnValue(of(original));
+    printService.getPrintImage.mockImplementation((_printId, imageId) =>
       of(`data:image/${imageId}`)
     );
     TestBed.configureTestingModule({
@@ -44,7 +45,9 @@ describe('copyPrintDetailResolver', () => {
   it('copies the print as a new print with no user', async () => {
     const copy = await copyOf('7');
 
-    expect(printService.getPrintDetail).toHaveBeenCalledOnceWith(7);
+    expect(printService.getPrintDetail).toHaveBeenCalledTimes(1);
+
+    expect(printService.getPrintDetail).toHaveBeenCalledWith(7);
     expect(copy.print!.title).toBe('Benchy');
     expect(copy.print!.id).toBeNull();
     expect(copy.user).toBeNull();
@@ -68,7 +71,7 @@ describe('copyPrintDetailResolver', () => {
   });
 
   it('copies a print with no images without fetching any', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       of({ ...original, images: [] } as PrintDetail)
     );
 
@@ -79,7 +82,7 @@ describe('copyPrintDetailResolver', () => {
   });
 
   it('resolves an empty detail when the id is not a number', async () => {
-    await expectAsync(copyOf('abc')).toBeResolvedTo({
+    await expect(copyOf('abc')).resolves.toEqual({
       print: null,
       user: null,
     });

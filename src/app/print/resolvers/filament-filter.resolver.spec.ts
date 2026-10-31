@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -13,7 +14,7 @@ import { filamentFilterResolver } from './filament-filter.resolver';
 import { runResolver } from 'src/app/core/resolvers/testing/run-resolver';
 
 describe('filamentFilterResolver', () => {
-  let mockFilamentService: jasmine.SpyObj<FilamentService>;
+  let mockFilamentService: MockedObject<FilamentService>;
 
   const mockDetail: FilamentDetail = {
     id: 'abc',
@@ -63,17 +64,16 @@ describe('filamentFilterResolver', () => {
   }
 
   beforeEach(() => {
-    mockFilamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getFilamentDetail']
-    );
+    mockFilamentService = {
+      getFilamentDetail: vi.fn().mockName('FilamentService.getFilamentDetail'),
+    } as unknown as MockedObject<FilamentService>;
 
     TestBed.configureTestingModule({
       providers: [{ provide: FilamentService, useValue: mockFilamentService }],
     });
   });
 
-  it('should return an empty array when no filterByFilamentId params are present', (done) => {
+  it('should return an empty array when no filterByFilamentId params are present', async () => {
     (
       runResolver(filamentFilterResolver, makeRoute([])) as Observable<
         FilamentSummary[]
@@ -81,12 +81,11 @@ describe('filamentFilterResolver', () => {
     ).subscribe((items) => {
       expect(items).toEqual([]);
       expect(mockFilamentService.getFilamentDetail).not.toHaveBeenCalled();
-      done();
     });
   });
 
-  it('should fetch details for each filterByFilamentId and map to summaries', (done) => {
-    mockFilamentService.getFilamentDetail.and.returnValue(of(mockDetail));
+  it('should fetch details for each filterByFilamentId and map to summaries', async () => {
+    mockFilamentService.getFilamentDetail.mockReturnValue(of(mockDetail));
 
     (
       runResolver(filamentFilterResolver, makeRoute(['abc'])) as Observable<
@@ -98,13 +97,12 @@ describe('filamentFilterResolver', () => {
       expect(items[0].id).toBe('abc');
       expect(items[0].displayName).toBe('Test Filament');
       expect(items[0].colorHex).toBe('000000');
-      done();
     });
   });
 
-  it('should fetch details for multiple filterByFilamentId params', (done) => {
+  it('should fetch details for multiple filterByFilamentId params', async () => {
     const detail2 = { ...mockDetail, id: 'def', displayName: 'Other Filament' };
-    mockFilamentService.getFilamentDetail.and.callFake((id: string) =>
+    mockFilamentService.getFilamentDetail.mockImplementation((id: string) =>
       of(id === 'abc' ? mockDetail : detail2)
     );
 
@@ -117,7 +115,6 @@ describe('filamentFilterResolver', () => {
       expect(items.length).toBe(2);
       expect(items[0].id).toBe('abc');
       expect(items[1].id).toBe('def');
-      done();
     });
   });
 });

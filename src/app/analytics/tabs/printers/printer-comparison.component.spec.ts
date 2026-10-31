@@ -32,10 +32,15 @@ describe('PrinterComparisonComponent', () => {
         // Stubbed: the real store would issue its own authenticated fetch.
         {
           provide: PrinterThumbnailStore,
-          useValue: jasmine.createSpyObj<PrinterThumbnailStore>(
-            'PrinterThumbnailStore',
-            ['thumbnailFor', 'invalidate', 'noteLoadFailure']
-          ),
+          useValue: {
+            thumbnailFor: vi
+              .fn()
+              .mockName('PrinterThumbnailStore.thumbnailFor'),
+            invalidate: vi.fn().mockName('PrinterThumbnailStore.invalidate'),
+            noteLoadFailure: vi
+              .fn()
+              .mockName('PrinterThumbnailStore.noteLoadFailure'),
+          },
         },
       ],
     }).compileComponents();
@@ -122,7 +127,9 @@ describe('PrinterComparisonComponent', () => {
     fixture.componentRef.setInput('rows', [row({ printerId: 7 })]);
     fixture.detectChanges();
 
-    let emitted: { printerId: number } | null = null;
+    let emitted: {
+      printerId: number;
+    } | null = null;
     component.printerSelect.subscribe((event) => (emitted = event));
 
     component.onSelect(component.sorted()[0]);
@@ -187,7 +194,7 @@ describe('PrinterComparisonComponent', () => {
 
     it('shows both for a printer that is not a resin printer', () => {
       fixture.componentRef.setInput('rows', [
-        row({ materialMg: 34_000_000, materialMl: 20 }),
+        row({ materialMg: 34000000, materialMl: 20 }),
       ]);
       fixture.detectChanges();
 

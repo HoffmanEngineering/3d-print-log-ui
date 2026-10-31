@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import {
   HttpErrorResponse,
   provideHttpClient,
@@ -80,10 +81,10 @@ const MARS = catalogModel('Elegoo', 'Mars', {
 describe('QuickAddPrinterComponent', () => {
   let fixture: ComponentFixture<QuickAddPrinterComponent>;
   let component: QuickAddPrinterComponent;
-  let printers: jasmine.SpyObj<PrinterService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let onboarding: jasmine.SpyObj<OnboardingService>;
-  let catalog: jasmine.SpyObj<PrinterCatalogService>;
+  let printers: MockedObject<PrinterService>;
+  let logging: MockedObject<LoggingService>;
+  let onboarding: MockedObject<OnboardingService>;
+  let catalog: MockedObject<PrinterCatalogService>;
   let saved: PrinterDetail[];
   let continued: number;
 
@@ -124,7 +125,7 @@ describe('QuickAddPrinterComponent', () => {
   }
 
   function sent(): PrinterDetail {
-    return printers.addPrinter.calls.mostRecent().args[0];
+    return vi.mocked(printers.addPrinter).mock.lastCall[0];
   }
 
   function typeInSearch(text: string): void {
@@ -161,25 +162,29 @@ describe('QuickAddPrinterComponent', () => {
   }
 
   beforeEach(() => {
-    printers = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'addPrinter',
-    ]);
-    printers.addPrinter.and.callFake((p) => of({ ...p, id: 7 }));
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
-    onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
-      'acknowledgeEmailNotice',
-    ]);
-    onboarding.acknowledgeEmailNotice.and.resolveTo();
-    catalog = jasmine.createSpyObj<PrinterCatalogService>(
-      'PrinterCatalogService',
-      ['search', 'popular', 'get', 'match']
-    );
-    catalog.search.and.returnValue(of([]));
-    catalog.popular.and.returnValue(of([]));
-    catalog.get.and.returnValue(of(null));
-    catalog.match.and.returnValue(of(null));
+    printers = {
+      addPrinter: vi.fn().mockName('PrinterService.addPrinter'),
+    } as unknown as MockedObject<PrinterService>;
+    printers.addPrinter.mockImplementation((p) => of({ ...p, id: 7 }));
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
+    onboarding = {
+      acknowledgeEmailNotice: vi
+        .fn()
+        .mockName('OnboardingService.acknowledgeEmailNotice'),
+    } as unknown as MockedObject<OnboardingService>;
+    onboarding.acknowledgeEmailNotice.mockResolvedValue(undefined);
+    catalog = {
+      search: vi.fn().mockName('PrinterCatalogService.search'),
+      popular: vi.fn().mockName('PrinterCatalogService.popular'),
+      get: vi.fn().mockName('PrinterCatalogService.get'),
+      match: vi.fn().mockName('PrinterCatalogService.match'),
+    } as unknown as MockedObject<PrinterCatalogService>;
+    catalog.search.mockReturnValue(of([]));
+    catalog.popular.mockReturnValue(of([]));
+    catalog.get.mockReturnValue(of(null));
+    catalog.match.mockReturnValue(of(null));
     TestBed.configureTestingModule({
       imports: [QuickAddPrinterComponent, NoopAnimationsModule],
       providers: [
@@ -283,7 +288,7 @@ describe('QuickAddPrinterComponent', () => {
     fixture.detectChanges();
 
     const save = byTestId<HTMLButtonElement>('quick-add-save')!;
-    expect(save.disabled).toBeFalse();
+    expect(save.disabled).toBe(false);
   });
 
   it('rejects a non-integer slot count while multi-material is on', async () => {
@@ -291,10 +296,10 @@ describe('QuickAddPrinterComponent', () => {
     component.form.controls.multiMaterial.setValue(true);
 
     component.form.controls.slotCount.setValue(2.5);
-    expect(component.form.controls.slotCount.invalid).toBeTrue();
+    expect(component.form.controls.slotCount.invalid).toBe(true);
 
     component.form.controls.slotCount.setValue(3);
-    expect(component.form.controls.slotCount.invalid).toBeFalse();
+    expect(component.form.controls.slotCount.invalid).toBe(false);
   });
 
   it('sends the slot count when multi-material is on', async () => {
@@ -308,7 +313,7 @@ describe('QuickAddPrinterComponent', () => {
     expect(sent().slotCount).toBe(6);
     expect(logging.logEvent).toHaveBeenCalledWith(
       'QuickAddPrinter_Saved',
-      jasmine.objectContaining({ multiSlot: true })
+      expect.objectContaining({ multiSlot: true })
     );
   });
 
@@ -321,7 +326,7 @@ describe('QuickAddPrinterComponent', () => {
     expect(sent().id).toBeNull();
     expect(sent().name).toBe('MK4');
     expect(sent().make).toBe('Prusa');
-    expect(sent().isActive).toBeTrue();
+    expect(sent().isActive).toBe(true);
     expect(sent().loadedFilaments).toEqual([]);
     expect(sent().category.nickname).toBe('FFF');
     expect(saved.length).toBe(1);
@@ -368,7 +373,7 @@ describe('QuickAddPrinterComponent', () => {
   it('calls addPrinter once on a double click', async () => {
     await setup();
     const response = new Subject<PrinterDetail>();
-    printers.addPrinter.and.returnValue(response);
+    printers.addPrinter.mockReturnValue(response);
     component.selectCatalogPrinter(MK4);
     fixture.detectChanges();
     const button = byTestId<HTMLButtonElement>('quick-add-save')!;
@@ -378,7 +383,7 @@ describe('QuickAddPrinterComponent', () => {
     void component.save();
 
     expect(printers.addPrinter).toHaveBeenCalledTimes(1);
-    expect(component.saving()).toBeTrue();
+    expect(component.saving()).toBe(true);
   });
 
   it('acknowledges the email notice only when it was shown', async () => {
@@ -396,7 +401,7 @@ describe('QuickAddPrinterComponent', () => {
 
   it('shows the API message on error and does not emit', async () => {
     await setup();
-    printers.addPrinter.and.returnValue(
+    printers.addPrinter.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -411,13 +416,13 @@ describe('QuickAddPrinterComponent', () => {
     fixture.detectChanges();
 
     expect(saved.length).toBe(0);
-    expect(component.saving()).toBeFalse();
+    expect(component.saving()).toBe(false);
     expect(host().textContent).toContain('Printer limit reached');
   });
 
   it('shows the generic copy for an HTML 502 body', async () => {
     await setup();
-    printers.addPrinter.and.returnValue(
+    printers.addPrinter.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -455,7 +460,7 @@ describe('QuickAddPrinterComponent', () => {
     fixture.detectChanges();
 
     expect(printers.addPrinter).toHaveBeenCalledTimes(1);
-    expect(button().disabled).toBeTrue();
+    expect(button().disabled).toBe(true);
   });
 
   it('saves typed text without a blur: one click confirms, the next saves once', async () => {
@@ -463,7 +468,7 @@ describe('QuickAddPrinterComponent', () => {
     typeInSearch('Voron 2.4');
 
     const button = byTestId<HTMLButtonElement>('quick-add-save')!;
-    expect(button.disabled).toBeFalse();
+    expect(button.disabled).toBe(false);
     button.click();
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r));
@@ -499,14 +504,14 @@ describe('QuickAddPrinterComponent', () => {
   it('marks the fields touched and explains an empty Save instead of disabling it', async () => {
     await setup();
     const button = byTestId<HTMLButtonElement>('quick-add-save')!;
-    expect(button.disabled).toBeFalse();
+    expect(button.disabled).toBe(false);
 
     button.click();
     await fixture.whenStable();
     fixture.detectChanges();
 
     expect(printers.addPrinter).not.toHaveBeenCalled();
-    expect(component.form.controls.name.touched).toBeTrue();
+    expect(component.form.controls.name.touched).toBe(true);
     expect(byTestId('quick-add-error')!.textContent).toContain(
       'Search for your printer, or type its make and model.'
     );
@@ -517,7 +522,7 @@ describe('QuickAddPrinterComponent', () => {
 
     beforeEach(() => {
       popular = new Subject<PrinterModel[]>();
-      catalog.popular.and.returnValue(popular);
+      catalog.popular.mockReturnValue(popular);
     });
 
     it('renders a text chip per popular model, each with an accessible name', async () => {
@@ -556,7 +561,7 @@ describe('QuickAddPrinterComponent', () => {
       await component.save();
       expect(logging.logEvent).toHaveBeenCalledWith(
         'QuickAddPrinter_Saved',
-        jasmine.objectContaining({
+        expect.objectContaining({
           catalogModelId: 'bambu-lab-p1s',
           popularChip: true,
           specsEdited: false,
@@ -623,14 +628,16 @@ describe('QuickAddPrinterComponent', () => {
   describe('search', () => {
     it('feeds the autocomplete from catalog.search after a 150 ms debounce', async () => {
       const results = new Subject<PrinterModel[]>();
-      catalog.search.and.returnValue(results);
+      catalog.search.mockReturnValue(results);
       await setup();
 
       typeInSearch('P1');
       expect(catalog.search).not.toHaveBeenCalled();
       await new Promise((r) => setTimeout(r, 200));
 
-      expect(catalog.search).toHaveBeenCalledOnceWith('P1');
+      expect(catalog.search).toHaveBeenCalledTimes(1);
+
+      expect(catalog.search).toHaveBeenCalledWith('P1');
       results.next([P1S]);
       expect(component.suggestions()).toEqual([P1S]);
     });
@@ -639,7 +646,7 @@ describe('QuickAddPrinterComponent', () => {
       const first = new Subject<PrinterModel[]>();
       const second = new Subject<PrinterModel[]>();
       const responses: Observable<PrinterModel[]>[] = [first, second];
-      catalog.search.and.callFake(() => responses.shift()!);
+      catalog.search.mockImplementation(() => responses.shift()!);
       await setup();
 
       typeInSearch('P1');
@@ -662,9 +669,9 @@ describe('QuickAddPrinterComponent', () => {
       openSpecs();
 
       expect(component.form.controls.type.value).toBe('FFF');
-      expect(component.form.controls.multiMaterial.value).toBeTrue();
+      expect(component.form.controls.multiMaterial.value).toBe(true);
       expect(component.form.controls.slotCount.value).toBe(4);
-      expect(component.form.controls.slotCount.enabled).toBeTrue();
+      expect(component.form.controls.slotCount.enabled).toBe(true);
       const nozzle = byTestId<HTMLButtonElement>('nozzle-0.4')!;
       expect(nozzle.getAttribute('aria-pressed')).toBe('true');
       expect(
@@ -703,12 +710,12 @@ describe('QuickAddPrinterComponent', () => {
       expect(sent().bedWidthMm).toBe(256);
       expect(sent().bedDepthMm).toBe(256);
       expect(sent().bedHeightMm).toBe(256);
-      expect(sent().hasHeatedBed).toBeTrue();
-      expect(sent().hasHeatedChamber).toBeFalse();
+      expect(sent().hasHeatedBed).toBe(true);
+      expect(sent().hasHeatedChamber).toBe(false);
       expect(sent().slotCount).toBe(4);
       expect(logging.logEvent).toHaveBeenCalledWith(
         'QuickAddPrinter_Saved',
-        jasmine.objectContaining({ specsEdited: true })
+        expect.objectContaining({ specsEdited: true })
       );
     });
 
@@ -747,7 +754,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(sent().bedDepthMm).toBe(256);
       expect(logging.logEvent).toHaveBeenCalledWith(
         'QuickAddPrinter_Saved',
-        jasmine.objectContaining({ specsEdited: true })
+        expect.objectContaining({ specsEdited: true })
       );
     });
 
@@ -798,7 +805,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(sent().slotCount).toBe(4);
       expect(logging.logEvent).not.toHaveBeenCalledWith(
         'QuickAddPrinter_NotListed',
-        jasmine.anything()
+        expect.anything()
       );
     });
 
@@ -821,7 +828,7 @@ describe('QuickAddPrinterComponent', () => {
 
       typeOverPick('Voron 2.4');
 
-      expect(component.form.controls.multiMaterial.value).toBeTrue();
+      expect(component.form.controls.multiMaterial.value).toBe(true);
       expect(component.form.controls.slotCount.value).toBe(8);
       await saveFreeText();
       expect(sent().slotCount).toBe(8);
@@ -862,7 +869,7 @@ describe('QuickAddPrinterComponent', () => {
 
       expect(logging.logEvent).not.toHaveBeenCalledWith(
         'QuickAddPrinter_NotListed',
-        jasmine.anything()
+        expect.anything()
       );
     });
 
@@ -874,7 +881,7 @@ describe('QuickAddPrinterComponent', () => {
       typeOverPick('Bambu Lab P1');
       expect(byTestId('spec-summary')).toBeNull();
       expect(byTestId('nozzle-0.4')).toBeNull();
-      expect(component.form.controls.multiMaterial.value).toBeFalse();
+      expect(component.form.controls.multiMaterial.value).toBe(false);
       typeInSearch('Voron 2.4');
       await saveFreeText();
 
@@ -899,7 +906,7 @@ describe('QuickAddPrinterComponent', () => {
       );
       expect(logging.logEvent).toHaveBeenCalledWith(
         'QuickAddPrinter_Saved',
-        jasmine.objectContaining({
+        expect.objectContaining({
           fromCatalog: false,
           catalogModelId: null,
           popularChip: false,
@@ -916,7 +923,7 @@ describe('QuickAddPrinterComponent', () => {
 
       expect(logging.logEvent).not.toHaveBeenCalledWith(
         'QuickAddPrinter_NotListed',
-        jasmine.anything()
+        expect.anything()
       );
     });
   });
@@ -926,7 +933,7 @@ describe('QuickAddPrinterComponent', () => {
 
     beforeEach(() => {
       popular = new Subject<PrinterModel[]>();
-      catalog.popular.and.returnValue(popular);
+      catalog.popular.mockReturnValue(popular);
     });
 
     function typeToggle(): HTMLElement | null {
@@ -1047,7 +1054,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(byTestId('multi-material')!.textContent!.trim()).toBe(
         'I use an AMS / multi-material unit'
       );
-      expect(box.checked).toBeTrue();
+      expect(box.checked).toBe(true);
       expect(input('slotCount')!.value).toBe('4');
 
       box.click();
@@ -1063,7 +1070,7 @@ describe('QuickAddPrinterComponent', () => {
       const box = host().querySelector(
         '[data-testid="multi-material"] input'
       ) as HTMLInputElement;
-      expect(box.checked).toBeFalse();
+      expect(box.checked).toBe(false);
       expect(input('slotCount')).toBeNull();
     });
 
@@ -1083,7 +1090,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(byTestId<HTMLInputElement>('printer-search')!.value).toBe('');
       expect(byTestId('spec-summary')).toBeNull();
       expect(component.form.controls.make.value).toBe('');
-      expect(component.form.controls.multiMaterial.value).toBeFalse();
+      expect(component.form.controls.multiMaterial.value).toBe(false);
       expect(logging.logEvent).toHaveBeenCalledWith(
         'QuickAddPrinter_PickChanged',
         { id: 'bambu-lab-p1s' }
@@ -1159,7 +1166,7 @@ describe('QuickAddPrinterComponent', () => {
       fixture.detectChanges();
 
       expect(printers.addPrinter).not.toHaveBeenCalled();
-      expect(component.showManual()).toBeTrue();
+      expect(component.showManual()).toBe(true);
       expect(continued).toBe(0);
     });
   });
@@ -1169,7 +1176,7 @@ describe('QuickAddPrinterComponent', () => {
 
     beforeEach(() => {
       popular = new Subject<PrinterModel[]>();
-      catalog.popular.and.returnValue(popular);
+      catalog.popular.mockReturnValue(popular);
     });
 
     async function settleSave(): Promise<void> {
@@ -1202,9 +1209,9 @@ describe('QuickAddPrinterComponent', () => {
       expect(saved.length).toBe(1);
       expect(continued).toBe(1);
       expect(component.catalogModel()).toBeNull();
-      expect(
-        byTestId<HTMLButtonElement>('quick-add-save')!.disabled
-      ).toBeFalse();
+      expect(byTestId<HTMLButtonElement>('quick-add-save')!.disabled).toBe(
+        false
+      );
     });
 
     it('"Save and add another" saves, resets to the grid and does not continue', async () => {
@@ -1231,7 +1238,7 @@ describe('QuickAddPrinterComponent', () => {
       expect(byTestId('picked-printer')).toBeNull();
       expect(byTestId('popular-printer-bambu-lab-p1s')).not.toBeNull();
       expect(byTestId<HTMLInputElement>('printer-search')!.value).toBe('');
-      expect(component.form.controls.multiMaterial.value).toBeFalse();
+      expect(component.form.controls.multiMaterial.value).toBe(false);
       expect(component.form.controls.nozzleDiameter.value).toBeNull();
       component.selectCatalogPrinter(MK4);
       expect(component.form.controls.name.value).toBe('MK4');
@@ -1299,7 +1306,7 @@ describe('QuickAddPrinterComponent', () => {
 
     it('keeps the pick and does not continue when the save fails', async () => {
       await setup(false, null, 'welcome');
-      printers.addPrinter.and.returnValue(throwError(() => new Error('down')));
+      printers.addPrinter.mockReturnValue(throwError(() => new Error('down')));
       component.selectCatalogPrinter(MK4);
 
       await component.submit();
@@ -1314,7 +1321,7 @@ describe('QuickAddPrinterComponent', () => {
   describe('initialModelId', () => {
     it('loads and preselects the model', async () => {
       const model = new Subject<PrinterModel | null>();
-      catalog.get.and.returnValue(model);
+      catalog.get.mockReturnValue(model);
       await setup(false, 'bambu-lab-p1s');
 
       model.next(P1S);
@@ -1330,7 +1337,7 @@ describe('QuickAddPrinterComponent', () => {
     });
 
     it('leaves the form empty when the id is unknown', async () => {
-      catalog.get.and.returnValue(of(null));
+      catalog.get.mockReturnValue(of(null));
       await setup(false, 'nope');
 
       expect(component.form.controls.search.value).toBe('');
@@ -1340,7 +1347,7 @@ describe('QuickAddPrinterComponent', () => {
 
   describe('initialName and initialSearch', () => {
     it('keeps the given nickname over the model a pick fills in', async () => {
-      catalog.get.and.returnValue(of(P1S));
+      catalog.get.mockReturnValue(of(P1S));
       await setup(false, 'bambu-lab-p1s', 'dialog', false, {
         initialName: 'Workshop P1S',
       });
@@ -1388,14 +1395,19 @@ describe('QuickAddPrinterComponent with the real catalog service', () => {
 describe('openQuickAddPrinterDialog', () => {
   it('opens the dialog with the desktop sizing and returns its ref', () => {
     const ref = {} as MatDialogRef<QuickAddPrinterDialogComponent>;
-    const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.returnValue(ref);
+    const dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    };
+    dialog.open.mockReturnValue(ref);
     const data = { source: 'checklist' as const, showEmailNotice: true };
 
-    const result = openQuickAddPrinterDialog(dialog, data);
+    const result = openQuickAddPrinterDialog(
+      dialog as unknown as MatDialog,
+      data
+    );
 
     expect(result).toBe(ref);
-    const [component, config] = dialog.open.calls.mostRecent().args;
+    const [component, config] = vi.mocked(dialog.open).mock.lastCall;
     expect(component).toBe(QuickAddPrinterDialogComponent);
     expect(config?.data).toEqual(data);
     expect(config?.width).toBe('min(30rem, 100vw - 2rem)');
@@ -1404,16 +1416,17 @@ describe('openQuickAddPrinterDialog', () => {
   });
 
   function setupDialog(data: object) {
-    const ref = jasmine.createSpyObj<
-      MatDialogRef<QuickAddPrinterDialogComponent>
-    >('ref', ['close']);
-    const catalog = jasmine.createSpyObj<PrinterCatalogService>(
-      'PrinterCatalogService',
-      ['search', 'popular', 'get']
-    );
-    catalog.search.and.returnValue(of([]));
-    catalog.popular.and.returnValue(of([]));
-    catalog.get.and.returnValue(of(P1S));
+    const ref = {
+      close: vi.fn().mockName('ref.close'),
+    };
+    const catalog = {
+      search: vi.fn().mockName('PrinterCatalogService.search'),
+      popular: vi.fn().mockName('PrinterCatalogService.popular'),
+      get: vi.fn().mockName('PrinterCatalogService.get'),
+    };
+    catalog.search.mockReturnValue(of([]));
+    catalog.popular.mockReturnValue(of([]));
+    catalog.get.mockReturnValue(of(P1S));
     TestBed.configureTestingModule({
       imports: [QuickAddPrinterDialogComponent, NoopAnimationsModule],
       providers: [

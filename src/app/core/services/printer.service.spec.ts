@@ -49,7 +49,7 @@ describe('PrinterService', () => {
     request.flush([{ id: 'pf-1', slot: 2, slotLabel: 'T2', filament: null }]);
 
     expect(loaded).toEqual([
-      jasmine.objectContaining({ slot: 2, slotLabel: 'T2' }),
+      expect.objectContaining({ slot: 2, slotLabel: 'T2' }),
     ]);
   });
 

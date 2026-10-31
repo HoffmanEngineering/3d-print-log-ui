@@ -1,5 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { BreakpointObserver, BreakpointState } from '@angular/cdk/layout';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal, WritableSignal } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -34,9 +35,9 @@ describe('SettingsComponent', () => {
   let breakpoint$: BehaviorSubject<BreakpointState>;
   let component: SettingsComponent;
   let fixture: ComponentFixture<SettingsComponent>;
-  let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
-  let mockPushPreferences: jasmine.SpyObj<PushPreferencesService>;
-  let mockPushPermissionPrompt: jasmine.SpyObj<PushPermissionPromptService>;
+  let mockNativeBridge: MockedObject<NativeBridgeService>;
+  let mockPushPreferences: MockedObject<PushPreferencesService>;
+  let mockPushPermissionPrompt: MockedObject<PushPermissionPromptService>;
   let userProfile: WritableSignal<UserProfileInfo | null>;
 
   const mockUserDetails = {
@@ -59,92 +60,95 @@ describe('SettingsComponent', () => {
     }),
   };
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     userProfile = signal<UserProfileInfo | null>({
       deactivationDateTime: null,
     } as UserProfileInfo);
-    const mockAuthService = jasmine.createSpyObj<AuthService>(
-      'AuthService',
-      ['updateCurrentUserDeactivationDate'],
-      {
-        userProfile,
-      }
-    );
-    const mockUserService = jasmine.createSpyObj<UserService>('UserService', [
-      'updateCurrentUserDetail',
-      'deactivateCurrentUser',
-    ]);
-    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      [
-        'updateUserSetting',
-        'addUserSetting',
-        'getCurrentUsersSettingByType',
-        'addOrUpdateSetting',
-      ]
-    );
-    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+    const mockAuthService = {
+      updateCurrentUserDeactivationDate: vi
+        .fn()
+        .mockName('AuthService.updateCurrentUserDeactivationDate'),
+      userProfile,
+    };
+    const mockUserService = {
+      updateCurrentUserDetail: vi
+        .fn()
+        .mockName('UserService.updateCurrentUserDetail'),
+      deactivateCurrentUser: vi
+        .fn()
+        .mockName('UserService.deactivateCurrentUser'),
+    };
+    const mockUserSettingService = {
+      updateUserSetting: vi
+        .fn()
+        .mockName('UserSettingService.updateUserSetting'),
+      addUserSetting: vi.fn().mockName('UserSettingService.addUserSetting'),
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting'),
+    };
+    mockUserSettingService.getCurrentUsersSettingByType.mockReturnValue(
       Promise.resolve(null)
     );
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['exportAllPrintsAsCsv']
-    );
-    const mockMetaService = jasmine.createSpyObj<MetaTagService>(
-      'MetaTagService',
-      ['setTitle']
-    );
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['error']
-    );
-    const mockSubscriptionService = jasmine.createSpyObj<SubscriptionService>(
-      'SubscriptionService',
-      ['createPortalSession'],
-      {
-        isPro: signal(false),
-        plan: signal(null),
-        currentPeriodEnd: signal(null),
-        cancelAtPeriodEnd: signal(false),
-      }
-    );
-    const mockThemeService = jasmine.createSpyObj<ThemeService>(
-      'ThemeService',
-      ['setMode'],
-      {
-        mode: signal<ThemeMode>('system'),
-      }
-    );
-    const mockLoggingService = jasmine.createSpyObj<LoggingService>(
-      'LoggingService',
-      ['logEvent', 'logException']
-    );
-    mockNativeBridge = jasmine.createSpyObj<NativeBridgeService>(
-      'NativeBridgeService',
-      ['isAvailable'],
-      { permission: 'granted' }
-    );
+    const mockPrintService = {
+      exportAllPrintsAsCsv: vi
+        .fn()
+        .mockName('PrintService.exportAllPrintsAsCsv'),
+    };
+    const mockMetaService = {
+      setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+    };
+    const mockToastrService = {
+      error: vi.fn().mockName('ToastrService.error'),
+    };
+    const mockSubscriptionService = {
+      createPortalSession: vi
+        .fn()
+        .mockName('SubscriptionService.createPortalSession'),
+      isPro: signal(false),
+      plan: signal(null),
+      currentPeriodEnd: signal(null),
+      cancelAtPeriodEnd: signal(false),
+    };
+    const mockThemeService = {
+      setMode: vi.fn().mockName('ThemeService.setMode'),
+      mode: signal<ThemeMode>('system'),
+    };
+    const mockLoggingService = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    };
+    mockNativeBridge = {
+      isAvailable: vi.fn().mockName('NativeBridgeService.isAvailable'),
+      permission: 'granted',
+    } as unknown as MockedObject<NativeBridgeService>;
     // Default to a plain browser: the overwhelming majority of these specs are not about
     // push, and the section must stay absent for them.
-    mockNativeBridge.isAvailable.and.returnValue(false);
+    mockNativeBridge.isAvailable.mockReturnValue(false);
 
-    mockPushPreferences = jasmine.createSpyObj<PushPreferencesService>(
-      'PushPreferencesService',
-      ['isEnabled', 'setEnabled']
-    );
-    mockPushPreferences.isEnabled.and.resolveTo(true);
-    mockPushPreferences.setEnabled.and.resolveTo(undefined);
+    mockPushPreferences = {
+      isEnabled: vi.fn().mockName('PushPreferencesService.isEnabled'),
+      setEnabled: vi.fn().mockName('PushPreferencesService.setEnabled'),
+    } as unknown as MockedObject<PushPreferencesService>;
+    mockPushPreferences.isEnabled.mockResolvedValue(true);
+    mockPushPreferences.setEnabled.mockResolvedValue(undefined);
 
-    mockPushPermissionPrompt =
-      jasmine.createSpyObj<PushPermissionPromptService>(
-        'PushPermissionPromptService',
-        ['promptInContext', 'promptOnUserRequest']
-      );
-    mockPushPermissionPrompt.promptInContext.and.resolveTo({
+    mockPushPermissionPrompt = {
+      promptInContext: vi
+        .fn()
+        .mockName('PushPermissionPromptService.promptInContext'),
+      promptOnUserRequest: vi
+        .fn()
+        .mockName('PushPermissionPromptService.promptOnUserRequest'),
+    } as unknown as MockedObject<PushPermissionPromptService>;
+    mockPushPermissionPrompt.promptInContext.mockResolvedValue({
       permission: 'granted',
       outcome: 'shown',
     });
-    mockPushPermissionPrompt.promptOnUserRequest.and.resolveTo({
+    mockPushPermissionPrompt.promptOnUserRequest.mockResolvedValue({
       permission: 'granted',
       outcome: 'shown',
     });
@@ -154,7 +158,7 @@ describe('SettingsComponent', () => {
       breakpoints: {},
     });
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [
         NoopAnimationsModule,
         RouterTestingModule,
@@ -204,7 +208,7 @@ describe('SettingsComponent', () => {
         },
       ],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(SettingsComponent);
@@ -221,7 +225,7 @@ describe('SettingsComponent', () => {
       fixture.detectChanges();
 
       expect(() => userProfile.set(null)).not.toThrow();
-      expect(component.deactivateHasBeenClicked()).toBeFalse();
+      expect(component.deactivateHasBeenClicked()).toBe(false);
     });
   });
 
@@ -230,7 +234,7 @@ describe('SettingsComponent', () => {
       // Set the mock mode to 'dark' to verify the [value] binding reflects signal state
       const mockThemeService = TestBed.inject(
         ThemeService
-      ) as jasmine.SpyObj<ThemeService>;
+      ) as MockedObject<ThemeService>;
       (mockThemeService.mode as WritableSignal<ThemeMode>).set('dark');
 
       fixture.detectChanges();
@@ -242,9 +246,9 @@ describe('SettingsComponent', () => {
       const darkToggle = fixture.nativeElement.querySelector(
         'mat-button-toggle[value="dark"]'
       );
-      expect(
-        darkToggle.classList.contains('mat-button-toggle-checked')
-      ).toBeTrue();
+      expect(darkToggle.classList.contains('mat-button-toggle-checked')).toBe(
+        true
+      );
     });
 
     it('calls themeService.setMode with the correct value when toggle changes', () => {
@@ -291,7 +295,7 @@ describe('SettingsComponent', () => {
     }
 
     it('hides the section entirely in a normal browser', () => {
-      mockNativeBridge.isAvailable.and.returnValue(false);
+      mockNativeBridge.isAvailable.mockReturnValue(false);
 
       fixture.detectChanges();
 
@@ -300,7 +304,7 @@ describe('SettingsComponent', () => {
     });
 
     it('renders both toggles inside the app shell', async () => {
-      mockNativeBridge.isAvailable.and.returnValue(true);
+      mockNativeBridge.isAvailable.mockReturnValue(true);
 
       fixture.detectChanges();
       await fixture.whenStable();
@@ -318,8 +322,8 @@ describe('SettingsComponent', () => {
     });
 
     it('reflects a stored opt-out on the matching toggle', async () => {
-      mockNativeBridge.isAvailable.and.returnValue(true);
-      mockPushPreferences.isEnabled.and.callFake((type) =>
+      mockNativeBridge.isAvailable.mockReturnValue(true);
+      mockPushPreferences.isEnabled.mockImplementation((type) =>
         Promise.resolve(type !== UserSettingType.Push_PrintFailed)
       );
 
@@ -329,12 +333,12 @@ describe('SettingsComponent', () => {
       await fixture.whenStable();
       await fixture.whenStable();
 
-      expect(component.printCompletedPush()).toBeTrue();
-      expect(component.printFailedPush()).toBeFalse();
+      expect(component.printCompletedPush()).toBe(true);
+      expect(component.printFailedPush()).toBe(false);
     });
 
     it('writes the print-failed setting when that toggle changes', async () => {
-      mockNativeBridge.isAvailable.and.returnValue(true);
+      mockNativeBridge.isAvailable.mockReturnValue(true);
       fixture.detectChanges();
       await fixture.whenStable();
 
@@ -350,8 +354,8 @@ describe('SettingsComponent', () => {
     });
 
     it('offers an achievement toggle that reflects and writes its own setting', async () => {
-      mockNativeBridge.isAvailable.and.returnValue(true);
-      mockPushPreferences.isEnabled.and.callFake((type) =>
+      mockNativeBridge.isAvailable.mockReturnValue(true);
+      mockPushPreferences.isEnabled.mockImplementation((type) =>
         Promise.resolve(type !== UserSettingType.Push_Achievement)
       );
 
@@ -364,7 +368,7 @@ describe('SettingsComponent', () => {
       expect(
         fixture.nativeElement.querySelector('[data-testid="push-achievement"]')
       ).not.toBeNull();
-      expect(component.achievementPush()).toBeFalse();
+      expect(component.achievementPush()).toBe(false);
 
       await component.onPushPreferenceChanged(
         UserSettingType.Push_Achievement,
@@ -386,7 +390,7 @@ describe('SettingsComponent', () => {
     }
 
     async function renderInAppShell() {
-      mockNativeBridge.isAvailable.and.returnValue(true);
+      mockNativeBridge.isAvailable.mockReturnValue(true);
       fixture.detectChanges();
       await fixture.whenStable();
       await fixture.whenStable();
@@ -443,7 +447,7 @@ describe('SettingsComponent', () => {
       // Asserted on the field, not the DOM: re-running change detection after this
       // async state change trips NG0100 in the harness. That the field drives the
       // warning's visibility is covered by the granted/denied/default render tests above.
-      expect(component.pushPermissionGranted()).toBeTrue();
+      expect(component.pushPermissionGranted()).toBe(true);
     });
   });
 
@@ -461,8 +465,8 @@ describe('SettingsComponent', () => {
       const saved = new Subject<UserSetting>();
       const settings = TestBed.inject(
         UserSettingService
-      ) as jasmine.SpyObj<UserSettingService>;
-      settings.addUserSetting.and.returnValue(saved);
+      ) as MockedObject<UserSettingService>;
+      settings.addUserSetting.mockReturnValue(saved);
       fixture.detectChanges();
 
       const diameter = (
@@ -482,20 +486,18 @@ describe('SettingsComponent', () => {
 
     it('re-enables Export when the export fails', () => {
       const exported = new Subject<Blob>();
-      const prints = TestBed.inject(
-        PrintService
-      ) as jasmine.SpyObj<PrintService>;
-      prints.exportAllPrintsAsCsv.and.returnValue(exported);
+      const prints = TestBed.inject(PrintService) as MockedObject<PrintService>;
+      prints.exportAllPrintsAsCsv.mockReturnValue(exported);
       fixture.detectChanges();
 
       button('Export')!.click();
       fixture.detectChanges();
-      expect(button('Export')!.disabled).withContext('exporting').toBeTrue();
+      expect(button('Export')!.disabled, 'exporting').toBe(true);
 
       exported.error(new Error('500'));
       fixture.detectChanges();
 
-      expect(button('Export')!.disabled).toBeFalse();
+      expect(button('Export')!.disabled).toBe(false);
     });
   });
 });

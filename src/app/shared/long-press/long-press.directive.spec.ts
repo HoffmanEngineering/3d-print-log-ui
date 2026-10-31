@@ -1,10 +1,5 @@
 import { Component } from '@angular/core';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   LongPressDirective,
   LONG_PRESS_DELAY_MS,
@@ -62,100 +57,111 @@ describe('LongPressDirective', () => {
     );
   }
 
-  it('emits once the press passes the delay', fakeAsync(() => {
+  it('emits once the press passes the delay', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(1);
-  }));
+  });
 
-  it('does not emit before the delay', fakeAsync(() => {
+  it('does not emit before the delay', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(LONG_PRESS_DELAY_MS - 1);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS - 1);
 
     expect(host.fired).toBe(0);
 
     // Release it, or the pending timer outlives the test.
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-  }));
+  });
 
-  it('does not emit when the pointer is released early', fakeAsync(() => {
+  it('does not emit when the pointer is released early', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(0);
-  }));
+  });
 
   // Without this, starting a scroll with a finger on a card selects it.
-  it('cancels when the pointer moves beyond the slop radius', fakeAsync(() => {
+  it('cancels when the pointer moves beyond the slop radius', async () => {
+    vi.useFakeTimers();
     pointerDown(0, 0);
     pointerMove(0, 40);
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(0);
-  }));
+  });
 
-  it('tolerates the small movement of a stationary finger', fakeAsync(() => {
+  it('tolerates the small movement of a stationary finger', async () => {
+    vi.useFakeTimers();
     pointerDown(0, 0);
     pointerMove(2, 3);
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(1);
-  }));
+  });
 
-  it('cancels when the browser takes over the gesture', fakeAsync(() => {
+  it('cancels when the browser takes over the gesture', async () => {
+    vi.useFakeTimers();
     pointerDown();
     element.dispatchEvent(new PointerEvent('pointercancel', { bubbles: true }));
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(0);
-  }));
+  });
 
   // The card is a routerLink: without this the release navigates away from the
   // list the moment the long press selects something.
-  it('swallows the click that follows a fired long press', fakeAsync(() => {
+  it('swallows the click that follows a fired long press', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
     element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(host.clicks).toBe(0);
-  }));
+  });
 
-  it('lets an ordinary tap through', fakeAsync(() => {
+  it('lets an ordinary tap through', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
     element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(host.clicks).toBe(1);
-  }));
+  });
 
-  it('only swallows the first click after the press', fakeAsync(() => {
+  it('only swallows the first click after the press', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
     element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(host.clicks).toBe(1);
-  }));
+  });
 
   // A right-click is the desktop context menu, not a long press.
-  it('ignores non-primary buttons', fakeAsync(() => {
+  it('ignores non-primary buttons', async () => {
+    vi.useFakeTimers();
     element.dispatchEvent(
       new PointerEvent('pointerdown', { button: 2, bubbles: true })
     );
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(0);
-  }));
+  });
 
-  it('suppresses the native context menu once the press has fired', fakeAsync(() => {
+  it('suppresses the native context menu once the press has fired', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     const contextMenu = new MouseEvent('contextmenu', {
       bubbles: true,
@@ -163,31 +169,33 @@ describe('LongPressDirective', () => {
     });
     element.dispatchEvent(contextMenu);
 
-    expect(contextMenu.defaultPrevented).toBeTrue();
-  }));
+    expect(contextMenu.defaultPrevented).toBe(true);
+  });
 
-  it('drops a pending timer when the element goes away mid-press', fakeAsync(() => {
+  it('drops a pending timer when the element goes away mid-press', async () => {
+    vi.useFakeTimers();
     pointerDown();
     fixture.destroy();
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
 
     expect(host.fired).toBe(0);
-  }));
+  });
 
   // The click after a long press is not guaranteed: the browser drops it if the finger
   // drifts off, and Android frequently sends none. A stale flag would then eat the next
   // real tap on the card.
-  it('does not carry a pending swallow into the next press', fakeAsync(() => {
+  it('does not carry a pending swallow into the next press', async () => {
+    vi.useFakeTimers();
     pointerDown();
-    tick(LONG_PRESS_DELAY_MS);
+    await vi.advanceTimersByTimeAsync(LONG_PRESS_DELAY_MS);
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
     // No click arrives.
 
     pointerDown();
-    tick(100);
+    await vi.advanceTimersByTimeAsync(100);
     element.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
     element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 
     expect(host.clicks).toBe(1);
-  }));
+  });
 });

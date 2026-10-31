@@ -1,12 +1,7 @@
+import type { Mock, MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, input, output } from '@angular/core';
-import {
-  ComponentFixture,
-  fakeAsync,
-  flush,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatStepper } from '@angular/material/stepper';
@@ -86,48 +81,53 @@ function page(items: PrinterSummarySimple[]): PagedList<PrinterSummarySimple> {
 describe('WelcomeComponent', () => {
   let fixture: ComponentFixture<WelcomeComponent>;
   let component: WelcomeComponent;
-  let onboarding: jasmine.SpyObj<OnboardingService>;
-  let printers: jasmine.SpyObj<PrinterService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let analytics: jasmine.SpyObj<GoogleAnalyticsService>;
+  let onboarding: MockedObject<OnboardingService>;
+  let printers: MockedObject<PrinterService>;
+  let logging: MockedObject<LoggingService>;
+  let analytics: MockedObject<GoogleAnalyticsService>;
   let router: Router;
-  let navigate: jasmine.Spy;
-  let breakpoints: jasmine.SpyObj<BreakpointObserver>;
+  let navigate: Mock;
+  let breakpoints: MockedObject<BreakpointObserver>;
 
   function configure(
     existing: PrinterSummarySimple[] = [],
     query: Record<string, string> = {},
     narrow = false
   ) {
-    breakpoints = jasmine.createSpyObj<BreakpointObserver>(
-      'BreakpointObserver',
-      ['isMatched', 'observe']
-    );
-    breakpoints.isMatched.and.returnValue(narrow);
-    onboarding = jasmine.createSpyObj<OnboardingService>('OnboardingService', [
-      'status',
-      'markWelcomeFinished',
-      'acknowledgeEmailNotice',
-    ]);
-    onboarding.status.and.resolveTo({
+    breakpoints = {
+      isMatched: vi.fn().mockName('BreakpointObserver.isMatched'),
+      observe: vi.fn().mockName('BreakpointObserver.observe'),
+    } as unknown as MockedObject<BreakpointObserver>;
+    breakpoints.isMatched.mockReturnValue(narrow);
+    onboarding = {
+      status: vi.fn().mockName('OnboardingService.status'),
+      markWelcomeFinished: vi
+        .fn()
+        .mockName('OnboardingService.markWelcomeFinished'),
+      acknowledgeEmailNotice: vi
+        .fn()
+        .mockName('OnboardingService.acknowledgeEmailNotice'),
+    } as unknown as MockedObject<OnboardingService>;
+    onboarding.status.mockResolvedValue({
       onboardingEligible: true,
       createdDate: null,
       emailVerified: true,
     });
-    onboarding.markWelcomeFinished.and.resolveTo();
-    onboarding.acknowledgeEmailNotice.and.resolveTo();
-    printers = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'getCurrentUserPrinterSummaries',
-    ]);
-    printers.getCurrentUserPrinterSummaries.and.returnValue(of(page(existing)));
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
-    analytics = jasmine.createSpyObj<GoogleAnalyticsService>(
-      'GoogleAnalyticsService',
-      ['eventEmitter']
-    );
+    onboarding.markWelcomeFinished.mockResolvedValue(undefined);
+    onboarding.acknowledgeEmailNotice.mockResolvedValue(undefined);
+    printers = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    } as unknown as MockedObject<PrinterService>;
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(of(page(existing)));
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
+    analytics = {
+      eventEmitter: vi.fn().mockName('GoogleAnalyticsService.eventEmitter'),
+    } as unknown as MockedObject<GoogleAnalyticsService>;
     TestBed.configureTestingModule({
       imports: [WelcomeComponent, NoopAnimationsModule],
       providers: [
@@ -142,9 +142,11 @@ describe('WelcomeComponent', () => {
         { provide: GoogleAnalyticsService, useValue: analytics },
         {
           provide: OnboardingApiService,
-          useValue: jasmine.createSpyObj('OnboardingApiService', [
-            'resendVerificationEmail',
-          ]),
+          useValue: {
+            resendVerificationEmail: vi
+              .fn()
+              .mockName('OnboardingApiService.resendVerificationEmail'),
+          },
         },
         { provide: IS_CORDOVA, useValue: false },
         { provide: BreakpointObserver, useValue: breakpoints },
@@ -159,7 +161,7 @@ describe('WelcomeComponent', () => {
       },
     });
     router = TestBed.inject(Router);
-    navigate = spyOn(router, 'navigate').and.resolveTo(true);
+    navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
   }
 
   async function render() {
@@ -220,7 +222,7 @@ describe('WelcomeComponent', () => {
 
     expect(printerForm().source()).toBe('welcome');
     expect(printerForm().mode()).toBe('welcome');
-    expect(printerForm().showEmailNotice()).toBeFalse();
+    expect(printerForm().showEmailNotice()).toBe(false);
   });
 
   it('leads step 1 with "Step 1 of 3" and the printer question', async () => {
@@ -241,7 +243,7 @@ describe('WelcomeComponent', () => {
     configure();
     await render();
     const form = printerForm();
-    expect(form.hasSavedPrinters()).toBeFalse();
+    expect(form.hasSavedPrinters()).toBe(false);
     expect(el('printer-chips')).toBeNull();
 
     form.saved.emit({ id: 7, name: 'Voron' } as PrinterDetail);
@@ -254,7 +256,7 @@ describe('WelcomeComponent', () => {
       fixture.nativeElement.querySelector('.welcome__added').textContent
     ).toContain('Added');
     expect(printerForm()).toBe(form);
-    expect(form.hasSavedPrinters()).toBeTrue();
+    expect(form.hasSavedPrinters()).toBe(true);
 
     form.saved.emit({ id: 8, name: 'MK4' } as PrinterDetail);
     await settle();
@@ -264,15 +266,14 @@ describe('WelcomeComponent', () => {
   it('shows the existing printer when the summary resolves after the first render', async () => {
     configure();
     const response = new Subject<PagedList<PrinterSummarySimple>>();
-    printers.getCurrentUserPrinterSummaries.and.returnValue(response);
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(response);
     await render();
 
     // While the summary is out, step 1 must not look like "no printers yet".
     expect(
-      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent))
-    )
-      .withContext('no empty quick-add form before the summary lands')
-      .toBeNull();
+      fixture.debugElement.query(By.directive(StubQuickAddPrinterComponent)),
+      'no empty quick-add form before the summary lands'
+    ).toBeNull();
     expect(el('printer-chips')).toBeNull();
 
     response.next(page([summary(3, 'MK4S')]));
@@ -280,13 +281,13 @@ describe('WelcomeComponent', () => {
     await settle();
 
     expect(el('printer-chips')!.textContent).toContain('MK4S');
-    expect(printerForm().hasSavedPrinters()).toBeTrue();
+    expect(printerForm().hasSavedPrinters()).toBe(true);
   });
 
   it('shows the quick-add form once an empty summary resolves', async () => {
     configure();
     const response = new Subject<PagedList<PrinterSummarySimple>>();
-    printers.getCurrentUserPrinterSummaries.and.returnValue(response);
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(response);
     await render();
 
     response.next(page([]));
@@ -294,13 +295,13 @@ describe('WelcomeComponent', () => {
     await settle();
 
     expect(printerForm()).toBeTruthy();
-    expect(printerForm().hasSavedPrinters()).toBeFalse();
+    expect(printerForm().hasSavedPrinters()).toBe(false);
   });
 
   it('falls back to the quick-add form when the summary fails', async () => {
     configure();
     const response = new Subject<PagedList<PrinterSummarySimple>>();
-    printers.getCurrentUserPrinterSummaries.and.returnValue(response);
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(response);
     await render();
 
     response.error(new Error('offline'));
@@ -310,28 +311,29 @@ describe('WelcomeComponent', () => {
     expect(logging.logException).toHaveBeenCalled();
   });
 
-  it('shows the quick-add form when the summary never settles within 3 s', fakeAsync(() => {
+  it('shows the quick-add form when the summary never settles within 3 s', async () => {
+    vi.useFakeTimers();
     configure();
-    printers.getCurrentUserPrinterSummaries.and.returnValue(
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(
       new Subject<PagedList<PrinterSummarySimple>>()
     );
     fixture = TestBed.createComponent(WelcomeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    tick(3000);
+    await vi.advanceTimersByTimeAsync(3000);
     fixture.detectChanges();
-    flush();
+    await vi.runAllTimersAsync();
     fixture.detectChanges();
 
     expect(printerForm()).toBeTruthy();
-    expect(component.step1Ready()).toBeTrue();
-  }));
+    expect(component.step1Ready()).toBe(true);
+  });
 
   it('tells the form about a printer that already exists', async () => {
     configure([summary(3, 'Prusa MK4')]);
     await render();
 
-    expect(printerForm().hasSavedPrinters()).toBeTrue();
+    expect(printerForm().hasSavedPrinters()).toBe(true);
     expect(el('printer-chips')!.textContent).toContain('Prusa MK4');
   });
 
@@ -500,7 +502,7 @@ describe('WelcomeComponent', () => {
       expect(link.textContent!.trim()).toBe('Materials');
       expect(link.getAttribute('href')).toBe('/materials');
       expect(link.getAttribute('target')).toBe('_blank');
-      expect(noMaterialForm()).toBeTrue();
+      expect(noMaterialForm()).toBe(true);
       expect(el('step2-skip')).toBeNull();
 
       const next = el('step2-resin-continue') as HTMLButtonElement;
@@ -520,13 +522,13 @@ describe('WelcomeComponent', () => {
       configure([resin(3, 'Saturn 4'), summary(4, 'P1S')]);
       await render();
       await goToStep(1);
-      expect(noMaterialForm()).toBeFalse();
+      expect(noMaterialForm()).toBe(false);
 
       await chooseLoadedIn('Saturn 4');
       expect(text('step2-heading')).toBe(
         'What resin is in your Saturn 4 right now?'
       );
-      expect(noMaterialForm()).toBeTrue();
+      expect(noMaterialForm()).toBe(true);
       expect(el('step2-resin-continue')).not.toBeNull();
       // The select stays, so the user can switch back.
       expect(el('loaded-in-select')).not.toBeNull();
@@ -536,7 +538,7 @@ describe('WelcomeComponent', () => {
         "What's loaded in your P1S right now?"
       );
       expect(text('step2-helper')).toContain('Just the one on the printer.');
-      expect(noMaterialForm()).toBeFalse();
+      expect(noMaterialForm()).toBe(false);
       expect(materialForm().submitLabel()).toBe('Add spool and continue');
       expect(materialForm().loadIntoPrinterId()).toBe(4);
       expect(el('step2-resin-continue')).toBeNull();
@@ -549,7 +551,7 @@ describe('WelcomeComponent', () => {
 
       const skip = el('step2-skip')!;
       expect(skip.closest('app-quick-add-material')).not.toBeNull();
-      expect(skip.hasAttribute('quickaddsecondary')).toBeTrue();
+      expect(skip.hasAttribute('quickaddsecondary')).toBe(true);
     });
 
     it('"Add spool and continue" saves and advances in one click', async () => {
@@ -634,7 +636,7 @@ describe('WelcomeComponent', () => {
   it('Skip setup waits for both writes before navigating', async () => {
     configure();
     let finishWrite!: () => void;
-    onboarding.markWelcomeFinished.and.returnValue(
+    onboarding.markWelcomeFinished.mockReturnValue(
       new Promise<void>((resolve) => (finishWrite = resolve))
     );
     await render();
@@ -650,7 +652,7 @@ describe('WelcomeComponent', () => {
 
   it('Skip setup still navigates when markWelcomeFinished rejects', async () => {
     configure();
-    onboarding.markWelcomeFinished.and.rejectWith(new Error('offline'));
+    onboarding.markWelcomeFinished.mockRejectedValue(new Error('offline'));
     await render();
 
     await component.skipSetup();
@@ -723,13 +725,13 @@ describe('WelcomeComponent', () => {
   it('logs a failed navigation instead of rejecting', async () => {
     configure();
     const failure = new Error('navigation failed');
-    navigate.and.rejectWith(failure);
+    navigate.mockRejectedValue(failure);
     await render();
 
-    await expectAsync(component.skipSetup()).toBeResolved();
+    await expect(component.skipSetup()).resolves.not.toThrow();
 
     expect(logging.logException).toHaveBeenCalledWith(failure);
-    expect((el('skip-setup') as HTMLButtonElement).disabled).toBeFalse();
+    expect((el('skip-setup') as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('shows the email notice in the footer', async () => {

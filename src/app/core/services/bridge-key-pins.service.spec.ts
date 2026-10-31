@@ -63,8 +63,12 @@ describe('BridgeKeyPinsService', () => {
   });
 
   it('keeps working when storage throws', () => {
-    spyOn(Storage.prototype, 'getItem').and.throwError('blocked');
-    spyOn(Storage.prototype, 'setItem').and.throwError('blocked');
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
     const pins = create();
     expect(pins.pinned(42)).toBeNull();
     pins.pin(42, a);
@@ -72,7 +76,7 @@ describe('BridgeKeyPinsService', () => {
   });
 
   it('touches no storage on the server', () => {
-    const get = spyOn(Storage.prototype, 'getItem').and.callThrough();
+    const get = vi.spyOn(Storage.prototype, 'getItem');
     const pins = create('server');
     pins.pin(42, a);
     expect(get).not.toHaveBeenCalled();

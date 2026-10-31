@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import {
   Component,
@@ -28,7 +28,7 @@ describe('NavbarComponent', () => {
   let loggedIn: WritableSignal<boolean | null>;
   let hasUnread: WritableSignal<boolean>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     profile = signal<UserProfileInfo | null>(null);
     loggedIn = signal<boolean | null>(false);
     const mockAuthService: Partial<AuthService> = {
@@ -43,7 +43,7 @@ describe('NavbarComponent', () => {
       hasUnreadReleases: hasUnread,
       firstUnreadAnchor: signal('v1.52.0'),
     };
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [NavbarComponent, RouterTestingModule, MatMenuModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
@@ -60,7 +60,7 @@ describe('NavbarComponent', () => {
         add: { imports: [NotificationBellStubComponent] },
       })
       .compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavbarComponent);

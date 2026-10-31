@@ -29,7 +29,7 @@ describe('calculateSpoolAdjustment', () => {
     const result = calculateSpoolAdjustment(450000, 150000, 500000);
     expect(result.measuredRemainingMg).toBe(300000);
     expect(result.adjustmentMg).toBe(-200000);
-    expect(result.negativeRemaining).toBeFalse();
+    expect(result.negativeRemaining).toBe(false);
   });
 
   it('produces a positive adjustment when measured exceeds tracked', () => {
@@ -44,6 +44,6 @@ describe('calculateSpoolAdjustment', () => {
 
   it('flags negative remaining when measured is below spool weight', () => {
     const result = calculateSpoolAdjustment(100000, 150000, 500000);
-    expect(result.negativeRemaining).toBeTrue();
+    expect(result.negativeRemaining).toBe(true);
   });
 });

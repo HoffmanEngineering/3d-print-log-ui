@@ -145,23 +145,26 @@ describe('EntityImagesPanelComponent', () => {
     };
 
     const setCaptureInput = (value: boolean) => {
-      (component as unknown as { useCaptureInput: boolean }).useCaptureInput =
-        value;
+      (
+        component as unknown as {
+          useCaptureInput: boolean;
+        }
+      ).useCaptureInput = value;
       fixture.detectChanges();
     };
 
     it('offers a camera-capture input alongside the gallery input', () => {
       const [gallery, camera] = fileInputs();
 
-      expect(gallery.hasAttribute('capture')).toBeFalse();
+      expect(gallery.hasAttribute('capture')).toBe(false);
       expect(camera.getAttribute('capture')).toBe('environment');
     });
 
     it('opens the gallery input from both add affordances in the browser and the iOS app', () => {
       setCaptureInput(false);
       const [gallery, camera] = fileInputs();
-      spyOn(gallery, 'click');
-      spyOn(camera, 'click');
+      vi.spyOn(gallery, 'click').mockReturnValue(undefined);
+      vi.spyOn(camera, 'click').mockReturnValue(undefined);
 
       clickAddPhoto();
       clickStripAdd();
@@ -173,8 +176,8 @@ describe('EntityImagesPanelComponent', () => {
     it('opens the capture input from both add affordances inside the Android app', () => {
       setCaptureInput(true);
       const [gallery, camera] = fileInputs();
-      spyOn(gallery, 'click');
-      spyOn(camera, 'click');
+      vi.spyOn(gallery, 'click').mockReturnValue(undefined);
+      vi.spyOn(camera, 'click').mockReturnValue(undefined);
 
       clickAddPhoto();
       clickStripAdd();
@@ -188,13 +191,13 @@ describe('EntityImagesPanelComponent', () => {
     pickFiles(aFile());
 
     expect(inner().items().length).toBe(1);
-    expect(component.hasStagedImages()).toBeTrue();
+    expect(component.hasStagedImages()).toBe(true);
     httpMock.expectNone(() => true);
   });
 
   it('clears hasStagedImages after a successful upload', () => {
     pickFiles(aFile());
-    expect(component.hasStagedImages()).toBeTrue();
+    expect(component.hasStagedImages()).toBe(true);
 
     component.uploadStagedImages(ENTITY_ID).subscribe();
     httpMock.expectOne(`${api}/api/TestEntities/${ENTITY_ID}/images`).flush({
@@ -205,7 +208,7 @@ describe('EntityImagesPanelComponent', () => {
       displayOrder: 0,
     });
 
-    expect(component.hasStagedImages()).toBeFalse();
+    expect(component.hasStagedImages()).toBe(false);
     expect(inner().items()[0].id).toBe(7);
   });
 
@@ -232,8 +235,8 @@ describe('EntityImagesPanelComponent', () => {
     requests()[0].flush('nope', { status: 500, statusText: 'Server Error' });
 
     expect(result!.transientFailures).toEqual([bad]);
-    expect(result!.allSucceeded).toBeFalse();
-    expect(component.hasStagedImages()).toBeTrue();
+    expect(result!.allSucceeded).toBe(false);
+    expect(component.hasStagedImages()).toBe(true);
   });
 
   it('retries only the previously failed files', () => {
@@ -271,8 +274,8 @@ describe('EntityImagesPanelComponent', () => {
       displayOrder: 1,
     });
     expect(result!.transientFailures).toEqual([]);
-    expect(result!.allSucceeded).toBeTrue();
-    expect(component.hasStagedImages()).toBeFalse();
+    expect(result!.allSucceeded).toBe(true);
+    expect(component.hasStagedImages()).toBe(false);
   });
 
   it('deletes a stored image through the API and drops it from the list', () => {
@@ -300,7 +303,7 @@ describe('EntityImagesPanelComponent', () => {
   });
 
   it('revokes the object URL when a staged image is deleted', () => {
-    const revoke = spyOn(URL, 'revokeObjectURL');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
     pickFiles(aFile());
     const staged = inner().items()[0];
 
@@ -385,7 +388,7 @@ describe('EntityImagesPanelComponent', () => {
       displayOrder: 1,
     });
 
-    expect(component.hasStagedImages()).toBeFalse();
+    expect(component.hasStagedImages()).toBe(false);
     expect(
       inner()
         .items()
@@ -397,7 +400,7 @@ describe('EntityImagesPanelComponent', () => {
     pickFiles(aFile('a.png'), aFile('b.png'));
     const second = inner().items()[1];
     inner().onDefaultChanged(second);
-    expect(inner().items()[1].isDefault).toBeTrue();
+    expect(inner().items()[1].isDefault).toBe(true);
 
     component.uploadStagedImages(ENTITY_ID).subscribe();
     const url = `${api}/api/TestEntities/${ENTITY_ID}/images`;
@@ -472,7 +475,7 @@ describe('EntityImagesPanelComponent', () => {
       isDefault: true,
       displayOrder: 0,
     });
-    expect(inner().uploading()).toBeFalse();
+    expect(inner().uploading()).toBe(false);
   });
 
   it('rolls back and reports the order when the reorder request fails', () => {
@@ -550,7 +553,7 @@ describe('EntityImagesPanelComponent', () => {
 
     // Without `takeUntilDestroyed` the request keeps the torn-down panel alive
     // and later writes to its signals.
-    expect(request.cancelled).toBeTrue();
+    expect(request.cancelled).toBe(true);
   });
 
   it('revokes every outstanding object URL on destroy', () => {
@@ -558,13 +561,10 @@ describe('EntityImagesPanelComponent', () => {
     const urls = inner()
       .items()
       .map((i) => i.url!);
-    const revoke = spyOn(URL, 'revokeObjectURL');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined);
     // Its contract requires teardown; without it the show/hide timers outlive
     // the component.
-    const destroy = spyOn(
-      DeferredSkeletonController.prototype,
-      'destroy'
-    ).and.callThrough();
+    const destroy = vi.spyOn(DeferredSkeletonController.prototype, 'destroy');
 
     fixture.destroy();
 
@@ -623,7 +623,7 @@ describe('EntityImagesPanelComponent', () => {
 
       expect(result!.permanentFailures.length).toBe(1);
       expect(result!.transientFailures).toEqual([]);
-      expect(result!.allSucceeded).toBeFalse();
+      expect(result!.allSucceeded).toBe(false);
       expect(retryButton()).toBeNull();
       expect(rejectionText()).toContain('cannot be uploaded');
     });
@@ -645,7 +645,7 @@ describe('EntityImagesPanelComponent', () => {
       let result: UploadResult | undefined;
       component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
 
-      expect(result!.allSucceeded).toBeTrue();
+      expect(result!.allSucceeded).toBe(true);
     });
   });
 
@@ -683,8 +683,8 @@ describe('EntityImagesPanelComponent', () => {
         )
         .flush(null);
 
-      expect(result!.allSucceeded).toBeTrue();
-      expect(inner().items()[1].isDefault).toBeTrue();
+      expect(result!.allSucceeded).toBe(true);
+      expect(inner().items()[1].isDefault).toBe(true);
     });
 
     it('does not report success until a pending reorder has been written', () => {
@@ -707,7 +707,7 @@ describe('EntityImagesPanelComponent', () => {
         .expectOne(`${api}/api/TestEntities/${ENTITY_ID}/images/reorder`)
         .flush(null);
 
-      expect(result!.allSucceeded).toBeTrue();
+      expect(result!.allSucceeded).toBe(true);
     });
 
     it('still reports success when a deferred write fails', () => {
@@ -728,7 +728,7 @@ describe('EntityImagesPanelComponent', () => {
 
       // The photos ARE saved; only the star is not. Blocking the save on that would
       // strand the user on a page whose work is already committed.
-      expect(result!.allSucceeded).toBeTrue();
+      expect(result!.allSucceeded).toBe(true);
       expect(inner().actionError()).toContain('default');
     });
   });
@@ -752,7 +752,7 @@ describe('EntityImagesPanelComponent', () => {
       // Not re-posted, but still not a success: the caller must not navigate away and
       // leave the user with no way to see what was dropped.
       expect(result!.permanentFailures.length).toBe(1);
-      expect(result!.allSucceeded).toBeFalse();
+      expect(result!.allSucceeded).toBe(false);
     });
 
     it('saves cleanly once the rejected file is removed', () => {
@@ -768,7 +768,7 @@ describe('EntityImagesPanelComponent', () => {
       component.uploadStagedImages(ENTITY_ID).subscribe((r) => (result = r));
 
       httpMock.expectNone(url);
-      expect(result!.allSucceeded).toBeTrue();
+      expect(result!.allSucceeded).toBe(true);
     });
   });
 });

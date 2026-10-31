@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import {
   HTTP_INTERCEPTORS,
   HttpClient,
@@ -19,10 +20,10 @@ const api = environment.printLogApiUrl;
 describe('AchievementRefreshInterceptor', () => {
   let http: HttpClient;
   let controller: HttpTestingController;
-  let refresh: jasmine.Spy;
+  let refresh: Mock;
 
   beforeEach(() => {
-    refresh = jasmine.createSpy('refreshUnreadCount');
+    refresh = vi.fn();
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withInterceptorsFromDi()),

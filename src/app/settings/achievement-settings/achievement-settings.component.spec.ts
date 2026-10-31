@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -12,26 +13,30 @@ import { AchievementSettingsComponent } from './achievement-settings.component';
 
 describe('AchievementSettingsComponent', () => {
   let fixture: ComponentFixture<AchievementSettingsComponent>;
-  let settings: jasmine.SpyObj<UserSettingService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let settings: MockedObject<UserSettingService>;
+  let logging: MockedObject<LoggingService>;
   let stored: Partial<Record<UserSettingType, string>>;
 
   async function render(): Promise<HTMLElement> {
-    settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
-      'getCurrentUsersSettingByType',
-      'addOrUpdateSetting',
-    ]);
-    settings.getCurrentUsersSettingByType.and.callFake((type) =>
+    settings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting'),
+    } as unknown as MockedObject<UserSettingService>;
+    settings.getCurrentUsersSettingByType.mockImplementation((type) =>
       settingsDelay.then(() =>
         stored[type] !== undefined
           ? ({ value: stored[type] } as UserSetting)
           : null
       )
     );
-    settings.addOrUpdateSetting.and.returnValue(Promise.resolve());
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    settings.addOrUpdateSetting.mockReturnValue(Promise.resolve());
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [AchievementSettingsComponent, NoopAnimationsModule],
@@ -120,12 +125,12 @@ describe('AchievementSettingsComponent', () => {
 
     // Still loading: a choice made now would be overwritten by the load, so none is possible.
     await new Promise((r) => setTimeout(r, 50));
-    expect(fixture.componentInstance.form.disabled).toBeTrue();
+    expect(fixture.componentInstance.form.disabled).toBe(true);
 
     release();
     await pending;
     await new Promise((r) => setTimeout(r));
-    expect(fixture.componentInstance.form.enabled).toBeTrue();
+    expect(fixture.componentInstance.form.enabled).toBe(true);
     expect(fixture.componentInstance.form.controls.celebrations.value).toBe(
       'off'
     );
@@ -134,7 +139,7 @@ describe('AchievementSettingsComponent', () => {
   it('saves rapid changes one at a time, last value last', async () => {
     await render();
     const resolvers: (() => void)[] = [];
-    settings.addOrUpdateSetting.and.callFake(
+    settings.addOrUpdateSetting.mockImplementation(
       () => new Promise<void>((r) => resolvers.push(r))
     );
 
@@ -146,7 +151,7 @@ describe('AchievementSettingsComponent', () => {
     resolvers[0]();
     await new Promise((r) => setTimeout(r));
     expect(settings.addOrUpdateSetting).toHaveBeenCalledTimes(2);
-    expect(settings.addOrUpdateSetting.calls.mostRecent().args).toEqual([
+    expect(vi.mocked(settings.addOrUpdateSetting).mock.lastCall).toEqual([
       UserSettingType.Achievements_Celebrations,
       'off',
     ]);

@@ -8,20 +8,16 @@ function makeFakeAi() {
   return {
     initializers: [] as Array<(item: any) => boolean | void>,
     emittedDuringLoad: [] as any[],
-    addTelemetryInitializer: jasmine.createSpy('addTelemetryInitializer'),
-    loadAppInsights: jasmine.createSpy('loadAppInsights'),
+    addTelemetryInitializer: vi.fn(),
+    loadAppInsights: vi.fn(),
     context: { application: { ver: '' } },
-    setAuthenticatedUserContext: jasmine.createSpy(
-      'setAuthenticatedUserContext'
-    ),
-    clearAuthenticatedUserContext: jasmine.createSpy(
-      'clearAuthenticatedUserContext'
-    ),
-    trackPageView: jasmine.createSpy('trackPageView'),
-    trackEvent: jasmine.createSpy('trackEvent'),
-    trackMetric: jasmine.createSpy('trackMetric'),
-    trackException: jasmine.createSpy('trackException'),
-    trackTrace: jasmine.createSpy('trackTrace'),
+    setAuthenticatedUserContext: vi.fn(),
+    clearAuthenticatedUserContext: vi.fn(),
+    trackPageView: vi.fn(),
+    trackEvent: vi.fn(),
+    trackMetric: vi.fn(),
+    trackException: vi.fn(),
+    trackTrace: vi.fn(),
   };
 }
 
@@ -31,7 +27,9 @@ function makeFakeAi() {
  * was constructed with on `fakeAi.capturedConfig`.
  */
 function makeFakeModule(
-  fakeAi: ReturnType<typeof makeFakeAi> & { capturedConfig?: any }
+  fakeAi: ReturnType<typeof makeFakeAi> & {
+    capturedConfig?: any;
+  }
 ) {
   return {
     ApplicationInsights: function (cfg: any) {
@@ -47,7 +45,7 @@ function makeFakeModule(
 class TestableLoggingService extends LoggingService {
   // Default to a never-settling promise: every test assigns importResult before
   // calling runInitialize(), and an eagerly-rejected default would surface as an
-  // unhandled rejection (order-dependent Karma failure).
+  // unhandled rejection (an order-dependent failure).
   importResult: Promise<any> = new Promise<never>(() => {});
   protected override isTelemetryEnabled(): boolean {
     return true;
@@ -60,7 +58,11 @@ class TestableLoggingService extends LoggingService {
     return this.importResult;
   }
   runInitialize(): Promise<void> {
-    return (this as unknown as { initialize(): Promise<void> }).initialize();
+    return (
+      this as unknown as {
+        initialize(): Promise<void>;
+      }
+    ).initialize();
   }
 }
 
@@ -73,11 +75,11 @@ describe('LoggingService', () => {
     });
     const service = TestBed.inject(LoggingService) as TestableLoggingService;
     const fakeAi = makeFakeAi();
-    fakeAi.addTelemetryInitializer.and.callFake((fn: any) =>
+    fakeAi.addTelemetryInitializer.mockImplementation((fn: any) =>
       fakeAi.initializers.push(fn)
     );
     // The real SDK tracks the initial page view from inside loadAppInsights().
-    fakeAi.loadAppInsights.and.callFake(() => {
+    fakeAi.loadAppInsights.mockImplementation(() => {
       const item = {
         baseData: {
           uri: 'https://www.3dprintlog.com/email-preferences#m=SECRET',
@@ -102,7 +104,7 @@ describe('LoggingService', () => {
   it('stub path: log methods do not throw and logException console.errors', () => {
     const service = TestBed.inject(LoggingService);
     const err = new Error('boom');
-    const consoleSpy = spyOn(console, 'error');
+    const consoleSpy = vi.spyOn(console, 'error').mockReturnValue(undefined);
 
     expect(() => service.logEvent('E')).not.toThrow();
     expect(() => service.logMetric('M', 1)).not.toThrow();
@@ -164,17 +166,17 @@ describe('LoggingService', () => {
       expect(cfg.instrumentationKey).toBe(
         environment.appInsights.instrumentationKey
       );
-      expect(cfg.enableAutoRouteTracking).toBeTrue();
-      expect(cfg.disableFetchTracking).toBeFalse();
-      expect(cfg.disableCorrelationHeaders).toBeFalse();
-      expect(cfg.enableCorsCorrelation).toBeTrue();
+      expect(cfg.enableAutoRouteTracking).toBe(true);
+      expect(cfg.disableFetchTracking).toBe(false);
+      expect(cfg.disableCorrelationHeaders).toBe(false);
+      expect(cfg.enableCorsCorrelation).toBe(true);
       expect(cfg.distributedTracingMode).toBe(2); // DistributedTracingModes.AI_AND_W3C
       expect(cfg.correlationHeaderDomains).toEqual([
         new URL(environment.printLogApiUrl).host,
       ]);
       expect(cfg.correlationHeaderExcludedDomains).toEqual(['*.auth0.com']);
-      expect(cfg.enableRequestHeaderTracking).toBeFalse();
-      expect(cfg.enableResponseHeaderTracking).toBeTrue();
+      expect(cfg.enableRequestHeaderTracking).toBe(false);
+      expect(cfg.enableResponseHeaderTracking).toBe(true);
       expect(fakeAi.loadAppInsights).toHaveBeenCalledTimes(1);
       expect(fakeAi.context.application.ver).toBe(environment.version);
     });
@@ -188,7 +190,9 @@ describe('LoggingService', () => {
 
       await service.runInitialize();
 
-      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledOnceWith(
+      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledTimes(1);
+
+      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledWith(
         '42',
         undefined,
         true
@@ -212,7 +216,8 @@ describe('LoggingService', () => {
       await service.runInitialize();
 
       service.setAuthenticatedUser(7);
-      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledOnceWith(
+      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledTimes(1);
+      expect(fakeAi.setAuthenticatedUserContext).toHaveBeenCalledWith(
         '7',
         undefined,
         true
@@ -226,7 +231,7 @@ describe('LoggingService', () => {
       const fakeAi = makeFakeAi();
       service.importResult = Promise.resolve(makeFakeModule(fakeAi));
       const err = new Error('pre-load');
-      const consoleSpy = spyOn(console, 'error');
+      const consoleSpy = vi.spyOn(console, 'error').mockReturnValue(undefined);
 
       service.logException(err);
       expect(consoleSpy).toHaveBeenCalledWith(err);
@@ -250,7 +255,7 @@ describe('LoggingService', () => {
 
       expect(fakeAi.trackEvent).toHaveBeenCalledTimes(50);
       // Oldest (e0) dropped; e1 is the first flushed.
-      expect(fakeAi.trackEvent.calls.first().args).toEqual([
+      expect(vi.mocked(fakeAi.trackEvent).mock.calls[0]).toEqual([
         { name: 'e1' },
         undefined,
       ]);
@@ -260,7 +265,7 @@ describe('LoggingService', () => {
 
     it('keeps running (no throw) when the SDK import fails', async () => {
       service.importResult = Promise.reject(new Error('network fail'));
-      spyOn(console, 'error');
+      vi.spyOn(console, 'error').mockReturnValue(undefined);
 
       service.logEvent('lost');
       await service.runInitialize();

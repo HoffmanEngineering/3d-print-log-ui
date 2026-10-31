@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -18,11 +19,10 @@ describe('FilamentUsageSummaryComponent', () => {
   let fixture: ComponentFixture<FilamentUsageSummaryComponent>;
 
   beforeEach(async () => {
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['calculatePrintCost']
-    );
-    mockPrintService.calculatePrintCost.and.returnValue({
+    const mockPrintService = {
+      calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+    };
+    mockPrintService.calculatePrintCost.mockReturnValue({
       valid: true,
       price: currency(0),
       formattedPrice: '$0.00',
@@ -50,12 +50,10 @@ describe('FilamentUsageSummaryComponent', () => {
 
   // printlog-bridge#97: the resin print a bridge reports, on the print detail page.
   describe('a resin print', () => {
-    let printService: jasmine.SpyObj<PrintService>;
+    let printService: MockedObject<PrintService>;
 
     beforeEach(() => {
-      printService = TestBed.inject(
-        PrintService
-      ) as jasmine.SpyObj<PrintService>;
+      printService = TestBed.inject(PrintService) as MockedObject<PrintService>;
     });
 
     function render(rows: PrintFilamentSummaryDto[]): string {
@@ -78,20 +76,20 @@ describe('FilamentUsageSummaryComponent', () => {
     it('prices a row by its actual volume, not its estimate', () => {
       render([resinUsageRow()]);
       expect(printService.calculatePrintCost).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           source: PrintFilamentSourceMeasurement.Volume,
           volumeMl: 42.5,
         })
       );
       expect(printService.calculatePrintCost).not.toHaveBeenCalledWith(
-        jasmine.objectContaining({ volumeMl: 40 })
+        expect.objectContaining({ volumeMl: 40 })
       );
     });
 
     it('prices an estimate-only row by its estimate', () => {
       render([estimateOnlyResinUsageRow()]);
       expect(printService.calculatePrintCost).toHaveBeenCalledWith(
-        jasmine.objectContaining({
+        expect.objectContaining({
           source: PrintFilamentSourceMeasurement.Volume,
           volumeMl: 40,
         })

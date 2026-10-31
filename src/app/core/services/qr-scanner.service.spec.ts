@@ -19,7 +19,7 @@ describe('QrScannerService', () => {
         'https://example.com/materials/a1b2c3d4-e5f6-7890-abcd-ef1234567890';
       const result: QrScanResult = service.parseFilamentUrl(url);
 
-      expect(result.success).toBeTrue();
+      expect(result.success).toBe(true);
       expect(result.filamentId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
       expect(result.rawText).toBe(url);
       expect(result.error).toBeUndefined();
@@ -30,7 +30,7 @@ describe('QrScannerService', () => {
         'https://example.com/materials/a1b2c3d4-e5f6-7890-abcd-ef1234567890#/spool/show/7';
       const result: QrScanResult = service.parseFilamentUrl(url);
 
-      expect(result.success).toBeTrue();
+      expect(result.success).toBe(true);
       expect(result.filamentId).toBe('a1b2c3d4-e5f6-7890-abcd-ef1234567890');
     });
 
@@ -39,7 +39,7 @@ describe('QrScannerService', () => {
         'https://example.com/materials/A1B2C3D4-E5F6-7890-ABCD-EF1234567890';
       const result: QrScanResult = service.parseFilamentUrl(url);
 
-      expect(result.success).toBeTrue();
+      expect(result.success).toBe(true);
       expect(result.filamentId).toBe('A1B2C3D4-E5F6-7890-ABCD-EF1234567890');
       expect(result.rawText).toBe(url);
     });
@@ -49,7 +49,7 @@ describe('QrScannerService', () => {
         'https://example.com/materials/a1B2c3D4-e5F6-7890-AbCd-eF1234567890';
       const result: QrScanResult = service.parseFilamentUrl(url);
 
-      expect(result.success).toBeTrue();
+      expect(result.success).toBe(true);
       expect(result.filamentId).toBe('a1B2c3D4-e5F6-7890-AbCd-eF1234567890');
     });
 
@@ -62,7 +62,7 @@ describe('QrScannerService', () => {
 
       urls.forEach((url) => {
         const result = service.parseFilamentUrl(url);
-        expect(result.success).toBeTrue();
+        expect(result.success).toBe(true);
         expect(result.filamentId).toBe('12345678-1234-1234-1234-123456789012');
       });
     });
@@ -70,7 +70,7 @@ describe('QrScannerService', () => {
     it('should return error for invalid URL format', () => {
       const result = service.parseFilamentUrl('not-a-url');
 
-      expect(result.success).toBeFalse();
+      expect(result.success).toBe(false);
       expect(result.filamentId).toBeUndefined();
       expect(result.error).toBe(
         'This QR code is not a 3D Print Log filament label'
@@ -83,7 +83,7 @@ describe('QrScannerService', () => {
         'https://example.com/filaments/12345678-1234-1234-1234-123456789012'
       );
 
-      expect(result.success).toBeFalse();
+      expect(result.success).toBe(false);
       expect(result.filamentId).toBeUndefined();
       expect(result.error).toBe(
         'This QR code is not a 3D Print Log filament label'
@@ -93,7 +93,7 @@ describe('QrScannerService', () => {
     it('should return error for URL without ID', () => {
       const result = service.parseFilamentUrl('https://example.com/materials/');
 
-      expect(result.success).toBeFalse();
+      expect(result.success).toBe(false);
       expect(result.filamentId).toBeUndefined();
       expect(result.error).toBe(
         'This QR code is not a 3D Print Log filament label'
@@ -105,7 +105,7 @@ describe('QrScannerService', () => {
         'https://example.com/materials/not-a-guid'
       );
 
-      expect(result.success).toBeFalse();
+      expect(result.success).toBe(false);
       expect(result.filamentId).toBeUndefined();
       expect(result.error).toBe(
         'This QR code is not a 3D Print Log filament label'
@@ -117,7 +117,7 @@ describe('QrScannerService', () => {
         'https://example.com/materials/12345678-1234-1234-1234-123456789012/edit'
       );
 
-      expect(result.success).toBeFalse();
+      expect(result.success).toBe(false);
       expect(result.filamentId).toBeUndefined();
       expect(result.error).toBe(
         'This QR code is not a 3D Print Log filament label'
@@ -129,14 +129,14 @@ describe('QrScannerService', () => {
         'https://example.com/materials/12345678-1234-1234-1234-123456789012?source=label';
       const result = service.parseFilamentUrl(url);
 
-      expect(result.success).toBeTrue();
+      expect(result.success).toBe(true);
       expect(result.filamentId).toBe('12345678-1234-1234-1234-123456789012');
     });
 
     it('should return error for empty string', () => {
       const result = service.parseFilamentUrl('');
 
-      expect(result.success).toBeFalse();
+      expect(result.success).toBe(false);
       expect(result.error).toBe(
         'This QR code is not a 3D Print Log filament label'
       );
@@ -147,14 +147,14 @@ describe('QrScannerService', () => {
         'file:///materials/12345678-1234-1234-1234-123456789012'
       );
 
-      expect(result.success).toBeTrue();
+      expect(result.success).toBe(true);
       expect(result.filamentId).toBe('12345678-1234-1234-1234-123456789012');
     });
   });
 
   describe('stopScanning', () => {
     it('should not throw when called without active scanner', async () => {
-      await expectAsync(service.stopScanning()).toBeResolved();
+      await expect(service.stopScanning()).resolves.not.toThrow();
     });
   });
 });

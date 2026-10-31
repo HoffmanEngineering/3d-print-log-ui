@@ -46,7 +46,7 @@ describe('print cost golden fixtures', () => {
     // The client has no currency concept at all: it cannot exclude a spool priced in another
     // currency, so this case is inexpressible here rather than merely failing. The UI gains the
     // user's Currency_Name setting in Phase 2, when the analytics tabs start rendering money.
-    const run = c.name === 'currency mismatch excludes the row' ? xit : it;
+    const run = c.name === 'currency mismatch excludes the row' ? it.skip : it;
 
     run(`matches the shared fixture: ${c.name}`, () => {
       const { total } = service.calculateTotalPrintCost(
@@ -56,13 +56,13 @@ describe('print cost golden fixtures', () => {
       );
 
       if (c.expectedAmount === null) {
-        expect(total.valid).toBeFalse();
+        expect(total.valid).toBe(false);
         return;
       }
 
       // Narrows the FilamentPrice union; a failure here is reported by the assertion above it.
       if (!total.valid) {
-        fail(`expected a valid total of ${c.expectedAmount}`);
+        throw new Error(`expected a valid total of ${c.expectedAmount}`);
         return;
       }
 
@@ -82,12 +82,14 @@ describe('print cost golden fixtures', () => {
       });
 
       if (c.expectedAmount === null) {
-        expect(result.valid).toBeFalse();
+        expect(result.valid).toBe(false);
         return;
       }
 
       if (!result.valid) {
-        fail(`expected a valid electricity cost of ${c.expectedAmount}`);
+        throw new Error(
+          `expected a valid electricity cost of ${c.expectedAmount}`
+        );
         return;
       }
 

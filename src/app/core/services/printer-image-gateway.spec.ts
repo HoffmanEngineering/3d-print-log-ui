@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -17,17 +18,20 @@ import { PrinterService } from './printer.service';
 describe('PrinterService image gateway', () => {
   let service: PrinterService;
   let httpMock: HttpTestingController;
-  let store: jasmine.SpyObj<PrinterThumbnailStore>;
+  let store: MockedObject<PrinterThumbnailStore>;
 
   const api = environment.printLogApiUrl;
   const PRINTER_ID = 7;
   const aFile = () => new File(['x'], 'printer.jpg', { type: 'image/jpeg' });
 
   beforeEach(() => {
-    store = jasmine.createSpyObj<PrinterThumbnailStore>(
-      'PrinterThumbnailStore',
-      ['invalidate', 'thumbnailFor', 'noteLoadFailure']
-    );
+    store = {
+      invalidate: vi.fn().mockName('PrinterThumbnailStore.invalidate'),
+      thumbnailFor: vi.fn().mockName('PrinterThumbnailStore.thumbnailFor'),
+      noteLoadFailure: vi
+        .fn()
+        .mockName('PrinterThumbnailStore.noteLoadFailure'),
+    } as unknown as MockedObject<PrinterThumbnailStore>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -58,7 +62,7 @@ describe('PrinterService image gateway', () => {
 
     const req = httpMock.expectOne(`${api}/api/Printers/${PRINTER_ID}/images`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBeTrue();
+    expect(req.request.body instanceof FormData).toBe(true);
     req.flush({});
   });
 

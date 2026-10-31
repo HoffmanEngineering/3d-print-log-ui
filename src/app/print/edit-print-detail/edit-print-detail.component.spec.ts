@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { FileAttachmentSectionComponent } from '../../shared/file-attachment-section/file-attachment-section.component';
@@ -6,15 +7,7 @@ import { PrinterAvatarComponent } from '../../shared/printer-avatar/printer-avat
 import { ImageThumbnailStripComponent } from '../../shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { PrintImageComponent } from '../../shared/print-image/print-image.component';
 import { ImageCarouselComponent } from '../../shared/image-carousel/image-carousel.component';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  flush,
-  flushMicrotasks,
-  tick,
-  waitForAsync,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import {
   NO_ERRORS_SCHEMA,
@@ -78,90 +71,115 @@ describe('EditPrintDetailComponent', () => {
   let component: EditPrintDetailComponent;
   let fixture: ComponentFixture<EditPrintDetailComponent>;
 
-  beforeEach(waitForAsync(() => {
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      {
-        addPrint: of(),
-        patchPrint: of(),
-        calculatePrintCost: { valid: false, message: '' },
-        calculateElectricityCost: { valid: false, message: '' },
-      }
-    );
+  beforeEach(async () => {
+    const mockPrintService = {
+      addPrint: vi.fn().mockName('PrintService.addPrint').mockReturnValue(of()),
+      patchPrint: vi
+        .fn()
+        .mockName('PrintService.patchPrint')
+        .mockReturnValue(of()),
+      calculatePrintCost: vi
+        .fn()
+        .mockName('PrintService.calculatePrintCost')
+        .mockReturnValue({ valid: false, message: '' }),
+      calculateElectricityCost: vi
+        .fn()
+        .mockName('PrintService.calculateElectricityCost')
+        .mockReturnValue({ valid: false, message: '' }),
+    };
 
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['success', 'error', 'warning', 'info']
-    );
+    const mockToastrService = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+      warning: vi.fn().mockName('ToastrService.warning'),
+      info: vi.fn().mockName('ToastrService.info'),
+    };
 
-    const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);
+    const mockTitleService = {
+      setTitle: vi.fn().mockName('Title.setTitle'),
+    };
 
-    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['updateUserSetting', 'getCurrentUsersSettingByType']
-    );
-    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+    const mockUserSettingService = {
+      updateUserSetting: vi
+        .fn()
+        .mockName('UserSettingService.updateUserSetting'),
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+    };
+    mockUserSettingService.getCurrentUsersSettingByType.mockReturnValue(
       Promise.resolve(null)
     );
 
-    const mockOnboardingService = jasmine.createSpyObj<OnboardingService>(
-      'OnboardingService',
-      {
-        status: Promise.resolve({
-          onboardingEligible: false,
-          createdDate: null,
-          emailVerified: true,
-        }),
-        markWelcomeFinished: Promise.resolve(),
-      }
-    );
+    const mockOnboardingService = {
+      status: vi
+        .fn()
+        .mockName('OnboardingService.status')
+        .mockReturnValue(
+          Promise.resolve({
+            onboardingEligible: false,
+            createdDate: null,
+            emailVerified: true,
+          })
+        ),
+      markWelcomeFinished: vi
+        .fn()
+        .mockName('OnboardingService.markWelcomeFinished')
+        .mockReturnValue(Promise.resolve()),
+    };
 
-    const mockAchievementService = jasmine.createSpyObj<AchievementService>(
-      'AchievementService',
-      { me: of({ families: [] } as never) }
-    );
+    const mockAchievementService = {
+      me: vi
+        .fn()
+        .mockName('AchievementService.me')
+        .mockReturnValue(of({ families: [] } as never)),
+    };
 
-    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-      'logEvent',
-    ]);
+    const mockLogger = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
-    const mockPrinterService = jasmine.createSpyObj<PrinterService>(
-      'PrinterService',
-      {
-        getLoadedFilamentForPrinter: of([]),
-        getCurrentUserPrinterSummaries: of({ paging: {}, items: [] } as never),
-      }
-    );
+    const mockPrinterService = {
+      getLoadedFilamentForPrinter: vi
+        .fn()
+        .mockName('PrinterService.getLoadedFilamentForPrinter')
+        .mockReturnValue(of([])),
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries')
+        .mockReturnValue(of({ paging: {}, items: [] } as never)),
+    };
 
-    const mockTrackingService = jasmine.createSpyObj<GoogleAnalyticsService>(
-      'GoogleAnalyticsService',
-      ['emitConversion', 'eventEmitter']
-    );
+    const mockTrackingService = {
+      emitConversion: vi.fn().mockName('GoogleAnalyticsService.emitConversion'),
+      eventEmitter: vi.fn().mockName('GoogleAnalyticsService.eventEmitter'),
+    };
 
-    const mockSubscriptionService = jasmine.createSpyObj<SubscriptionService>(
-      'SubscriptionService',
-      [],
-      {
-        isPro: signal(true) as Signal<boolean>,
-        maxImagesPerPrint: signal(20) as Signal<number>,
-        maxFilesPerPrint: signal(5) as Signal<number>,
-        maxFileStorageBytes: signal(53687091200) as Signal<number>,
-        usedFileStorageBytes: signal(0) as Signal<number>,
-      }
-    );
+    const mockSubscriptionService = {
+      isPro: signal(true) as Signal<boolean>,
+      maxImagesPerPrint: signal(20) as Signal<number>,
+      maxFilesPerPrint: signal(5) as Signal<number>,
+      maxFileStorageBytes: signal(53687091200) as Signal<number>,
+      usedFileStorageBytes: signal(0) as Signal<number>,
+    };
 
-    const mockCatalog = jasmine.createSpyObj<PrinterCatalogService>(
-      'PrinterCatalogService',
-      { match: of(null), get: of(null) }
-    );
+    const mockCatalog = {
+      match: vi
+        .fn()
+        .mockName('PrinterCatalogService.match')
+        .mockReturnValue(of(null)),
+      get: vi
+        .fn()
+        .mockName('PrinterCatalogService.get')
+        .mockReturnValue(of(null)),
+    };
 
-    const mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      ['createProject']
-    );
+    const mockProjectService = {
+      createProject: vi.fn().mockName('ProjectService.createProject'),
+    };
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [
         RouterTestingModule,
         FormsModule,
@@ -242,13 +260,13 @@ describe('EditPrintDetailComponent', () => {
         add: { schemas: [NO_ERRORS_SCHEMA] },
       })
       .compileComponents();
-  }));
+  });
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(EditPrintDetailComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-  }));
+  });
 
   it('should create', () => {
     expect(component).toBeTruthy();
@@ -601,14 +619,14 @@ describe('EditPrintDetailComponent', () => {
     });
 
     describe('Toast branching on image limit', () => {
-      let toastrService: jasmine.SpyObj<ToastrService>;
+      let toastrService: MockedObject<ToastrService>;
       let isProSignal: WritableSignal<boolean>;
       let maxImagesSignal: WritableSignal<number>;
 
       beforeEach(() => {
         toastrService = TestBed.inject(
           ToastrService
-        ) as jasmine.SpyObj<ToastrService>;
+        ) as MockedObject<ToastrService>;
         const subscriptionService = TestBed.inject(SubscriptionService);
         isProSignal =
           subscriptionService.isPro as unknown as WritableSignal<boolean>;
@@ -646,7 +664,9 @@ describe('EditPrintDetailComponent', () => {
 
         component.detectFiles(mockEvent);
 
-        expect(toastrService.warning).toHaveBeenCalledOnceWith(
+        expect(toastrService.warning).toHaveBeenCalledTimes(1);
+
+        expect(toastrService.warning).toHaveBeenCalledWith(
           'Maximum 20 images allowed',
           'Limit Reached'
         );
@@ -678,7 +698,9 @@ describe('EditPrintDetailComponent', () => {
 
         component.detectFiles(mockEvent);
 
-        expect(toastrService.info).toHaveBeenCalledOnceWith(
+        expect(toastrService.info).toHaveBeenCalledTimes(1);
+
+        expect(toastrService.info).toHaveBeenCalledWith(
           'Free accounts allow 5 images per print. Upgrade to Pro for more.',
           'Image Limit Reached'
         );
@@ -689,7 +711,7 @@ describe('EditPrintDetailComponent', () => {
 
   describe('parseAsSeconds', () => {
     it('reads a typed duration as whole seconds', () => {
-      expect(component.parseAsSeconds('1h 30m')).toBe(5_400);
+      expect(component.parseAsSeconds('1h 30m')).toBe(5400);
     });
 
     // A typo used to be saved as a print time of 0 seconds.
@@ -860,7 +882,7 @@ describe('EditPrintDetailComponent', () => {
 
     it('should reset saving to false after handleSaveSuccess', () => {
       const router = TestBed.inject(Router);
-      spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+      vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
       component.saving.set(true);
       component['handleSaveSuccess']({ id: 1 } as any);
@@ -877,28 +899,28 @@ describe('EditPrintDetailComponent', () => {
         )!;
       component.saving.set(true);
       fixture.detectChanges();
-      expect(submit().disabled).withContext('saving').toBeTrue();
+      expect(submit().disabled, 'saving').toBe(true);
 
       const logger = TestBed.inject(LoggingService) as unknown as Record<
         string,
         unknown
       >;
-      logger['logTrace'] = jasmine.createSpy('logTrace');
+      logger['logTrace'] = vi.fn();
       component['handleSaveError'](new Error('500'), { id: null } as never);
       fixture.detectChanges();
 
-      expect(submit().disabled).toBeFalse();
+      expect(submit().disabled).toBe(false);
     });
 
     it('tells the user when the save fails, not just stops the spinner', () => {
       const toastr = TestBed.inject(
         ToastrService
-      ) as jasmine.SpyObj<ToastrService>;
+      ) as MockedObject<ToastrService>;
       const logger = TestBed.inject(LoggingService) as unknown as Record<
         string,
         unknown
       >;
-      logger['logTrace'] = jasmine.createSpy('logTrace');
+      logger['logTrace'] = vi.fn();
 
       component['handleSaveError'](new Error('400'), { id: null } as never);
 
@@ -911,19 +933,15 @@ describe('EditPrintDetailComponent', () => {
     it('lists the material loaded in a newly chosen printer', () => {
       const loaded = new Subject<unknown>();
       (
-        TestBed.inject(PrinterService) as jasmine.SpyObj<PrinterService>
-      ).getLoadedFilamentForPrinter.and.returnValue(loaded as never);
+        TestBed.inject(PrinterService) as MockedObject<PrinterService>
+      ).getLoadedFilamentForPrinter.mockReturnValue(loaded as never);
       // Choosing a printer also remembers it as the last one used.
       const settings = TestBed.inject(UserSettingService) as unknown as Record<
         string,
         unknown
       >;
-      settings['addUserSetting'] = jasmine
-        .createSpy('addUserSetting')
-        .and.returnValue(of({}));
-      settings['updateUserSetting'] = jasmine
-        .createSpy('updateUserSetting')
-        .and.returnValue(of({}));
+      settings['addUserSetting'] = vi.fn().mockReturnValue(of({}));
+      settings['updateUserSetting'] = vi.fn().mockReturnValue(of({}));
       component.printForm.get('id')!.setValue(null);
       component.printForm.get('printerId')!.setValue(2);
       fixture.detectChanges();
@@ -949,17 +967,13 @@ describe('EditPrintDetailComponent', () => {
       const showLoaded = (remaining: Record<string, number | null>) => {
         const loaded = new Subject<unknown>();
         (
-          TestBed.inject(PrinterService) as jasmine.SpyObj<PrinterService>
-        ).getLoadedFilamentForPrinter.and.returnValue(loaded as never);
+          TestBed.inject(PrinterService) as MockedObject<PrinterService>
+        ).getLoadedFilamentForPrinter.mockReturnValue(loaded as never);
         const settings = TestBed.inject(
           UserSettingService
         ) as unknown as Record<string, unknown>;
-        settings['addUserSetting'] = jasmine
-          .createSpy('addUserSetting')
-          .and.returnValue(of({}));
-        settings['updateUserSetting'] = jasmine
-          .createSpy('updateUserSetting')
-          .and.returnValue(of({}));
+        settings['addUserSetting'] = vi.fn().mockReturnValue(of({}));
+        settings['updateUserSetting'] = vi.fn().mockReturnValue(of({}));
         component.printForm.get('id')!.setValue(null);
         component.printForm.get('printerId')!.setValue(2);
         fixture.detectChanges();
@@ -995,7 +1009,7 @@ describe('EditPrintDetailComponent', () => {
 
       it('shows grams, meters and milliliters for a tracked spool', () => {
         const text = showLoaded({
-          filamentRemaining: 250_000,
+          filamentRemaining: 250000,
           filamentLengthRemainingInM: 84,
           filamentVolumeRemainingInMl: 201,
         });
@@ -1011,15 +1025,15 @@ describe('EditPrintDetailComponent', () => {
   // #263: an existing print saves with PATCH, sending only what the user changed, so a form opened
   // before a connector completed the print cannot revert the connector's status, duration and usage.
   describe('Saving an existing print', () => {
-    let printService: jasmine.SpyObj<PrintService>;
-    let projectService: jasmine.SpyObj<ProjectService>;
+    let printService: MockedObject<PrintService>;
+    let projectService: MockedObject<ProjectService>;
     let editor: ComponentFixture<EditPrintDetailComponent> | undefined;
 
     const usageRow = {
       id: 'a3f1c2d4-0000-4000-8000-000000000001',
       filament: null,
       slot: null,
-      estimatedAmountMg: 20_000,
+      estimatedAmountMg: 20000,
       estimatedLengthInM: null,
       estimatedVolumeMl: null,
       estimatedSource: PrintFilamentSourceMeasurement.Weight,
@@ -1063,7 +1077,11 @@ describe('EditPrintDetailComponent', () => {
       route.data.subscribe(
         (data) => (resolved = data as Record<string, unknown>)
       );
-      (route as { data: Observable<unknown> }).data = of({
+      (
+        route as {
+          data: Observable<unknown>;
+        }
+      ).data = of({
         ...resolved!,
         print: { print },
       });
@@ -1074,14 +1092,12 @@ describe('EditPrintDetailComponent', () => {
     }
 
     beforeEach(() => {
-      printService = TestBed.inject(
-        PrintService
-      ) as jasmine.SpyObj<PrintService>;
-      printService.patchPrint.and.returnValue(of({ id: 5 } as PrintDetail));
+      printService = TestBed.inject(PrintService) as MockedObject<PrintService>;
+      printService.patchPrint.mockReturnValue(of({ id: 5 } as PrintDetail));
       projectService = TestBed.inject(
         ProjectService
-      ) as jasmine.SpyObj<ProjectService>;
-      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+      ) as MockedObject<ProjectService>;
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
         Promise.resolve(true)
       );
     });
@@ -1094,7 +1110,9 @@ describe('EditPrintDetailComponent', () => {
       form.printForm.controls.notes.setValue('added a note');
       form.onSubmit();
 
-      expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+      expect(printService.patchPrint).toHaveBeenCalledTimes(1);
+
+      expect(printService.patchPrint).toHaveBeenCalledWith(5, {
         notes: 'added a note',
       });
       expect(printService.addPrint).not.toHaveBeenCalled();
@@ -1106,7 +1124,7 @@ describe('EditPrintDetailComponent', () => {
       form.onSubmit();
 
       expect(printService.patchPrint).not.toHaveBeenCalled();
-      expect(form.saving()).toBeFalse();
+      expect(form.saving()).toBe(false);
     });
 
     it('clears a field the user emptied', () => {
@@ -1115,7 +1133,9 @@ describe('EditPrintDetailComponent', () => {
       form.printForm.controls.notes.setValue('');
       form.onSubmit();
 
-      expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+      expect(printService.patchPrint).toHaveBeenCalledTimes(1);
+
+      expect(printService.patchPrint).toHaveBeenCalledWith(5, {
         clear: ['notes'],
       });
     });
@@ -1126,11 +1146,11 @@ describe('EditPrintDetailComponent', () => {
       form.filamentUsage.at(0).get('amountG')!.setValue(21.5);
       form.onSubmit();
 
-      const [, patch] = printService.patchPrint.calls.mostRecent().args;
+      const [, patch] = vi.mocked(printService.patchPrint).mock.lastCall;
       expect(Object.keys(patch)).toEqual(['filamentUsage']);
       expect(patch.filamentUsage![0].id).toBe(usageRow.id);
-      expect(patch.filamentUsage![0].amountMg).toBe(21_500);
-      expect(patch.filamentUsage![0].estimatedAmountMg).toBe(20_000);
+      expect(patch.filamentUsage![0].amountMg).toBe(21500);
+      expect(patch.filamentUsage![0].estimatedAmountMg).toBe(20000);
     });
 
     // api#282: PATCH resets actualIsEstimate on every row unless the client sends it back.
@@ -1138,11 +1158,11 @@ describe('EditPrintDetailComponent', () => {
       const bridgePrint = {
         ...existingPrint,
         filamentUsage: [
-          { ...usageRow, amountMg: 18_000, slot: 1, actualIsEstimate: true },
+          { ...usageRow, amountMg: 18000, slot: 1, actualIsEstimate: true },
           {
             ...usageRow,
             id: 'a3f1c2d4-0000-4000-8000-000000000002',
-            amountMg: 4_000,
+            amountMg: 4000,
             slot: 2,
             actualIsEstimate: true,
           },
@@ -1155,7 +1175,7 @@ describe('EditPrintDetailComponent', () => {
         form.filamentUsage.at(1).get('notes')!.setValue('tray B1');
         form.onSubmit();
 
-        const [, patch] = printService.patchPrint.calls.mostRecent().args;
+        const [, patch] = vi.mocked(printService.patchPrint).mock.lastCall;
         expect(patch.filamentUsage!.map((r) => r.actualIsEstimate)).toEqual([
           true,
           true,
@@ -1168,7 +1188,7 @@ describe('EditPrintDetailComponent', () => {
         form.filamentUsage.at(0).get('amountG')!.setValue(17.25);
         form.onSubmit();
 
-        const [, patch] = printService.patchPrint.calls.mostRecent().args;
+        const [, patch] = vi.mocked(printService.patchPrint).mock.lastCall;
         expect(patch.filamentUsage!.map((r) => r.actualIsEstimate)).toEqual([
           false,
           true,
@@ -1194,8 +1214,8 @@ describe('EditPrintDetailComponent', () => {
         ...existingPrint,
         filamentUsage: [],
         filamentType: 'PLA',
-        filamentUsageMg: 15_000,
-        estimatedFilamentUsageMg: 14_000,
+        filamentUsageMg: 15000,
+        estimatedFilamentUsageMg: 14000,
       } as unknown as PrintDetail;
 
       it('sends the converted row when it was edited', () => {
@@ -1205,18 +1225,18 @@ describe('EditPrintDetailComponent', () => {
         form.filamentUsage.at(0).get('amountG')!.setValue(16);
         form.onSubmit();
 
-        const [id, patch] = printService.patchPrint.calls.mostRecent().args;
+        const [id, patch] = vi.mocked(printService.patchPrint).mock.lastCall;
         expect(id).toBe(5);
         expect(Object.keys(patch)).toEqual(['filamentUsage']);
         expect(patch.filamentUsage!.length).toBe(1);
-        expect(patch.filamentUsage![0].amountMg).toBe(16_000);
-        expect(patch.filamentUsage![0].estimatedAmountMg).toBe(14_000);
+        expect(patch.filamentUsage![0].amountMg).toBe(16000);
+        expect(patch.filamentUsage![0].estimatedAmountMg).toBe(14000);
       });
 
       it('sends an empty filamentUsage when the row was deleted', () => {
         const form = openEditor(legacyPrint);
         // The row holds usage, so removing it asks first; confirm.
-        spyOn(form.dialog, 'open').and.returnValue({
+        vi.spyOn(form.dialog, 'open').mockReturnValue({
           componentInstance: {},
           afterClosed: () => of(true),
         } as never);
@@ -1225,7 +1245,8 @@ describe('EditPrintDetailComponent', () => {
         form.onSubmit();
 
         expect(form.filamentUsage.length).toBe(0);
-        expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+        expect(printService.patchPrint).toHaveBeenCalledTimes(1);
+        expect(printService.patchPrint).toHaveBeenCalledWith(5, {
           filamentUsage: [],
         });
       });
@@ -1249,7 +1270,9 @@ describe('EditPrintDetailComponent', () => {
         form.printForm.controls.notes.setValue('added a note');
         form.onSubmit();
 
-        expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+        expect(printService.patchPrint).toHaveBeenCalledTimes(1);
+
+        expect(printService.patchPrint).toHaveBeenCalledWith(5, {
           notes: 'added a note',
         });
       });
@@ -1260,13 +1283,13 @@ describe('EditPrintDetailComponent', () => {
 
       form.onSubmit();
 
-      const [, patch] = printService.patchPrint.calls.mostRecent().args;
+      const [, patch] = vi.mocked(printService.patchPrint).mock.lastCall;
       expect(Object.keys(patch)).toEqual(['startDate']);
       expect(patch.startDate).toEqual(form.getCombinedStartDateTime());
     });
 
     it('creates a new project first, then assigns it', () => {
-      projectService.createProject.and.returnValue(
+      projectService.createProject.mockReturnValue(
         of({ id: 'project-9', name: 'Boats' } as never)
       );
       const form = openEditor(existingPrint);
@@ -1274,14 +1297,17 @@ describe('EditPrintDetailComponent', () => {
       form.onProjectSelected({ type: 'new', newProjectName: 'Boats' });
       form.onSubmit();
 
-      expect(projectService.createProject).toHaveBeenCalledOnceWith({
+      expect(projectService.createProject).toHaveBeenCalledTimes(1);
+
+      expect(projectService.createProject).toHaveBeenCalledWith({
         name: 'Boats',
         status: ProjectStatus.InProgress,
         viewStatus: ProjectViewStatus.Private,
         startDateOverride: null,
         finishDateOverride: null,
       });
-      expect(printService.patchPrint).toHaveBeenCalledOnceWith(5, {
+      expect(printService.patchPrint).toHaveBeenCalledTimes(1);
+      expect(printService.patchPrint).toHaveBeenCalledWith(5, {
         projectId: 'project-9',
       });
     });
@@ -1290,7 +1316,7 @@ describe('EditPrintDetailComponent', () => {
   it('creates a new print with POST', () => {
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
+    ) as MockedObject<PrintService>;
 
     component.printForm.controls.title.setValue('New print');
     component.filamentUsage.clear();
@@ -1303,13 +1329,18 @@ describe('EditPrintDetailComponent', () => {
   // The printers have to be in the route data BEFORE the first change detection: creating
   // the @for views afterwards makes dev mode's check-no-changes pass compare freshly
   // created bindings against their initial undefined and report NG0100.
-  it('shows a printer avatar in each option of the printer picker', fakeAsync(() => {
+  it('shows a printer avatar in each option of the printer picker', async () => {
+    vi.useFakeTimers();
     const route = TestBed.inject(ActivatedRoute);
     let resolved: Record<string, unknown>;
     route.data.subscribe(
       (data) => (resolved = data as Record<string, unknown>)
     );
-    (route as { data: Observable<unknown> }).data = of({
+    (
+      route as {
+        data: Observable<unknown>;
+      }
+    ).data = of({
       ...resolved!,
       printers: [
         {
@@ -1331,22 +1362,22 @@ describe('EditPrintDetailComponent', () => {
       ).nativeElement as HTMLElement
     ).click();
     picker.detectChanges();
-    flush();
+    await vi.runAllTimersAsync();
 
     expect(
       document.querySelector('mat-option app-printer-avatar')
     ).toBeTruthy();
 
     picker.destroy();
-  }));
+  });
 
   describe('onboarding', () => {
     let editor: ComponentFixture<EditPrintDetailComponent> | undefined;
-    let settings: Record<string, jasmine.Spy>;
-    let printerService: jasmine.SpyObj<PrinterService>;
-    let onboarding: jasmine.SpyObj<OnboardingService>;
-    let achievements: jasmine.SpyObj<AchievementService>;
-    let analytics: jasmine.SpyObj<GoogleAnalyticsService>;
+    let settings: Record<string, Mock>;
+    let printerService: MockedObject<PrinterService>;
+    let onboarding: MockedObject<OnboardingService>;
+    let achievements: MockedObject<AchievementService>;
+    let analytics: MockedObject<GoogleAnalyticsService>;
 
     const printer = (id: number, name: string): PrinterSummary =>
       ({
@@ -1378,7 +1409,7 @@ describe('EditPrintDetailComponent', () => {
             materialType: 'PLA',
           },
           slot: null,
-          estimatedAmountMg: 12_000,
+          estimatedAmountMg: 12000,
           estimatedSource: PrintFilamentSourceMeasurement.Weight,
           amountMg: null,
           source: PrintFilamentSourceMeasurement.Weight,
@@ -1436,7 +1467,7 @@ describe('EditPrintDetailComponent', () => {
 
     function stubDialog(form: EditPrintDetailComponent) {
       const closed = new Subject<unknown>();
-      const open = spyOn(form.dialog, 'open').and.returnValue({
+      const open = vi.spyOn(form.dialog, 'open').mockReturnValue({
         afterClosed: () => closed,
       } as never);
       return { open, closed };
@@ -1452,41 +1483,41 @@ describe('EditPrintDetailComponent', () => {
 
     function writtenPrinterIds(): string[] {
       return [
-        ...settings['addUserSetting'].calls
-          .all()
-          .filter(
-            (c) => c.args[0] === UserSettingType.Prints_LastSelectedPrinterId
+        ...vi
+          .mocked(settings['addUserSetting'])
+          .mock.calls.filter(
+            (c) => c[0] === UserSettingType.Prints_LastSelectedPrinterId
           )
-          .map((c) => c.args[1] as string),
-        ...settings['updateUserSetting'].calls
-          .all()
-          .map((c) => c.args[1] as string),
+          .map((c) => c[1] as string),
+        ...vi
+          .mocked(settings['updateUserSetting'])
+          .mock.calls.map((c) => c[1] as string),
       ];
     }
 
     beforeEach(() => {
       settings = TestBed.inject(UserSettingService) as unknown as Record<
         string,
-        jasmine.Spy
+        Mock
       >;
-      settings['addUserSetting'] = jasmine
-        .createSpy('addUserSetting')
-        .and.returnValue(of({ id: 3, value: '' }));
-      settings['updateUserSetting'].and.returnValue(of({ id: 3, value: '' }));
+      settings['addUserSetting'] = vi
+        .fn()
+        .mockReturnValue(of({ id: 3, value: '' }));
+      settings['updateUserSetting'].mockReturnValue(of({ id: 3, value: '' }));
       printerService = TestBed.inject(
         PrinterService
-      ) as jasmine.SpyObj<PrinterService>;
+      ) as MockedObject<PrinterService>;
       onboarding = TestBed.inject(
         OnboardingService
-      ) as jasmine.SpyObj<OnboardingService>;
+      ) as MockedObject<OnboardingService>;
       achievements = TestBed.inject(
         AchievementService
-      ) as jasmine.SpyObj<AchievementService>;
+      ) as MockedObject<AchievementService>;
       analytics = TestBed.inject(
         GoogleAnalyticsService
-      ) as jasmine.SpyObj<GoogleAnalyticsService>;
-      achievements.me.calls.reset();
-      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+      ) as MockedObject<GoogleAnalyticsService>;
+      achievements.me.mockClear();
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
         Promise.resolve(true)
       );
     });
@@ -1494,7 +1525,8 @@ describe('EditPrintDetailComponent', () => {
     afterEach(() => editor?.destroy());
 
     describe('adding a printer from the printer select', () => {
-      it('offers "+ Add a printer" after the printers', fakeAsync(() => {
+      it('offers "+ Add a printer" after the printers', async () => {
+        vi.useFakeTimers();
         openEditor({ printers: [printer(7, 'Mini')] });
 
         (
@@ -1503,7 +1535,7 @@ describe('EditPrintDetailComponent', () => {
           ).nativeElement as HTMLElement
         ).click();
         editor!.detectChanges();
-        flush();
+        await vi.runAllTimersAsync();
 
         const options = Array.from(document.querySelectorAll('mat-option'));
         expect(options[options.length - 1].textContent).toContain(
@@ -1511,8 +1543,8 @@ describe('EditPrintDetailComponent', () => {
         );
         expect(
           options[options.length - 1].classList.contains('add-printer-option')
-        ).toBeTrue();
-      }));
+        ).toBe(true);
+      });
 
       // Review Focus 1: a slicer hand-off must keep every field it filled.
       it('keeps the Cura fields and selects the new printer', async () => {
@@ -1523,7 +1555,7 @@ describe('EditPrintDetailComponent', () => {
         });
         const { open, closed } = stubDialog(form);
         const usageBefore = JSON.stringify(form.filamentUsage.getRawValue());
-        printerService.getCurrentUserPrinterSummaries.and.returnValue(
+        printerService.getCurrentUserPrinterSummaries.mockReturnValue(
           of({
             paging: {},
             items: [printer(7, 'Mini'), printer(42, 'Core One')],
@@ -1531,12 +1563,13 @@ describe('EditPrintDetailComponent', () => {
         );
 
         choosePrinter(form, -1);
-        expect(form.printForm.controls.printerId.value)
-          .withContext('restored while the dialog is open')
-          .toBe(7);
+        expect(
+          form.printForm.controls.printerId.value,
+          'restored while the dialog is open'
+        ).toBe(7);
         await flushPromises();
         expect(open).toHaveBeenCalledTimes(1);
-        expect(open.calls.mostRecent().args[1]!.data).toEqual({
+        expect(vi.mocked(open).mock.lastCall[1]!.data).toEqual({
           source: 'print-form',
           showEmailNotice: false,
         });
@@ -1591,7 +1624,7 @@ describe('EditPrintDetailComponent', () => {
       });
 
       it('tells the dialog to show the email notice to an eligible user', async () => {
-        onboarding.status.and.resolveTo({
+        onboarding.status.mockResolvedValue({
           onboardingEligible: true,
           createdDate: '2026-10-18',
           emailVerified: false,
@@ -1602,7 +1635,7 @@ describe('EditPrintDetailComponent', () => {
         choosePrinter(form, -1);
         await flushPromises();
 
-        expect(open.calls.mostRecent().args[1]!.data).toEqual({
+        expect(vi.mocked(open).mock.lastCall[1]!.data).toEqual({
           source: 'print-form',
           showEmailNotice: true,
         });
@@ -1616,7 +1649,7 @@ describe('EditPrintDetailComponent', () => {
           lastSelectedPrinterId: 7,
         });
         const { open, closed } = stubDialog(form);
-        expect(form.printForm.dirty).toBeFalse();
+        expect(form.printForm.dirty).toBe(false);
 
         choosePrinter(form, -1);
         form.onPrinterSelectOpenedChange(false);
@@ -1626,8 +1659,8 @@ describe('EditPrintDetailComponent', () => {
 
         expect(open).toHaveBeenCalledTimes(1);
         expect(form.printForm.controls.printerId.value).toBe(7);
-        expect(form.printForm.dirty).toBeFalse();
-        expect(form.canDeactivate()).toBeTrue();
+        expect(form.printForm.dirty).toBe(false);
+        expect(form.canDeactivate()).toBe(true);
       });
 
       it('keeps a form dirty that was already dirty', async () => {
@@ -1644,7 +1677,7 @@ describe('EditPrintDetailComponent', () => {
         closed.next(undefined);
 
         expect(form.printForm.controls.printerId.value).toBe(8);
-        expect(form.printForm.dirty).toBeTrue();
+        expect(form.printForm.dirty).toBe(true);
       });
 
       it('opens no dialog when arrow keys reach it on the closed select', async () => {
@@ -1675,9 +1708,7 @@ describe('EditPrintDetailComponent', () => {
         editor!.detectChanges();
         await flushPromises();
 
-        expect(seen)
-          .withContext('the arrow key reached the sentinel')
-          .toContain(-1);
+        expect(seen, 'the arrow key reached the sentinel').toContain(-1);
 
         expect(open).not.toHaveBeenCalled();
         expect(form.printForm.controls.printerId.value).toBe(7);
@@ -1689,37 +1720,40 @@ describe('EditPrintDetailComponent', () => {
 
     describe('the onboarding status lookup', () => {
       it('is prefetched when a new print opens', () => {
-        onboarding.status.calls.reset();
+        onboarding.status.mockClear();
         openEditor({ printers: [printer(7, 'Mini')] });
 
         expect(onboarding.status).toHaveBeenCalled();
       });
 
-      it('opens the dialog without the notice when the lookup hangs past 3 s', fakeAsync(() => {
-        onboarding.status.and.returnValue(new Promise(() => {}));
+      it('opens the dialog without the notice when the lookup hangs past 3 s', async () => {
+        vi.useFakeTimers();
+        onboarding.status.mockReturnValue(new Promise(() => {}));
         const form = openEditor({ printers: [] });
         const { open } = stubDialog(form);
 
         void form.openAddPrinter();
-        tick(2999);
+        await vi.advanceTimersByTimeAsync(2999);
         expect(open).not.toHaveBeenCalled();
-        tick(1);
-        flushMicrotasks();
+        await vi.advanceTimersByTimeAsync(1);
+        await vi.advanceTimersByTimeAsync(0);
 
         expect(open).toHaveBeenCalledTimes(1);
-        expect(open.calls.mostRecent().args[1]!.data).toEqual({
+        expect(vi.mocked(open).mock.lastCall[1]!.data).toEqual({
           source: 'print-form',
           showEmailNotice: false,
         });
-        flush();
-      }));
+        await vi.runAllTimersAsync();
+      });
 
       it('can open the dialog again after dialog.open throws', async () => {
         const form = openEditor({ printers: [] });
-        const open = spyOn(form.dialog, 'open').and.throwError('boom');
+        const open = vi.spyOn(form.dialog, 'open').mockImplementation(() => {
+          throw new Error('boom');
+        });
 
         await form.openAddPrinter();
-        open.and.returnValue({ afterClosed: () => new Subject() } as never);
+        open.mockReturnValue({ afterClosed: () => new Subject() } as never);
         await form.openAddPrinter();
 
         expect(open).toHaveBeenCalledTimes(2);
@@ -1747,7 +1781,7 @@ describe('EditPrintDetailComponent', () => {
       it('shows the select once the first printer is added', async () => {
         const form = openEditor({ printers: [] });
         const { closed } = stubDialog(form);
-        printerService.getCurrentUserPrinterSummaries.and.returnValue(
+        printerService.getCurrentUserPrinterSummaries.mockReturnValue(
           of({ paging: {}, items: [printer(42, 'Core One')] } as never)
         );
 
@@ -1767,14 +1801,14 @@ describe('EditPrintDetailComponent', () => {
 
         const toastr = TestBed.inject(
           ToastrService
-        ) as jasmine.SpyObj<ToastrService>;
+        ) as MockedObject<ToastrService>;
         expect(toastr.info).not.toHaveBeenCalled();
       });
     });
 
     describe('detecting the slicer printer', () => {
-      let catalog: jasmine.SpyObj<PrinterCatalogService>;
-      let logger: jasmine.SpyObj<LoggingService>;
+      let catalog: MockedObject<PrinterCatalogService>;
+      let logger: MockedObject<LoggingService>;
 
       const X1C = 'bambu-lab-x1-carbon';
       const x1cModel = {
@@ -1801,10 +1835,10 @@ describe('EditPrintDetailComponent', () => {
         isActive,
       });
       const detectedEvents = () =>
-        logger.logEvent.calls
-          .all()
-          .filter((c) => c.args[0] === 'PrintForm_PrinterDetected')
-          .map((c) => c.args[1]);
+        vi
+          .mocked(logger.logEvent)
+          .mock.calls.filter((c) => c[0] === 'PrintForm_PrinterDetected')
+          .map((c) => c[1]);
       const hint = () =>
         (editor!.nativeElement as HTMLElement).querySelector(
           '[data-testid="detected-printer-hint"]'
@@ -1813,17 +1847,15 @@ describe('EditPrintDetailComponent', () => {
       beforeEach(() => {
         catalog = TestBed.inject(
           PrinterCatalogService
-        ) as jasmine.SpyObj<PrinterCatalogService>;
-        logger = TestBed.inject(
-          LoggingService
-        ) as jasmine.SpyObj<LoggingService>;
-        catalog.match.calls.reset();
-        catalog.get.calls.reset();
+        ) as MockedObject<PrinterCatalogService>;
+        logger = TestBed.inject(LoggingService) as MockedObject<LoggingService>;
+        catalog.match.mockClear();
+        catalog.get.mockClear();
       });
 
       describe('a model the user owns', () => {
         beforeEach(() =>
-          catalog.match.and.returnValue(of({ id: X1C, confidence: 'exact' }))
+          catalog.match.mockReturnValue(of({ id: X1C, confidence: 'exact' }))
         );
 
         it('preselects that printer without saving it as the last selected', () => {
@@ -1834,7 +1866,9 @@ describe('EditPrintDetailComponent', () => {
             detectedPrinterNames: ['Bambu Lab X1 Carbon 0.4 nozzle'],
           });
 
-          expect(catalog.match).toHaveBeenCalledOnceWith(
+          expect(catalog.match).toHaveBeenCalledTimes(1);
+
+          expect(catalog.match).toHaveBeenCalledWith(
             'Bambu Lab X1 Carbon 0.4 nozzle'
           );
           expect(form.printForm.controls.printerId.value).toBe(9);
@@ -1862,7 +1896,7 @@ describe('EditPrintDetailComponent', () => {
         });
 
         it('leaves the other fields alone', () => {
-          printerService.getLoadedFilamentForPrinter.and.callFake(
+          printerService.getLoadedFilamentForPrinter.mockImplementation(
             (id) => of(id === 9 ? [{ filament: spoolB }] : []) as never
           );
           const form = openEditor({
@@ -1879,8 +1913,8 @@ describe('EditPrintDetailComponent', () => {
           expect(row.filament).toEqual(spoolB);
           expect(
             form.getPrintFromForm().filamentUsage[0].estimatedAmountMg
-          ).toBe(12_000);
-          expect(form.printForm.dirty).toBeFalse();
+          ).toBe(12000);
+          expect(form.printForm.dirty).toBe(false);
         });
 
         describe('the usage rows', () => {
@@ -1896,7 +1930,7 @@ describe('EditPrintDetailComponent', () => {
           } as unknown as PrintDetail;
 
           it('refill from the detected printer, as a manual change does', () => {
-            printerService.getLoadedFilamentForPrinter.and.callFake(
+            printerService.getLoadedFilamentForPrinter.mockImplementation(
               (id) =>
                 of(
                   id === 7
@@ -1925,9 +1959,12 @@ describe('EditPrintDetailComponent', () => {
           });
 
           it('keep rows the user touched while the match was pending', () => {
-            const match = new Subject<{ id: string; confidence: string }>();
-            catalog.match.and.returnValue(match);
-            printerService.getLoadedFilamentForPrinter.and.callFake(
+            const match = new Subject<{
+              id: string;
+              confidence: string;
+            }>();
+            catalog.match.mockReturnValue(match);
+            printerService.getLoadedFilamentForPrinter.mockImplementation(
               (id) => of(id === 9 ? [{ filament: spoolB }] : []) as never
             );
             const form = openEditor({
@@ -1952,7 +1989,7 @@ describe('EditPrintDetailComponent', () => {
 
           it("drop the last-selected printer's spool when it lands after detection", () => {
             const printer7Spools = new Subject<unknown[]>();
-            printerService.getLoadedFilamentForPrinter.and.callFake(
+            printerService.getLoadedFilamentForPrinter.mockImplementation(
               (id) =>
                 (id === 7
                   ? printer7Spools
@@ -1975,8 +2012,11 @@ describe('EditPrintDetailComponent', () => {
         });
 
         it('never overrides a printer the user already chose', () => {
-          const match = new Subject<{ id: string; confidence: string }>();
-          catalog.match.and.returnValue(match);
+          const match = new Subject<{
+            id: string;
+            confidence: string;
+          }>();
+          catalog.match.mockReturnValue(match);
           const form = openEditor({
             print: curaPrint,
             printers: [
@@ -1998,8 +2038,8 @@ describe('EditPrintDetailComponent', () => {
 
       describe('a model the user does not own', () => {
         beforeEach(() => {
-          catalog.match.and.returnValue(of({ id: X1C, confidence: 'alias' }));
-          catalog.get.and.returnValue(of(x1cModel));
+          catalog.match.mockReturnValue(of({ id: X1C, confidence: 'alias' }));
+          catalog.get.mockReturnValue(of(x1cModel));
         });
 
         it('shows the hint and keeps the printer', () => {
@@ -2023,7 +2063,7 @@ describe('EditPrintDetailComponent', () => {
 
         it('paints the hint when the model arrives after the first render', () => {
           const model = new Subject<PrinterModel | null>();
-          catalog.get.and.returnValue(model);
+          catalog.get.mockReturnValue(model);
           openEditor({
             print: curaPrint,
             printers: [catalogPrinter(7, null)],
@@ -2062,7 +2102,7 @@ describe('EditPrintDetailComponent', () => {
           editor!.detectChanges();
           const { open, closed } = stubDialog(form);
           const usageBefore = JSON.stringify(form.filamentUsage.getRawValue());
-          printerService.getCurrentUserPrinterSummaries.and.returnValue(
+          printerService.getCurrentUserPrinterSummaries.mockReturnValue(
             of({
               paging: {},
               items: [catalogPrinter(7, null), catalogPrinter(42, X1C)],
@@ -2073,7 +2113,7 @@ describe('EditPrintDetailComponent', () => {
           await flushPromises();
 
           expect(open).toHaveBeenCalledTimes(1);
-          expect(open.calls.mostRecent().args[1]!.data).toEqual({
+          expect(vi.mocked(open).mock.lastCall[1]!.data).toEqual({
             source: 'print-form',
             showEmailNotice: false,
             initialModelId: X1C,
@@ -2107,7 +2147,7 @@ describe('EditPrintDetailComponent', () => {
           });
           editor!.detectChanges();
           const { closed } = stubDialog(form);
-          printerService.getCurrentUserPrinterSummaries.and.returnValue(
+          printerService.getCurrentUserPrinterSummaries.mockReturnValue(
             of({
               paging: {},
               items: [
@@ -2138,7 +2178,7 @@ describe('EditPrintDetailComponent', () => {
           });
           editor!.detectChanges();
           const { open, closed } = stubDialog(form);
-          printerService.getCurrentUserPrinterSummaries.and.returnValue(
+          printerService.getCurrentUserPrinterSummaries.mockReturnValue(
             of({
               paging: {},
               items: [catalogPrinter(7, null), catalogPrinter(42, X1C)],
@@ -2147,7 +2187,7 @@ describe('EditPrintDetailComponent', () => {
 
           choosePrinter(form, -1);
           await flushPromises();
-          expect(open.calls.mostRecent().args[1]!.data).toEqual({
+          expect(vi.mocked(open).mock.lastCall[1]!.data).toEqual({
             source: 'print-form',
             showEmailNotice: false,
           });
@@ -2191,7 +2231,7 @@ describe('EditPrintDetailComponent', () => {
           expect(hint()).toBeNull();
           expect(form.printForm.controls.printerId.value).toBe(7);
           expect(form.printForm.controls.title.value).toBe('Benchy from Cura');
-          expect(form.printForm.dirty).toBeFalse();
+          expect(form.printForm.dirty).toBe(false);
           expect(detectedEvents()).toEqual([]);
           expect(writtenPrinterIds()).toEqual([]);
         }
@@ -2205,48 +2245,56 @@ describe('EditPrintDetailComponent', () => {
           });
 
         it('changes nothing on no match', () => {
-          catalog.match.and.returnValue(of(null));
+          catalog.match.mockReturnValue(of(null));
           const form = open();
           expect(catalog.get).not.toHaveBeenCalled();
           expectNothingChanged(form);
         });
 
         it('changes nothing when the match errors', () => {
-          catalog.match.and.returnValue(throwError(() => new Error('500')));
+          catalog.match.mockReturnValue(throwError(() => new Error('500')));
           expectNothingChanged(open());
         });
 
         it('changes nothing when the model lookup finds nothing', () => {
-          catalog.match.and.returnValue(
+          catalog.match.mockReturnValue(
             of({ id: 'gone', confidence: 'exact' })
           );
-          catalog.get.and.returnValue(of(null));
+          catalog.get.mockReturnValue(of(null));
           expectNothingChanged(open());
         });
 
-        it('gives up after 3000 ms', fakeAsync(() => {
-          const match = new Subject<{ id: string; confidence: string }>();
-          catalog.match.and.returnValue(match);
+        it('gives up after 3000 ms', async () => {
+          vi.useFakeTimers();
+          const match = new Subject<{
+            id: string;
+            confidence: string;
+          }>();
+          catalog.match.mockReturnValue(match);
           const form = open();
 
-          tick(3000);
+          await vi.advanceTimersByTimeAsync(3000);
           match.next({ id: X1C, confidence: 'exact' });
 
           expectNothingChanged(form);
-          flush();
-        }));
+          await vi.runAllTimersAsync();
+        });
 
-        it('still applies a match that lands just inside 3000 ms', fakeAsync(() => {
-          const match = new Subject<{ id: string; confidence: string }>();
-          catalog.match.and.returnValue(match);
+        it('still applies a match that lands just inside 3000 ms', async () => {
+          vi.useFakeTimers();
+          const match = new Subject<{
+            id: string;
+            confidence: string;
+          }>();
+          catalog.match.mockReturnValue(match);
           const form = open();
 
-          tick(2999);
+          await vi.advanceTimersByTimeAsync(2999);
           match.next({ id: X1C, confidence: 'exact' });
 
           expect(form.printForm.controls.printerId.value).toBe(9);
-          flush();
-        }));
+          await vi.runAllTimersAsync();
+        });
       });
 
       // PrusaSlicer writes a vendor code as printer_model ("COREONE") and the readable profile
@@ -2263,14 +2311,14 @@ describe('EditPrintDetailComponent', () => {
           });
 
         it('tries them in order and uses the first that matches', () => {
-          catalog.match.and.callFake((name: string) =>
+          catalog.match.mockImplementation((name: string) =>
             of(
               name === 'COREONE' ? null : { id: CORE_ONE, confidence: 'alias' }
             )
           );
           const form = open();
 
-          expect(catalog.match.calls.allArgs()).toEqual([
+          expect(vi.mocked(catalog.match).mock.calls).toEqual([
             ['COREONE'],
             ['Prusa CORE One HF0.4 nozzle'],
           ]);
@@ -2281,7 +2329,7 @@ describe('EditPrintDetailComponent', () => {
         });
 
         it('moves past a candidate whose match errors', () => {
-          catalog.match.and.callFake((name: string) =>
+          catalog.match.mockImplementation((name: string) =>
             name === 'COREONE'
               ? throwError(() => new Error('500'))
               : of({ id: CORE_ONE, confidence: 'alias' })
@@ -2293,12 +2341,14 @@ describe('EditPrintDetailComponent', () => {
         });
 
         it('never asks about the next name once one matches', () => {
-          catalog.match.and.returnValue(
+          catalog.match.mockReturnValue(
             of({ id: CORE_ONE, confidence: 'exact' })
           );
           const form = open();
 
-          expect(catalog.match).toHaveBeenCalledOnceWith('COREONE');
+          expect(catalog.match).toHaveBeenCalledTimes(1);
+
+          expect(catalog.match).toHaveBeenCalledWith('COREONE');
           expect(form.printForm.controls.printerId.value).toBe(9);
           expect(detectedEvents()).toEqual([
             { confidence: 'exact', owned: true, candidate: 0 },
@@ -2306,7 +2356,7 @@ describe('EditPrintDetailComponent', () => {
         });
 
         it('changes nothing when no candidate matches', () => {
-          catalog.match.and.returnValue(of(null));
+          catalog.match.mockReturnValue(of(null));
           const form = open();
           editor!.detectChanges();
 
@@ -2318,33 +2368,39 @@ describe('EditPrintDetailComponent', () => {
           expect(writtenPrinterIds()).toEqual([]);
         });
 
-        it('spends one 3000 ms budget on the whole sequence', fakeAsync(() => {
+        it('spends one 3000 ms budget on the whole sequence', async () => {
+          vi.useFakeTimers();
           const first = new Subject<{
             id: string;
             confidence: string;
           } | null>();
-          catalog.match.and.callFake((name: string) =>
+          catalog.match.mockImplementation((name: string) =>
             name === 'COREONE'
               ? first
               : of({ id: CORE_ONE, confidence: 'exact' })
           );
           const form = open();
 
-          tick(3000);
+          await vi.advanceTimersByTimeAsync(3000);
           first.next(null);
           editor!.detectChanges();
 
-          expect(catalog.match).toHaveBeenCalledOnceWith('COREONE');
+          expect(catalog.match).toHaveBeenCalledTimes(1);
+
+          expect(catalog.match).toHaveBeenCalledWith('COREONE');
           expect(form.printForm.controls.printerId.value).toBe(7);
           expect(hint()).toBeNull();
           expect(detectedEvents()).toEqual([]);
-          flush();
-        }));
+          await vi.runAllTimersAsync();
+        });
       });
 
       it('does nothing once the form is gone', () => {
-        const match = new Subject<{ id: string; confidence: string }>();
-        catalog.match.and.returnValue(match);
+        const match = new Subject<{
+          id: string;
+          confidence: string;
+        }>();
+        catalog.match.mockReturnValue(match);
         const form = openEditor({
           print: curaPrint,
           printers: [catalogPrinter(7, null), catalogPrinter(9, X1C)],
@@ -2353,7 +2409,7 @@ describe('EditPrintDetailComponent', () => {
         });
 
         editor!.destroy();
-        expect(match.observed).toBeFalse();
+        expect(match.observed).toBe(false);
         expect(() =>
           match.next({ id: X1C, confidence: 'exact' })
         ).not.toThrow();
@@ -2398,7 +2454,7 @@ describe('EditPrintDetailComponent', () => {
         });
         const host = editor!.nativeElement as HTMLElement;
 
-        expect(form.onboardingMode()).toBeTrue();
+        expect(form.onboardingMode()).toBe(true);
         expect(form.printForm.controls.title.value).toBe('My first print');
         expect(form.printForm.controls.printerId.value).toBe(42);
         const strip = host.querySelector('.onboarding-strip')!;
@@ -2424,7 +2480,7 @@ describe('EditPrintDetailComponent', () => {
         const form = openEditor({ printers: [printer(7, 'Mini')] });
         const host = editor!.nativeElement as HTMLElement;
 
-        expect(form.onboardingMode()).toBeFalse();
+        expect(form.onboardingMode()).toBe(false);
         expect(form.printForm.controls.title.value).toBe('');
         expect(host.querySelector('.onboarding-strip')).toBeNull();
       });
@@ -2441,7 +2497,7 @@ describe('EditPrintDetailComponent', () => {
       }
 
       it('does not fire the conversion when the first print was already earned', () => {
-        achievements.me.and.returnValue(earned(['first-print']));
+        achievements.me.mockReturnValue(earned(['first-print']));
         const form = openEditor({ printers: [printer(7, 'Mini')] });
 
         saveNewPrint(form);
@@ -2451,7 +2507,7 @@ describe('EditPrintDetailComponent', () => {
       });
 
       it('fires the conversion for a first print', () => {
-        achievements.me.and.returnValue(earned(['first-printer']));
+        achievements.me.mockReturnValue(earned(['first-printer']));
         const form = openEditor({ printers: [printer(7, 'Mini')] });
 
         saveNewPrint(form);
@@ -2460,7 +2516,7 @@ describe('EditPrintDetailComponent', () => {
       });
 
       it('fires the conversion when the achievements could not be read', () => {
-        achievements.me.and.returnValue(
+        achievements.me.mockReturnValue(
           new Observable((s) => s.error(new Error('500')))
         );
         const form = openEditor({ printers: [printer(7, 'Mini')] });
@@ -2480,18 +2536,20 @@ describe('EditPrintDetailComponent', () => {
       });
 
       it('sends tutorial_complete for an eligible user on their first print', async () => {
-        onboarding.status.and.resolveTo({
+        onboarding.status.mockResolvedValue({
           onboardingEligible: true,
           createdDate: '2026-10-18',
           emailVerified: true,
         });
-        achievements.me.and.returnValue(earned([]));
+        achievements.me.mockReturnValue(earned([]));
         const form = openEditor({ printers: [printer(7, 'Mini')] });
 
         saveNewPrint(form);
         await flushPromises();
 
-        expect(analytics.eventEmitter).toHaveBeenCalledOnceWith(
+        expect(analytics.eventEmitter).toHaveBeenCalledTimes(1);
+
+        expect(analytics.eventEmitter).toHaveBeenCalledWith(
           'tutorial_complete',
           'engagement',
           'tutorial_complete'
@@ -2499,7 +2557,7 @@ describe('EditPrintDetailComponent', () => {
       });
 
       it('does not send tutorial_complete to an ineligible user', async () => {
-        achievements.me.and.returnValue(earned([]));
+        achievements.me.mockReturnValue(earned([]));
         const form = openEditor({ printers: [printer(7, 'Mini')] });
 
         saveNewPrint(form);
@@ -2509,12 +2567,12 @@ describe('EditPrintDetailComponent', () => {
       });
 
       it('does not send tutorial_complete when the first print is unknown or earned', async () => {
-        onboarding.status.and.resolveTo({
+        onboarding.status.mockResolvedValue({
           onboardingEligible: true,
           createdDate: '2026-10-18',
           emailVerified: true,
         });
-        achievements.me.and.returnValue(earned(['first-print']));
+        achievements.me.mockReturnValue(earned(['first-print']));
         const form = openEditor({ printers: [printer(7, 'Mini')] });
         saveNewPrint(form);
         form.hadFirstPrint = null;

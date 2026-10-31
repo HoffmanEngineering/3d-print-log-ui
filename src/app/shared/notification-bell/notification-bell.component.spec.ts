@@ -36,10 +36,10 @@ function note(over: Partial<NotificationSummaryDto>): NotificationSummaryDto {
 describe('NotificationBellComponent', () => {
   let fixture: ComponentFixture<NotificationBellComponent>;
   let component: NotificationBellComponent;
-  const celebrations = jasmine.createSpyObj<AchievementCelebrationService>(
-    'AchievementCelebrationService',
-    ['start', 'stop']
-  );
+  const celebrations = {
+    start: vi.fn().mockName('AchievementCelebrationService.start'),
+    stop: vi.fn().mockName('AchievementCelebrationService.stop'),
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -83,7 +83,7 @@ describe('NotificationBellComponent', () => {
   it('achievement notification renders sm badge from catalog', () => {
     const badge = component.achievementBadge(note({}))!;
     expect(badge.glyph).toBe('layers');
-    expect(badge.oneTime).toBeTrue();
+    expect(badge.oneTime).toBe(true);
     expect(badge.title).toBe('First Layer');
   });
 

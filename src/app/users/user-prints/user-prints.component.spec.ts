@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap } from '@angular/router';
@@ -14,7 +15,7 @@ import { UserPrintsComponent } from './user-prints.component';
 describe('UserPrintsComponent', () => {
   let fixture: ComponentFixture<UserPrintsComponent>;
   let component: UserPrintsComponent;
-  let printService: jasmine.SpyObj<PrintService>;
+  let printService: MockedObject<PrintService>;
   let queryParams: BehaviorSubject<ParamMap>;
 
   const cards = () =>
@@ -33,10 +34,10 @@ describe('UserPrintsComponent', () => {
     } as unknown as PagedList<PrintSummary>);
 
   beforeEach(() => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'getPrintSummaries',
-    ]);
-    printService.getPrintSummaries.and.returnValue(page(1, 2, [1, 2]));
+    printService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+    } as unknown as MockedObject<PrintService>;
+    printService.getPrintSummaries.mockReturnValue(page(1, 2, [1, 2]));
     queryParams = new BehaviorSubject(convertToParamMap({}));
 
     TestBed.configureTestingModule({
@@ -46,7 +47,9 @@ describe('UserPrintsComponent', () => {
         { provide: ActivatedRoute, useValue: { queryParamMap: queryParams } },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],
@@ -58,7 +61,8 @@ describe('UserPrintsComponent', () => {
   });
 
   it("loads the first page of the user's prints", () => {
-    expect(printService.getPrintSummaries).toHaveBeenCalledOnceWith(
+    expect(printService.getPrintSummaries).toHaveBeenCalledTimes(1);
+    expect(printService.getPrintSummaries).toHaveBeenCalledWith(
       1,
       10,
       '',
@@ -70,25 +74,25 @@ describe('UserPrintsComponent', () => {
       7
     );
     expect(component.prints().map((p) => p.id)).toEqual([1, 2]);
-    expect(component.showLoadMore()).toBeTrue();
+    expect(component.showLoadMore()).toBe(true);
   });
 
   it('appends the next page and hides Load more after the last one', async () => {
-    printService.getPrintSummaries.and.returnValue(page(2, 2, [3]));
+    printService.getPrintSummaries.mockReturnValue(page(2, 2, [3]));
 
     await component.loadNextPage();
 
-    expect(printService.getPrintSummaries.calls.mostRecent().args[0]).toBe(2);
+    expect(vi.mocked(printService.getPrintSummaries).mock.lastCall[0]).toBe(2);
     expect(component.prints().map((p) => p.id)).toEqual([1, 2, 3]);
-    expect(component.showLoadMore()).toBeFalse();
+    expect(component.showLoadMore()).toBe(false);
   });
 
   it('starts over from the first page when the search in the URL changes', () => {
-    printService.getPrintSummaries.and.returnValue(page(1, 1, [9]));
+    printService.getPrintSummaries.mockReturnValue(page(1, 1, [9]));
 
     queryParams.next(convertToParamMap({ searchText: 'benchy' }));
 
-    const args = printService.getPrintSummaries.calls.mostRecent().args;
+    const args = vi.mocked(printService.getPrintSummaries).mock.lastCall;
     expect(args[0]).toBe(1);
     expect(args[2]).toBe('benchy');
     expect(component.prints().map((p) => p.id)).toEqual([9]);
@@ -96,25 +100,25 @@ describe('UserPrintsComponent', () => {
 
   it('keeps the search from the URL on first load', () => {
     queryParams.next(convertToParamMap({ searchText: 'benchy' }));
-    printService.getPrintSummaries.calls.reset();
+    printService.getPrintSummaries.mockClear();
     const opened = TestBed.createComponent(UserPrintsComponent);
     opened.componentRef.setInput('userId', 7);
     opened.detectChanges();
 
     expect(opened.componentInstance.searchText()).toBe('benchy');
-    const args = printService.getPrintSummaries.calls.mostRecent().args;
+    const args = vi.mocked(printService.getPrintSummaries).mock.lastCall;
     expect(args[2]).toBe('benchy');
     expect(args[8]).toBe(7);
   });
 
   it('clears the search and reloads when switched to another user', () => {
     component.searchText.set('benchy');
-    printService.getPrintSummaries.and.returnValue(page(1, 1, [4]));
+    printService.getPrintSummaries.mockReturnValue(page(1, 1, [4]));
 
     fixture.componentRef.setInput('userId', 8);
     fixture.detectChanges();
 
-    const args = printService.getPrintSummaries.calls.mostRecent().args;
+    const args = vi.mocked(printService.getPrintSummaries).mock.lastCall;
     expect(args[2]).toBe('');
     expect(args[8]).toBe(8);
     expect(component.prints().map((p) => p.id)).toEqual([4]);
@@ -127,7 +131,7 @@ describe('UserPrintsComponent', () => {
     });
 
     it('shows the next page and drops Load More after the last one', async () => {
-      printService.getPrintSummaries.and.returnValue(page(2, 2, [3]));
+      printService.getPrintSummaries.mockReturnValue(page(2, 2, [3]));
 
       await component.loadNextPage();
       fixture.detectChanges();
@@ -137,7 +141,7 @@ describe('UserPrintsComponent', () => {
     });
 
     it('shows the new results when the search in the URL changes', () => {
-      printService.getPrintSummaries.and.returnValue(page(1, 1, [9]));
+      printService.getPrintSummaries.mockReturnValue(page(1, 1, [9]));
 
       queryParams.next(convertToParamMap({ searchText: 'benchy' }));
       fixture.detectChanges();

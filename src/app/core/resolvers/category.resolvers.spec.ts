@@ -24,7 +24,7 @@ describe('category resolvers', () => {
       ],
     });
 
-    await expectAsync(resolveValue(materialCategoriesResolver)).toBeResolvedTo(
+    await expect(resolveValue(materialCategoriesResolver)).resolves.toEqual(
       categories
     );
   });
@@ -40,7 +40,7 @@ describe('category resolvers', () => {
       ],
     });
 
-    await expectAsync(resolveValue(printerCategoriesResolver)).toBeResolvedTo(
+    await expect(resolveValue(printerCategoriesResolver)).resolves.toEqual(
       categories
     );
   });

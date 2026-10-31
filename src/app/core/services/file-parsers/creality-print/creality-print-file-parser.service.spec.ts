@@ -15,7 +15,7 @@ describe('CrealityPrintFileParserService', () => {
   });
 
   it('detects the Creality Print marker', () => {
-    expect(service.detect(';Creality Print GCode')).toBeTrue();
+    expect(service.detect(';Creality Print GCode')).toBe(true);
   });
 
   it('should set the estimated filament usage', async () => {

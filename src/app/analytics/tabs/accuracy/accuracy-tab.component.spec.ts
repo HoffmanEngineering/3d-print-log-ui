@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -65,23 +61,23 @@ const response = (
 describe('AccuracyTabComponent', () => {
   let fixture: ComponentFixture<AccuracyTabComponent>;
   let component: AccuracyTabComponent;
-  let analytics: jasmine.SpyObj<AnalyticsService>;
+  let analytics: MockedObject<AnalyticsService>;
 
   // createTabData debounces by 250ms, so the response only lands after the timer is
   // flushed — a plain whenStable() would assert against a still-loading tab.
-  const setup = () => {
+  const setup = async () => {
     fixture = TestBed.createComponent(AccuracyTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     fixture.detectChanges();
   };
 
   beforeEach(async () => {
-    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
-      'getAccuracy',
-    ]);
-    analytics.getAccuracy.and.returnValue(of(response()));
+    analytics = {
+      getAccuracy: vi.fn().mockName('AnalyticsService.getAccuracy'),
+    } as unknown as MockedObject<AnalyticsService>;
+    analytics.getAccuracy.mockReturnValue(of(response()));
 
     await TestBed.configureTestingModule({
       imports: [AccuracyTabComponent, NoopAnimationsModule],
@@ -93,8 +89,9 @@ describe('AccuracyTabComponent', () => {
     }).compileComponents();
   });
 
-  it('composes a callout sentence from the structured facts', fakeAsync(() => {
-    analytics.getAccuracy.and.returnValue(
+  it('composes a callout sentence from the structured facts', async () => {
+    vi.useFakeTimers();
+    analytics.getAccuracy.mockReturnValue(
       of(
         response({
           callouts: [
@@ -110,16 +107,17 @@ describe('AccuracyTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     const text = component.calloutMessages()[0];
     expect(text).toContain('Ender 3');
     expect(text).toContain('18%');
     expect(text).toContain('longer');
-  }));
+  });
 
-  it('says "shorter" when the ratio is below one', fakeAsync(() => {
-    analytics.getAccuracy.and.returnValue(
+  it('says "shorter" when the ratio is below one', async () => {
+    vi.useFakeTimers();
+    analytics.getAccuracy.mockReturnValue(
       of(
         response({
           callouts: [
@@ -135,13 +133,14 @@ describe('AccuracyTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(component.calloutMessages()[0]).toContain('shorter');
-  }));
+  });
 
-  it('renders a suppressed group as "Not enough data yet" rather than a blank', fakeAsync(() => {
-    analytics.getAccuracy.and.returnValue(
+  it('renders a suppressed group as "Not enough data yet" rather than a blank', async () => {
+    vi.useFakeTimers();
+    analytics.getAccuracy.mockReturnValue(
       of(
         response({
           byPrinter: [
@@ -157,40 +156,47 @@ describe('AccuracyTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(fixture.nativeElement.textContent).toContain('Not enough data yet');
-  }));
+  });
 
-  it('substitutes bars for the scatter on a narrow container without changing the request', fakeAsync(() => {
-    setup();
-    expect(component.showScatter()).toBeTrue();
+  it('substitutes bars for the scatter on a narrow container without changing the request', async () => {
+    vi.useFakeTimers();
+    await setup();
+    expect(component.showScatter()).toBe(true);
 
     component.containerWidth.set(400);
     fixture.detectChanges();
 
-    expect(component.showScatter()).toBeFalse();
+    expect(component.showScatter()).toBe(false);
     // The phone substitution is a RENDERING choice: the payload is identical at every width.
     expect(analytics.getAccuracy).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('resolves a clicked bar back to its printer id and navigates', fakeAsync(() => {
-    setup();
+  it('resolves a clicked bar back to its printer id and navigates', async () => {
+    vi.useFakeTimers();
+    await setup();
 
-    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(undefined);
     component.onBarSelect({ label: 'Ender 3', seriesKey: 'value' });
 
-    const [commands, extras] = navigate.calls.mostRecent().args as [
+    const [commands, extras] = vi.mocked(navigate).mock.lastCall as [
       unknown[],
-      { queryParams: Record<string, unknown> },
+      {
+        queryParams: Record<string, unknown>;
+      },
     ];
     expect(commands).toEqual(['/prints']);
     expect(extras.queryParams['filterByPrinterId']).toBe('42');
     expect(extras.queryParams['userId']).toBeUndefined();
-  }));
+  });
 
-  it('does not navigate when two printers share a label', fakeAsync(() => {
-    analytics.getAccuracy.and.returnValue(
+  it('does not navigate when two printers share a label', async () => {
+    vi.useFakeTimers();
+    analytics.getAccuracy.mockReturnValue(
       of(
         response({
           byPrinter: [
@@ -214,19 +220,22 @@ describe('AccuracyTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
-    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(undefined);
     component.onBarSelect({ label: 'Ender 3', seriesKey: 'value' });
 
     // Guessing which of two same-named printers was meant is worse than doing nothing.
     expect(navigate).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('fails the whole tab on an error', fakeAsync(() => {
-    analytics.getAccuracy.and.returnValue(throwError(() => new Error('boom')));
-    setup();
+  it('fails the whole tab on an error', async () => {
+    vi.useFakeTimers();
+    analytics.getAccuracy.mockReturnValue(throwError(() => new Error('boom')));
+    await setup();
 
     expect(component.state()).toBe('error');
-  }));
+  });
 });

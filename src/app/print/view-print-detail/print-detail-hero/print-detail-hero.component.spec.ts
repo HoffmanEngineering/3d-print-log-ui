@@ -7,12 +7,12 @@ describe('PrintDetailHeroComponent', () => {
   let fixture: ComponentFixture<PrintDetailHeroComponent>;
 
   beforeEach(async () => {
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      {
-        getPrintImage: of(''),
-      }
-    );
+    const mockPrintService = {
+      getPrintImage: vi
+        .fn()
+        .mockName('PrintService.getPrintImage')
+        .mockReturnValue(of('')),
+    };
 
     await TestBed.configureTestingModule({
       imports: [PrintDetailHeroComponent],

@@ -68,7 +68,7 @@ describe('ConnectionService', () => {
     service.getConnections().subscribe();
 
     const request = httpMock.expectOne((r) => r.url === base);
-    expect(request.request.params.has('printerId')).toBeFalse();
+    expect(request.request.params.has('printerId')).toBe(false);
     request.flush([]);
   });
 

@@ -39,7 +39,7 @@ describe('resolveScrollContainer', () => {
   it('does not treat a sub-pixel difference as a scroll range', () => {
     const content = { scrollHeight: 800.5, clientHeight: 800 } as HTMLElement;
 
-    expect(scrolls(content)).toBeFalse();
+    expect(scrolls(content)).toBe(false);
   });
 
   it('keeps scroll depth from reading 100% on a container that cannot scroll', () => {

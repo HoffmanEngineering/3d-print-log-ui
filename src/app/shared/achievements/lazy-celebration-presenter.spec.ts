@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { Overlay } from '@angular/cdk/overlay';
 import { signal, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -26,9 +27,9 @@ describe('LazyCelebrationPresenter', () => {
   let dialog: {
     openDialogs: unknown[];
     afterAllClosed: Subject<void>;
-    open: jasmine.Spy;
+    open: Mock;
   };
-  let overlayCreate: jasmine.Spy;
+  let overlayCreate: Mock;
   let toastClosed: Subject<void>;
   let router: {
     currentNavigation: WritableSignal<Navigation | null>;
@@ -54,16 +55,14 @@ describe('LazyCelebrationPresenter', () => {
     dialog = {
       openDialogs: [],
       afterAllClosed: new Subject<void>(),
-      open: jasmine
-        .createSpy('open')
-        .and.returnValue({ afterClosed: () => of(undefined) }),
+      open: vi.fn().mockReturnValue({ afterClosed: () => of(undefined) }),
     };
     toastClosed = new Subject<void>();
     router = {
       currentNavigation: signal<Navigation | null>(null),
       events: new Subject<Event>(),
     };
-    overlayCreate = jasmine.createSpy('create').and.returnValue({
+    overlayCreate = vi.fn().mockReturnValue({
       attach: () => ({
         setInput: () => undefined,
         instance: { closed: toastClosed },
@@ -110,7 +109,7 @@ describe('LazyCelebrationPresenter', () => {
 
     dialog.openDialogs = [];
     dialog.afterAllClosed.next();
-    await until(() => overlayCreate.calls.count() > 0);
+    await until(() => vi.mocked(overlayCreate).mock.calls.length > 0);
     expect(overlayCreate).toHaveBeenCalledTimes(1);
 
     toastClosed.next();
@@ -153,7 +152,7 @@ describe('LazyCelebrationPresenter', () => {
   it('does not wait for navigation before a toast', async () => {
     router.currentNavigation.set({} as Navigation);
     const shown = presenter.toast([ITEM], { quiet: false });
-    await until(() => overlayCreate.calls.count() > 0);
+    await until(() => vi.mocked(overlayCreate).mock.calls.length > 0);
     expect(overlayCreate).toHaveBeenCalledTimes(1);
 
     toastClosed.next();

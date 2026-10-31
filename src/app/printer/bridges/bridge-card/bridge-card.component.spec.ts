@@ -92,18 +92,23 @@ describe('BridgeCardComponent', () => {
         provideRouter([]),
         {
           provide: BridgesService,
-          useValue: jasmine.createSpyObj('BridgesService', [
-            'setSecret',
-            'clearSecret',
-          ]),
+          useValue: {
+            setSecret: vi.fn().mockName('BridgesService.setSecret'),
+            clearSecret: vi.fn().mockName('BridgesService.clearSecret'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
       ],
     }).compileComponents();
@@ -144,7 +149,7 @@ describe('BridgeCardComponent', () => {
     await create(bridge({ status: ConnectionStatus.Stale }));
     expect(one('bridge-status')!.textContent).toContain('Stale');
     expect(one('bridge-stale')).not.toBeNull();
-    expect((one('bridge-scan') as HTMLButtonElement).disabled).toBeTrue();
+    expect((one('bridge-scan') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('groups what it found by state', async () => {
@@ -293,7 +298,7 @@ describe('BridgeCardComponent', () => {
     const editor = fixture.debugElement.query(
       By.directive(BridgeCredentialsComponent)
     ).componentInstance as BridgeCredentialsComponent;
-    expect(editor.keyWarningAbove()).toBeTrue();
+    expect(editor.keyWarningAbove()).toBe(true);
   });
 
   describe('with other bridges', () => {
@@ -376,7 +381,7 @@ describe('BridgeCardComponent', () => {
         all('bridge-new-row').some((r) =>
           r.textContent!.includes('Workshop X1C')
         )
-      ).toBeFalse();
+      ).toBe(false);
       expect(one('bridge-listed-elsewhere')!.textContent).toContain('Attic Pi');
     });
 

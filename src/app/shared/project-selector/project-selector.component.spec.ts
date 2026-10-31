@@ -1,10 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  flush,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProjectSelectorComponent } from './project-selector.component';
 import {
   ProjectService,
@@ -20,7 +15,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('ProjectSelectorComponent', () => {
   let fixture: ComponentFixture<ProjectSelectorComponent>;
-  let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let mockProjectService: MockedObject<ProjectService>;
 
   const mockProjects: ProjectSummaryDto[] = [
     {
@@ -42,17 +37,19 @@ describe('ProjectSelectorComponent', () => {
   ];
 
   beforeEach(async () => {
-    mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      ['getProjectSummaries', 'getProjectById']
-    );
-    mockProjectService.getProjectSummaries.and.returnValue(
+    mockProjectService = {
+      getProjectSummaries: vi
+        .fn()
+        .mockName('ProjectService.getProjectSummaries'),
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+    } as unknown as MockedObject<ProjectService>;
+    mockProjectService.getProjectSummaries.mockReturnValue(
       of({
         items: mockProjects,
         paging: { totalCount: 1, currentPage: 1, pageSize: 25, totalPages: 1 },
       })
     );
-    mockProjectService.getProjectById.and.returnValue(
+    mockProjectService.getProjectById.mockReturnValue(
       of({
         id: 'abc',
         name: 'Voron Build',
@@ -70,67 +67,73 @@ describe('ProjectSelectorComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProjectSelectorComponent);
-    // detectChanges is called inside each fakeAsync test so timers register in the fake zone
+    // Each test calls detectChanges itself, after faking timers, so the search
+    // debounce's timer is a fake one.
   });
 
-  it('should load active projects by default on init', fakeAsync(() => {
-    fixture.detectChanges(); // triggers ngOnInit, registers debounce timer in fake zone
-    tick(250);
+  it('should load active projects by default on init', async () => {
+    vi.useFakeTimers();
+    fixture.detectChanges(); // triggers ngOnInit, which starts the debounce timer
+    await vi.advanceTimersByTimeAsync(250);
     fixture.detectChanges();
     expect(mockProjectService.getProjectSummaries).toHaveBeenCalledWith(1, 25, {
       status: ProjectStatus.InProgress,
       sortBy: 'updatedDate',
     });
-    expect(fixture.componentInstance.isDefaultView()).toBeTrue();
-  }));
+    expect(fixture.componentInstance.isDefaultView()).toBe(true);
+  });
 
-  it('should search all projects when user types', fakeAsync(() => {
+  it('should search all projects when user types', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick(250); // initial load
+    await vi.advanceTimersByTimeAsync(250); // initial load
     fixture.componentInstance.searchControl.setValue('voron');
-    tick(250); // debounce for search
+    await vi.advanceTimersByTimeAsync(250); // debounce for search
     fixture.detectChanges();
     expect(mockProjectService.getProjectSummaries).toHaveBeenCalledWith(1, 25, {
       search: 'voron',
     });
-    expect(fixture.componentInstance.isDefaultView()).toBeFalse();
-  }));
+    expect(fixture.componentInstance.isDefaultView()).toBe(false);
+  });
 
-  it('should reload defaults when search is cleared', fakeAsync(() => {
+  it('should reload defaults when search is cleared', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick(250); // initial load
+    await vi.advanceTimersByTimeAsync(250); // initial load
     fixture.componentInstance.searchControl.setValue('voron');
-    tick(250); // search
+    await vi.advanceTimersByTimeAsync(250); // search
     fixture.componentInstance.searchControl.setValue('');
-    tick(250); // reload defaults
+    await vi.advanceTimersByTimeAsync(250); // reload defaults
     fixture.detectChanges();
-    expect(fixture.componentInstance.isDefaultView()).toBeTrue();
+    expect(fixture.componentInstance.isDefaultView()).toBe(true);
     expect(
-      mockProjectService.getProjectSummaries.calls.mostRecent().args
+      vi.mocked(mockProjectService.getProjectSummaries).mock.lastCall
     ).toEqual([
       1,
       25,
       { status: ProjectStatus.InProgress, sortBy: 'updatedDate' },
     ]);
-  }));
+  });
 
-  it('should emit null when selection is cleared', fakeAsync(() => {
+  it('should emit null when selection is cleared', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick(250); // initial load
+    await vi.advanceTimersByTimeAsync(250); // initial load
     const emitted: any[] = [];
     fixture.componentInstance.projectSelected.subscribe((v: any) =>
       emitted.push(v)
     );
     fixture.componentInstance.clearProject();
-    tick(250); // debounce from setValue('')
+    await vi.advanceTimersByTimeAsync(250); // debounce from setValue('')
     expect(emitted[0]).toBeNull();
-  }));
+  });
 
-  it('should initialize selectedProject signal when initial project inputs are provided', fakeAsync(() => {
+  it('should initialize selectedProject signal when initial project inputs are provided', async () => {
+    vi.useFakeTimers();
     fixture.componentRef.setInput('initialProjectId', 'abc');
     fixture.componentRef.setInput('initialProjectName', 'Voron Build');
     fixture.detectChanges();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
 
     const selected = fixture.componentInstance.selectedProject();
     expect(selected).not.toBeNull();
@@ -140,25 +143,27 @@ describe('ProjectSelectorComponent', () => {
       expect(selected.projectName).toBe('Voron Build');
     }
     expect(fixture.componentInstance.searchControl.value).toBe('Voron Build');
-  }));
+  });
 
-  it('should show clear button when initial project is provided', fakeAsync(() => {
+  it('should show clear button when initial project is provided', async () => {
+    vi.useFakeTimers();
     fixture.componentRef.setInput('initialProjectId', 'abc');
     fixture.componentRef.setInput('initialProjectName', 'Voron Build');
     fixture.detectChanges();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     fixture.detectChanges();
 
     const clearButton = fixture.nativeElement.querySelector(
       'button[aria-label="Clear"]'
     );
     expect(clearButton).not.toBeNull();
-  }));
+  });
 
-  it('should fetch project by id and initialize when only initialProjectId is provided', fakeAsync(() => {
+  it('should fetch project by id and initialize when only initialProjectId is provided', async () => {
+    vi.useFakeTimers();
     fixture.componentRef.setInput('initialProjectId', 'abc');
     fixture.detectChanges();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     fixture.detectChanges();
 
     expect(mockProjectService.getProjectById).toHaveBeenCalledWith('abc');
@@ -170,13 +175,14 @@ describe('ProjectSelectorComponent', () => {
       expect(selected.projectName).toBe('Voron Build');
     }
     expect(fixture.componentInstance.searchControl.value).toBe('Voron Build');
-  }));
+  });
 
-  it('should not overwrite text the user typed while the project name was still loading', fakeAsync(() => {
+  it('should not overwrite text the user typed while the project name was still loading', async () => {
+    vi.useFakeTimers();
     // The print detail payload carries projectId but not projectName, so the name arrives
     // on a round trip that can land after the user has started typing. Prefilling then
     // splices the old name into the new one (#projects e2e).
-    mockProjectService.getProjectById.and.returnValue(
+    mockProjectService.getProjectById.mockReturnValue(
       of({
         id: 'abc',
         name: 'Voron Build',
@@ -191,75 +197,77 @@ describe('ProjectSelectorComponent', () => {
     fixture.componentInstance.searchControl.markAsDirty();
     fixture.componentInstance.searchControl.setValue('Benchy Batch');
 
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.searchControl.value).toBe('Benchy Batch');
-  }));
+  });
 
-  it('should clear selectedProject and emit null when clear button clicked after initial project', fakeAsync(() => {
+  it('should clear selectedProject and emit null when clear button clicked after initial project', async () => {
+    vi.useFakeTimers();
     fixture.componentRef.setInput('initialProjectId', 'abc');
     fixture.componentRef.setInput('initialProjectName', 'Voron Build');
     fixture.detectChanges();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
 
     const emitted: any[] = [];
     fixture.componentInstance.projectSelected.subscribe((v: any) =>
       emitted.push(v)
     );
     fixture.componentInstance.clearProject();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
 
     expect(fixture.componentInstance.selectedProject()).toBeNull();
     expect(emitted[0]).toBeNull();
-  }));
+  });
 
-  it('reports a failed lookup and clears the message once a retry succeeds', fakeAsync(() => {
+  it('reports a failed lookup and clears the message once a retry succeeds', async () => {
+    vi.useFakeTimers();
     // Without a handler the failure would leave an empty autocomplete with no
     // explanation, and the stream would be dead for the rest of the dialog's life.
-    mockProjectService.getProjectSummaries.and.returnValue(
+    mockProjectService.getProjectSummaries.mockReturnValue(
       throwError(() => new Error('boom'))
     );
     fixture.detectChanges();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
 
-    expect(fixture.componentInstance.loadFailed()).toBeTrue();
+    expect(fixture.componentInstance.loadFailed()).toBe(true);
     // A failed lookup returns an empty list, which must not be read as
     // "that name is free" - offering to create is how duplicates happen.
-    expect(fixture.componentInstance.showNewOption()).toBeFalse();
+    expect(fixture.componentInstance.showNewOption()).toBe(false);
     fixture.detectChanges();
 
-    mockProjectService.getProjectSummaries.and.returnValue(
+    mockProjectService.getProjectSummaries.mockReturnValue(
       of({
         paging: { currentPage: 1, totalPages: 1, pageSize: 25, totalCount: 1 },
         items: [{ id: 'p1', name: 'Recovered', status: 1 }],
       } as any)
     );
-    const callsBefore = mockProjectService.getProjectSummaries.calls.count();
+    const callsBefore = vi.mocked(mockProjectService.getProjectSummaries).mock
+      .calls.length;
 
     // Clicked through the DOM on purpose. Calling retry() directly would pass
     // even with the button nested somewhere it cannot be reached.
     const retryButton: HTMLButtonElement = fixture.nativeElement.querySelector(
       '[data-cy="project-lookup-retry"]'
     );
-    expect(retryButton)
-      .withContext('the retry control must be in the DOM')
-      .toBeTruthy();
+    expect(retryButton, 'the retry control must be in the DOM').toBeTruthy();
     retryButton.click();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
 
-    expect(mockProjectService.getProjectSummaries.calls.count()).toBe(
-      callsBefore + 1
-    );
-    expect(fixture.componentInstance.loadFailed()).toBeFalse();
+    expect(
+      vi.mocked(mockProjectService.getProjectSummaries).mock.calls.length
+    ).toBe(callsBefore + 1);
+    expect(fixture.componentInstance.loadFailed()).toBe(false);
     expect(fixture.componentInstance.filteredProjects().length).toBe(1);
-  }));
+  });
 
   // Regression: typing a name that existing projects merely CONTAIN pushed the create
   // option below the fold of the panel, so it was never clicked, nothing was selected,
   // and the bulk dialog's confirm button stayed disabled with nothing explaining why.
-  it('offers to create the typed name above the projects that contain it', fakeAsync(() => {
-    mockProjectService.getProjectSummaries.and.returnValue(
+  it('offers to create the typed name above the projects that contain it', async () => {
+    vi.useFakeTimers();
+    mockProjectService.getProjectSummaries.mockReturnValue(
       of({
         paging: { currentPage: 1, totalPages: 1, pageSize: 25, totalCount: 2 },
         items: [
@@ -271,10 +279,10 @@ describe('ProjectSelectorComponent', () => {
     fixture.detectChanges();
 
     fixture.componentInstance.searchControl.setValue('Test Project');
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.showNewOption()).toBeTrue();
+    expect(fixture.componentInstance.showNewOption()).toBe(true);
 
     // The panel only renders once it is open.
     const input: HTMLInputElement = fixture.nativeElement.querySelector(
@@ -282,7 +290,7 @@ describe('ProjectSelectorComponent', () => {
     );
     input.dispatchEvent(new Event('focusin'));
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
     fixture.detectChanges();
 
     const options = Array.from(
@@ -292,6 +300,6 @@ describe('ProjectSelectorComponent', () => {
     expect(options[0].textContent).toContain('Create project');
     expect(options[1].textContent).toContain('Test Project 2');
 
-    flush();
-  }));
+    await vi.runAllTimersAsync();
+  });
 });

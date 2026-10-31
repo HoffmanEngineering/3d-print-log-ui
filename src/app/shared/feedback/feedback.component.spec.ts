@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -19,16 +20,16 @@ describe('FeedbackComponent', () => {
         provideRouter([]),
         {
           provide: FeedbackService,
-          useValue: jasmine.createSpyObj<FeedbackService>('FeedbackService', [
-            'addFeedback',
-          ]),
+          useValue: {
+            addFeedback: vi.fn().mockName('FeedbackService.addFeedback'),
+          },
         },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj<ToastrService>('ToastrService', [
-            'success',
-            'error',
-          ]),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
       ],
     }).compileComponents();
@@ -43,13 +44,13 @@ describe('FeedbackComponent', () => {
   });
 
   it('lets the page unload while the form is pristine', () => {
-    expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false);
   });
 
   it('asks before unloading while the form is dirty', () => {
     component.form.markAsDirty();
 
-    expect(dispatchBeforeUnload().defaultPrevented).toBeTrue();
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(true);
   });
 
   describe('the Submit button', () => {
@@ -62,20 +63,20 @@ describe('FeedbackComponent', () => {
     beforeEach(() => {
       response = new Subject();
       (
-        TestBed.inject(FeedbackService) as jasmine.SpyObj<FeedbackService>
-      ).addFeedback.and.returnValue(response as never);
+        TestBed.inject(FeedbackService) as MockedObject<FeedbackService>
+      ).addFeedback.mockReturnValue(response as never);
 
       component.form.patchValue({ note: 'More charts, please' });
       fixture.detectChanges();
     });
 
     it('is disabled while the feedback is being sent', () => {
-      expect(submit().disabled).toBeFalse();
+      expect(submit().disabled).toBe(false);
 
       submit().click();
       fixture.detectChanges();
 
-      expect(submit().disabled).toBeTrue();
+      expect(submit().disabled).toBe(true);
     });
 
     it('is enabled again when sending fails', () => {
@@ -85,7 +86,7 @@ describe('FeedbackComponent', () => {
       response.error(new Error('offline'));
       fixture.detectChanges();
 
-      expect(submit().disabled).toBeFalse();
+      expect(submit().disabled).toBe(false);
     });
   });
 });

@@ -1,10 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -18,10 +14,10 @@ import { SimpleDialogComponent } from 'src/app/shared/simple-dialog/simple-dialo
 import { PairedDevicesComponent } from './paired-devices.component';
 
 describe('PairedDevicesComponent', () => {
-  let service: jasmine.SpyObj<DeviceGrantsService>;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let service: MockedObject<DeviceGrantsService>;
+  let dialog: MockedObject<MatDialog>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
   let fixture: ComponentFixture<PairedDevicesComponent>;
   let dialogAnswer: boolean | undefined;
 
@@ -33,7 +29,7 @@ describe('PairedDevicesComponent', () => {
     scopes: ['prints:write', 'printers:slots', 'connections:write'],
     createdAt: '2026-10-20T10:00:00+00:00',
     pairedAt: '2026-10-20T10:00:00+00:00',
-    lastUsedAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+    lastUsedAt: new Date(Date.now() - 5 * 60000).toISOString(),
   };
   const ender: DeviceGrant = {
     id: 1,
@@ -51,27 +47,29 @@ describe('PairedDevicesComponent', () => {
   }
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<DeviceGrantsService>('DeviceGrantsService', [
-      'list',
-      'revoke',
-      'revokeAll',
-    ]);
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    service = {
+      list: vi.fn().mockName('DeviceGrantsService.list'),
+      revoke: vi.fn().mockName('DeviceGrantsService.revoke'),
+      revokeAll: vi.fn().mockName('DeviceGrantsService.revokeAll'),
+    } as unknown as MockedObject<DeviceGrantsService>;
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
     dialogAnswer = true;
-    dialog.open.and.callFake(
+    dialog.open.mockImplementation(
       () =>
         ({
           afterClosed: () => of(dialogAnswer),
         }) as MatDialogRef<SimpleDialogComponent, boolean>
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'error',
-      'success',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      error: vi.fn().mockName('ToastrService.error'),
+      success: vi.fn().mockName('ToastrService.success'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [PairedDevicesComponent],
@@ -110,9 +108,9 @@ describe('PairedDevicesComponent', () => {
     // Stamped here, not at module load: the suite can take minutes to reach this test.
     const recent = {
       ...voron,
-      lastUsedAt: new Date(Date.now() - 5 * 60_000).toISOString(),
+      lastUsedAt: new Date(Date.now() - 5 * 60000).toISOString(),
     };
-    service.list.and.returnValue(of([recent, ender]));
+    service.list.mockReturnValue(of([recent, ender]));
     create();
 
     expect(el().textContent).toContain('Paired devices');
@@ -128,7 +126,7 @@ describe('PairedDevicesComponent', () => {
   });
 
   it('shows the exact last-used time on hover', () => {
-    service.list.and.returnValue(of([voron]));
+    service.list.mockReturnValue(of([voron]));
     create();
 
     const time = rows()[0].querySelector(
@@ -140,7 +138,7 @@ describe('PairedDevicesComponent', () => {
   });
 
   it('points to the pairing docs when nothing is paired', () => {
-    service.list.and.returnValue(of([]));
+    service.list.mockReturnValue(of([]));
     create();
 
     expect(el().textContent).toContain('No paired devices.');
@@ -153,7 +151,7 @@ describe('PairedDevicesComponent', () => {
 
   for (const status of [404, 503]) {
     it(`hides the whole section when the API answers ${status}`, () => {
-      service.list.and.returnValue(throwError(() => httpError(status)));
+      service.list.mockReturnValue(throwError(() => httpError(status)));
       create();
 
       expect(el().textContent?.trim()).toBe('');
@@ -162,10 +160,9 @@ describe('PairedDevicesComponent', () => {
   }
 
   it('offers a retry when loading fails otherwise', () => {
-    service.list.and.returnValues(
-      throwError(() => httpError(500)),
-      of([voron])
-    );
+    service.list
+      .mockReturnValueOnce(throwError(() => httpError(500)))
+      .mockReturnValueOnce(of([voron]));
     create();
 
     expect(el().textContent).toContain("We couldn't load your paired devices.");
@@ -177,36 +174,37 @@ describe('PairedDevicesComponent', () => {
     expect(rows().length).toBe(1);
   });
 
-  it('renders nothing before the skeleton delay, then skeleton rows', fakeAsync(() => {
+  it('renders nothing before the skeleton delay, then skeleton rows', async () => {
+    vi.useFakeTimers();
     const pending = new Subject<DeviceGrant[]>();
-    service.list.and.returnValue(pending);
+    service.list.mockReturnValue(pending);
     create();
 
     expect(el().querySelector('app-skeleton')).toBeNull();
     expect(el().textContent).not.toContain('No paired devices.');
 
-    tick(200);
+    await vi.advanceTimersByTimeAsync(200);
     fixture.detectChanges();
     expect(el().querySelectorAll('app-skeleton').length).toBeGreaterThan(0);
     expect(el().querySelector('[aria-busy="true"]')).toBeTruthy();
 
     pending.next([voron]);
     pending.complete();
-    tick(400);
+    await vi.advanceTimersByTimeAsync(400);
     fixture.detectChanges();
     expect(el().querySelector('app-skeleton')).toBeNull();
     expect(rows().length).toBe(1);
-  }));
+  });
 
   it('asks before revoking and says what happens to the bridge', () => {
-    service.list.and.returnValue(of([voron]));
+    service.list.mockReturnValue(of([voron]));
     dialogAnswer = false;
     create();
 
     clickRevoke(0);
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    const data = dialog.open.calls.mostRecent().args[1]?.data as {
+    const data = vi.mocked(dialog.open).mock.lastCall[1]?.data as {
       title: string;
       body: string;
     };
@@ -219,9 +217,9 @@ describe('PairedDevicesComponent', () => {
   });
 
   it('removes the row at once and logs the revoke', () => {
-    service.list.and.returnValue(of([voron, ender]));
+    service.list.mockReturnValue(of([voron, ender]));
     const result = new Subject<void>();
-    service.revoke.and.returnValue(result);
+    service.revoke.mockReturnValue(result);
     create();
 
     clickRevoke(0);
@@ -242,8 +240,8 @@ describe('PairedDevicesComponent', () => {
   });
 
   it('shows the empty state after the last device is revoked', () => {
-    service.list.and.returnValue(of([voron]));
-    service.revoke.and.returnValue(of(undefined));
+    service.list.mockReturnValue(of([voron]));
+    service.revoke.mockReturnValue(of(undefined));
     create();
 
     clickRevoke(0);
@@ -253,8 +251,8 @@ describe('PairedDevicesComponent', () => {
   });
 
   it('treats a 404 on revoke as already gone', () => {
-    service.list.and.returnValue(of([voron]));
-    service.revoke.and.returnValue(throwError(() => httpError(404)));
+    service.list.mockReturnValue(of([voron]));
+    service.revoke.mockReturnValue(throwError(() => httpError(404)));
     create();
 
     clickRevoke(0);
@@ -264,9 +262,9 @@ describe('PairedDevicesComponent', () => {
   });
 
   it('puts the row back in its place with an error when revoking fails', () => {
-    service.list.and.returnValue(of([voron, ender]));
+    service.list.mockReturnValue(of([voron, ender]));
     const result = new Subject<void>();
-    service.revoke.and.returnValue(result);
+    service.revoke.mockReturnValue(result);
     create();
 
     clickRevoke(0);
@@ -278,7 +276,7 @@ describe('PairedDevicesComponent', () => {
     expect(rows().length).toBe(2);
     expect(rows()[0].textContent).toContain('printlog-bridge on voron');
     expect(toastr.error).toHaveBeenCalled();
-    expect(toastr.error.calls.mostRecent().args[0]).toContain(
+    expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain(
       'printlog-bridge on voron'
     );
     expect(logging.logEvent).toHaveBeenCalledWith(
@@ -309,7 +307,7 @@ describe('PairedDevicesComponent', () => {
       ['one device', [voron]],
     ] as [string, DeviceGrant[]][]) {
       it(`is not offered with ${label}`, () => {
-        service.list.and.returnValue(of(grants));
+        service.list.mockReturnValue(of(grants));
         create();
 
         expect(revokeAllButton()).toBeNull();
@@ -317,7 +315,7 @@ describe('PairedDevicesComponent', () => {
     }
 
     it('is offered with two or more devices', () => {
-      service.list.and.returnValue(of([voron, ender, prusa]));
+      service.list.mockReturnValue(of([voron, ender, prusa]));
       create();
 
       expect(revokeAllButton()).toBeTruthy();
@@ -325,14 +323,14 @@ describe('PairedDevicesComponent', () => {
     });
 
     it('asks first, with the count and what happens, and does nothing on cancel', () => {
-      service.list.and.returnValue(of([voron, ender, prusa]));
+      service.list.mockReturnValue(of([voron, ender, prusa]));
       dialogAnswer = false;
       create();
 
       clickRevokeAll();
 
       expect(dialog.open).toHaveBeenCalledTimes(1);
-      const data = dialog.open.calls.mostRecent().args[1]?.data as {
+      const data = vi.mocked(dialog.open).mock.lastCall[1]?.data as {
         title: string;
         body: string;
         yesText: string;
@@ -351,9 +349,11 @@ describe('PairedDevicesComponent', () => {
     });
 
     it('empties the list, reports the count and logs it', () => {
-      service.list.and.returnValue(of([voron, ender, prusa]));
-      const result = new Subject<{ revoked: number }>();
-      service.revokeAll.and.returnValue(result);
+      service.list.mockReturnValue(of([voron, ender, prusa]));
+      const result = new Subject<{
+        revoked: number;
+      }>();
+      service.revokeAll.mockReturnValue(result);
       create();
 
       clickRevokeAll();
@@ -361,7 +361,7 @@ describe('PairedDevicesComponent', () => {
       expect(service.revokeAll).toHaveBeenCalledTimes(1);
       // Not optimistic: the rows stay until the API answers, and the button can't be pressed twice.
       expect(rows().length).toBe(3);
-      expect(revokeAllButton()?.disabled).toBeTrue();
+      expect(revokeAllButton()?.disabled).toBe(true);
 
       result.next({ revoked: 3 });
       result.complete();
@@ -370,7 +370,7 @@ describe('PairedDevicesComponent', () => {
       expect(rows().length).toBe(0);
       expect(el().textContent).toContain('No paired devices.');
       expect(toastr.success).toHaveBeenCalled();
-      expect(toastr.success.calls.mostRecent().args[0]).toContain(
+      expect(vi.mocked(toastr.success).mock.lastCall[0]).toContain(
         '3 paired devices'
       );
       expect(logging.logEvent).toHaveBeenCalledWith(
@@ -381,16 +381,16 @@ describe('PairedDevicesComponent', () => {
 
     for (const status of [404, 405]) {
       it(`says the server can't do it yet on ${status}, and keeps the list`, () => {
-        service.list.and.returnValue(of([voron, ender]));
-        service.revokeAll.and.returnValue(throwError(() => httpError(status)));
+        service.list.mockReturnValue(of([voron, ender]));
+        service.revokeAll.mockReturnValue(throwError(() => httpError(status)));
         create();
 
         clickRevokeAll();
 
         expect(rows().length).toBe(2);
-        expect(revokeAllButton()?.disabled).toBeFalse();
+        expect(revokeAllButton()?.disabled).toBe(false);
         expect(toastr.error).toHaveBeenCalled();
-        expect(toastr.error.calls.mostRecent().args[0]).toContain(
+        expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain(
           'doesn’t support'
         );
         expect(logging.logEvent).toHaveBeenCalledWith(
@@ -402,15 +402,17 @@ describe('PairedDevicesComponent', () => {
     }
 
     it('keeps the list and shows an error when it fails otherwise', () => {
-      service.list.and.returnValue(of([voron, ender]));
-      service.revokeAll.and.returnValue(throwError(() => httpError(500)));
+      service.list.mockReturnValue(of([voron, ender]));
+      service.revokeAll.mockReturnValue(throwError(() => httpError(500)));
       create();
 
       clickRevokeAll();
 
       expect(rows().length).toBe(2);
       expect(toastr.error).toHaveBeenCalled();
-      expect(toastr.error.calls.mostRecent().args[0]).toContain('still paired');
+      expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain(
+        'still paired'
+      );
       expect(logging.logEvent).toHaveBeenCalledWith(
         'ConnectedAgents_AllDevicesRevokeFailed',
         { status: 500 }

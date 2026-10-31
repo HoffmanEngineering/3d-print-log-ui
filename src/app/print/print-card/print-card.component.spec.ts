@@ -44,11 +44,15 @@ describe('PrintCardComponent', () => {
         provideHttpClientTesting(),
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();
@@ -87,14 +91,14 @@ describe('PrintCardComponent', () => {
   });
 
   it('should emit deleted output when delete is triggered', () => {
-    const deletedSpy = jasmine.createSpy('deleted');
+    const deletedSpy = vi.fn();
     component.deleted.subscribe(deletedSpy);
     component.onDeleteClicked();
     expect(deletedSpy).toHaveBeenCalledWith(mockPrint);
   });
 
   it('should emit statusChanged when changeStatus is called', () => {
-    const spy = jasmine.createSpy('statusChanged');
+    const spy = vi.fn();
     component.statusChanged.subscribe(spy);
     component.onStatusChange(PrintStatus.Failed);
     expect(spy).toHaveBeenCalledWith({ id: 42, status: PrintStatus.Failed });
@@ -258,11 +262,15 @@ describe('PrintCardComponent — preferred unit', () => {
         provideHttpClientTesting(),
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();

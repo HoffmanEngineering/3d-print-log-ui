@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { CdkScrollable, ScrollDispatcher } from '@angular/cdk/scrolling';
@@ -21,25 +22,25 @@ const mobileMediaMatcher = {
 };
 
 /** The shell injects the opener to run the Ctrl+K shortcut and toolbar button. */
-const searchOpener = () =>
-  jasmine.createSpyObj<DocsSearchOpener>('DocsSearchOpener', ['open']);
+const searchOpener = () => ({
+  open: vi.fn().mockName('DocsSearchOpener.open'),
+});
 
 describe('DocumentationComponent SEO lifecycle', () => {
   let events: Subject<RouterEvent>;
-  let structuredData: jasmine.SpyObj<StructuredDataService>;
-  let meta: jasmine.SpyObj<MetaTagService>;
+  let structuredData: MockedObject<StructuredDataService>;
+  let meta: MockedObject<MetaTagService>;
   let fixture: ComponentFixture<DocumentationComponent>;
 
   beforeEach(async () => {
     events = new Subject<RouterEvent>();
-    structuredData = jasmine.createSpyObj<StructuredDataService>(
-      'StructuredDataService',
-      ['setJsonLd']
-    );
-    meta = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setSeoTags',
-      'setTitle',
-    ]);
+    structuredData = {
+      setJsonLd: vi.fn().mockName('StructuredDataService.setJsonLd'),
+    } as unknown as MockedObject<StructuredDataService>;
+    meta = {
+      setSeoTags: vi.fn().mockName('MetaTagService.setSeoTags'),
+      setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+    } as unknown as MockedObject<MetaTagService>;
 
     await TestBed.configureTestingModule({
       imports: [DocumentationComponent],
@@ -55,10 +56,14 @@ describe('DocumentationComponent SEO lifecycle', () => {
         },
         {
           provide: DocsTelemetryService,
-          useValue: jasmine.createSpyObj<DocsTelemetryService>(
-            'DocsTelemetryService',
-            ['trackPageView', 'trackScrollDepth']
-          ),
+          useValue: {
+            trackPageView: vi
+              .fn()
+              .mockName('DocsTelemetryService.trackPageView'),
+            trackScrollDepth: vi
+              .fn()
+              .mockName('DocsTelemetryService.trackScrollDepth'),
+          },
         },
       ],
     })
@@ -73,7 +78,7 @@ describe('DocumentationComponent SEO lifecycle', () => {
 
   it('sets doc structured data for the initial doc url', () => {
     expect(structuredData.setJsonLd).toHaveBeenCalledTimes(1);
-    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+    const nodes = vi.mocked(structuredData.setJsonLd).mock.lastCall[0];
     expect(nodes.map((n) => n['@type'])).toEqual([
       'TechArticle',
       'BreadcrumbList',
@@ -82,16 +87,28 @@ describe('DocumentationComponent SEO lifecycle', () => {
   });
 
   it('resolves every @id reference within the same graph', () => {
-    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+    const nodes = vi.mocked(structuredData.setJsonLd).mock.lastCall[0];
     const ids = new Set(nodes.map((n) => n['@id']).filter(Boolean));
     const article = nodes.find((n) => n['@type'] === 'TechArticle');
-    expect(ids).toContain((article?.['publisher'] as { '@id': string })['@id']);
-    expect(ids).toContain((article?.['author'] as { '@id': string })['@id']);
+    expect(ids).toContain(
+      (
+        article?.['publisher'] as {
+          '@id': string;
+        }
+      )['@id']
+    );
+    expect(ids).toContain(
+      (
+        article?.['author'] as {
+          '@id': string;
+        }
+      )['@id']
+    );
   });
 
   it('adds a HowTo for a page written as numbered steps', () => {
     events.next(new NavigationEnd(3, '/docs/klipper', '/docs/klipper'));
-    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+    const nodes = vi.mocked(structuredData.setJsonLd).mock.lastCall[0];
     const howTo = nodes.find((n) => n['@type'] === 'HowTo');
     expect(howTo?.['name']).toBe('Klipper notifier (legacy)');
     const steps = howTo?.['step'] as Array<Record<string, unknown>>;
@@ -102,13 +119,13 @@ describe('DocumentationComponent SEO lifecycle', () => {
   });
 
   it('clears structured data when navigating to a non-doc url while alive', () => {
-    structuredData.setJsonLd.calls.reset();
+    structuredData.setJsonLd.mockClear();
     events.next(new NavigationEnd(1, '/', '/'));
     expect(structuredData.setJsonLd).toHaveBeenCalledWith([]);
   });
 
   it('does NOT touch structured data after the component is destroyed', () => {
-    structuredData.setJsonLd.calls.reset();
+    structuredData.setJsonLd.mockClear();
     fixture.destroy();
     events.next(new NavigationEnd(2, '/', '/'));
     expect(structuredData.setJsonLd).not.toHaveBeenCalled();
@@ -118,7 +135,7 @@ describe('DocumentationComponent SEO lifecycle', () => {
 describe('DocumentationComponent telemetry', () => {
   let events: Subject<RouterEvent>;
   let scrolled: Subject<CdkScrollable | void>;
-  let telemetry: jasmine.SpyObj<DocsTelemetryService>;
+  let telemetry: MockedObject<DocsTelemetryService>;
   let fixture: ComponentFixture<DocumentationComponent>;
 
   /** A CdkScrollable stand-in whose element reports the given geometry. */
@@ -153,10 +170,12 @@ describe('DocumentationComponent telemetry', () => {
   async function setup(initialUrl: string): Promise<void> {
     events = new Subject<RouterEvent>();
     scrolled = new Subject<CdkScrollable | void>();
-    telemetry = jasmine.createSpyObj<DocsTelemetryService>(
-      'DocsTelemetryService',
-      ['trackPageView', 'trackScrollDepth']
-    );
+    telemetry = {
+      trackPageView: vi.fn().mockName('DocsTelemetryService.trackPageView'),
+      trackScrollDepth: vi
+        .fn()
+        .mockName('DocsTelemetryService.trackScrollDepth'),
+    } as unknown as MockedObject<DocsTelemetryService>;
 
     await TestBed.configureTestingModule({
       imports: [DocumentationComponent],
@@ -165,17 +184,16 @@ describe('DocumentationComponent telemetry', () => {
         { provide: DocsSearchOpener, useValue: searchOpener() },
         {
           provide: StructuredDataService,
-          useValue: jasmine.createSpyObj<StructuredDataService>(
-            'StructuredDataService',
-            ['setJsonLd']
-          ),
+          useValue: {
+            setJsonLd: vi.fn().mockName('StructuredDataService.setJsonLd'),
+          },
         },
         {
           provide: MetaTagService,
-          useValue: jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-            'setSeoTags',
-            'setTitle',
-          ]),
+          useValue: {
+            setSeoTags: vi.fn().mockName('MetaTagService.setSeoTags'),
+            setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+          },
         },
         { provide: MediaMatcher, useValue: mobileMediaMatcher },
         { provide: ScrollDispatcher, useValue: { scrolled: () => scrolled } },
@@ -192,21 +210,25 @@ describe('DocumentationComponent telemetry', () => {
   it('reports a page view for the docs url it starts on', async () => {
     await setup('/docs/prints');
 
-    expect(telemetry.trackPageView).toHaveBeenCalledOnceWith('/docs/prints');
+    expect(telemetry.trackPageView).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackPageView).toHaveBeenCalledWith('/docs/prints');
   });
 
   it('reports a page view for each docs navigation', async () => {
     await setup('/docs/prints');
-    telemetry.trackPageView.calls.reset();
+    telemetry.trackPageView.mockClear();
 
     events.next(new NavigationEnd(1, '/docs/materials', '/docs/materials'));
 
-    expect(telemetry.trackPageView).toHaveBeenCalledOnceWith('/docs/materials');
+    expect(telemetry.trackPageView).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackPageView).toHaveBeenCalledWith('/docs/materials');
   });
 
   it('does not report a page view when navigating out of the docs section', async () => {
     await setup('/docs/prints');
-    telemetry.trackPageView.calls.reset();
+    telemetry.trackPageView.mockClear();
 
     events.next(new NavigationEnd(1, '/prints', '/prints'));
 
@@ -215,7 +237,7 @@ describe('DocumentationComponent telemetry', () => {
 
   it('stops reporting page views once destroyed', async () => {
     await setup('/docs/prints');
-    telemetry.trackPageView.calls.reset();
+    telemetry.trackPageView.mockClear();
 
     fixture.destroy();
     events.next(new NavigationEnd(2, '/docs/materials', '/docs/materials'));
@@ -247,7 +269,7 @@ describe('DocumentationComponent telemetry', () => {
     // a phone that list is longer than the screen; scrolling it to the end
     // would otherwise file a 100% "read the whole page" measurement.
     await setup('/docs/prints');
-    telemetry.trackScrollDepth.calls.reset();
+    telemetry.trackScrollDepth.mockClear();
 
     // Geometry chosen to read as 50%: the fallback container in this test DOM
     // has no scroll range and so reports 100, and asserting against 100 would
@@ -263,8 +285,10 @@ describe('DocumentationComponent telemetry', () => {
     // The percentage itself is scrollPercentOf's contract, tested separately.
     await setup('/docs/prints');
 
-    expect(telemetry.trackScrollDepth).toHaveBeenCalledOnceWith(
-      jasmine.any(Number),
+    expect(telemetry.trackScrollDepth).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackScrollDepth).toHaveBeenCalledWith(
+      expect.any(Number),
       'prints'
     );
   });
@@ -272,7 +296,7 @@ describe('DocumentationComponent telemetry', () => {
   it('stops reporting scroll depth once destroyed', async () => {
     await setup('/docs/prints');
     // Ignore the arrival sample; this is about scroll events after teardown.
-    telemetry.trackScrollDepth.calls.reset();
+    telemetry.trackScrollDepth.mockClear();
     fixture.destroy();
 
     scrolled.next(scrollableAt(1600, 800, 4000));
@@ -307,17 +331,16 @@ describe('DocumentationComponent layout', () => {
         { provide: DocsSearchOpener, useValue: searchOpener() },
         {
           provide: StructuredDataService,
-          useValue: jasmine.createSpyObj<StructuredDataService>(
-            'StructuredDataService',
-            ['setJsonLd']
-          ),
+          useValue: {
+            setJsonLd: vi.fn().mockName('StructuredDataService.setJsonLd'),
+          },
         },
         {
           provide: MetaTagService,
-          useValue: jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-            'setSeoTags',
-            'setTitle',
-          ]),
+          useValue: {
+            setSeoTags: vi.fn().mockName('MetaTagService.setSeoTags'),
+            setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+          },
         },
         {
           provide: MediaMatcher,
@@ -334,10 +357,14 @@ describe('DocumentationComponent layout', () => {
         },
         {
           provide: DocsTelemetryService,
-          useValue: jasmine.createSpyObj<DocsTelemetryService>(
-            'DocsTelemetryService',
-            ['trackPageView', 'trackScrollDepth']
-          ),
+          useValue: {
+            trackPageView: vi
+              .fn()
+              .mockName('DocsTelemetryService.trackPageView'),
+            trackScrollDepth: vi
+              .fn()
+              .mockName('DocsTelemetryService.trackScrollDepth'),
+          },
         },
       ],
     })
@@ -373,6 +400,6 @@ describe('DocumentationComponent layout', () => {
 
     expect(shell.classList).toContain('example-is-mobile');
     expect(fixture.componentInstance.snav().mode).toBe('over');
-    expect(fixture.componentInstance.snav().opened).toBeFalse();
+    expect(fixture.componentInstance.snav().opened).toBe(false);
   });
 });

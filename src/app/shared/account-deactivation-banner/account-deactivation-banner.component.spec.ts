@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
@@ -12,8 +13,8 @@ import { AccountDeactivationBannerComponent } from './account-deactivation-banne
 describe('AccountDeactivationBannerComponent', () => {
   let fixture: ComponentFixture<AccountDeactivationBannerComponent>;
   let userProfile: WritableSignal<UserProfileInfo | null>;
-  let auth: jasmine.SpyObj<AuthService>;
-  let userService: jasmine.SpyObj<UserService>;
+  let auth: MockedObject<AuthService>;
+  let userService: MockedObject<UserService>;
 
   const deactivated = {
     deactivationDateTime: new Date('2026-10-01T12:00:00Z'),
@@ -21,11 +22,12 @@ describe('AccountDeactivationBannerComponent', () => {
 
   const render = (profile: UserProfileInfo | null) => {
     userProfile = signal(profile);
-    auth = jasmine.createSpyObj<AuthService>(
-      'AuthService',
-      ['updateCurrentUserDeactivationDate'],
-      { userProfile }
-    );
+    auth = {
+      updateCurrentUserDeactivationDate: vi
+        .fn()
+        .mockName('AuthService.updateCurrentUserDeactivationDate'),
+      userProfile,
+    } as unknown as MockedObject<AuthService>;
     TestBed.configureTestingModule({
       imports: [AccountDeactivationBannerComponent],
       providers: [
@@ -42,9 +44,11 @@ describe('AccountDeactivationBannerComponent', () => {
   };
 
   beforeEach(() => {
-    userService = jasmine.createSpyObj<UserService>('UserService', [
-      'reactivateCurrentUser',
-    ]);
+    userService = {
+      reactivateCurrentUser: vi
+        .fn()
+        .mockName('UserService.reactivateCurrentUser'),
+    } as unknown as MockedObject<UserService>;
   });
 
   it('shows nothing to a signed-out visitor', () => {
@@ -78,15 +82,14 @@ describe('AccountDeactivationBannerComponent', () => {
   });
 
   it('reactivates the account and clears the deactivation date', () => {
-    userService.reactivateCurrentUser.and.returnValue(
+    userService.reactivateCurrentUser.mockReturnValue(
       of({ deactivationDateTime: null } as UserDetailDto)
     );
 
     render(deactivated)!.querySelector('button')!.click();
 
     expect(userService.reactivateCurrentUser).toHaveBeenCalled();
-    expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledOnceWith(
-      null
-    );
+    expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledTimes(1);
+    expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledWith(null);
   });
 });

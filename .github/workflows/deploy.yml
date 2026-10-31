@@ -50,6 +50,11 @@ jobs:
       - name: Lint
         run: npm run lint:brief
 
+      # The unit tests run in Playwright's Chromium (Vitest browser mode), which npm ci
+      # does not download.
+      - name: Install the unit tests' browser
+        run: npx playwright install --with-deps chromium
+
       - name: Test
         run: npm run test:ci
 

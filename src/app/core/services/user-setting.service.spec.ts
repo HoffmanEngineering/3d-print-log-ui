@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import {
   HttpTestingController,
@@ -111,7 +112,7 @@ describe('UserSettingService', () => {
         .expectOne(apiUrl)
         .flush('boom', { status: 500, statusText: 'Server Error' });
 
-      await expectAsync(promise).toBeRejected();
+      await expect(promise).rejects.toThrow();
     });
 
     it('rejects (does not swallow) a response-mapping/programming error', async () => {
@@ -122,7 +123,7 @@ describe('UserSettingService', () => {
       // is not the anonymous auth error and must not be swallowed as empty.
       httpTesting.expectOne(apiUrl).flush(null);
 
-      await expectAsync(promise).toBeRejected();
+      await expect(promise).rejects.toThrow();
     });
 
     it('does not cache an HttpErrorResponse failure (next call refetches)', async () => {
@@ -132,7 +133,7 @@ describe('UserSettingService', () => {
       httpTesting
         .expectOne(apiUrl)
         .flush('boom', { status: 500, statusText: 'Server Error' });
-      await expectAsync(first).toBeRejected();
+      await expect(first).rejects.toThrow();
 
       const second = service.getCurrentUsersSettingByType(
         UserSettingType.Currency_Symbol
@@ -360,11 +361,13 @@ describe('UserSettingService', () => {
 
 describe('UserSettingService — anonymous visitor (mocked HttpClient)', () => {
   let service: UserSettingService;
-  let mockHttp: jasmine.SpyObj<HttpClient>;
+  let mockHttp: MockedObject<HttpClient>;
 
   beforeEach(() => {
-    mockHttp = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
-    mockHttp.get.and.returnValue(
+    mockHttp = {
+      get: vi.fn().mockName('HttpClient.get'),
+    } as unknown as MockedObject<HttpClient>;
+    mockHttp.get.mockReturnValue(
       throwError(() => ({ error: 'missing_refresh_token' }))
     );
 
@@ -394,10 +397,10 @@ describe('UserSettingService — anonymous through the real interceptor', () => 
 
   beforeEach(() => {
     (environment as any).devAuthBypass = false;
-    const mockAuth = jasmine.createSpyObj<AuthService>('AuthService', [
-      'getTokenSilently$',
-    ]);
-    mockAuth.getTokenSilently$.and.returnValue(
+    const mockAuth = {
+      getTokenSilently$: vi.fn().mockName('AuthService.getTokenSilently$'),
+    };
+    mockAuth.getTokenSilently$.mockReturnValue(
       throwError(() => ({ error: 'missing_refresh_token' }))
     );
 

@@ -16,7 +16,7 @@ describe('currentUserDetailResolver', () => {
       ],
     });
 
-    await expectAsync(resolveValue(currentUserDetailResolver)).toBeResolvedTo(
+    await expect(resolveValue(currentUserDetailResolver)).resolves.toEqual(
       user
     );
   });

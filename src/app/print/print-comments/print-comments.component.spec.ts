@@ -1,5 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { signal, WritableSignal } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrService } from 'ngx-toastr';
 
@@ -17,24 +18,25 @@ describe('PrintCommentsComponent', () => {
   let fixture: ComponentFixture<PrintCommentsComponent>;
   let userProfile: WritableSignal<UserProfileInfo | null>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     userProfile = signal<UserProfileInfo | null>(null);
     const mockAuthService = {
-      ...jasmine.createSpyObj<AuthService>('AuthService', ['getUser$']),
+      ...{
+        getUser$: vi.fn().mockName('AuthService.getUser$'),
+      },
       userProfile,
     };
 
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['deletePrintComment']
-    );
+    const mockPrintService = {
+      deletePrintComment: vi.fn().mockName('PrintService.deletePrintComment'),
+    };
 
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['success', 'error']
-    );
+    const mockToastrService = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    };
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [PrintCommentsComponent, NoopAnimationsModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
@@ -42,7 +44,7 @@ describe('PrintCommentsComponent', () => {
         { provide: ToastrService, useValue: mockToastrService },
       ],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintCommentsComponent);
@@ -100,8 +102,8 @@ describe('PrintCommentsComponent', () => {
   it('reports a deleted comment upward without mutating the input list', () => {
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
-    printService.deletePrintComment.and.returnValue(of(null));
+    ) as MockedObject<PrintService>;
+    printService.deletePrintComment.mockReturnValue(of(null));
 
     const target = { id: 7 } as Comment;
     const comments = [target, { id: 8 } as Comment];

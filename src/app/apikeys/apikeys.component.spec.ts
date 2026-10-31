@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ToastrService } from 'ngx-toastr';
@@ -14,7 +15,7 @@ import { ApikeysComponent } from './apikeys.component';
 describe('ApikeysComponent', () => {
   let component: ApikeysComponent;
   let fixture: ComponentFixture<ApikeysComponent>;
-  let apiKeys: jasmine.SpyObj<ApiKeyService>;
+  let apiKeys: MockedObject<ApiKeyService>;
   let summaries: Subject<UserApiKeySummary[]>;
 
   const existing = { id: 'k1', description: 'Klipper' } as UserApiKeySummary;
@@ -22,12 +23,14 @@ describe('ApikeysComponent', () => {
 
   beforeEach(() => {
     summaries = new Subject();
-    apiKeys = jasmine.createSpyObj<ApiKeyService>('ApiKeyService', [
-      'getApiKeySummaryForUser',
-      'createNewApiKey',
-      'deleteApiKey',
-    ]);
-    apiKeys.getApiKeySummaryForUser.and.returnValue(summaries);
+    apiKeys = {
+      getApiKeySummaryForUser: vi
+        .fn()
+        .mockName('ApiKeyService.getApiKeySummaryForUser'),
+      createNewApiKey: vi.fn().mockName('ApiKeyService.createNewApiKey'),
+      deleteApiKey: vi.fn().mockName('ApiKeyService.deleteApiKey'),
+    } as unknown as MockedObject<ApiKeyService>;
+    apiKeys.getApiKeySummaryForUser.mockReturnValue(summaries);
 
     TestBed.configureTestingModule({
       imports: [ApikeysComponent],
@@ -35,11 +38,16 @@ describe('ApikeysComponent', () => {
         { provide: ApiKeyService, useValue: apiKeys },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
         {
           provide: MetaTagService,
-          useValue: jasmine.createSpyObj('MetaTagService', ['setTitle']),
+          useValue: {
+            setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+          },
         },
         {
           provide: PushPermissionPromptService,
@@ -65,7 +73,7 @@ describe('ApikeysComponent', () => {
 
   it('puts a new key first, with its secret, and closes the form', () => {
     summaries.next([existing]);
-    apiKeys.createNewApiKey.and.returnValue(
+    apiKeys.createNewApiKey.mockReturnValue(
       of({ id: 'k2', description: 'Octo', publicKey: 'secret' } as never)
     );
     component.startAddNewKey();
@@ -73,17 +81,23 @@ describe('ApikeysComponent', () => {
 
     component.addNewKey();
 
-    expect(apiKeys.createNewApiKey).toHaveBeenCalledOnceWith('Octo');
+    expect(apiKeys.createNewApiKey).toHaveBeenCalledTimes(1);
+
+    expect(apiKeys.createNewApiKey).toHaveBeenCalledWith('Octo');
     expect(component.keys().map((k) => k.id)).toEqual(['k2', 'k1']);
-    expect((component.keys()[0] as { privateKey?: string }).privateKey).toBe(
-      'secret'
-    );
-    expect(component.addingKey()).toBeFalse();
+    expect(
+      (
+        component.keys()[0] as {
+          privateKey?: string;
+        }
+      ).privateKey
+    ).toBe('secret');
+    expect(component.addingKey()).toBe(false);
   });
 
   it('removes a deleted key', () => {
     summaries.next([existing]);
-    apiKeys.deleteApiKey.and.returnValue(of(undefined as never));
+    apiKeys.deleteApiKey.mockReturnValue(of(undefined as never));
 
     component.deleteKey('k1');
 

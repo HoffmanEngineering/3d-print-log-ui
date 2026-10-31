@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
 import { Subject, throwError } from 'rxjs';
@@ -15,7 +11,10 @@ import { OverviewTabComponent } from './overview-tab.component';
 
 function response(
   printCount: number,
-  material: { grams?: number | null; ml?: number | null } = {}
+  material: {
+    grams?: number | null;
+    ml?: number | null;
+  } = {}
 ): OverviewResponse {
   const coverage = {
     population: 'prints',
@@ -69,13 +68,13 @@ function response(
 
 describe('OverviewTabComponent', () => {
   let fixture: ComponentFixture<OverviewTabComponent>;
-  let analytics: jasmine.SpyObj<AnalyticsService>;
+  let analytics: MockedObject<AnalyticsService>;
   let store: AnalyticsFilterStore;
 
   beforeEach(async () => {
-    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
-      'getOverview',
-    ]);
+    analytics = {
+      getOverview: vi.fn().mockName('AnalyticsService.getOverview'),
+    } as unknown as MockedObject<AnalyticsService>;
 
     await TestBed.configureTestingModule({
       imports: [OverviewTabComponent, NoopAnimationsModule],
@@ -90,12 +89,13 @@ describe('OverviewTabComponent', () => {
     store = TestBed.inject(AnalyticsFilterStore);
   });
 
-  it('renders six stat tiles once loaded', fakeAsync(() => {
+  it('renders six stat tiles once loaded', async () => {
+    vi.useFakeTimers();
     const subject = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValue(subject);
+    analytics.getOverview.mockReturnValue(subject);
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     subject.next(response(42));
     fixture.detectChanges();
 
@@ -103,43 +103,48 @@ describe('OverviewTabComponent', () => {
       (fixture.nativeElement as HTMLElement).querySelectorAll('app-stat-tile')
         .length
     ).toBe(6);
-  }));
+  });
 
-  it('debounces rapid filter changes into a single request', fakeAsync(() => {
-    analytics.getOverview.and.returnValue(new Subject<OverviewResponse>());
+  it('debounces rapid filter changes into a single request', async () => {
+    vi.useFakeTimers();
+    analytics.getOverview.mockReturnValue(new Subject<OverviewResponse>());
 
     fixture.detectChanges();
     store.setPreset('last7');
     store.setPreset('last30');
     store.setPreset('last90');
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     expect(analytics.getOverview).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('discards a stale response so an older result cannot overwrite a newer one', fakeAsync(() => {
+  it('discards a stale response so an older result cannot overwrite a newer one', async () => {
+    vi.useFakeTimers();
     const first = new Subject<OverviewResponse>();
     const second = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValues(first, second);
+    analytics.getOverview
+      .mockReturnValueOnce(first)
+      .mockReturnValueOnce(second);
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     store.setPreset('last7');
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
 
     second.next(response(7));
     first.next(response(999)); // arrives late; must be ignored
     fixture.detectChanges();
 
     expect(fixture.componentInstance.data()?.tiles.printCount.value).toBe(7);
-  }));
+  });
 
-  it('shows an error state with a retry when the request fails', fakeAsync(() => {
-    analytics.getOverview.and.returnValue(throwError(() => new Error('boom')));
+  it('shows an error state with a retry when the request fails', async () => {
+    vi.useFakeTimers();
+    analytics.getOverview.mockReturnValue(throwError(() => new Error('boom')));
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     fixture.detectChanges();
 
     expect(fixture.componentInstance.state()).toBe('error');
@@ -148,25 +153,27 @@ describe('OverviewTabComponent', () => {
         '[data-testid="chart-retry"]'
       )
     ).toBeTruthy();
-  }));
+  });
 
-  it('labels a date-only bucket with the civil date the server sent', fakeAsync(() => {
+  it('labels a date-only bucket with the civil date the server sent', async () => {
+    vi.useFakeTimers();
     // The series carries DateOnly ("2026-07-01"). Parsed as UTC it renders as 6/30 anywhere
     // west of UTC, so the whole chart reads a day early for most of the Americas.
     const subject = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValue(subject);
+    analytics.getOverview.mockReturnValue(subject);
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     subject.next(response(3));
     fixture.detectChanges();
 
     expect(fixture.componentInstance.barData()[0].label).toBe('7/1');
-  }));
+  });
 
-  it('sorts time buckets chronologically when the API returns newest first', fakeAsync(() => {
+  it('sorts time buckets chronologically when the API returns newest first', async () => {
+    vi.useFakeTimers();
     const subject = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValue(subject);
+    analytics.getOverview.mockReturnValue(subject);
     const result = response(3);
     result.granularity = 'Month';
     result.series = [
@@ -182,28 +189,29 @@ describe('OverviewTabComponent', () => {
       },
     ];
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     subject.next(result);
     fixture.detectChanges();
     expect(
       fixture.componentInstance.barData().map((item) => item.fullLabel)
     ).toEqual(['Jun 2026', 'Jul 2026']);
-  }));
+  });
 
-  it('navigates click-through using the param the print list actually reads', fakeAsync(() => {
+  it('navigates click-through using the param the print list actually reads', async () => {
+    vi.useFakeTimers();
     const subject = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValue(subject);
+    analytics.getOverview.mockReturnValue(subject);
     const router = TestBed.inject(Router);
-    const navigate = spyOn(router, 'navigate').and.resolveTo(true);
+    const navigate = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     subject.next(response(3));
     fixture.detectChanges();
 
     fixture.componentInstance.onSliceSelect({ key: 'Failed' });
 
-    const [path, extras] = navigate.calls.mostRecent().args;
+    const [path, extras] = vi.mocked(navigate).mock.lastCall;
     expect(path).toEqual(['/prints']);
 
     // Singular: print-list-resolver.service.ts reads `filterByStatus`. The plural form has no
@@ -213,11 +221,12 @@ describe('OverviewTabComponent', () => {
     expect(params['filterByStatuses']).toBeUndefined();
     // A userId would turn the list into that user's PUBLIC prints only.
     expect(params['userId']).toBeUndefined();
-  }));
+  });
 
-  it('renders each highlight in the unit its tile uses, not the raw API token', fakeAsync(() => {
+  it('renders each highlight in the unit its tile uses, not the raw API token', async () => {
+    vi.useFakeTimers();
     const subject = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValue(subject);
+    analytics.getOverview.mockReturnValue(subject);
     const result = response(4);
     result.highlights = {
       mostUsedPrinter: { id: '1', label: 'Ender', value: 4, unit: 'prints' },
@@ -227,7 +236,7 @@ describe('OverviewTabComponent', () => {
     };
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     subject.next(result);
     fixture.detectChanges();
 
@@ -242,19 +251,20 @@ describe('OverviewTabComponent', () => {
     expect(displays).toContain('4 prints');
     expect(fixture.nativeElement.textContent).not.toContain('0.84 cost');
     expect(fixture.nativeElement.textContent).not.toContain('9000 seconds');
-  }));
+  });
 
-  it('reports an empty state rather than an error when there are no prints', fakeAsync(() => {
+  it('reports an empty state rather than an error when there are no prints', async () => {
+    vi.useFakeTimers();
     const subject = new Subject<OverviewResponse>();
-    analytics.getOverview.and.returnValue(subject);
+    analytics.getOverview.mockReturnValue(subject);
 
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     subject.next(response(0));
     fixture.detectChanges();
 
     expect(fixture.componentInstance.state()).toBe('empty');
-  }));
+  });
 
   // 3d-print-log-api#294: resin is in mL, beside the grams or instead of them.
   describe('filament tile', () => {
@@ -263,47 +273,52 @@ describe('OverviewTabComponent', () => {
         (fixture.nativeElement as HTMLElement).querySelectorAll('app-stat-tile')
       ).find((tile) => tile.textContent?.includes('used')) as HTMLElement;
 
-    const load = (overview: OverviewResponse) => {
+    const load = async (overview: OverviewResponse) => {
       const subject = new Subject<OverviewResponse>();
-      analytics.getOverview.and.returnValue(subject);
+      analytics.getOverview.mockReturnValue(subject);
       fixture.detectChanges();
-      tick(300);
+      await vi.advanceTimersByTimeAsync(300);
       subject.next(overview);
       fixture.detectChanges();
     };
 
-    it('shows grams alone for a filament-only user', fakeAsync(() => {
-      load(response(4));
+    it('shows grams alone for a filament-only user', async () => {
+      vi.useFakeTimers();
+      await load(response(4));
 
       expect(filamentTile().textContent).toContain('3.2 kg');
       expect(filamentTile().textContent).not.toContain('mL');
-    }));
+    });
 
-    it('shows both when the range has filament and resin', fakeAsync(() => {
-      load(response(4, { grams: 34000, ml: 20 }));
+    it('shows both when the range has filament and resin', async () => {
+      vi.useFakeTimers();
+      await load(response(4, { grams: 34000, ml: 20 }));
 
       expect(filamentTile().textContent).toContain('34.0 kg · 20.0 mL');
-    }));
+    });
 
-    it('shows mL alone, labeled as material, when the range has no grams', fakeAsync(() => {
-      load(response(4, { grams: 0, ml: 72.75 }));
+    it('shows mL alone, labeled as material, when the range has no grams', async () => {
+      vi.useFakeTimers();
+      await load(response(4, { grams: 0, ml: 72.75 }));
 
       expect(filamentTile().textContent).toContain('72.8 mL');
       expect(filamentTile().textContent).toContain('Material used');
       expect(filamentTile().textContent).not.toContain(' g');
-    }));
+    });
 
-    it('keeps the grams tile against an API without filamentMl', fakeAsync(() => {
+    it('keeps the grams tile against an API without filamentMl', async () => {
+      vi.useFakeTimers();
       const older = response(4);
       delete (older.tiles as Partial<typeof older.tiles>).filamentMl;
-      load(older);
+      await load(older);
 
       expect(filamentTile().textContent).toContain('3.2 kg');
       expect(filamentTile().textContent).not.toContain('mL');
-    }));
+    });
 
-    it('appends the mL row to the tab CSV after the existing tiles', fakeAsync(() => {
-      load(response(4, { grams: 34000, ml: 20 }));
+    it('appends the mL row to the tab CSV after the existing tiles', async () => {
+      vi.useFakeTimers();
+      await load(response(4, { grams: 34000, ml: 20 }));
 
       const rows = fixture.componentInstance.tileRows();
       expect(rows.map((row) => row[0])).toEqual([
@@ -316,6 +331,6 @@ describe('OverviewTabComponent', () => {
         'Filament (mL)',
       ]);
       expect(rows.at(-1)).toEqual(['Filament (mL)', 20, null]);
-    }));
+    });
   });
 });

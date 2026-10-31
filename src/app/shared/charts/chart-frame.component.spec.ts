@@ -59,7 +59,7 @@ describe('ChartFrameComponent', () => {
     let emitted = false;
     fixture.componentInstance.retry.subscribe(() => (emitted = true));
     retry.click();
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('renders a coverage badge when values include estimates', () => {

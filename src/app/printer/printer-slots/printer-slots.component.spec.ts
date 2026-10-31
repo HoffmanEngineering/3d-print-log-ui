@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
@@ -17,8 +18,8 @@ import { PrinterSlotsComponent } from './printer-slots.component';
 describe('PrinterSlotsComponent', () => {
   let fixture: ComponentFixture<PrinterSlotsComponent>;
   let httpMock: HttpTestingController;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
   let picked: FilamentSummary | null;
   let emitted: PrinterFilamentSummaryDto[][];
 
@@ -52,14 +53,14 @@ describe('PrinterSlotsComponent', () => {
     loaded: PrinterFilamentSummaryDto[] = [],
     slotCount = 4
   ): Promise<void> {
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     const dialog = {
       open: () => ({
         componentInstance: {
@@ -144,7 +145,7 @@ describe('PrinterSlotsComponent', () => {
     expect(emitted).toEqual([[loadedIn(2, spool('a'))]]);
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterSlots_Loaded',
-      jasmine.objectContaining({ slot: 2 })
+      expect.objectContaining({ slot: 2 })
     );
   });
 
@@ -169,7 +170,7 @@ describe('PrinterSlotsComponent', () => {
     httpMock.expectOne(`${base}/0`).flush([loadedIn(0, spool('a'))]);
 
     expect(toastr.success).toHaveBeenCalledWith(
-      jasmine.stringContaining('Prusa by the door')
+      expect.stringContaining('Prusa by the door')
     );
   });
 
@@ -183,7 +184,7 @@ describe('PrinterSlotsComponent', () => {
     httpMock.expectOne(`${base}/3`).flush([loadedIn(3, spool('a'))]);
     fixture.detectChanges();
 
-    expect(toastr.success).toHaveBeenCalledWith(jasmine.stringContaining('T1'));
+    expect(toastr.success).toHaveBeenCalledWith(expect.stringContaining('T1'));
     expect(rows()[1].textContent).toContain('Empty');
   });
 

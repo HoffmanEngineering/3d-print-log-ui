@@ -61,8 +61,8 @@ describe('CuraSlicerFileParserService', () => {
   });
 
   it('detects Cura by its engine marker', () => {
-    expect(service.detect(';Generated with Cura_SteamEngine 4.9.0')).toBeTrue();
-    expect(service.detect(';FLAVOR:Marlin')).toBeFalse();
+    expect(service.detect(';Generated with Cura_SteamEngine 4.9.0')).toBe(true);
+    expect(service.detect(';FLAVOR:Marlin')).toBe(false);
   });
 
   it('emits one usage row per extruder from the Filament used header', async () => {

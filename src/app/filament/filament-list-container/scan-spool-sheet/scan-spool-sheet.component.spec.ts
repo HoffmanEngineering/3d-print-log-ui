@@ -1,12 +1,7 @@
+import type { Mock, MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { WritableSignal, signal } from '@angular/core';
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  flush,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   MAT_BOTTOM_SHEET_DATA,
   MatBottomSheetRef,
@@ -72,42 +67,47 @@ describe('ScanSpoolSheetComponent', () => {
   let reader: {
     available: WritableSignal<boolean>;
     status: WritableSignal<NfcStatus>;
-    listen: jasmine.Spy;
+    listen: Mock;
     readingStarted: Subject<void>;
-    forget: jasmine.Spy;
-    openSettings: jasmine.Spy;
-    scan: jasmine.Spy;
+    forget: Mock;
+    openSettings: Mock;
+    scan: Mock;
     scansOnDemand: WritableSignal<boolean>;
   };
-  let filaments: jasmine.SpyObj<FilamentService>;
-  let sheetRef: jasmine.SpyObj<MatBottomSheetRef<ScanSpoolSheetComponent>>;
-  let logger: jasmine.SpyObj<LoggingService>;
+  let filaments: MockedObject<FilamentService>;
+  let sheetRef: MockedObject<MatBottomSheetRef<ScanSpoolSheetComponent>>;
+  let logger: MockedObject<LoggingService>;
 
-  async function setUp(data: { filaments: FilamentSummary[] } | null = null) {
+  async function setUp(
+    data: {
+      filaments: FilamentSummary[];
+    } | null = null
+  ) {
     tags = new Subject<TagRead>();
     started = new Subject<void>();
     reader = {
       available: signal(true),
       status: signal<NfcStatus>('ready'),
-      listen: jasmine.createSpy('listen').and.callFake(() => tags),
+      listen: vi.fn().mockImplementation(() => tags),
       readingStarted: started,
-      forget: jasmine.createSpy('forget'),
-      openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
-      scan: jasmine.createSpy('scan').and.resolveTo(),
+      forget: vi.fn(),
+      openSettings: vi.fn().mockResolvedValue(undefined),
+      scan: vi.fn().mockResolvedValue(undefined),
       scansOnDemand: signal(false),
     };
-    filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'resolveTagRead',
-      'addTagToFilament',
-      'getFilamentDetail',
-    ]);
-    sheetRef = jasmine.createSpyObj<MatBottomSheetRef<ScanSpoolSheetComponent>>(
-      'MatBottomSheetRef',
-      ['dismiss']
-    );
-    logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    filaments = {
+      resolveTagRead: vi.fn().mockName('FilamentService.resolveTagRead'),
+      addTagToFilament: vi.fn().mockName('FilamentService.addTagToFilament'),
+      getFilamentDetail: vi.fn().mockName('FilamentService.getFilamentDetail'),
+    } as unknown as MockedObject<FilamentService>;
+    sheetRef = {
+      dismiss: vi.fn().mockName('MatBottomSheetRef.dismiss'),
+    } as unknown as MockedObject<
+      MatBottomSheetRef<ScanSpoolSheetComponent, any>
+    >;
+    logger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [ScanSpoolSheetComponent],
@@ -148,7 +148,7 @@ describe('ScanSpoolSheetComponent', () => {
     await setUp();
     expect(el.textContent).toContain('Hold your phone to a spool');
     expect(reader.listen).toHaveBeenCalledTimes(1);
-    expect(tags.observed).toBeTrue();
+    expect(tags.observed).toBe(true);
   });
 
   it('shows Reading tag once native reports a tag under the phone', async () => {
@@ -170,86 +170,91 @@ describe('ScanSpoolSheetComponent', () => {
       fixture.detectChanges();
     }
 
-    it('goes back to waiting after 4 seconds', fakeAsync(() => {
+    it('goes back to waiting after 4 seconds', async () => {
+      vi.useFakeTimers();
       startReading();
 
-      tick(3999);
+      await vi.advanceTimersByTimeAsync(3999);
       fixture.detectChanges();
       expect(el.textContent).toContain('Reading tag, hold still…');
 
-      tick(1);
+      await vi.advanceTimersByTimeAsync(1);
       fixture.detectChanges();
       expect(el.textContent).toContain('Hold your phone to a spool');
       expect(el.querySelector('mat-spinner')).toBeNull();
-      flush();
-    }));
+      await vi.runAllTimersAsync();
+    });
 
-    it('goes back to the error with Retry when reading started from it', fakeAsync(() => {
-      filaments.resolveTagRead.and.returnValue(
+    it('goes back to the error with Retry when reading started from it', async () => {
+      vi.useFakeTimers();
+      filaments.resolveTagRead.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 0 }))
       );
       read('04A23F11');
       startReading();
       expect(el.textContent).not.toContain("Couldn't look up that tag");
 
-      tick(4000);
+      await vi.advanceTimersByTimeAsync(4000);
       fixture.detectChanges();
 
       expect(el.textContent).toContain(
         "Couldn't look up that tag. Check your connection."
       );
       expect(button('scan-retry')).toBeTruthy();
-      flush();
-    }));
+      await vi.runAllTimersAsync();
+    });
 
-    it('restarts the 4 seconds on another readingStarted', fakeAsync(() => {
+    it('restarts the 4 seconds on another readingStarted', async () => {
+      vi.useFakeTimers();
       startReading();
-      tick(3000);
+      await vi.advanceTimersByTimeAsync(3000);
       startReading();
 
-      tick(3000);
+      await vi.advanceTimersByTimeAsync(3000);
       fixture.detectChanges();
       expect(el.textContent).toContain('Reading tag, hold still…');
 
-      tick(1000);
+      await vi.advanceTimersByTimeAsync(1000);
       fixture.detectChanges();
       expect(el.textContent).toContain('Hold your phone to a spool');
-      flush();
-    }));
+      await vi.runAllTimersAsync();
+    });
 
-    it('does nothing once a tag arrives', fakeAsync(() => {
-      filaments.resolveTagRead.and.returnValue(new Subject<TagReadResponse>());
+    it('does nothing once a tag arrives', async () => {
+      vi.useFakeTimers();
+      filaments.resolveTagRead.mockReturnValue(new Subject<TagReadResponse>());
       startReading();
       read('04A23F11');
 
-      tick(4000);
+      await vi.advanceTimersByTimeAsync(4000);
       fixture.detectChanges();
 
       expect(el.textContent).toContain('Looking up the tag…');
-      flush();
-    }));
+      await vi.runAllTimersAsync();
+    });
 
-    it('goes back to the hold-still sheet when reading started from it', fakeAsync(() => {
-      filaments.resolveTagRead.and.returnValue(
+    it('goes back to the hold-still sheet when reading started from it', async () => {
+      vi.useFakeTimers();
+      filaments.resolveTagRead.mockReturnValue(
         unknown({ reading: null, hint: 'hold-still' })
       );
       read('805BEC3E');
       startReading();
       expect(el.textContent).toContain('Reading tag, hold still…');
 
-      tick(4000);
+      await vi.advanceTimersByTimeAsync(4000);
       fixture.detectChanges();
 
       expect(el.textContent).toContain(
         "Hold the phone still and tap again to read the spool's details"
       );
-      flush();
-    }));
+      await vi.runAllTimersAsync();
+    });
   });
 
   it('forgets a tap it drops while a lookup is running', async () => {
     await setUp();
-    filaments.resolveTagRead.and.returnValue(new Subject<TagReadResponse>());
+    filaments.resolveTagRead.mockReturnValue(new Subject<TagReadResponse>());
     read('04A23F11');
 
     read('04B00000');
@@ -260,7 +265,7 @@ describe('ScanSpoolSheetComponent', () => {
 
   it('a linked tag dismisses with that spool', async () => {
     await setUp();
-    filaments.resolveTagRead.and.returnValue(
+    filaments.resolveTagRead.mockReturnValue(
       of({
         status: 'linked',
         filament: { id: 'spool-1' } as FilamentDetail,
@@ -282,7 +287,7 @@ describe('ScanSpoolSheetComponent', () => {
 
   it('posts the whole read, not just the UID', async () => {
     await setUp();
-    filaments.resolveTagRead.and.returnValue(unknown());
+    filaments.resolveTagRead.mockReturnValue(unknown());
     const tag: TagRead = {
       uid: '805BEC3E',
       tech: 'nfca',
@@ -292,13 +297,15 @@ describe('ScanSpoolSheetComponent', () => {
 
     tags.next(tag);
 
-    expect(filaments.resolveTagRead).toHaveBeenCalledOnceWith(tag);
+    expect(filaments.resolveTagRead).toHaveBeenCalledTimes(1);
+
+    expect(filaments.resolveTagRead).toHaveBeenCalledWith(tag);
   });
 
   describe('an unknown tag', () => {
     it('shows the swatch and the summary line', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(unknown());
+      filaments.resolveTagRead.mockReturnValue(unknown());
 
       read('805BEC3E');
 
@@ -313,13 +320,13 @@ describe('ScanSpoolSheetComponent', () => {
         button('scan-swatch').classList.contains(
           'scan-sheet__swatch--translucent'
         )
-      ).toBeFalse();
+      ).toBe(false);
       expect(logger.logEvent).toHaveBeenCalledWith('MaterialsScan_Unknown');
     });
 
     it('draws a checkerboard behind a translucent color', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({ reading: { ...SNAPMAKER, alpha: 128 } })
       );
 
@@ -329,12 +336,12 @@ describe('ScanSpoolSheetComponent', () => {
         button('scan-swatch').classList.contains(
           'scan-sheet__swatch--translucent'
         )
-      ).toBeTrue();
+      ).toBe(true);
     });
 
     it('leaves out the parts the tag does not carry', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({
           reading: { format: 'openspool', materialType: 'PETG' },
         })
@@ -361,7 +368,7 @@ describe('ScanSpoolSheetComponent', () => {
       await setUp({
         filaments: [summary('a', 'Alpha PLA'), summary('b', 'Beta PLA')],
       });
-      filaments.resolveTagRead.and.returnValue(unknown({ suggestions }));
+      filaments.resolveTagRead.mockReturnValue(unknown({ suggestions }));
 
       read('805BEC3E');
 
@@ -382,13 +389,13 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('fetches only the suggested spools the list does not have', async () => {
       await setUp({ filaments: [summary('a', 'Alpha PLA')] });
-      filaments.getFilamentDetail.and.returnValue(
+      filaments.getFilamentDetail.mockReturnValue(
         of({
           ...summary('b', 'Beta PLA'),
           diameterMm: 1.75,
         } as unknown as FilamentDetail)
       );
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({
           suggestions: [
             { filamentId: 'a', score: 1, reasons: ['untagged'] },
@@ -399,25 +406,29 @@ describe('ScanSpoolSheetComponent', () => {
 
       read('805BEC3E');
 
-      expect(filaments.getFilamentDetail).toHaveBeenCalledOnceWith('b');
+      expect(filaments.getFilamentDetail).toHaveBeenCalledTimes(1);
+
+      expect(filaments.getFilamentDetail).toHaveBeenCalledWith('b');
       expect(el.textContent).toContain('Beta PLA');
     });
 
     it('choosing a suggestion links the tag with its reading', async () => {
       await setUp({ filaments: [summary('a', 'Alpha PLA')] });
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({
           suggestions: [{ filamentId: 'a', score: 1, reasons: ['untagged'] }],
         })
       );
-      filaments.addTagToFilament.and.returnValue(
+      filaments.addTagToFilament.mockReturnValue(
         of({ id: 'a' } as FilamentDetail)
       );
       read('805BEC3E');
 
       button('scan-suggestion').click();
 
-      expect(filaments.addTagToFilament).toHaveBeenCalledOnceWith(
+      expect(filaments.addTagToFilament).toHaveBeenCalledTimes(1);
+
+      expect(filaments.addTagToFilament).toHaveBeenCalledWith(
         'a',
         '805BEC3E',
         SNAPMAKER
@@ -430,12 +441,12 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('a 409 shows the conflict and stays open', async () => {
       await setUp({ filaments: [summary('a', 'Alpha PLA')] });
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({
           suggestions: [{ filamentId: 'a', score: 1, reasons: ['untagged'] }],
         })
       );
-      filaments.addTagToFilament.and.returnValue(
+      filaments.addTagToFilament.mockReturnValue(
         throwError(
           () =>
             new HttpErrorResponse({
@@ -457,12 +468,12 @@ describe('ScanSpoolSheetComponent', () => {
         "Tag 805BEC3E is already on Other Spool, so it wasn't added here."
       );
       expect(sheetRef.dismiss).not.toHaveBeenCalled();
-      expect(button('scan-suggestion').disabled).toBeFalse();
+      expect(button('scan-suggestion').disabled).toBe(false);
     });
 
     it('Search all materials dismisses with the tag and reading', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(unknown());
+      filaments.resolveTagRead.mockReturnValue(unknown());
       read('805BEC3E');
 
       button('scan-link').click();
@@ -485,7 +496,7 @@ describe('ScanSpoolSheetComponent', () => {
         manufacturer: 'Snapmaker',
         source: 'SpoolmanDB' as const,
       };
-      filaments.resolveTagRead.and.returnValue(unknown({ catalogMatch }));
+      filaments.resolveTagRead.mockReturnValue(unknown({ catalogMatch }));
       read('805BEC3E');
 
       button('scan-new').click();
@@ -501,7 +512,7 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('the hold-still hint still offers Link and Create', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({ reading: null, hint: 'hold-still' })
       );
 
@@ -524,17 +535,19 @@ describe('ScanSpoolSheetComponent', () => {
 
       it('keeps listening and forgets the UID so the same tag can be read again', async () => {
         await setUp();
-        filaments.resolveTagRead.and.returnValue(holdStill());
+        filaments.resolveTagRead.mockReturnValue(holdStill());
 
         read('805BEC3E');
 
-        expect(tags.observed).toBeTrue();
+        expect(tags.observed).toBe(true);
         expect(reader.forget).toHaveBeenCalledWith('805BEC3E');
       });
 
       it('a second read of the same UID shows what the tag says', async () => {
         await setUp();
-        filaments.resolveTagRead.and.returnValues(holdStill(), unknown());
+        filaments.resolveTagRead
+          .mockReturnValueOnce(holdStill())
+          .mockReturnValueOnce(unknown());
         read('805BEC3E');
         expect(el.querySelector('[data-testid="scan-summary"]')).toBeNull();
 
@@ -546,27 +559,28 @@ describe('ScanSpoolSheetComponent', () => {
         );
         expect(el.querySelector('[data-testid="scan-hold-still"]')).toBeNull();
         // Decoded: the sheet stops at this tag now.
-        expect(tags.observed).toBeFalse();
+        expect(tags.observed).toBe(false);
       });
 
       it('a read of a different tag is a new scan', async () => {
         await setUp();
-        filaments.resolveTagRead.and.returnValues(
-          holdStill(),
-          of({
-            status: 'linked',
-            filament: { id: 'spool-2' } as FilamentDetail,
-            reading: null,
-            catalogMatch: null,
-            suggestions: [],
-            hint: null,
-          })
-        );
+        filaments.resolveTagRead
+          .mockReturnValueOnce(holdStill())
+          .mockReturnValueOnce(
+            of({
+              status: 'linked',
+              filament: { id: 'spool-2' } as FilamentDetail,
+              reading: null,
+              catalogMatch: null,
+              suggestions: [],
+              hint: null,
+            })
+          );
         read('805BEC3E');
 
         read('04A23F11');
 
-        expect(filaments.resolveTagRead.calls.argsFor(1)[0].uid).toBe(
+        expect(vi.mocked(filaments.resolveTagRead).mock.calls[1][0].uid).toBe(
           '04A23F11'
         );
         expect(sheetRef.dismiss).toHaveBeenCalledWith({
@@ -578,23 +592,23 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('disables Cancel while a suggestion is being linked', async () => {
       await setUp({ filaments: [summary('a', 'Alpha PLA')] });
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({
           suggestions: [{ filamentId: 'a', score: 1, reasons: ['untagged'] }],
         })
       );
-      filaments.addTagToFilament.and.returnValue(new Subject<FilamentDetail>());
+      filaments.addTagToFilament.mockReturnValue(new Subject<FilamentDetail>());
       read('805BEC3E');
 
       button('scan-suggestion').click();
       fixture.detectChanges();
 
-      expect(button('scan-cancel').disabled).toBeTrue();
+      expect(button('scan-cancel').disabled).toBe(true);
     });
 
     it('an app without memory (no reading) shows Link and Create and no summary', async () => {
       await setUp({ filaments: [summary('a', 'Alpha PLA')] });
-      filaments.resolveTagRead.and.returnValue(
+      filaments.resolveTagRead.mockReturnValue(
         unknown({
           reading: null,
           suggestions: [{ filamentId: 'a', score: 1, reasons: ['untagged'] }],
@@ -618,7 +632,7 @@ describe('ScanSpoolSheetComponent', () => {
       const message =
         "This phone can't read the data on Snapmaker or Bambu tags; the tag can still be linked.";
       await setUp();
-      filaments.resolveTagRead.and.returnValue(unknown({ reading: null }));
+      filaments.resolveTagRead.mockReturnValue(unknown({ reading: null }));
 
       read('805BEC3E', { classicUnsupported: true });
       expect(el.textContent).toContain(message);
@@ -626,14 +640,14 @@ describe('ScanSpoolSheetComponent', () => {
 
       TestBed.resetTestingModule();
       await setUp();
-      filaments.resolveTagRead.and.returnValue(unknown({ reading: null }));
+      filaments.resolveTagRead.mockReturnValue(unknown({ reading: null }));
       read('805BEC3E', { classicUnsupported: true });
       expect(el.textContent).not.toContain(message);
     });
 
     it('does not mention it when the phone can read classic tags', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(unknown());
+      filaments.resolveTagRead.mockReturnValue(unknown());
 
       read('805BEC3E');
 
@@ -643,13 +657,13 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('stops at the first unknown tag', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(unknown());
+      filaments.resolveTagRead.mockReturnValue(unknown());
       read('04A23F11');
       read('04A23F12');
 
       expect(filaments.resolveTagRead).toHaveBeenCalledTimes(1);
       // Unsubscribed, so the picker that opens next owns the reader.
-      expect(tags.observed).toBeFalse();
+      expect(tags.observed).toBe(false);
     });
   });
 
@@ -659,7 +673,7 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('says so, forgets the UID and offers Retry', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValue(offline());
+      filaments.resolveTagRead.mockReturnValue(offline());
 
       read('04A23F11');
 
@@ -672,17 +686,18 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('Retry posts the same read again without a new tap', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValues(
-        offline(),
-        of({
-          status: 'linked',
-          filament: { id: 'spool-1' } as FilamentDetail,
-          reading: null,
-          catalogMatch: null,
-          suggestions: [],
-          hint: null,
-        })
-      );
+      filaments.resolveTagRead
+        .mockReturnValueOnce(offline())
+        .mockReturnValueOnce(
+          of({
+            status: 'linked',
+            filament: { id: 'spool-1' } as FilamentDetail,
+            reading: null,
+            catalogMatch: null,
+            suggestions: [],
+            hint: null,
+          })
+        );
       const tag: TagRead = {
         uid: '805BEC3E',
         tech: 'nfca',
@@ -694,7 +709,7 @@ describe('ScanSpoolSheetComponent', () => {
       button('scan-retry').click();
 
       expect(filaments.resolveTagRead).toHaveBeenCalledTimes(2);
-      expect(filaments.resolveTagRead.calls.argsFor(1)[0]).toEqual({
+      expect(vi.mocked(filaments.resolveTagRead).mock.calls[1][0]).toEqual({
         uid: '805BEC3E',
         tech: 'nfca',
         memory: { kind: 'classic', data: 'AAAA' },
@@ -707,17 +722,18 @@ describe('ScanSpoolSheetComponent', () => {
 
     it('a new tap during the error works too', async () => {
       await setUp();
-      filaments.resolveTagRead.and.returnValues(
-        offline(),
-        of({
-          status: 'linked',
-          filament: { id: 'spool-1' } as FilamentDetail,
-          reading: null,
-          catalogMatch: null,
-          suggestions: [],
-          hint: null,
-        })
-      );
+      filaments.resolveTagRead
+        .mockReturnValueOnce(offline())
+        .mockReturnValueOnce(
+          of({
+            status: 'linked',
+            filament: { id: 'spool-1' } as FilamentDetail,
+            reading: null,
+            catalogMatch: null,
+            suggestions: [],
+            hint: null,
+          })
+        );
       read('04A23F11');
 
       read('04A23F11');

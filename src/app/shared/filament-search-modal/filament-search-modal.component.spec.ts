@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA, WritableSignal, signal } from '@angular/core';
 import { FilamentListComponent } from '../filament-list/filament-list.component';
@@ -80,22 +81,26 @@ function buildDetail(): FilamentDetail {
 describe('FilamentSearchModalComponent', () => {
   let component: FilamentSearchModalComponent;
   let fixture: ComponentFixture<FilamentSearchModalComponent>;
-  let mockFilamentService: jasmine.SpyObj<FilamentService>;
-  let mockDialogRef: jasmine.SpyObj<MatDialogRef<FilamentSearchModalComponent>>;
+  let mockFilamentService: MockedObject<FilamentService>;
+  let mockDialogRef: MockedObject<MatDialogRef<FilamentSearchModalComponent>>;
 
   beforeEach(async () => {
-    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    const mockLogger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
-    mockFilamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getCurrentUserFilamentSummaries', 'getFilamentDetail']
-    );
+    mockFilamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+      getFilamentDetail: vi.fn().mockName('FilamentService.getFilamentDetail'),
+    } as unknown as MockedObject<FilamentService>;
 
-    mockDialogRef = jasmine.createSpyObj<
-      MatDialogRef<FilamentSearchModalComponent>
-    >('MatDialogRef', ['close']);
+    mockDialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<
+      MatDialogRef<FilamentSearchModalComponent, any>
+    >;
 
     await TestBed.configureTestingModule({
       imports: [MatDialogModule, FilamentSearchModalComponent],
@@ -106,10 +111,10 @@ describe('FilamentSearchModalComponent', () => {
         { provide: MAT_DIALOG_DATA, useValue: {} },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj<ToastrService>('ToastrService', [
-            'error',
-            'warning',
-          ]),
+          useValue: {
+            error: vi.fn().mockName('ToastrService.error'),
+            warning: vi.fn().mockName('ToastrService.warning'),
+          },
         },
       ],
     })
@@ -132,7 +137,7 @@ describe('FilamentSearchModalComponent', () => {
 
   describe('handleQrScanned', () => {
     it('keeps the remaining filament values from the scanned material', () => {
-      mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
+      mockFilamentService.getFilamentDetail.mockReturnValue(of(buildDetail()));
 
       component.handleQrScanned({
         success: true,
@@ -141,7 +146,7 @@ describe('FilamentSearchModalComponent', () => {
       });
 
       expect(mockDialogRef.close).toHaveBeenCalled();
-      const selected = mockDialogRef.close.calls.mostRecent().args[0];
+      const selected = vi.mocked(mockDialogRef.close).mock.lastCall[0];
       expect(selected.filamentRemaining).toBe(750000);
       expect(selected.filamentLengthRemainingInM).toBe(248);
       expect(selected.filamentVolumeRemainingInMl).toBe(605);
@@ -149,7 +154,7 @@ describe('FilamentSearchModalComponent', () => {
 
     it('keeps the remaining values when adding in multi-select mode', () => {
       component.data.multiSelect = true;
-      mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
+      mockFilamentService.getFilamentDetail.mockReturnValue(of(buildDetail()));
 
       component.handleQrScanned({
         success: true,
@@ -186,7 +191,7 @@ describe('FilamentSearchModalComponent', () => {
     });
 
     it('a QR pick in multi-select is part of the selection the list shows', () => {
-      mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
+      mockFilamentService.getFilamentDetail.mockReturnValue(of(buildDetail()));
 
       component.handleQrScanned({
         success: true,
@@ -194,11 +199,11 @@ describe('FilamentSearchModalComponent', () => {
         rawText: 'https://www.3dprintlog.com/materials/filament-1',
       });
 
-      expect(component.selectedIds().has('filament-1')).toBeTrue();
+      expect(component.selectedIds().has('filament-1')).toBe(true);
     });
 
     it('a QR pick survives a later checkbox click on another row', () => {
-      mockFilamentService.getFilamentDetail.and.returnValue(of(buildDetail()));
+      mockFilamentService.getFilamentDetail.mockReturnValue(of(buildDetail()));
       component.handleQrScanned({
         success: true,
         filamentId: 'filament-1',
@@ -235,7 +240,7 @@ describe('FilamentSearchModalComponent', () => {
       fixture.detectChanges();
 
       expect(list()).toBe(before);
-      expect(list()!.hidden).toBeTrue();
+      expect(list()!.hidden).toBe(true);
     });
   });
 });
@@ -243,19 +248,19 @@ describe('FilamentSearchModalComponent', () => {
 describe('FilamentSearchModalComponent NFC tags', () => {
   let component: FilamentSearchModalComponent;
   let fixture: ComponentFixture<FilamentSearchModalComponent>;
-  let filaments: jasmine.SpyObj<FilamentService>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<FilamentSearchModalComponent>>;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logger: jasmine.SpyObj<LoggingService>;
+  let filaments: MockedObject<FilamentService>;
+  let dialogRef: MockedObject<MatDialogRef<FilamentSearchModalComponent>>;
+  let dialog: MockedObject<MatDialog>;
+  let toastr: MockedObject<ToastrService>;
+  let logger: MockedObject<LoggingService>;
   let tags: Subject<TagRead>;
   let reader: {
     available: WritableSignal<boolean>;
     status: WritableSignal<NfcStatus>;
     listen: () => Subject<TagRead>;
-    forget: jasmine.Spy;
-    openSettings: jasmine.Spy;
-    scan: jasmine.Spy;
+    forget: Mock;
+    openSettings: Mock;
+    scan: Mock;
     scansOnDemand: WritableSignal<boolean>;
   };
   /** What the next confirm dialog answers: true = yes, undefined = no, a Subject = still open. */
@@ -267,7 +272,11 @@ describe('FilamentSearchModalComponent NFC tags', () => {
   });
   const text = () => (fixture.nativeElement as HTMLElement).textContent ?? '';
   const lastDialogData = () =>
-    (dialog.open.calls.mostRecent().args[1] as { data: SimpleDialogData }).data;
+    (
+      vi.mocked(dialog.open).mock.lastCall[1] as {
+        data: SimpleDialogData;
+      }
+    ).data;
 
   async function setUp(data: Partial<DialogData> = {}): Promise<void> {
     tags = new Subject<TagRead>();
@@ -275,20 +284,22 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       available: signal(true),
       status: signal<NfcStatus>('ready'),
       listen: () => tags,
-      forget: jasmine.createSpy('forget'),
-      openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
-      scan: jasmine.createSpy('scan').and.resolveTo(),
+      forget: vi.fn(),
+      openSettings: vi.fn().mockResolvedValue(undefined),
+      scan: vi.fn().mockResolvedValue(undefined),
       scansOnDemand: signal(false),
     };
-    filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getCurrentUserFilamentSummaries',
-      'getFilamentDetail',
-      'getFilamentByTag',
-      'resolveTagRead',
-      'addTagToFilament',
-    ]);
+    filaments = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+      getFilamentDetail: vi.fn().mockName('FilamentService.getFilamentDetail'),
+      getFilamentByTag: vi.fn().mockName('FilamentService.getFilamentByTag'),
+      resolveTagRead: vi.fn().mockName('FilamentService.resolveTagRead'),
+      addTagToFilament: vi.fn().mockName('FilamentService.addTagToFilament'),
+    } as unknown as MockedObject<FilamentService>;
     // Most specs care only whether a spool has the tag: adapt their getFilamentByTag answers.
-    filaments.resolveTagRead.and.callFake((read) =>
+    filaments.resolveTagRead.mockImplementation((read) =>
       filaments.getFilamentByTag(read.uid).pipe(
         map((detail) => ({
           status: detail ? ('linked' as const) : ('unknown' as const),
@@ -300,12 +311,16 @@ describe('FilamentSearchModalComponent NFC tags', () => {
         }))
       )
     );
-    dialogRef = jasmine.createSpyObj<
-      MatDialogRef<FilamentSearchModalComponent>
-    >('MatDialogRef', ['close']);
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<
+      MatDialogRef<FilamentSearchModalComponent, any>
+    >;
     dialogAnswers = [];
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.callFake(
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockImplementation(
       () =>
         ({
           afterClosed: () => {
@@ -314,15 +329,15 @@ describe('FilamentSearchModalComponent NFC tags', () => {
           },
         }) as never
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'error',
-      'warning',
-      'success',
-    ]);
-    logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      error: vi.fn().mockName('ToastrService.error'),
+      warning: vi.fn().mockName('ToastrService.warning'),
+      success: vi.fn().mockName('ToastrService.success'),
+    } as unknown as MockedObject<ToastrService>;
+    logger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [FilamentSearchModalComponent],
@@ -408,13 +423,13 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('a known tag closes single-select with the spool', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(spool()));
+    filaments.getFilamentByTag.mockReturnValue(of(spool()));
 
     tags.next({ uid: '04A23F11', tech: 'nfca' });
 
     expect(filaments.getFilamentByTag).toHaveBeenCalledWith('04A23F11');
     expect(dialogRef.close).toHaveBeenCalledWith(
-      jasmine.objectContaining({ id: 'filament-1' })
+      expect.objectContaining({ id: 'filament-1' })
     );
     expect(logger.logEvent).toHaveBeenCalledWith('TagReader_Lookup', {
       known: true,
@@ -423,10 +438,9 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('a known tag in multi-select is selected and the picker keeps listening', async () => {
     await setUp({ multiSelect: true });
-    filaments.getFilamentByTag.and.returnValues(
-      of(spool()),
-      of(spool({ id: 'filament-2' }))
-    );
+    filaments.getFilamentByTag
+      .mockReturnValueOnce(of(spool()))
+      .mockReturnValueOnce(of(spool({ id: 'filament-2' })));
 
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     tags.next({ uid: '04A23F12', tech: 'nfca' });
@@ -437,7 +451,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('a known tag already selected in multi-select is not added twice', async () => {
     await setUp({ multiSelect: true });
-    filaments.getFilamentByTag.and.returnValue(of(spool()));
+    filaments.getFilamentByTag.mockReturnValue(of(spool()));
 
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     tags.next({ uid: '04A23F11', tech: 'nfca' });
@@ -447,7 +461,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('asks before picking a spool in another category', async () => {
     await setUp({ filterByMaterialCategory: 'filament' });
-    filaments.getFilamentByTag.and.returnValue(
+    filaments.getFilamentByTag.mockReturnValue(
       of(
         spool({ displayName: 'Tough Resin', materialCategoryNickname: 'resin' })
       )
@@ -464,7 +478,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('does not pick when the user declines the check', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(spool({ isActive: false })));
+    filaments.getFilamentByTag.mockReturnValue(of(spool({ isActive: false })));
     dialogAnswers = [undefined];
 
     tags.next({ uid: '04A23F11', tech: 'nfca' });
@@ -477,7 +491,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('puts both checks in one message', async () => {
     await setUp({ filterByMaterialCategory: 'filament' });
-    filaments.getFilamentByTag.and.returnValue(
+    filaments.getFilamentByTag.mockReturnValue(
       of(spool({ materialCategoryNickname: 'resin', isActive: false }))
     );
     dialogAnswers = [true];
@@ -491,7 +505,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('escapes spool names in the check', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(
+    filaments.getFilamentByTag.mockReturnValue(
       of(spool({ displayName: '<b>Bold</b>', isActive: false }))
     );
     dialogAnswers = [undefined];
@@ -503,7 +517,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('an unknown tag shows the banner', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(null));
+    filaments.getFilamentByTag.mockReturnValue(of(null));
 
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     fixture.detectChanges();
@@ -517,8 +531,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('unknown then a pick: Add tag and select links it, then selects', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(null));
-    filaments.addTagToFilament.and.returnValue(of(spool()));
+    filaments.getFilamentByTag.mockReturnValue(of(null));
+    filaments.addTagToFilament.mockReturnValue(of(spool()));
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     dialogAnswers = [true];
 
@@ -538,7 +552,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       null
     );
     expect(dialogRef.close).toHaveBeenCalledWith(
-      jasmine.objectContaining({ id: 'filament-1' })
+      expect.objectContaining({ id: 'filament-1' })
     );
     expect(component.pendingTagUid()).toBeNull();
   });
@@ -546,7 +560,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
   it('a tag read in the modal goes through tag-reads and links with its reading', async () => {
     await setUp();
     const reading: TagReading = { format: 'snapmaker', materialType: 'PLA' };
-    filaments.resolveTagRead.and.returnValue(
+    filaments.resolveTagRead.mockReturnValue(
       of({
         status: 'unknown',
         filament: null,
@@ -556,7 +570,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
         hint: null,
       })
     );
-    filaments.addTagToFilament.and.returnValue(of(spool()));
+    filaments.addTagToFilament.mockReturnValue(of(spool()));
     const read: TagRead = { uid: '04A23F11', tech: 'nfca', techs: ['NfcA'] };
     tags.next(read);
     dialogAnswers = [true];
@@ -574,7 +588,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
   it('a pending reading from the sheet is sent with the link', async () => {
     const reading: TagReading = { format: 'snapmaker' };
     await setUp({ pendingTagUid: '04A23F11', pendingTagReading: reading });
-    filaments.addTagToFilament.and.returnValue(of(spool()));
+    filaments.addTagToFilament.mockReturnValue(of(spool()));
     dialogAnswers = [true];
 
     component.handleFilamentSelected(filamentDetailToSummary(spool()));
@@ -588,7 +602,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('unknown then a pick: Just select selects without linking', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(null));
+    filaments.getFilamentByTag.mockReturnValue(of(null));
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     dialogAnswers = [undefined];
 
@@ -603,8 +617,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('a link that fails with 409 still selects and names the other spool', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(null));
-    filaments.addTagToFilament.and.returnValue(
+    filaments.getFilamentByTag.mockReturnValue(of(null));
+    filaments.addTagToFilament.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -623,7 +637,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     component.handleFilamentSelected(filamentDetailToSummary(spool()));
 
     expect(dialogRef.close).toHaveBeenCalled();
-    expect(toastr.warning.calls.mostRecent().args[0]).toContain('Old Spool');
+    expect(vi.mocked(toastr.warning).mock.lastCall[0]).toContain('Old Spool');
     expect(logger.logEvent).toHaveBeenCalledWith(
       'FilamentSearchModal_TagLinkFailed',
       { status: 409, conflict: true }
@@ -634,7 +648,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
     await setUp({ multiSelect: true });
     const other = filamentDetailToSummary(spool({ id: 'filament-2' }));
     component.toggleFilament(other);
-    filaments.getFilamentByTag.and.returnValue(of(null));
+    filaments.getFilamentByTag.mockReturnValue(of(null));
     tags.next({ uid: '04A23F11', tech: 'nfca' });
 
     component.toggleFilament(other);
@@ -650,7 +664,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('dismissing the banner makes picks ordinary', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(of(null));
+    filaments.getFilamentByTag.mockReturnValue(of(null));
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     fixture.detectChanges();
 
@@ -665,7 +679,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
   it('a failed lookup says so and forgets the UID', async () => {
     await setUp();
-    filaments.getFilamentByTag.and.returnValue(
+    filaments.getFilamentByTag.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 0 }))
     );
 
@@ -675,13 +689,13 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       "Couldn't look up that tag. Check your connection."
     );
     expect(reader.forget).toHaveBeenCalledWith('04A23F11');
-    expect(component.loading()).toBeFalse();
+    expect(component.loading()).toBe(false);
   });
 
   it('ignores a tag that arrives during a lookup', async () => {
     await setUp();
     const pending = new Subject<FilamentDetail | null>();
-    filaments.getFilamentByTag.and.returnValue(pending);
+    filaments.getFilamentByTag.mockReturnValue(pending);
 
     tags.next({ uid: '04A23F11', tech: 'nfca' });
     tags.next({ uid: '04A23F12', tech: 'nfca' });
@@ -692,8 +706,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
   describe('one tag at a time', () => {
     it('ignores a tag read while the link dialog is open', async () => {
       await setUp({ multiSelect: true });
-      filaments.getFilamentByTag.and.returnValue(of(null));
-      filaments.addTagToFilament.and.returnValue(of(spool()));
+      filaments.getFilamentByTag.mockReturnValue(of(null));
+      filaments.addTagToFilament.mockReturnValue(of(spool()));
       tags.next({ uid: '04A23F11', tech: 'nfca' });
       const linkAnswer = new Subject<boolean | undefined>();
       dialogAnswers = [linkAnswer];
@@ -706,7 +720,8 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       linkAnswer.complete();
 
       expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
-      expect(filaments.addTagToFilament).toHaveBeenCalledOnceWith(
+      expect(filaments.addTagToFilament).toHaveBeenCalledTimes(1);
+      expect(filaments.addTagToFilament).toHaveBeenCalledWith(
         'filament-1',
         '04A23F11',
         null
@@ -717,9 +732,9 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
     it('ignores a tag read while the link is saving, and keeps the overlay up', async () => {
       await setUp({ multiSelect: true });
-      filaments.getFilamentByTag.and.returnValue(of(null));
+      filaments.getFilamentByTag.mockReturnValue(of(null));
       const saving = new Subject<FilamentDetail>();
-      filaments.addTagToFilament.and.returnValue(saving);
+      filaments.addTagToFilament.mockReturnValue(saving);
       tags.next({ uid: '04A23F11', tech: 'nfca' });
       dialogAnswers = [true];
 
@@ -727,21 +742,20 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       tags.next({ uid: '04A23F11', tech: 'nfca' });
 
       expect(filaments.getFilamentByTag).toHaveBeenCalledTimes(1);
-      expect(component.loading()).toBeTrue();
+      expect(component.loading()).toBe(true);
       expect(component.pendingTagUid()).toBeNull();
 
       saving.next(spool());
       saving.complete();
-      expect(component.loading()).toBeFalse();
+      expect(component.loading()).toBe(false);
       expect([...component.selectedIds()]).toEqual(['filament-1']);
     });
 
     it('ignores a tag read while the pick check is open', async () => {
       await setUp();
-      filaments.getFilamentByTag.and.returnValues(
-        of(spool({ isActive: false })),
-        of(spool({ id: 'filament-2' }))
-      );
+      filaments.getFilamentByTag
+        .mockReturnValueOnce(of(spool({ isActive: false })))
+        .mockReturnValueOnce(of(spool({ id: 'filament-2' })));
       const check = new Subject<boolean | undefined>();
       dialogAnswers = [check];
 
@@ -754,16 +768,17 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       check.next(undefined);
       check.complete();
       tags.next({ uid: '04B00000', tech: 'nfca' });
-      expect(dialogRef.close).toHaveBeenCalledOnceWith(
-        jasmine.objectContaining({ id: 'filament-2' })
+      expect(dialogRef.close).toHaveBeenCalledTimes(1);
+      expect(dialogRef.close).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'filament-2' })
       );
     });
 
     it('a link that finishes after Close does not change the result', async () => {
       await setUp();
-      filaments.getFilamentByTag.and.returnValue(of(null));
+      filaments.getFilamentByTag.mockReturnValue(of(null));
       const saving = new Subject<FilamentDetail>();
-      filaments.addTagToFilament.and.returnValue(saving);
+      filaments.addTagToFilament.mockReturnValue(saving);
       tags.next({ uid: '04A23F11', tech: 'nfca' });
       dialogAnswers = [true];
 
@@ -772,14 +787,16 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       saving.next(spool());
       saving.complete();
 
-      expect(dialogRef.close).toHaveBeenCalledOnceWith(null);
+      expect(dialogRef.close).toHaveBeenCalledTimes(1);
+
+      expect(dialogRef.close).toHaveBeenCalledWith(null);
     });
 
     it('a confirmed link still saves when the picker is closed mid-save', async () => {
       await setUp();
-      filaments.getFilamentByTag.and.returnValue(of(null));
+      filaments.getFilamentByTag.mockReturnValue(of(null));
       const saving = new Subject<FilamentDetail>();
-      filaments.addTagToFilament.and.returnValue(saving);
+      filaments.addTagToFilament.mockReturnValue(saving);
       tags.next({ uid: '04A23F11', tech: 'nfca' });
       dialogAnswers = [true];
 
@@ -787,7 +804,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       // Back, Escape or the backdrop closes the dialog and destroys the picker.
       fixture.destroy();
 
-      expect(saving.observed).toBeTrue();
+      expect(saving.observed).toBe(true);
       saving.next(spool());
       saving.complete();
       expect(logger.logEvent).toHaveBeenCalledWith(
@@ -797,7 +814,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
     it('a read dropped while busy does not use up the repeat window', async () => {
       await setUp();
-      filaments.getFilamentByTag.and.returnValue(
+      filaments.getFilamentByTag.mockReturnValue(
         of(spool({ isActive: false }))
       );
       const check = new Subject<boolean | undefined>();
@@ -811,7 +828,7 @@ describe('FilamentSearchModalComponent NFC tags', () => {
 
     it('cancelling the pick check lets the same spool be tapped again at once', async () => {
       await setUp();
-      filaments.getFilamentByTag.and.returnValue(
+      filaments.getFilamentByTag.mockReturnValue(
         of(spool({ isActive: false }))
       );
       dialogAnswers = [undefined];
@@ -826,9 +843,9 @@ describe('FilamentSearchModalComponent NFC tags', () => {
       component.toggleFilament(
         filamentDetailToSummary(spool({ id: 'filament-2' }))
       );
-      filaments.getFilamentByTag.and.returnValue(of(null));
+      filaments.getFilamentByTag.mockReturnValue(of(null));
       const saving = new Subject<FilamentDetail>();
-      filaments.addTagToFilament.and.returnValue(saving);
+      filaments.addTagToFilament.mockReturnValue(saving);
       tags.next({ uid: '04A23F11', tech: 'nfca' });
       dialogAnswers = [true];
       component.toggleFilament(filamentDetailToSummary(spool()));
@@ -840,12 +857,12 @@ describe('FilamentSearchModalComponent NFC tags', () => {
             fixture.nativeElement as HTMLElement
           ).querySelectorAll<HTMLButtonElement>('mat-dialog-actions button')
         ).find((b) => b.textContent?.includes('Add'))!;
-      expect(addButton().disabled).toBeTrue();
+      expect(addButton().disabled).toBe(true);
 
       saving.next(spool());
       saving.complete();
       fixture.detectChanges();
-      expect(addButton().disabled).toBeFalse();
+      expect(addButton().disabled).toBe(false);
     });
   });
 

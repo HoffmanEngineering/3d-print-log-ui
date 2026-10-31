@@ -122,7 +122,7 @@ describe('PrintFileService', () => {
         type: 'application/octet-stream',
       });
       const result = service.validateFile(file);
-      expect(result.valid).toBeTrue();
+      expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
@@ -131,7 +131,7 @@ describe('PrintFileService', () => {
         type: 'application/pdf',
       });
       const result = service.validateFile(file);
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect(result.error).toContain('.pdf');
       expect(result.error).toContain('not supported');
     });
@@ -143,7 +143,7 @@ describe('PrintFileService', () => {
       // Override size via Object.defineProperty since File.size is read-only
       Object.defineProperty(bigFile, 'size', { value: 201 * 1024 * 1024 });
       const result = service.validateFile(bigFile);
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect(result.error).toContain('200MB');
     });
   });

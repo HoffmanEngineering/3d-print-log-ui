@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { PLATFORM_ID, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -16,7 +17,7 @@ describe('NotifierNoticeComponent', () => {
   let fixture: ComponentFixture<NotifierNoticeComponent>;
   let httpMock: HttpTestingController;
   let user: WritableSignal<unknown>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let logging: MockedObject<LoggingService>;
 
   const base = `${environment.printLogApiUrl}/api/Connections`;
 
@@ -50,10 +51,10 @@ describe('NotifierNoticeComponent', () => {
   async function render(
     platform: 'browser' | 'server' = 'browser'
   ): Promise<void> {
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     await TestBed.configureTestingModule({
       imports: [NotifierNoticeComponent],
       providers: [

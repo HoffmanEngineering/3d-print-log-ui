@@ -3,12 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import {
-  TestBed,
-  fakeAsync,
-  flushMicrotasks,
-  tick,
-} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { environment } from 'src/environments/environment';
 
 import { AuthService } from '../services/auth.service';
@@ -20,7 +15,9 @@ import {
 describe('PrinterThumbnailStore', () => {
   let store: PrinterThumbnailStore;
   let httpMock: HttpTestingController;
-  let auth: { loggedIn: boolean | null };
+  let auth: {
+    loggedIn: boolean | null;
+  };
 
   const url = `${environment.printLogApiUrl}/api/Printers/thumbnails`;
 
@@ -131,21 +128,22 @@ describe('PrinterThumbnailStore', () => {
     httpMock.expectNone(url);
   });
 
-  it('refetches after the TTL elapses', fakeAsync(() => {
+  it('refetches after the TTL elapses', async () => {
+    vi.useFakeTimers();
     setUp();
 
     store.thumbnailFor(1);
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'a' }]);
 
-    tick(THUMBNAIL_TTL_MS + 1);
+    await vi.advanceTimersByTimeAsync(THUMBNAIL_TTL_MS + 1);
 
     store.thumbnailFor(1);
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(0);
     httpMock.expectOne(url).flush([{ printerId: 1, thumbnailUrl: 'b' }]);
 
     expect(store.thumbnailFor(1)).toBe('b');
-  }));
+  });
 
   it('refetches immediately after invalidate', async () => {
     setUp();

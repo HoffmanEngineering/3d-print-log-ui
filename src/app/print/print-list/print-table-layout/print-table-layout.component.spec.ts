@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -12,7 +13,7 @@ import {
 
 describe('PrintTableLayoutComponent', () => {
   let changes: string[][];
-  let dialogRef: jasmine.SpyObj<MatDialogRef<PrintTableLayoutComponent>>;
+  let dialogRef: MockedObject<MatDialogRef<PrintTableLayoutComponent>>;
 
   const columns = ['title', 'printer', 'status', 'date'].map(
     (key) => ({ key }) as ColumnDefinition
@@ -52,7 +53,9 @@ describe('PrintTableLayoutComponent', () => {
 
   beforeEach(() => {
     changes = [];
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<MatDialogRef<PrintTableLayoutComponent, any>>;
   });
 
   it('lists the shown columns in the order the table shows them', () => {

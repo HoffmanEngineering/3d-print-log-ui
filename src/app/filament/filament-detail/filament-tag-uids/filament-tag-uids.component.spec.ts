@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -57,11 +58,15 @@ describe('FilamentTagUidsComponent', () => {
         },
         {
           provide: FilamentService,
-          useValue: jasmine.createSpyObj('FilamentService', ['resolveTagRead']),
+          useValue: {
+            resolveTagRead: vi.fn().mockName('FilamentService.resolveTagRead'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();
@@ -107,7 +112,7 @@ describe('FilamentTagUidsComponent', () => {
     pressEnter();
 
     expect(host.control.value).toEqual(['04A23F11']);
-    expect(host.control.dirty).toBeTrue();
+    expect(host.control.dirty).toBe(true);
     expect(chipTexts()).toEqual(['04A23F11']);
     expect(input().value).toBe('');
   });
@@ -115,7 +120,7 @@ describe('FilamentTagUidsComponent', () => {
   it('does not let Enter submit the surrounding form', () => {
     type('04A23F11');
 
-    expect(pressEnter().defaultPrevented).toBeTrue();
+    expect(pressEnter().defaultPrevented).toBe(true);
   });
 
   it('adds the pending UID when the field loses focus', () => {
@@ -142,14 +147,14 @@ describe('FilamentTagUidsComponent', () => {
     input().dispatchEvent(new Event('blur'));
     fixture.detectChanges();
 
-    expect(host.control.valid).toBeFalse();
+    expect(host.control.valid).toBe(false);
     expect(host.control.errors?.['tagUidDraft']).toContain(
       'even number of hex digits'
     );
 
     type('');
 
-    expect(host.control.valid).toBeTrue();
+    expect(host.control.valid).toBe(true);
   });
 
   it('merges a UID already on this spool in another format', () => {
@@ -173,7 +178,7 @@ describe('FilamentTagUidsComponent', () => {
     fixture.detectChanges();
 
     expect(host.control.value).toEqual(['DEADBEEF']);
-    expect(host.control.dirty).toBeTrue();
+    expect(host.control.dirty).toBe(true);
   });
 
   it('stops accepting tags at the 16-tag cap', () => {
@@ -182,7 +187,7 @@ describe('FilamentTagUidsComponent', () => {
     );
     fixture.detectChanges();
 
-    expect(input().disabled).toBeTrue();
+    expect(input().disabled).toBe(true);
   });
 
   it('names and links the spool that already holds a conflicting tag', () => {
@@ -213,7 +218,10 @@ describe('FilamentTagUidsComponent', () => {
 class ScanHostComponent {
   readonly control = new FormControl<string[]>([], { nonNullable: true });
   filamentId: string | null = 'this-spool';
-  readings: { uid: string; reading: TagReading }[] = [];
+  readings: {
+    uid: string;
+    reading: TagReading;
+  }[] = [];
 }
 
 const SCANNED_READING: TagReading = {
@@ -250,13 +258,13 @@ describe('FilamentTagUidsComponent scanning', () => {
     available: WritableSignal<boolean>;
     status: WritableSignal<NfcStatus>;
     listen: () => Subject<TagRead>;
-    forget: jasmine.Spy;
-    openSettings: jasmine.Spy;
-    scan: jasmine.Spy;
+    forget: Mock;
+    openSettings: Mock;
+    scan: Mock;
     scansOnDemand: WritableSignal<boolean>;
   };
-  let filaments: jasmine.SpyObj<FilamentService>;
-  let logger: jasmine.SpyObj<LoggingService>;
+  let filaments: MockedObject<FilamentService>;
+  let logger: MockedObject<LoggingService>;
 
   beforeEach(async () => {
     tags = new Subject<TagRead>();
@@ -264,18 +272,18 @@ describe('FilamentTagUidsComponent scanning', () => {
       available: signal(true),
       status: signal<NfcStatus>('ready'),
       listen: () => tags,
-      forget: jasmine.createSpy('forget'),
-      openSettings: jasmine.createSpy('openSettings').and.resolveTo(),
-      scan: jasmine.createSpy('scan').and.resolveTo(),
+      forget: vi.fn(),
+      openSettings: vi.fn().mockResolvedValue(undefined),
+      scan: vi.fn().mockResolvedValue(undefined),
       scansOnDemand: signal(false),
     };
-    filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'resolveTagRead',
-    ]);
-    filaments.resolveTagRead.and.returnValue(of(unknownTag()));
-    logger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    filaments = {
+      resolveTagRead: vi.fn().mockName('FilamentService.resolveTagRead'),
+    } as unknown as MockedObject<FilamentService>;
+    filaments.resolveTagRead.mockReturnValue(of(unknownTag()));
+    logger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [ScanHostComponent],
@@ -320,7 +328,9 @@ describe('FilamentTagUidsComponent scanning', () => {
 
     scan('805BEC3E', { techs: ['NfcA'], memory });
 
-    expect(filaments.resolveTagRead).toHaveBeenCalledOnceWith({
+    expect(filaments.resolveTagRead).toHaveBeenCalledTimes(1);
+
+    expect(filaments.resolveTagRead).toHaveBeenCalledWith({
       uid: '805BEC3E',
       tech: 'nfca',
       techs: ['NfcA'],
@@ -329,7 +339,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('hands the parent what a new tag says, by UID', () => {
-    filaments.resolveTagRead.and.returnValue(of(unknownTag(SCANNED_READING)));
+    filaments.resolveTagRead.mockReturnValue(of(unknownTag(SCANNED_READING)));
 
     scan('805BEC3E', { memory: { kind: 'classic', data: 'AAAA' } });
 
@@ -340,10 +350,9 @@ describe('FilamentTagUidsComponent scanning', () => {
 
   it('keeps one reading per UID across scans', () => {
     const second: TagReading = { ...SCANNED_READING, materialType: 'PETG' };
-    filaments.resolveTagRead.and.returnValues(
-      of(unknownTag(SCANNED_READING)),
-      of(unknownTag(second))
-    );
+    filaments.resolveTagRead
+      .mockReturnValueOnce(of(unknownTag(SCANNED_READING)))
+      .mockReturnValueOnce(of(unknownTag(second)));
 
     scan('805BEC3E');
     scan('04A23F11');
@@ -362,7 +371,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('keeps no reading for a tag another spool holds', () => {
-    filaments.resolveTagRead.and.returnValue(
+    filaments.resolveTagRead.mockReturnValue(
       of({ ...linkedTo('other', 'Old Spool'), reading: SCANNED_READING })
     );
 
@@ -428,7 +437,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('shows a conflict at scan time when another spool holds the tag', () => {
-    filaments.resolveTagRead.and.returnValue(
+    filaments.resolveTagRead.mockReturnValue(
       of(linkedTo('other', 'Old Spool'))
     );
 
@@ -445,7 +454,7 @@ describe('FilamentTagUidsComponent scanning', () => {
 
   it('a conflict that answers after its chip was removed is not shown', () => {
     const lookup = new Subject<TagReadResponse>();
-    filaments.resolveTagRead.and.returnValue(lookup);
+    filaments.resolveTagRead.mockReturnValue(lookup);
 
     scan('04A23F11');
     el.querySelector<HTMLElement>(
@@ -459,7 +468,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('loading another value clears a scan-time conflict', () => {
-    filaments.resolveTagRead.and.returnValue(
+    filaments.resolveTagRead.mockReturnValue(
       of(linkedTo('other', 'Old Spool'))
     );
     scan('04A23F11');
@@ -484,7 +493,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('this spool holding the tag is not a conflict', () => {
-    filaments.resolveTagRead.and.returnValue(of(linkedTo('this-spool', 'Me')));
+    filaments.resolveTagRead.mockReturnValue(of(linkedTo('this-spool', 'Me')));
 
     scan('04A23F11');
 
@@ -492,7 +501,7 @@ describe('FilamentTagUidsComponent scanning', () => {
   });
 
   it('a failed lookup still adds the tag and forgets the UID', () => {
-    filaments.resolveTagRead.and.returnValue(
+    filaments.resolveTagRead.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 503 }))
     );
 
@@ -578,11 +587,15 @@ describe('FilamentTagUidsComponent tag details', () => {
         },
         {
           provide: FilamentService,
-          useValue: jasmine.createSpyObj('FilamentService', ['resolveTagRead']),
+          useValue: {
+            resolveTagRead: vi.fn().mockName('FilamentService.resolveTagRead'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();

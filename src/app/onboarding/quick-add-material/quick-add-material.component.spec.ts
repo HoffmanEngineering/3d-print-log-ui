@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -62,9 +63,9 @@ class SecondaryActionHostComponent {}
 describe('QuickAddMaterialComponent', () => {
   let fixture: ComponentFixture<QuickAddMaterialComponent>;
   let component: QuickAddMaterialComponent;
-  let filaments: jasmine.SpyObj<FilamentService>;
-  let printers: jasmine.SpyObj<PrinterService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let filaments: MockedObject<FilamentService>;
+  let printers: MockedObject<PrinterService>;
+  let logging: MockedObject<LoggingService>;
   let saved: FilamentDetail[];
 
   async function setup(loadIntoPrinterId: number | null = null) {
@@ -79,18 +80,18 @@ describe('QuickAddMaterialComponent', () => {
   }
 
   beforeEach(() => {
-    filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'addFilament',
-    ]);
-    filaments.addFilament.and.callFake((f) => of({ ...f, id: 'new-id' }));
-    printers = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'loadSlot',
-    ]);
-    printers.loadSlot.and.returnValue(of([]));
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    filaments = {
+      addFilament: vi.fn().mockName('FilamentService.addFilament'),
+    } as unknown as MockedObject<FilamentService>;
+    filaments.addFilament.mockImplementation((f) => of({ ...f, id: 'new-id' }));
+    printers = {
+      loadSlot: vi.fn().mockName('PrinterService.loadSlot'),
+    } as unknown as MockedObject<PrinterService>;
+    printers.loadSlot.mockReturnValue(of([]));
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     TestBed.configureTestingModule({
       imports: [QuickAddMaterialComponent, NoopAnimationsModule],
       providers: [
@@ -146,8 +147,8 @@ describe('QuickAddMaterialComponent', () => {
 
     await component.save();
 
-    const body = filaments.addFilament.calls.mostRecent().args[0];
-    expect(body.initialNominalWeightMg).toBe(1_000_000);
+    const body = vi.mocked(filaments.addFilament).mock.lastCall[0];
+    expect(body.initialNominalWeightMg).toBe(1000000);
     expect(body.source).toBe(FilamentSourceMeasurement.Weight);
     expect(body.diameterMm).toBe(1.75);
     expect(body.materialCategoryNickname).toBe('filament');
@@ -160,7 +161,7 @@ describe('QuickAddMaterialComponent', () => {
     expect(body.colorPattern).toBe(ColorPatternType.Solid);
     expect(body.finishType).toBe(FilamentFinishType.Standard);
     expect(body.effects).toEqual([]);
-    expect(body.isActive).toBeTrue();
+    expect(body.isActive).toBe(true);
     expect(body.filamentAdjustments).toEqual([]);
     expect(body.displayName).toBe('Hatchbox PLA Red');
     expect(saved.length).toBe(1);
@@ -172,7 +173,7 @@ describe('QuickAddMaterialComponent', () => {
 
     await component.save();
 
-    const body = filaments.addFilament.calls.mostRecent().args[0];
+    const body = vi.mocked(filaments.addFilament).mock.lastCall[0];
     expect(body.colorHex).toBe('ffffff');
     expect(body.colors).toEqual(['ffffff']);
   });
@@ -182,7 +183,9 @@ describe('QuickAddMaterialComponent', () => {
 
     await component.save();
 
-    expect(printers.loadSlot).toHaveBeenCalledOnceWith(7, 0, 'new-id');
+    expect(printers.loadSlot).toHaveBeenCalledTimes(1);
+
+    expect(printers.loadSlot).toHaveBeenCalledWith(7, 0, 'new-id');
     expect(logging.logEvent).toHaveBeenCalledWith('QuickAddMaterial_Saved', {
       materialType: 'PLA',
       loadedIntoPrinter: true,
@@ -202,7 +205,7 @@ describe('QuickAddMaterialComponent', () => {
   });
 
   it('still emits saved when loadSlot fails, and logs the exception', async () => {
-    printers.loadSlot.and.returnValue(throwError(() => new Error('boom')));
+    printers.loadSlot.mockReturnValue(throwError(() => new Error('boom')));
     await setup(7);
 
     await component.save();
@@ -213,7 +216,7 @@ describe('QuickAddMaterialComponent', () => {
   });
 
   it('shows an error and does not emit when the filament save fails', async () => {
-    filaments.addFilament.and.returnValue(
+    filaments.addFilament.mockReturnValue(
       throwError(
         () => new HttpErrorResponse({ status: 400, error: { message: 'Nope' } })
       )
@@ -224,7 +227,7 @@ describe('QuickAddMaterialComponent', () => {
 
     expect(saved.length).toBe(0);
     expect(component.errorMessage()).toBe('Nope');
-    expect(component.saving()).toBeFalse();
+    expect(component.saving()).toBe(false);
   });
 
   it('ignores a second save while one is in flight', async () => {
@@ -238,7 +241,7 @@ describe('QuickAddMaterialComponent', () => {
   });
 
   it('shows the generic copy for an HTML 502 body, never the URL', async () => {
-    filaments.addFilament.and.returnValue(
+    filaments.addFilament.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -275,7 +278,7 @@ describe('QuickAddMaterialComponent', () => {
     fixture.detectChanges();
 
     expect(filaments.addFilament).toHaveBeenCalledTimes(1);
-    expect(button().disabled).toBeTrue();
+    expect(button().disabled).toBe(true);
   });
 
   it('falls back to the generated name when the name is blank', async () => {
@@ -287,7 +290,7 @@ describe('QuickAddMaterialComponent', () => {
 
     await component.save();
 
-    expect(filaments.addFilament.calls.mostRecent().args[0].displayName).toBe(
+    expect(vi.mocked(filaments.addFilament).mock.lastCall[0].displayName).toBe(
       'Hatchbox PLA Black'
     );
   });

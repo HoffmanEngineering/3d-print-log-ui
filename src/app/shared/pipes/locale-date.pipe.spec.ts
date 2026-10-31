@@ -30,7 +30,7 @@ describe('LocaleDatePipe', () => {
     expect(result).toContain(':');
     // en-US medium time shows AM/PM
     const hasAmPm = result.includes('AM') || result.includes('PM');
-    expect(hasAmPm).toBeTrue();
+    expect(hasAmPm).toBe(true);
   });
 
   it('formats time in 24h for de-DE locale', () => {

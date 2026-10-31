@@ -44,7 +44,7 @@ describe('AdComponent', () => {
   });
 
   it('should default fullWidthResponsive to true', () => {
-    expect(component.fullWidthResponsive()).toBeTrue();
+    expect(component.fullWidthResponsive()).toBe(true);
   });
 
   it('should pass adSlot to ng-adsense', () => {
@@ -58,7 +58,7 @@ describe('AdComponent', () => {
   it('should pass fullWidthResponsive=false when set', () => {
     fixture.componentRef.setInput('fullWidthResponsive', false);
     fixture.detectChanges();
-    expect(component.fullWidthResponsive()).toBeFalse();
+    expect(component.fullWidthResponsive()).toBe(false);
   });
 
   it('should render an aside with aria-label Advertisement when not Pro', () => {

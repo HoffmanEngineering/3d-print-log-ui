@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { Injector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -8,24 +9,25 @@ import { DocsSearchOpener } from './docs-search.opener';
 
 describe('DocsSearchOpener', () => {
   let opener: DocsSearchOpener;
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialog: MockedObject<MatDialog>;
   let closed: Subject<unknown>;
-  let componentInstance: jasmine.SpyObj<DocsSearchDialogComponent>;
+  let componentInstance: MockedObject<DocsSearchDialogComponent>;
 
   beforeEach(() => {
     closed = new Subject();
-    componentInstance = jasmine.createSpyObj<DocsSearchDialogComponent>(
-      'DocsSearchDialogComponent',
-      ['focusInput']
-    );
+    componentInstance = {
+      focusInput: vi.fn().mockName('DocsSearchDialogComponent.focusInput'),
+    } as unknown as MockedObject<DocsSearchDialogComponent>;
 
     const ref = {
       afterClosed: () => closed.asObservable(),
       componentInstance,
     } as unknown as MatDialogRef<DocsSearchDialogComponent>;
 
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.returnValue(ref as never);
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockReturnValue(ref as never);
 
     TestBed.configureTestingModule({
       providers: [DocsSearchOpener, { provide: MatDialog, useValue: dialog }],
@@ -38,7 +40,7 @@ describe('DocsSearchOpener', () => {
 
     expect(dialog.open).toHaveBeenCalledWith(
       DocsSearchDialogComponent,
-      jasmine.any(Object)
+      expect.any(Object)
     );
     expect(opener.isOpen).toBe(true);
   });
@@ -48,7 +50,7 @@ describe('DocsSearchOpener', () => {
     // which only the /docs route provides, and opens empty.
     opener.open();
 
-    const config = dialog.open.calls.mostRecent().args[1]!;
+    const config = vi.mocked(dialog.open).mock.lastCall[1]!;
     expect(config.injector).toBe(TestBed.inject(Injector));
   });
 
@@ -81,7 +83,7 @@ describe('DocsSearchOpener', () => {
   it('carries a query into the dialog', () => {
     opener.open('spool');
 
-    expect(dialog.open.calls.mostRecent().args[1]?.data).toEqual({
+    expect(vi.mocked(dialog.open).mock.lastCall[1]?.data).toEqual({
       query: 'spool',
     });
   });
@@ -89,7 +91,7 @@ describe('DocsSearchOpener', () => {
   it('passes no data when opened with nothing typed', () => {
     opener.open();
 
-    expect(dialog.open.calls.mostRecent().args[1]?.data).toBeNull();
+    expect(vi.mocked(dialog.open).mock.lastCall[1]?.data).toBeNull();
   });
 
   it('puts the caret in the input on open', () => {
@@ -98,7 +100,7 @@ describe('DocsSearchOpener', () => {
     // palette opened with Ctrl+K with nowhere to type.
     opener.open();
 
-    expect(dialog.open.calls.mostRecent().args[1]?.autoFocus).toBe(
+    expect(vi.mocked(dialog.open).mock.lastCall[1]?.autoFocus).toBe(
       'first-tabbable'
     );
   });

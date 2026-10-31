@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { SimpleDialogData } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { provideHttpClient } from '@angular/common/http';
@@ -19,12 +20,16 @@ import { PrinterSpoolmanComponent } from './printer-spoolman.component';
 describe('PrinterSpoolmanComponent', () => {
   let fixture: ComponentFixture<PrinterSpoolmanComponent>;
   let httpMock: HttpTestingController;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let dialogInstance: { title?: string; body?: string; yesText?: string };
+  let dialog: MockedObject<MatDialog>;
+  let dialogInstance: {
+    title?: string;
+    body?: string;
+    yesText?: string;
+  };
   let confirm: boolean | undefined;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let clipboard: jasmine.SpyObj<Clipboard>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
+  let clipboard: MockedObject<Clipboard>;
 
   const api = environment.printLogApiUrl;
   const listUrl = `${api}/api/SpoolmanConnections`;
@@ -61,24 +66,28 @@ describe('PrinterSpoolmanComponent', () => {
   beforeEach(async () => {
     confirm = true;
     dialogInstance = {};
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.callFake(
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockImplementation(
       () =>
         ({
           componentInstance: dialogInstance,
           afterClosed: () => of(confirm),
         }) as any
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
-    clipboard = jasmine.createSpyObj<Clipboard>('Clipboard', ['copy']);
-    clipboard.copy.and.returnValue(true);
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
+    clipboard = {
+      copy: vi.fn().mockName('Clipboard.copy'),
+    } as unknown as MockedObject<Clipboard>;
+    clipboard.copy.mockReturnValue(true);
 
     // The real SpoolmanConnectionService, over HttpTestingController.
     await TestBed.configureTestingModule({
@@ -221,7 +230,7 @@ url: jsons://x
     expect(squash(q('spoolman-config'))).toContain('Save & Restart');
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterSpoolman_Connected',
-      jasmine.objectContaining({ reconnect: false })
+      expect.objectContaining({ reconnect: false })
     );
   });
 
@@ -262,11 +271,13 @@ url: jsons://x
 
     q('spoolman-copy')!.click();
 
-    expect(clipboard.copy).toHaveBeenCalledOnceWith(block);
+    expect(clipboard.copy).toHaveBeenCalledTimes(1);
+
+    expect(clipboard.copy).toHaveBeenCalledWith(block);
     expect(toastr.success).toHaveBeenCalled();
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterSpoolman_Copied',
-      jasmine.anything()
+      expect.anything()
     );
   });
 
@@ -351,7 +362,7 @@ url: jsons://x
     fixture.detectChanges();
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
-    const data = dialog.open.calls.mostRecent().args[1]
+    const data = vi.mocked(dialog.open).mock.lastCall[1]
       ?.data as SimpleDialogData;
     expect(data.title).toBe("Change this printer's Spoolman secret?");
     expect(data.body).toContain('Only do this if you lost the');
@@ -370,7 +381,7 @@ url: jsons://x
     );
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterSpoolman_Connected',
-      jasmine.objectContaining({ reconnect: true })
+      expect.objectContaining({ reconnect: true })
     );
   });
 
@@ -394,7 +405,8 @@ url: jsons://x
 
     expect(dialog.open).toHaveBeenCalledTimes(1);
     expect(
-      (dialog.open.calls.mostRecent().args[1]?.data as SimpleDialogData).yesText
+      (vi.mocked(dialog.open).mock.lastCall[1]?.data as SimpleDialogData)
+        .yesText
     ).toBe('Disconnect');
     const del = httpMock.expectOne(`${listUrl}/c1`);
     expect(del.request.method).toBe('DELETE');
@@ -408,7 +420,7 @@ url: jsons://x
     expect(q('spoolman-status')).toBeNull();
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterSpoolman_Disconnected',
-      jasmine.anything()
+      expect.anything()
     );
   });
 

@@ -2,20 +2,20 @@ import { parseDurationAsSeconds } from './duration';
 
 describe('parseDurationAsSeconds', () => {
   it('reads the day/hour/minute/second strings slicers write', () => {
-    expect(parseDurationAsSeconds('1d 2h 3m 4s')).toBe(93_784);
-    expect(parseDurationAsSeconds('2d 03h 15m 07s')).toBe(184_507);
-    expect(parseDurationAsSeconds('2h 30m')).toBe(9_000);
-    expect(parseDurationAsSeconds('1h30m')).toBe(5_400);
+    expect(parseDurationAsSeconds('1d 2h 3m 4s')).toBe(93784);
+    expect(parseDurationAsSeconds('2d 03h 15m 07s')).toBe(184507);
+    expect(parseDurationAsSeconds('2h 30m')).toBe(9000);
+    expect(parseDurationAsSeconds('1h30m')).toBe(5400);
     expect(parseDurationAsSeconds('45s')).toBe(45);
   });
 
   it('reads the longer unit names a person might type', () => {
     expect(parseDurationAsSeconds('10 min')).toBe(600);
-    expect(parseDurationAsSeconds('1 hour 2 minutes')).toBe(3_720);
+    expect(parseDurationAsSeconds('1 hour 2 minutes')).toBe(3720);
   });
 
   it('accepts fractional units and surrounding whitespace', () => {
-    expect(parseDurationAsSeconds('1.5h')).toBe(5_400);
+    expect(parseDurationAsSeconds('1.5h')).toBe(5400);
     expect(parseDurationAsSeconds(' 5m ')).toBe(300);
   });
 

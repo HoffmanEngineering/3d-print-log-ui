@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import {
@@ -12,12 +13,12 @@ import {
 import { filamentDetailResolver } from './filament-detail.resolver';
 
 describe('filamentDetailResolver', () => {
-  let filamentService: jasmine.SpyObj<FilamentService>;
+  let filamentService: MockedObject<FilamentService>;
 
   beforeEach(() => {
-    filamentService = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getFilamentDetail',
-    ]);
+    filamentService = {
+      getFilamentDetail: vi.fn().mockName('FilamentService.getFilamentDetail'),
+    } as unknown as MockedObject<FilamentService>;
     TestBed.configureTestingModule({
       providers: [{ provide: FilamentService, useValue: filamentService }],
     });
@@ -25,15 +26,16 @@ describe('filamentDetailResolver', () => {
 
   it('resolves the filament named by the id param', async () => {
     const filament = { id: 'abc' } as FilamentDetail;
-    filamentService.getFilamentDetail.and.returnValue(of(filament));
+    filamentService.getFilamentDetail.mockReturnValue(of(filament));
 
-    await expectAsync(
+    await expect(
       resolveValue(
         filamentDetailResolver,
         routeSnapshot({ params: { id: 'abc' } })
       )
-    ).toBeResolvedTo(filament);
-    expect(filamentService.getFilamentDetail).toHaveBeenCalledOnceWith('abc');
+    ).resolves.toEqual(filament);
+    expect(filamentService.getFilamentDetail).toHaveBeenCalledTimes(1);
+    expect(filamentService.getFilamentDetail).toHaveBeenCalledWith('abc');
   });
 
   it('returns null for the new-filament route', () => {

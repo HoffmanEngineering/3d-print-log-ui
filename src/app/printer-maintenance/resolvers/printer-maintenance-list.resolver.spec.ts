@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import {
   PrinterMaintenanceService,
@@ -11,14 +12,15 @@ import {
 import { printerMaintenanceListResolver } from './printer-maintenance-list.resolver';
 
 describe('printerMaintenanceListResolver', () => {
-  let maintenance: jasmine.SpyObj<PrinterMaintenanceService>;
+  let maintenance: MockedObject<PrinterMaintenanceService>;
 
   beforeEach(() => {
     localStorage.removeItem('printer_maintenance_list_page_size');
-    maintenance = jasmine.createSpyObj<PrinterMaintenanceService>(
-      'PrinterMaintenanceService',
-      ['getCurrentUserPrinterMaintenance']
-    );
+    maintenance = {
+      getCurrentUserPrinterMaintenance: vi
+        .fn()
+        .mockName('PrinterMaintenanceService.getCurrentUserPrinterMaintenance'),
+    } as unknown as MockedObject<PrinterMaintenanceService>;
     TestBed.configureTestingModule({
       providers: [
         { provide: PrinterMaintenanceService, useValue: maintenance },
@@ -33,9 +35,11 @@ describe('printerMaintenanceListResolver', () => {
   it('requests the first page of all entries, newest first, by default', () => {
     runResolver(printerMaintenanceListResolver);
 
-    expect(
-      maintenance.getCurrentUserPrinterMaintenance
-    ).toHaveBeenCalledOnceWith(
+    expect(maintenance.getCurrentUserPrinterMaintenance).toHaveBeenCalledTimes(
+      1
+    );
+
+    expect(maintenance.getCurrentUserPrinterMaintenance).toHaveBeenCalledWith(
       1,
       10,
       '',
@@ -61,8 +65,8 @@ describe('printerMaintenanceListResolver', () => {
       })
     );
 
-    const args =
-      maintenance.getCurrentUserPrinterMaintenance.calls.mostRecent().args;
+    const args = vi.mocked(maintenance.getCurrentUserPrinterMaintenance).mock
+      .lastCall;
     expect(args.slice(0, 4)).toEqual(['2', 25, 'nozzle', [4, 9]]);
   });
 });

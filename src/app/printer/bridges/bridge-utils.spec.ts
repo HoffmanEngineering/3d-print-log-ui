@@ -127,7 +127,7 @@ describe('bridge-utils', () => {
           scanRequestedAt: '2026-10-27T18:03:00+00:00',
           lastSweepAt: '2026-10-27T17:00:00Z',
         })
-      ).toBeTrue();
+      ).toBe(true);
     });
 
     it('is scanning when no sweep has happened yet', () => {
@@ -136,7 +136,7 @@ describe('bridge-utils', () => {
           scanRequestedAt: '2026-10-27T18:03:00+00:00',
           lastSweepAt: null,
         })
-      ).toBeTrue();
+      ).toBe(true);
     });
 
     it('is not scanning once the sweep is done or nothing was asked', () => {
@@ -145,10 +145,10 @@ describe('bridge-utils', () => {
           scanRequestedAt: '2026-10-27T18:03:00+00:00',
           lastSweepAt: '2026-10-27T18:04:11Z',
         })
-      ).toBeFalse();
-      expect(
-        isScanning({ scanRequestedAt: null, lastSweepAt: null })
-      ).toBeFalse();
+      ).toBe(false);
+      expect(isScanning({ scanRequestedAt: null, lastSweepAt: null })).toBe(
+        false
+      );
     });
   });
 
@@ -224,13 +224,13 @@ describe('bridge-utils', () => {
         'flashforge',
         'anycubic',
       ]);
-      expect(isConnectableKind('octoprint')).toBeTrue();
-      expect(isConnectableKind('sdcp')).toBeTrue();
-      expect(isConnectableKind('duet')).toBeTrue();
-      expect(isConnectableKind('flashforge')).toBeTrue();
-      expect(isConnectableKind('anycubic')).toBeTrue();
+      expect(isConnectableKind('octoprint')).toBe(true);
+      expect(isConnectableKind('sdcp')).toBe(true);
+      expect(isConnectableKind('duet')).toBe(true);
+      expect(isConnectableKind('flashforge')).toBe(true);
+      expect(isConnectableKind('anycubic')).toBe(true);
       // A kind with no adapter in this build.
-      expect(isConnectableKind('creality')).toBeFalse();
+      expect(isConnectableKind('creality')).toBe(false);
     });
   });
 
@@ -267,11 +267,11 @@ describe('bridge-utils', () => {
     });
 
     it('treats the three key problems as "reload the bridge"', () => {
-      expect(isKeyErrorCode('bridge_key_changed')).toBeTrue();
-      expect(isKeyErrorCode('bridge_key_unconfirmed')).toBeTrue();
-      expect(isKeyErrorCode('bridge_key_missing')).toBeTrue();
-      expect(isKeyErrorCode('invalid_sealed_value')).toBeFalse();
-      expect(isKeyErrorCode(null)).toBeFalse();
+      expect(isKeyErrorCode('bridge_key_changed')).toBe(true);
+      expect(isKeyErrorCode('bridge_key_unconfirmed')).toBe(true);
+      expect(isKeyErrorCode('bridge_key_missing')).toBe(true);
+      expect(isKeyErrorCode('invalid_sealed_value')).toBe(false);
+      expect(isKeyErrorCode(null)).toBe(false);
     });
   });
 
@@ -360,7 +360,7 @@ describe('bridge-utils', () => {
           ],
         })
       ).toEqual({
-        text: jasmine.stringContaining('refused this access code'),
+        text: expect.stringContaining('refused this access code'),
         attention: true,
       });
     });

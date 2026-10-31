@@ -1,11 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
-import {
-  ComponentFixture,
-  TestBed,
-  discardPeriodicTasks,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -46,10 +41,10 @@ import {
 } from './bridges-page.component';
 
 describe('BridgesPageComponent', () => {
-  let service: jasmine.SpyObj<BridgesService>;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let service: MockedObject<BridgesService>;
+  let dialog: MockedObject<MatDialog>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
   let fixture: ComponentFixture<BridgesPageComponent>;
   let dialogAnswer: unknown;
 
@@ -75,22 +70,22 @@ describe('BridgesPageComponent', () => {
 
   beforeEach(() => {
     localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
-    service = jasmine.createSpyObj<BridgesService>('BridgesService', [
-      'list',
-      'discovered',
-      'printers',
-      'update',
-      'scan',
-      'ignore',
-      'unignore',
-      'disconnect',
-      'confirmKey',
-    ]);
-    service.list.and.returnValue(of([garage, attic]));
-    service.discovered.and.callFake((id: number) =>
+    service = {
+      list: vi.fn().mockName('BridgesService.list'),
+      discovered: vi.fn().mockName('BridgesService.discovered'),
+      printers: vi.fn().mockName('BridgesService.printers'),
+      update: vi.fn().mockName('BridgesService.update'),
+      scan: vi.fn().mockName('BridgesService.scan'),
+      ignore: vi.fn().mockName('BridgesService.ignore'),
+      unignore: vi.fn().mockName('BridgesService.unignore'),
+      disconnect: vi.fn().mockName('BridgesService.disconnect'),
+      confirmKey: vi.fn().mockName('BridgesService.confirmKey'),
+    } as unknown as MockedObject<BridgesService>;
+    service.list.mockReturnValue(of([garage, attic]));
+    service.discovered.mockImplementation((id: number) =>
       of(id === 42 ? [discovered()] : [])
     );
-    service.printers.and.callFake((id: number) =>
+    service.printers.mockImplementation((id: number) =>
       of(
         id === 9
           ? [
@@ -103,19 +98,21 @@ describe('BridgesPageComponent', () => {
           : []
       )
     );
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
     dialogAnswer = true;
-    dialog.open.and.callFake(
+    dialog.open.mockImplementation(
       () => ({ afterClosed: () => of(dialogAnswer) }) as never
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
   });
 
   let queryMove: string | null = null;
@@ -183,7 +180,7 @@ describe('BridgesPageComponent', () => {
   });
 
   it('shows the empty state when no bridge has checked in', async () => {
-    service.list.and.returnValue(of([]));
+    service.list.mockReturnValue(of([]));
     await create();
     expect(one('bridges-empty')).not.toBeNull();
     expect(service.discovered).not.toHaveBeenCalled();
@@ -191,7 +188,7 @@ describe('BridgesPageComponent', () => {
 
   for (const status of [404, 503]) {
     it(`says the screen is not available on a ${status}, without logging an error`, async () => {
-      service.list.and.returnValue(throwError(() => httpError(status)));
+      service.list.mockReturnValue(throwError(() => httpError(status)));
       await create();
       expect(one('bridges-unavailable')).not.toBeNull();
       expect(logging.logException).not.toHaveBeenCalled();
@@ -199,11 +196,11 @@ describe('BridgesPageComponent', () => {
   }
 
   it('offers a retry when the list fails', async () => {
-    service.list.and.returnValue(throwError(() => httpError(500)));
+    service.list.mockReturnValue(throwError(() => httpError(500)));
     await create();
     expect(one('bridges-error')).not.toBeNull();
 
-    service.list.and.returnValue(of([garage]));
+    service.list.mockReturnValue(of([garage]));
     (one('bridges-error')!.querySelector('button') as HTMLElement).click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -211,16 +208,16 @@ describe('BridgesPageComponent', () => {
   });
 
   it('keeps a bridge whose printers failed to load, with a retry', async () => {
-    service.discovered.and.returnValue(throwError(() => httpError(500)));
+    service.discovered.mockReturnValue(throwError(() => httpError(500)));
     await create();
     expect(all('bridges-card').length).toBe(2);
     expect(one('bridge-load-failed')).not.toBeNull();
   });
 
   it('ignores a printer at once and reloads', async () => {
-    service.ignore.and.returnValue(of(undefined));
+    service.ignore.mockReturnValue(of(undefined));
     await create();
-    service.discovered.and.callFake((id: number) =>
+    service.discovered.mockImplementation((id: number) =>
       of(
         id === 42 ? [discovered({ state: DiscoveredPrinterState.Ignored })] : []
       )
@@ -236,13 +233,13 @@ describe('BridgesPageComponent', () => {
   });
 
   it('explains a refused ignore', async () => {
-    service.ignore.and.returnValue(
+    service.ignore.mockReturnValue(
       throwError(() => httpError(409, 'ignore_limit'))
     );
     await create();
     one('bridge-ignore')!.click();
     expect(toastr.error).toHaveBeenCalledWith(
-      jasmine.stringMatching('200 ignored')
+      expect.stringMatching('200 ignored')
     );
     expect(logging.logEvent).toHaveBeenCalledWith('Bridges_ActionFailed', {
       action: 'ignore',
@@ -251,7 +248,7 @@ describe('BridgesPageComponent', () => {
   });
 
   it('shows Scanning right after Scan now', async () => {
-    service.scan.and.returnValue(
+    service.scan.mockReturnValue(
       of({ scanRequestedAt: '2999-01-01T00:00:00Z' })
     );
     await create();
@@ -264,8 +261,13 @@ describe('BridgesPageComponent', () => {
   it('opens the connect dialog with the printers other bridges watch', async () => {
     await create();
     one('bridge-connect')!.click();
-    const config = dialog.open.calls.mostRecent().args[1] as {
-      data: { watchedBy: Map<number, number>; bridge: { id: number } };
+    const config = vi.mocked(dialog.open).mock.lastCall[1] as {
+      data: {
+        watchedBy: Map<number, number>;
+        bridge: {
+          id: number;
+        };
+      };
     };
     expect(config.data.bridge.id).toBe(42);
     expect(config.data.watchedBy.get(3)).toBe(9);
@@ -273,7 +275,7 @@ describe('BridgesPageComponent', () => {
   });
 
   it('disconnects after confirming, and reloads', async () => {
-    service.disconnect.and.returnValue(of(undefined));
+    service.disconnect.mockReturnValue(of(undefined));
     await create();
     one('bridge-disconnect')!.click();
     expect(service.disconnect).toHaveBeenCalledWith(9, 7);
@@ -289,7 +291,7 @@ describe('BridgesPageComponent', () => {
   });
 
   it('renames a bridge and shows the new name', async () => {
-    service.update.and.returnValue(
+    service.update.mockReturnValue(
       of(bridge({ name: 'Garage', displayName: 'Garage', location: null }))
     );
     await create();
@@ -304,20 +306,21 @@ describe('BridgesPageComponent', () => {
     expect(one('bridge-name')!.textContent).toContain('Garage');
   });
 
-  it('refreshes while open', fakeAsync(() => {
+  it('refreshes while open', async () => {
+    vi.useFakeTimers();
     void configure({ idleMs: 1000, scanningMs: 100 });
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
     fixture = TestBed.createComponent(BridgesPageComponent);
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
     expect(service.list).toHaveBeenCalledTimes(1);
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     expect(service.list).toHaveBeenCalledTimes(2);
     fixture.destroy();
-    tick(5000);
+    await vi.advanceTimersByTimeAsync(5000);
     expect(service.list).toHaveBeenCalledTimes(2);
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
   function card(index = 0): BridgeCardComponent {
     return fixture.debugElement.queryAll(By.directive(BridgeCardComponent))[
@@ -334,24 +337,25 @@ describe('BridgesPageComponent', () => {
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
-    fail('timed out');
+    throw new Error('timed out');
   }
 
   it('confirms a pending key with the fingerprint the card computed, checks what came back, pins it and reloads', async () => {
     const pending = bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey });
-    service.list.and.returnValue(of([pending]));
-    service.confirmKey.and.returnValue(
+    service.list.mockReturnValue(of([pending]));
+    service.confirmKey.mockReturnValue(
       of(bridge({ publicKey: OTHER_BRIDGE_KEY.publicKey }))
     );
     await create();
     card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
-    await until(() => toastr.success.calls.count() === 1);
-    expect(service.confirmKey).toHaveBeenCalledOnceWith(
+    await until(() => vi.mocked(toastr.success).mock.calls.length === 1);
+    expect(service.confirmKey).toHaveBeenCalledTimes(1);
+    expect(service.confirmKey).toHaveBeenCalledWith(
       42,
       OTHER_BRIDGE_KEY.fingerprint
     );
     expect(toastr.success).toHaveBeenCalledWith(
-      jasmine.stringContaining('credentials again')
+      expect.stringContaining('credentials again')
     );
     expect(logging.logEvent).toHaveBeenCalledWith('Bridges_KeyConfirmed', {
       hadKey: true,
@@ -364,16 +368,16 @@ describe('BridgesPageComponent', () => {
   });
 
   it('refuses a confirmation answer that carries a different key than the one confirmed', async () => {
-    service.list.and.returnValue(
+    service.list.mockReturnValue(
       of([bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey })])
     );
-    service.confirmKey.and.returnValue(
+    service.confirmKey.mockReturnValue(
       of(bridge({ publicKey: TEST_BRIDGE_KEY.publicKey }))
     );
     await create();
     card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
-    await until(() => toastr.error.calls.count() === 1);
-    expect(toastr.error.calls.mostRecent().args[0]).toContain('different key');
+    await until(() => vi.mocked(toastr.error).mock.calls.length === 1);
+    expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain('different key');
     expect(toastr.success).not.toHaveBeenCalled();
     expect(logging.logEvent).toHaveBeenCalledWith(
       'Bridges_KeyConfirmMismatch',
@@ -381,7 +385,7 @@ describe('BridgesPageComponent', () => {
     );
     expect(logging.logEvent).not.toHaveBeenCalledWith(
       'Bridges_KeyConfirmed',
-      jasmine.anything()
+      expect.anything()
     );
     // The user compared OTHER with the bridge: pin that, so the key served instead is flagged.
     expect(TestBed.inject(BridgeKeyPinsService).pinned(42)).toBe(
@@ -392,17 +396,17 @@ describe('BridgesPageComponent', () => {
 
   for (const code of ['pending_key_changed', 'no_pending_key']) {
     it(`explains ${code} and reloads to compare again`, async () => {
-      service.list.and.returnValue(
+      service.list.mockReturnValue(
         of([bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey })])
       );
-      service.confirmKey.and.returnValue(
+      service.confirmKey.mockReturnValue(
         throwError(() => httpError(409, code))
       );
       await create();
       card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
       fixture.detectChanges();
       expect(toastr.error).toHaveBeenCalled();
-      expect(toastr.error.calls.mostRecent().args[0]).not.toContain(
+      expect(vi.mocked(toastr.error).mock.lastCall[0]).not.toContain(
         'Something went wrong'
       );
       expect(logging.logEvent).toHaveBeenCalledWith('Bridges_ActionFailed', {
@@ -414,8 +418,8 @@ describe('BridgesPageComponent', () => {
   }
 
   it('shows a credential change in the row before the next refresh', async () => {
-    service.list.and.returnValue(of([garage]));
-    service.printers.and.returnValue(of([bridgePrinter()]));
+    service.list.mockReturnValue(of([garage]));
+    service.printers.mockReturnValue(of([bridgePrinter()]));
     await create();
     expect(one('bridge-credential-summary')!.textContent).toContain(
       'No access code'
@@ -446,24 +450,24 @@ describe('BridgesPageComponent', () => {
   });
 
   it('keeps a confirmation mismatch on the card, not only in a toast', async () => {
-    service.list.and.returnValue(
+    service.list.mockReturnValue(
       of([bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey })])
     );
-    service.confirmKey.and.returnValue(
+    service.confirmKey.mockReturnValue(
       of(bridge({ publicKey: TEST_BRIDGE_KEY.publicKey }))
     );
     await create();
-    expect(card().keyMismatch()).toBeFalse();
+    expect(card().keyMismatch()).toBe(false);
     card().confirmKey.emit(OTHER_BRIDGE_KEY.fingerprint);
-    await until(() => toastr.error.calls.count() === 1);
+    await until(() => vi.mocked(toastr.error).mock.calls.length === 1);
     fixture.detectChanges();
-    expect(card().keyMismatch()).toBeTrue();
+    expect(card().keyMismatch()).toBe(true);
   });
 
   describe('several bridges', () => {
     /** Attic watches the X1C Garage found too (same serial). */
     function atticWatchesTheX1c(): void {
-      service.printers.and.callFake((id: number) =>
+      service.printers.mockImplementation((id: number) =>
         of(id === 9 ? [bridgePrinter({ printerId: 3 })] : [])
       );
     }
@@ -472,11 +476,13 @@ describe('BridgesPageComponent', () => {
       component: unknown;
       data: BridgeMoveDialogData & BridgeConnectDialogData;
     } {
-      const args = dialog.open.calls.mostRecent().args;
+      const args = vi.mocked(dialog.open).mock.lastCall;
       return {
         component: args[0],
         data: (
-          args[1] as { data: BridgeMoveDialogData & BridgeConnectDialogData }
+          args[1] as {
+            data: BridgeMoveDialogData & BridgeConnectDialogData;
+          }
         ).data,
       };
     }
@@ -502,13 +508,13 @@ describe('BridgesPageComponent', () => {
     });
 
     it('offers no Move with a single bridge', async () => {
-      service.list.and.returnValue(of([attic]));
+      service.list.mockReturnValue(of([attic]));
       await create();
       expect(one('bridge-move')).toBeNull();
     });
 
     it('connects with another bridge that found the printer too', async () => {
-      service.discovered.and.callFake((id: number) =>
+      service.discovered.mockImplementation((id: number) =>
         of(
           id === 42
             ? [discovered({ id: 12 })]
@@ -527,7 +533,7 @@ describe('BridgesPageComponent', () => {
 
     it('opens the move from a connect conflict, to the bridge the user was connecting', async () => {
       atticWatchesTheX1c();
-      service.discovered.and.callFake((id: number) =>
+      service.discovered.mockImplementation((id: number) =>
         of(id === 42 ? [discovered({ id: 12, identityKey: null })] : [])
       );
       await create();
@@ -544,7 +550,7 @@ describe('BridgesPageComponent', () => {
       queryMove = '3';
       await configure();
       const router = TestBed.inject(Router);
-      spyOn(router, 'navigate').and.resolveTo(true);
+      vi.spyOn(router, 'navigate').mockResolvedValue(true);
       dialogAnswer = undefined;
       fixture = TestBed.createComponent(BridgesPageComponent);
       fixture.detectChanges();
@@ -555,14 +561,14 @@ describe('BridgesPageComponent', () => {
       expect(opened.data.entry.printerId).toBe(3);
       expect(router.navigate).toHaveBeenCalledWith(
         [],
-        jasmine.objectContaining({ queryParams: { move: null } })
+        expect.objectContaining({ queryParams: { move: null } })
       );
     });
 
     it('says when ?move names a printer no app entry has', async () => {
       queryMove = '999';
       await configure();
-      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
       fixture = TestBed.createComponent(BridgesPageComponent);
       fixture.detectChanges();
       await fixture.whenStable();
@@ -572,17 +578,17 @@ describe('BridgesPageComponent', () => {
 
     it("keeps ?move when a bridge's printers couldn't load, and opens it once they do", async () => {
       queryMove = '3';
-      service.printers.and.callFake((id: number) =>
+      service.printers.mockImplementation((id: number) =>
         id === 9 ? throwError(() => httpError(500)) : of([])
       );
       await configure();
-      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
       dialogAnswer = undefined;
       fixture = TestBed.createComponent(BridgesPageComponent);
       fixture.detectChanges();
       await fixture.whenStable();
       expect(dialog.open).not.toHaveBeenCalled();
-      expect(toastr.error.calls.mostRecent().args[0]).toContain(
+      expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain(
         "couldn't load"
       );
 
@@ -598,7 +604,7 @@ describe('BridgesPageComponent', () => {
     it("doesn't move a printer its bridge's config file also has, and says why", async () => {
       queryMove = '3';
       atticWatchesTheX1c();
-      service.discovered.and.callFake((id: number) =>
+      service.discovered.mockImplementation((id: number) =>
         of(
           id === 9
             ? [
@@ -612,33 +618,33 @@ describe('BridgesPageComponent', () => {
         )
       );
       await configure();
-      spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
       fixture = TestBed.createComponent(BridgesPageComponent);
       fixture.detectChanges();
       await fixture.whenStable();
       expect(dialog.open).not.toHaveBeenCalled();
-      expect(toastr.error.calls.mostRecent().args[0]).toContain('config file');
+      expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain('config file');
     });
 
     it("doesn't open the move from a connect conflict when the other bridge's printers couldn't load", async () => {
-      service.printers.and.callFake((id: number) =>
+      service.printers.mockImplementation((id: number) =>
         id === 9 ? throwError(() => httpError(500)) : of([])
       );
-      service.discovered.and.callFake((id: number) =>
+      service.discovered.mockImplementation((id: number) =>
         of(id === 42 ? [discovered({ id: 12, identityKey: null })] : [])
       );
       await create();
       dialogAnswer = { moveFrom: 9, printerId: 3 };
       one('bridge-connect')!.click();
       expect(lastOpened().component).toBe(BridgeConnectDialogComponent);
-      expect(toastr.error.calls.mostRecent().args[0]).toContain(
+      expect(vi.mocked(toastr.error).mock.lastCall[0]).toContain(
         "couldn't load"
       );
     });
 
     it('warns on the bridge that recently reported jobs for a printer another bridge watches', async () => {
-      const recent = new Date(Date.now() - 2 * 86_400_000).toISOString();
-      service.list.and.returnValue(
+      const recent = new Date(Date.now() - 2 * 86400000).toISOString();
+      service.list.mockReturnValue(
         of([
           {
             ...garage,

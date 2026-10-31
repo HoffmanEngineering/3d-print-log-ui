@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -17,34 +18,37 @@ import { EmailSettingsComponent } from './email-settings.component';
 
 describe('EmailSettingsComponent', () => {
   let fixture: ComponentFixture<EmailSettingsComponent>;
-  let settings: jasmine.SpyObj<UserSettingService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let accountEmail: jasmine.SpyObj<AccountEmailService>;
+  let settings: MockedObject<UserSettingService>;
+  let logging: MockedObject<LoggingService>;
+  let accountEmail: MockedObject<AccountEmailService>;
   let stored: Partial<Record<UserSettingType, string>>;
   let account: AccountEmail | Error;
 
   async function render(): Promise<HTMLElement> {
-    settings = jasmine.createSpyObj<UserSettingService>('UserSettingService', [
-      'getCurrentUsersSettingByType',
-      'addOrUpdateSetting',
-    ]);
-    settings.getCurrentUsersSettingByType.and.callFake((type) =>
+    settings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting'),
+    } as unknown as MockedObject<UserSettingService>;
+    settings.getCurrentUsersSettingByType.mockImplementation((type) =>
       Promise.resolve(
         stored[type] !== undefined
           ? ({ value: stored[type] } as UserSetting)
           : null
       )
     );
-    settings.addOrUpdateSetting.and.returnValue(Promise.resolve());
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
-    accountEmail = jasmine.createSpyObj<AccountEmailService>(
-      'AccountEmailService',
-      ['get']
-    );
-    accountEmail.get.and.returnValue(
+    settings.addOrUpdateSetting.mockReturnValue(Promise.resolve());
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
+    accountEmail = {
+      get: vi.fn().mockName('AccountEmailService.get'),
+    } as unknown as MockedObject<AccountEmailService>;
+    accountEmail.get.mockReturnValue(
       account instanceof Error ? throwError(() => account) : of(account)
     );
 
@@ -125,13 +129,13 @@ describe('EmailSettingsComponent', () => {
     await render();
     const form = fixture.componentInstance.form;
 
-    expect(form.controls.onboarding.disabled).toBeTrue();
-    expect(form.controls.monthlyRecap.disabled).toBeTrue();
-    expect(form.controls.printerSilent.disabled).toBeTrue();
+    expect(form.controls.onboarding.disabled).toBe(true);
+    expect(form.controls.monthlyRecap.disabled).toBe(true);
+    expect(form.controls.printerSilent.disabled).toBe(true);
 
     form.controls.all.setValue(true);
 
-    expect(form.controls.monthlyRecap.enabled).toBeTrue();
+    expect(form.controls.monthlyRecap.enabled).toBe(true);
   });
 
   it('saves and logs a category change', async () => {
@@ -153,7 +157,7 @@ describe('EmailSettingsComponent', () => {
 
   it('puts a toggle back and says so when its save fails', async () => {
     const el = await render();
-    settings.addOrUpdateSetting.and.returnValue(
+    settings.addOrUpdateSetting.mockReturnValue(
       Promise.reject(new Error('offline'))
     );
 
@@ -161,19 +165,19 @@ describe('EmailSettingsComponent', () => {
     await new Promise((r) => setTimeout(r));
     fixture.detectChanges();
 
-    expect(
-      fixture.componentInstance.form.controls.monthlyRecap.value
-    ).toBeTrue();
+    expect(fixture.componentInstance.form.controls.monthlyRecap.value).toBe(
+      true
+    );
     expect(el.querySelector('[data-testid="email-save-error"]')).not.toBeNull();
     expect(logging.logEvent).not.toHaveBeenCalledWith(
       'EmailSettings_Changed',
-      jasmine.anything()
+      expect.anything()
     );
   });
 
   it('restores the categories when a failed master-switch save is undone', async () => {
     await render();
-    settings.addOrUpdateSetting.and.returnValue(
+    settings.addOrUpdateSetting.mockReturnValue(
       Promise.reject(new Error('offline'))
     );
     const form = fixture.componentInstance.form;
@@ -181,8 +185,8 @@ describe('EmailSettingsComponent', () => {
     form.controls.all.setValue(false);
     await new Promise((r) => setTimeout(r));
 
-    expect(form.controls.all.value).toBeTrue();
-    expect(form.controls.monthlyRecap.enabled).toBeTrue();
+    expect(form.controls.all.value).toBe(true);
+    expect(form.controls.monthlyRecap.enabled).toBe(true);
   });
 
   it('saves the master switch', async () => {
@@ -199,7 +203,7 @@ describe('EmailSettingsComponent', () => {
 
   it('keeps the controls disabled when settings fail to load', async () => {
     stored = {};
-    settings = undefined as unknown as jasmine.SpyObj<UserSettingService>;
+    settings = undefined as unknown as MockedObject<UserSettingService>;
     await TestBed.configureTestingModule({
       imports: [EmailSettingsComponent, NoopAnimationsModule],
       providers: [
@@ -214,10 +218,10 @@ describe('EmailSettingsComponent', () => {
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
         {
           provide: AccountEmailService,
@@ -230,7 +234,7 @@ describe('EmailSettingsComponent', () => {
     await fixture.whenStable();
     await new Promise((r) => setTimeout(r));
 
-    expect(fixture.componentInstance.form.disabled).toBeTrue();
+    expect(fixture.componentInstance.form.disabled).toBe(true);
   });
 
   it('renders as the settings anchor target', async () => {

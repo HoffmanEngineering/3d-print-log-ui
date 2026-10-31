@@ -66,8 +66,8 @@ describe('AnalyticsService', () => {
       (r) => r.url === `${environment.printLogApiUrl}/api/analytics/overview`
     );
 
-    expect(req.request.params.has('fromDate')).toBeFalse();
-    expect(req.request.params.has('toDate')).toBeFalse();
+    expect(req.request.params.has('fromDate')).toBe(false);
+    expect(req.request.params.has('toDate')).toBe(false);
     req.flush(null);
   });
 
@@ -134,8 +134,8 @@ describe('AnalyticsService', () => {
       (r) => r.url === `${environment.printLogApiUrl}/api/analytics/overview`
     );
 
-    expect(req.request.params.has('printerIds')).toBeFalse();
-    expect(req.request.params.has('statuses')).toBeFalse();
+    expect(req.request.params.has('printerIds')).toBe(false);
+    expect(req.request.params.has('statuses')).toBe(false);
     req.flush(null);
   });
 });

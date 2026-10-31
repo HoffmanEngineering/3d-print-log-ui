@@ -65,7 +65,7 @@ describe('GcodeParserBase', () => {
       );
       expect(print.filamentUsage.length).toBe(2);
       expect(print.filamentUsage[0]).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           id: null,
           filament: OTHER_FILAMENT,
           source: PrintFilamentSourceMeasurement.Length,

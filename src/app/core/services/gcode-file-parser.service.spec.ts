@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
@@ -13,35 +14,36 @@ import { LoggingService } from './logging.service';
 
 describe('GcodeFileParserService', () => {
   let service: GcodeFileParserService;
-  let registry: jasmine.SpyObj<SlicerRegistry>;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let parser: jasmine.SpyObj<GcodeParserBase>;
+  let registry: MockedObject<SlicerRegistry>;
+  let dialog: MockedObject<MatDialog>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
+  let parser: MockedObject<GcodeParserBase>;
 
   beforeEach(() => {
-    registry = jasmine.createSpyObj<SlicerRegistry>('SlicerRegistry', [
-      'resolve',
-      'getSupportedSlicerNames',
-    ]);
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'error',
-      'info',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    registry = {
+      resolve: vi.fn().mockName('SlicerRegistry.resolve'),
+      getSupportedSlicerNames: vi
+        .fn()
+        .mockName('SlicerRegistry.getSupportedSlicerNames'),
+    } as unknown as MockedObject<SlicerRegistry>;
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    toastr = {
+      error: vi.fn().mockName('ToastrService.error'),
+      info: vi.fn().mockName('ToastrService.info'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     // parse() goes through parseWithMeta, so the parser's own parse() is never called.
-    parser = jasmine.createSpyObj<GcodeParserBase>(
-      'Parser',
-      ['parseWithMeta'],
-      {
-        slicerName: 'Orca Slicer',
-      }
-    );
-    parser.parseWithMeta.and.resolveTo({
+    parser = {
+      parseWithMeta: vi.fn().mockName('Parser.parseWithMeta'),
+      slicerName: 'Orca Slicer',
+    } as unknown as MockedObject<GcodeParserBase>;
+    parser.parseWithMeta.mockResolvedValue({
       print: { ...createDefaultPrintDetail(), title: 'Parsed' },
       detectedPrinterNames: ['Bambu Lab X1 Carbon'],
     });
@@ -58,7 +60,7 @@ describe('GcodeFileParserService', () => {
   });
 
   function resolveAs(result: Partial<ResolvedParser>) {
-    registry.resolve.and.returnValue({
+    registry.resolve.mockReturnValue({
       parser,
       confidence: 'detected',
       score: 1,
@@ -93,7 +95,7 @@ describe('GcodeFileParserService', () => {
   it('opens the generic viewer when no parser matches', async () => {
     resolveAs({ parser: null, confidence: 'none', score: 0 });
     const fromModal = { ...createDefaultPrintDetail(), title: 'Modal' };
-    dialog.open.and.returnValue({ afterClosed: () => of(fromModal) } as any);
+    dialog.open.mockReturnValue({ afterClosed: () => of(fromModal) } as any);
     const print = await service.parse('G28', 'raw.gcode');
     expect(dialog.open).toHaveBeenCalled();
     expect(print?.title).toBe('Modal');
@@ -106,7 +108,7 @@ describe('GcodeFileParserService', () => {
 
   it('returns null and toasts an error when the parser throws', async () => {
     resolveAs({});
-    parser.parseWithMeta.and.rejectWith(new Error('boom'));
+    parser.parseWithMeta.mockRejectedValue(new Error('boom'));
     const print = await service.parse('gcode');
     expect(print).toBeNull();
     expect(toastr.error).toHaveBeenCalled();
@@ -114,7 +116,7 @@ describe('GcodeFileParserService', () => {
   });
 
   it('lists supported slicers from the registry', () => {
-    registry.getSupportedSlicerNames.and.returnValue(['Orca Slicer', 'Cura']);
+    registry.getSupportedSlicerNames.mockReturnValue(['Orca Slicer', 'Cura']);
     expect(service.getSupportedSlicers()).toEqual(['Orca Slicer', 'Cura']);
   });
 
@@ -130,20 +132,20 @@ describe('GcodeFileParserService', () => {
     it('detects no printer from the generic viewer', async () => {
       resolveAs({ parser: null, confidence: 'none', score: 0 });
       const fromModal = { ...createDefaultPrintDetail(), title: 'Modal' };
-      dialog.open.and.returnValue({ afterClosed: () => of(fromModal) } as any);
+      dialog.open.mockReturnValue({ afterClosed: () => of(fromModal) } as any);
       const result = await service.parseWithMeta('G28', 'raw.gcode');
       expect(result).toEqual({ print: fromModal, detectedPrinterNames: [] });
     });
 
     it('is null when the viewer is canceled', async () => {
       resolveAs({ parser: null, confidence: 'none', score: 0 });
-      dialog.open.and.returnValue({ afterClosed: () => of(undefined) } as any);
+      dialog.open.mockReturnValue({ afterClosed: () => of(undefined) } as any);
       expect(await service.parseWithMeta('G28')).toBeNull();
     });
 
     it('is null and toasts an error when the parser throws', async () => {
       resolveAs({});
-      parser.parseWithMeta.and.rejectWith(new Error('boom'));
+      parser.parseWithMeta.mockRejectedValue(new Error('boom'));
       expect(await service.parseWithMeta('gcode')).toBeNull();
       expect(toastr.error).toHaveBeenCalled();
     });

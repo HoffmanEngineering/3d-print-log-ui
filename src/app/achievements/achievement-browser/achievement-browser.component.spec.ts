@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -42,17 +43,17 @@ describe('AchievementBrowserComponent', () => {
   let host: HostComponent;
   let el: HTMLElement;
   let wide$: BehaviorSubject<boolean>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let sheetOpen: jasmine.Spy;
+  let logging: MockedObject<LoggingService>;
+  let sheetOpen: Mock;
   let sheetDismissed: Subject<void>;
 
   beforeEach(() => {
     wide$ = new BehaviorSubject(true);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     sheetDismissed = new Subject<void>();
-    sheetOpen = jasmine.createSpy('open').and.returnValue({
+    sheetOpen = vi.fn().mockReturnValue({
       afterDismissed: () => sheetDismissed,
       dismiss: () => undefined,
     });
@@ -127,9 +128,9 @@ describe('AchievementBrowserComponent', () => {
     wide$.next(true);
     fixture.detectChanges();
 
-    const opens = logging.logEvent.calls
-      .allArgs()
-      .filter(([name]) => name === 'AchievementDetail_Opened');
+    const opens = vi
+      .mocked(logging.logEvent)
+      .mock.calls.filter(([name]) => name === 'AchievementDetail_Opened');
     expect(opens.length).toBe(1);
   });
 

@@ -14,7 +14,7 @@ const usageRow = {
     id: 'f-1',
   } as unknown as PrintDetail['filamentUsage'][number]['filament'],
   slot: 2,
-  estimatedAmountMg: 20_000,
+  estimatedAmountMg: 20000,
   estimatedLengthInM: null,
   estimatedVolumeMl: null,
   estimatedSource: PrintFilamentSourceMeasurement.Weight,
@@ -71,9 +71,9 @@ describe('buildPrintPatch', () => {
       loadedPrint({ title: 'Benchy v2' })
     );
 
-    expect('status' in patch).toBeFalse();
-    expect('filamentUsage' in patch).toBeFalse();
-    expect('printTimeInSeconds' in patch).toBeFalse();
+    expect('status' in patch).toBe(false);
+    expect('filamentUsage' in patch).toBe(false);
+    expect('printTimeInSeconds' in patch).toBe(false);
   });
 
   it('sends each changed scalar field', () => {
@@ -175,7 +175,7 @@ describe('buildPrintPatch', () => {
   });
 
   it('sends every usage row when one row was edited', () => {
-    const edited = { ...usageRow, amountMg: 21_500 };
+    const edited = { ...usageRow, amountMg: 21500 };
     const patch = buildPrintPatch(
       loadedPrint(),
       loadedPrint({ filamentUsage: [edited] })
@@ -186,11 +186,11 @@ describe('buildPrintPatch', () => {
         id: usageRow.id,
         filamentId: 'f-1',
         slot: 2,
-        estimatedAmountMg: 20_000,
+        estimatedAmountMg: 20000,
         estimatedLengthInM: null,
         estimatedVolumeMl: null,
         estimatedSource: PrintFilamentSourceMeasurement.Weight,
-        amountMg: 21_500,
+        amountMg: 21500,
         lengthInM: null,
         volumeMl: null,
         source: PrintFilamentSourceMeasurement.Weight,
@@ -204,14 +204,14 @@ describe('buildPrintPatch', () => {
   describe('actualIsEstimate (printlog-bridge#82)', () => {
     const estimatedRow = {
       ...usageRow,
-      amountMg: 18_000,
+      amountMg: 18000,
       actualIsEstimate: true,
     };
     const otherRow = {
       ...usageRow,
       id: 'a3f1c2d4-0000-4000-8000-000000000002',
       slot: 3,
-      amountMg: 4_000,
+      amountMg: 4000,
       actualIsEstimate: true,
     };
 
@@ -233,7 +233,7 @@ describe('buildPrintPatch', () => {
       const patch = buildPrintPatch(
         loadedPrint({ filamentUsage: [estimatedRow, otherRow] }),
         loadedPrint({
-          filamentUsage: [{ ...estimatedRow, amountMg: 17_250 }, otherRow],
+          filamentUsage: [{ ...estimatedRow, amountMg: 17250 }, otherRow],
         })
       );
 
@@ -257,18 +257,18 @@ describe('buildPrintPatch', () => {
         })
       );
 
-      expect(patch.filamentUsage?.[0].actualIsEstimate).toBeFalse();
+      expect(patch.filamentUsage?.[0].actualIsEstimate).toBe(false);
     });
 
     it('sends a measured row as measured', () => {
       const patch = buildPrintPatch(
-        loadedPrint({ filamentUsage: [{ ...usageRow, amountMg: 3_000 }] }),
+        loadedPrint({ filamentUsage: [{ ...usageRow, amountMg: 3000 }] }),
         loadedPrint({
-          filamentUsage: [{ ...usageRow, amountMg: 3_000, notes: 'x' }],
+          filamentUsage: [{ ...usageRow, amountMg: 3000, notes: 'x' }],
         })
       );
 
-      expect(patch.filamentUsage?.[0].actualIsEstimate).toBeFalse();
+      expect(patch.filamentUsage?.[0].actualIsEstimate).toBe(false);
     });
 
     it('sends nothing when only the flag would be resent', () => {
@@ -314,8 +314,8 @@ describe('buildPrintPatch', () => {
       loadedPrint(),
       loadedPrint({
         filamentType: 'PLA',
-        filamentUsageMg: 12_000,
-        estimatedFilamentUsageMg: 15_000,
+        filamentUsageMg: 12000,
+        estimatedFilamentUsageMg: 15000,
         externalSource: 'moonraker',
         curaSettingId: 'setting-1',
       })

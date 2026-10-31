@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
@@ -50,38 +51,35 @@ const mockProject: ProjectDetailDto = {
 describe('ProjectDetailComponent', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
   let component: ProjectDetailComponent;
-  let mockProjectService: jasmine.SpyObj<ProjectService>;
-  let mockPrintService: jasmine.SpyObj<PrintService>;
+  let mockProjectService: MockedObject<ProjectService>;
+  let mockPrintService: MockedObject<PrintService>;
   let currentUser: WritableSignal<any>;
 
   beforeEach(async () => {
-    mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      [
-        'getProjectById',
-        'deleteProject',
-        'updateProject',
-        'uploadImage',
-        'deleteImage',
-        'reorderImages',
-        'setDefaultImage',
-      ]
-    );
-    mockProjectService.getProjectById.and.returnValue(of(mockProject));
+    mockProjectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+      deleteProject: vi.fn().mockName('ProjectService.deleteProject'),
+      updateProject: vi.fn().mockName('ProjectService.updateProject'),
+      uploadImage: vi.fn().mockName('ProjectService.uploadImage'),
+      deleteImage: vi.fn().mockName('ProjectService.deleteImage'),
+      reorderImages: vi.fn().mockName('ProjectService.reorderImages'),
+      setDefaultImage: vi.fn().mockName('ProjectService.setDefaultImage'),
+    } as unknown as MockedObject<ProjectService>;
+    mockProjectService.getProjectById.mockReturnValue(of(mockProject));
 
-    mockPrintService = jasmine.createSpyObj('PrintService', [
-      'getPrintSummaries',
-      'deletePrint',
-      'updatePrintStatus',
-    ]);
-    mockPrintService.getPrintSummaries.and.returnValue(
+    mockPrintService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      deletePrint: vi.fn().mockName('PrintService.deletePrint'),
+      updatePrintStatus: vi.fn().mockName('PrintService.updatePrintStatus'),
+    } as unknown as MockedObject<PrintService>;
+    mockPrintService.getPrintSummaries.mockReturnValue(
       of({
         items: [],
         paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
       })
     );
-    mockPrintService.deletePrint.and.returnValue(of(null));
-    mockPrintService.updatePrintStatus.and.returnValue(of(null));
+    mockPrintService.deletePrint.mockReturnValue(of(null));
+    mockPrintService.updatePrintStatus.mockReturnValue(of(null));
 
     currentUser = signal({ id: 1 });
     const mockAuthService = { userProfile: currentUser };
@@ -98,7 +96,9 @@ describe('ProjectDetailComponent', () => {
         },
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: ADSENSE_TOKEN,
@@ -167,15 +167,15 @@ describe('ProjectDetailComponent', () => {
   });
 
   it('should call updateProject and re-fetch project on save', async () => {
-    mockProjectService.updateProject.and.returnValue(of(mockProject));
-    mockProjectService.uploadImage = jasmine
-      .createSpy()
-      .and.returnValue(
+    mockProjectService.updateProject.mockReturnValue(of(mockProject));
+    mockProjectService.uploadImage = vi
+      .fn()
+      .mockReturnValue(
         of({ id: 10, isDefault: false, displayOrder: 0 } as any)
       );
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
-    mockProjectService.setDefaultImage.and.returnValue(of(void 0));
-    mockProjectService.deleteImage.and.returnValue(of(void 0));
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
+    mockProjectService.setDefaultImage.mockReturnValue(of(void 0));
+    mockProjectService.deleteImage.mockReturnValue(of(void 0));
 
     await fixture.whenStable();
     fixture.detectChanges();
@@ -195,7 +195,7 @@ describe('ProjectDetailComponent', () => {
 
     expect(mockProjectService.updateProject).toHaveBeenCalledWith(
       'abc-123',
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'Updated Name',
         status: ProjectStatus.InProgress,
       })
@@ -213,9 +213,7 @@ describe('ProjectDetailComponent', () => {
       afterClosed: () => of(true),
       componentInstance: {},
     } as any;
-    (TestBed.inject(MatDialog).open as jasmine.Spy).and.returnValue(
-      mockDialogRef
-    );
+    (TestBed.inject(MatDialog).open as Mock).mockReturnValue(mockDialogRef);
 
     const print: PrintSummary = {
       id: 7,
@@ -328,15 +326,15 @@ describe('ProjectDetailComponent', () => {
 
     beforeEach(async () => {
       // onStatusChange pipes the result, so a spy with no return value throws on undefined.
-      mockProjectService.updateProject.and.returnValue(of(mockProject));
-      mockProjectService.uploadImage = jasmine
-        .createSpy()
-        .and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(of(mockProject));
+      mockProjectService.uploadImage = vi
+        .fn()
+        .mockReturnValue(
           of({ id: 10, isDefault: false, displayOrder: 0 } as any)
         );
-      mockProjectService.reorderImages.and.returnValue(of(void 0));
-      mockProjectService.setDefaultImage.and.returnValue(of(void 0));
-      mockProjectService.deleteImage.and.returnValue(of(void 0));
+      mockProjectService.reorderImages.mockReturnValue(of(void 0));
+      mockProjectService.setDefaultImage.mockReturnValue(of(void 0));
+      mockProjectService.deleteImage.mockReturnValue(of(void 0));
       await fixture.whenStable();
       fixture.detectChanges();
     });
@@ -355,7 +353,7 @@ describe('ProjectDetailComponent', () => {
 
       component.onStatusChange(ProjectStatus.Complete);
 
-      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      const dto = vi.mocked(mockProjectService.updateProject).mock.lastCall[1];
       expect(dto.startDateOverride).toBe('2026-02-01');
       expect(dto.finishDateOverride).toBe('2026-03-01');
     });
@@ -369,7 +367,7 @@ describe('ProjectDetailComponent', () => {
 
       component.onStatusChange(ProjectStatus.Complete);
 
-      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      const dto = vi.mocked(mockProjectService.updateProject).mock.lastCall[1];
       expect(dto.startDateOverride).toBeNull();
       expect(dto.finishDateOverride).toBeNull();
     });
@@ -384,7 +382,7 @@ describe('ProjectDetailComponent', () => {
         finishDateOverride: null,
       });
 
-      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      const dto = vi.mocked(mockProjectService.updateProject).mock.lastCall[1];
       expect(dto.startDateOverride).toBe('2026-02-01');
       expect(dto.finishDateOverride).toBeNull();
     });
@@ -397,7 +395,7 @@ describe('ProjectDetailComponent', () => {
     it('shows the API message when a save is rejected as an inverted range', async () => {
       const message =
         "A project's finish date cannot be before its start date.";
-      mockProjectService.updateProject.and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(
         throwError(
           () =>
             new HttpErrorResponse({
@@ -418,9 +416,9 @@ describe('ProjectDetailComponent', () => {
       fixture.detectChanges();
 
       expect(component.saveErrorMessage()).toBe(message);
-      expect(component.isSaving()).toBeFalse();
+      expect(component.isSaving()).toBe(false);
       // Stays open so the user can correct the dates rather than re-entering the whole form.
-      expect(component.isEditing()).toBeTrue();
+      expect(component.isEditing()).toBe(true);
 
       const el = fixture.nativeElement.querySelector(
         '[data-cy="project-save-error"]'
@@ -429,7 +427,7 @@ describe('ProjectDetailComponent', () => {
     });
 
     it('falls back to generic copy for a non-400 save failure', async () => {
-      mockProjectService.updateProject.and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 500 }))
       );
 
@@ -445,7 +443,7 @@ describe('ProjectDetailComponent', () => {
     });
 
     it('clears a previous save error when the next save starts', async () => {
-      mockProjectService.updateProject.and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 400, error: 'nope' }))
       );
       component.project.set(mockProject);
@@ -454,7 +452,7 @@ describe('ProjectDetailComponent', () => {
       await fixture.whenStable();
       expect(component.saveErrorMessage()).toBe('nope');
 
-      mockProjectService.updateProject.and.returnValue(of(mockProject));
+      mockProjectService.updateProject.mockReturnValue(of(mockProject));
       component.onSave(baseFormValue);
       await fixture.whenStable();
 
@@ -509,35 +507,32 @@ describe('ProjectDetailComponent', () => {
 describe('ProjectDetailComponent — create mode (id === "new")', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
   let component: ProjectDetailComponent;
-  let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let mockProjectService: MockedObject<ProjectService>;
 
   beforeEach(async () => {
-    mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      [
-        'getProjectById',
-        'createProject',
-        'deleteProject',
-        'updateProject',
-        'uploadImage',
-        'deleteImage',
-        'reorderImages',
-        'setDefaultImage',
-      ]
-    );
-    mockProjectService.createProject.and.returnValue(
+    mockProjectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+      createProject: vi.fn().mockName('ProjectService.createProject'),
+      deleteProject: vi.fn().mockName('ProjectService.deleteProject'),
+      updateProject: vi.fn().mockName('ProjectService.updateProject'),
+      uploadImage: vi.fn().mockName('ProjectService.uploadImage'),
+      deleteImage: vi.fn().mockName('ProjectService.deleteImage'),
+      reorderImages: vi.fn().mockName('ProjectService.reorderImages'),
+      setDefaultImage: vi.fn().mockName('ProjectService.setDefaultImage'),
+    } as unknown as MockedObject<ProjectService>;
+    mockProjectService.createProject.mockReturnValue(
       of({ ...mockProject, id: 'new-guid-123' })
     );
-    mockProjectService.getProjectById.and.returnValue(
+    mockProjectService.getProjectById.mockReturnValue(
       of({ ...mockProject, id: 'new-guid-123' })
     );
 
-    const mockPrintService = jasmine.createSpyObj('PrintService', [
-      'getPrintSummaries',
-      'deletePrint',
-      'updatePrintStatus',
-    ]);
-    mockPrintService.getPrintSummaries.and.returnValue(
+    const mockPrintService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      deletePrint: vi.fn().mockName('PrintService.deletePrint'),
+      updatePrintStatus: vi.fn().mockName('PrintService.updatePrintStatus'),
+    };
+    mockPrintService.getPrintSummaries.mockReturnValue(
       of({
         items: [],
         paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
@@ -561,11 +556,15 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
         },
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: Router,
-          useValue: jasmine.createSpyObj('Router', ['navigate']),
+          useValue: {
+            navigate: vi.fn().mockName('Router.navigate'),
+          },
         },
         {
           provide: ADSENSE_TOKEN,
@@ -604,13 +603,13 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
   });
 
   it('should navigate to /prints when onCancelEdit is called in create mode', () => {
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    const router = TestBed.inject(Router) as MockedObject<Router>;
     component.onCancelEdit();
     expect(router.navigate).toHaveBeenCalledWith(['/prints']);
   });
 
   it('should call createProject with form values on save', async () => {
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
 
     component.onSave({
       name: 'My New Project',
@@ -625,7 +624,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
     await fixture.whenStable();
 
     expect(mockProjectService.createProject).toHaveBeenCalledWith(
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'My New Project',
         status: ProjectStatus.InProgress,
         viewStatus: ProjectViewStatus.Private,
@@ -638,7 +637,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
   it('forwards non-null date overrides from the create form', async () => {
     // Asserting only the null case would stay green even if both create-payload
     // assignments were deleted, since an absent key reads as undefined either way.
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
 
     component.onSave({
       name: 'Pinned Project',
@@ -652,14 +651,14 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
 
     await fixture.whenStable();
 
-    const dto = mockProjectService.createProject.calls.mostRecent().args[0];
+    const dto = vi.mocked(mockProjectService.createProject).mock.lastCall[0];
     expect(dto.startDateOverride).toBe('2026-02-01');
     expect(dto.finishDateOverride).toBe('2026-03-01');
   });
 
   it('should exit edit mode, set the created project, and update the URL after successful creation', async () => {
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    const router = TestBed.inject(Router) as MockedObject<Router>;
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
 
     component.onSave({
       name: 'My New Project',
@@ -686,9 +685,9 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
 
 describe('ProjectDetailComponent — metadata from /seo', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
-  let metaTags: jasmine.SpyObj<MetaTagService>;
-  let seoService: jasmine.SpyObj<SeoService>;
-  let title: jasmine.SpyObj<Title>;
+  let metaTags: MockedObject<MetaTagService>;
+  let seoService: MockedObject<SeoService>;
+  let title: MockedObject<Title>;
 
   const projectSeo: SeoMetadata = {
     type: 'project',
@@ -706,28 +705,32 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
     seo: () => ReturnType<SeoService['forProject']>,
     id = 'abc-123'
   ) => {
-    const projectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      ['getProjectById']
-    );
-    projectService.getProjectById.and.returnValue(of(mockProject));
-    const printService = jasmine.createSpyObj('PrintService', [
-      'getPrintSummaries',
-    ]);
-    printService.getPrintSummaries.and.returnValue(
+    const projectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+    };
+    projectService.getProjectById.mockReturnValue(of(mockProject));
+    const printService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+    };
+    printService.getPrintSummaries.mockReturnValue(
       of({
         items: [],
         paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
       })
     );
-    metaTags = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'applySeoMetadata',
-      'preventIndexing',
-      'restoreShellRobots',
-    ]);
-    seoService = jasmine.createSpyObj<SeoService>('SeoService', ['forProject']);
-    seoService.forProject.and.callFake(seo);
-    title = jasmine.createSpyObj<Title>('Title', ['setTitle', 'getTitle']);
+    metaTags = {
+      applySeoMetadata: vi.fn().mockName('MetaTagService.applySeoMetadata'),
+      preventIndexing: vi.fn().mockName('MetaTagService.preventIndexing'),
+      restoreShellRobots: vi.fn().mockName('MetaTagService.restoreShellRobots'),
+    } as unknown as MockedObject<MetaTagService>;
+    seoService = {
+      forProject: vi.fn().mockName('SeoService.forProject'),
+    } as unknown as MockedObject<SeoService>;
+    seoService.forProject.mockImplementation(seo);
+    title = {
+      setTitle: vi.fn().mockName('Title.setTitle'),
+      getTitle: vi.fn().mockName('Title.getTitle'),
+    } as unknown as MockedObject<Title>;
 
     await TestBed.configureTestingModule({
       imports: [ProjectDetailComponent, NoopAnimationsModule],
@@ -741,11 +744,15 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { params: { id } } } },
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: Router,
-          useValue: jasmine.createSpyObj('Router', ['navigate']),
+          useValue: {
+            navigate: vi.fn().mockName('Router.navigate'),
+          },
         },
         {
           provide: ADSENSE_TOKEN,
@@ -779,8 +786,14 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
     expect(title.setTitle).toHaveBeenCalledWith(
       'Test Voron Build | 3D Print Log'
     );
-    expect(title.setTitle).toHaveBeenCalledBefore(metaTags.applySeoMetadata);
-    expect(metaTags.applySeoMetadata.calls.count()).toBeGreaterThan(0);
+    expect(
+      Math.min(...vi.mocked(title.setTitle).mock.invocationCallOrder)
+    ).toBeLessThan(
+      Math.min(...vi.mocked(metaTags.applySeoMetadata).mock.invocationCallOrder)
+    );
+    expect(
+      vi.mocked(metaTags.applySeoMetadata).mock.calls.length
+    ).toBeGreaterThan(0);
   });
 
   it('keeps the client-side title and marks the page noindex for a project that is not public', async () => {
@@ -808,7 +821,7 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
 
   it("restores the shell's robots tags when the page is left", async () => {
     await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
-    metaTags.restoreShellRobots.calls.reset();
+    metaTags.restoreShellRobots.mockClear();
     fixture.destroy();
     expect(metaTags.restoreShellRobots).toHaveBeenCalled();
   });

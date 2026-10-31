@@ -23,16 +23,16 @@ describe('AdsenseLoaderService', () => {
     // document — appending a live adsbygoogle.js <script> makes a real network
     // request and starts filling stray ad slots from other specs, which hangs
     // the CI browser.
-    const appendSpy = spyOn(document.head, 'appendChild').and.callFake(
-      <T extends Node>(node: T): T => node
-    );
+    const appendSpy = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation(<T extends Node>(node: T): T => node);
 
     const service = TestBed.inject(AdsenseLoaderService);
     service.load();
     service.load();
 
     expect(appendSpy).toHaveBeenCalledTimes(1);
-    const script = appendSpy.calls.argsFor(0)[0] as HTMLScriptElement;
+    const script = vi.mocked(appendSpy).mock.calls[0][0] as HTMLScriptElement;
     expect(script.getAttribute('data-ad-client')).toBe(
       'ca-pub-7759478851543974'
     );
@@ -44,9 +44,9 @@ describe('AdsenseLoaderService', () => {
     document
       .querySelectorAll('script[data-adsense-loader]')
       .forEach((s) => s.remove());
-    const appendSpy = spyOn(document.head, 'appendChild').and.callFake(
-      <T extends Node>(node: T): T => node
-    );
+    const appendSpy = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation(<T extends Node>(node: T): T => node);
     TestBed.overrideProvider(IS_CORDOVA_IOS, { useValue: true });
 
     TestBed.inject(AdsenseLoaderService).load();

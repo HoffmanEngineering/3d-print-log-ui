@@ -74,7 +74,7 @@ describe('FileAttachmentListComponent', () => {
     fixture.componentRef.setInput('canDownload', true);
     fixture.detectChanges();
 
-    const spy = spyOn(component.download, 'emit');
+    const spy = vi.spyOn(component.download, 'emit').mockReturnValue(undefined);
     component.onDownload(uploadedFile);
     expect(spy).toHaveBeenCalledWith(uploadedFile);
   });
@@ -91,7 +91,7 @@ describe('FileAttachmentListComponent', () => {
     fixture.componentRef.setInput('editable', true);
     fixture.detectChanges();
 
-    const spy = spyOn(component.delete, 'emit');
+    const spy = vi.spyOn(component.delete, 'emit').mockReturnValue(undefined);
     component.onDelete(uploadedFile);
     expect(spy).toHaveBeenCalledWith(uploadedFile);
   });

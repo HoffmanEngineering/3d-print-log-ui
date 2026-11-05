@@ -18,7 +18,11 @@ import { ToastrService } from 'ngx-toastr';
 import { AdsenseModule } from 'ng2-adsense';
 import { ViewPrintDetailComponent } from './view-print-detail.component';
 import { PrintDetailSummaryComponent } from './print-detail-summary/print-detail-summary.component';
-import { PrintService, PrintStatus } from 'src/app/core/services/print.service';
+import {
+  PrintService,
+  PrintStatus,
+  PrintViewStatus,
+} from 'src/app/core/services/print.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
@@ -140,6 +144,11 @@ describe('ViewPrintDetailComponent', () => {
         .fn()
         .mockName('PrintService.calculateTotalPrintCost'),
       calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+      // A private print's hero image is fetched through the service, with the token.
+      getPrintImage: vi
+        .fn()
+        .mockName('PrintService.getPrintImage')
+        .mockReturnValue(of('')),
     } as unknown as MockedObject<PrintService>;
     printService.calculatePrintCost.mockReturnValue({
       valid: true,
@@ -774,6 +783,34 @@ describe('ViewPrintDetailComponent', () => {
     );
     // An older API: no thumbnail, so the strip uses the full image as before.
     expect(withoutThumb.thumbnailUrl).toBeUndefined();
+  });
+
+  // A private print's image is served only with the owner's token, which an <img src>
+  // never sends: the hero gets no direct URL and fetches the image itself.
+  it('gives the hero no direct image URL for a private print', async () => {
+    await setup({
+      viewerId: OWNER_ID,
+      print: {
+        ...basePrint,
+        viewStatus: PrintViewStatus.Private,
+        images: [{ id: 1, isDefault: true, displayOrder: 0 }],
+      },
+    });
+    expect(component.printImages()[0].url).toBeUndefined();
+  });
+
+  it('keeps the direct image URL for a public print', async () => {
+    await setup({
+      viewerId: null,
+      print: {
+        ...basePrint,
+        viewStatus: PrintViewStatus.Public,
+        images: [{ id: 1, isDefault: true, displayOrder: 0 }],
+      },
+    });
+    expect(component.printImages()[0].url).toMatch(
+      /\/api\/Prints\/1\/image\/1$/
+    );
   });
 
   // These four settings used to be route resolvers. The component now loads

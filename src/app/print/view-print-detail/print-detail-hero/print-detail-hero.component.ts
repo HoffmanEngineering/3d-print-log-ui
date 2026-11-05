@@ -38,6 +38,11 @@ export class PrintDetailHeroComponent {
   protected readonly selectedImage = computed(
     () => this.images()[this.selectedIndex()] ?? null
   );
+  /** The selected image as a list, so the template can re-create the image per selection. */
+  protected readonly selectedImages = computed(() => {
+    const image = this.selectedImage();
+    return image ? [image] : [];
+  });
 
   protected readonly selectedAlt = computed(() => {
     const subject = this.title()?.trim() || 'this print';

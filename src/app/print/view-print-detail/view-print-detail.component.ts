@@ -39,6 +39,7 @@ import {
   PrintFilamentSourceMeasurement,
   PrintService,
   PrintStatus,
+  PrintViewStatus,
 } from '../../core/services/print.service';
 import { PushPermissionPromptService } from 'src/app/core/services/push-permission-prompt.service';
 import {
@@ -227,11 +228,17 @@ export class ViewPrintDetailComponent {
     if (!print?.images?.length) {
       return [];
     }
+    // The API serves a private print's images only with the owner's token, which an
+    // <img src> never sends. Without a direct URL the hero fetches them through
+    // PrintService instead, whose request carries it.
+    const isPrivate = print.viewStatus === PrintViewStatus.Private;
     return (
       print.images
         .map((image) => ({
           id: image.id,
-          url: `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
+          url: isPrivate
+            ? undefined
+            : `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
           thumbnailUrl: apiUrl(image.thumbnailUrl),
           file: null as File | null,
           isDefault: image.isDefault,

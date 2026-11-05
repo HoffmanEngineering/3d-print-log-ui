@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 49
 mode: how-to
-updated: 2026-10-30
+updated: 2026-11-04
 related: [printlog-bridge, printlog-bridge-docker, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp, printlog-bridge-duet, printlog-bridge-flashforge, printlog-bridge-anycubic]
 ---
 ## Bridges and printers found on your network
@@ -119,7 +119,7 @@ If you don't recognize the new key, leave it unconfirmed: nothing is sent to it.
 
 ### Printers in the config file {#config-file}
 
-Printers you set up in `printlog-bridge.cfg` keep working, and show as **managed by the config file**. The app can't change them: edit the file. If you also connected the same printer in the app, the config file wins, and the screen offers to remove the app's entry. The same goes for an `[app_printer]` section's [credentials](#credentials-config).
+Printers you set up in `printlog-bridge.cfg` keep working, and show as **managed by the config file**. Each one names the 3D Print Log printer it logs to, linked to that printer's page, with its section name from the file. The app can't change them: edit the file. If you also connected the same printer in the app, the config file wins, and the screen offers to remove the app's entry. The same goes for an `[app_printer]` section's [credentials](#credentials-config).
 
 ### Disconnect or ignore {#disconnect}
 

@@ -446,12 +446,31 @@
                 >description</mat-icon
               >
               <div class="identity">
-                <span class="name">{{ row.title }}</span>
-                <span class="meta">
-                  {{ kindLabel(row.printer.kind) }} ·
-                  <span class="mono">{{ row.address }}</span> · Managed by the
-                  config file
-                </span>
+                @if (row.printer.printerId && row.printer.printerName) {
+                  <a
+                    class="name"
+                    data-testid="bridge-configured-printer-link"
+                    [routerLink]="['/printers', row.printer.printerId]"
+                    >{{ row.printer.printerName }}</a
+                  >
+                  <span class="meta">
+                    {{ kindLabel(row.printer.kind) }} ·
+                    <span class="mono">{{ row.address }}</span> ·
+                    @if (row.printer.name) {
+                      <span class="mono">{{ row.printer.name }}</span> in the
+                      config file
+                    } @else {
+                      Managed by the config file
+                    }
+                  </span>
+                } @else {
+                  <span class="name">{{ row.title }}</span>
+                  <span class="meta">
+                    {{ kindLabel(row.printer.kind) }} ·
+                    <span class="mono">{{ row.address }}</span> · Managed by the
+                    config file
+                  </span>
+                }
                 @if (row.entry) {
                   <span class="meta warn">
                     Also connected in the app as app printer {{ row.entry.id }};

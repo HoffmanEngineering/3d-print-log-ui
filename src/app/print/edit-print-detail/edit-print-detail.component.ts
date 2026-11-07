@@ -908,31 +908,24 @@ export class EditPrintDetailComponent
         this.printForm.get('printerId').value
       );
 
-    if (userSetting) {
-      this.userSettingService
-        .updateUserSetting(userSetting.id, newValue)
-        .subscribe((setting) => {
-          this.lastMaterialMeasureSettings[materialCategoryName] = setting;
-        });
-    } else {
-      const materialUserSettingType =
-        EditPrintDetailComponent.MATERIAL_CATEGORY_TO_USER_SETTING[
-          materialCategoryName
-        ];
+    const materialUserSettingType: UserSettingType | undefined =
+      userSetting?.userSettingTypeId ??
+      EditPrintDetailComponent.MATERIAL_CATEGORY_TO_USER_SETTING[
+        materialCategoryName
+      ];
 
-      if (!materialUserSettingType) {
-        this.loggingService.logEvent('EditPrintDetail_UnknownMaterialType', {
-          materialCategoryName,
-        });
-        return;
-      }
-
-      this.userSettingService
-        .addUserSetting(materialUserSettingType, newValue)
-        .subscribe((setting) => {
-          this.lastMaterialMeasureSettings[materialCategoryName] = setting;
-        });
+    if (!materialUserSettingType) {
+      this.loggingService.logEvent('EditPrintDetail_UnknownMaterialType', {
+        materialCategoryName,
+      });
+      return;
     }
+
+    void this.userSettingService
+      .addOrUpdateSetting(materialUserSettingType, newValue)
+      .then((setting) => {
+        this.lastMaterialMeasureSettings[materialCategoryName] = setting;
+      });
   }
 
   private SaveSettingWhenSelectedPrinterIdChanges() {
@@ -963,25 +956,14 @@ export class EditPrintDetailComponent
         this.setMaterialCategoryNameForPrinterId(newPrinterId);
 
         // Save the last selected printer setting.
-        if (this.lastSelectedPrinterSetting) {
-          this.userSettingService
-            .updateUserSetting(
-              this.lastSelectedPrinterSetting.id,
-              newPrinterId.toString()
-            )
-            .subscribe((setting) => {
-              this.lastSelectedPrinterSetting = setting;
-            });
-        } else {
-          this.userSettingService
-            .addUserSetting(
-              UserSettingType.Prints_LastSelectedPrinterId,
-              newPrinterId.toString()
-            )
-            .subscribe((setting) => {
-              this.lastSelectedPrinterSetting = setting;
-            });
-        }
+        void this.userSettingService
+          .addOrUpdateSetting(
+            UserSettingType.Prints_LastSelectedPrinterId,
+            newPrinterId.toString()
+          )
+          .then((setting) => {
+            this.lastSelectedPrinterSetting = setting;
+          });
       });
   }
 
@@ -996,25 +978,14 @@ export class EditPrintDetailComponent
       .get('allowComments')
       .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((allowComments: boolean) => {
-        if (this.lastAllowCommentsSetting) {
-          this.userSettingService
-            .updateUserSetting(
-              this.lastAllowCommentsSetting.id,
-              allowComments.toString()
-            )
-            .subscribe((setting) => {
-              this.lastAllowCommentsSetting = setting;
-            });
-        } else {
-          this.userSettingService
-            .addUserSetting(
-              UserSettingType.Prints_LastSelectedAllowComments,
-              allowComments.toString()
-            )
-            .subscribe((setting) => {
-              this.lastAllowCommentsSetting = setting;
-            });
-        }
+        void this.userSettingService
+          .addOrUpdateSetting(
+            UserSettingType.Prints_LastSelectedAllowComments,
+            allowComments.toString()
+          )
+          .then((setting) => {
+            this.lastAllowCommentsSetting = setting;
+          });
       });
   }
 
@@ -1022,25 +993,14 @@ export class EditPrintDetailComponent
     this.loggingService.logEvent('ChangedDefaultViewStatus', {
       status: newViewStatus,
     });
-    if (this.defaultPrintViewStatusSetting()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultPrintViewStatusSetting().id,
-          newViewStatus.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultPrintViewStatusSetting.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Prints_DefaultPrintViewStatus,
-          newViewStatus.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultPrintViewStatusSetting.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Prints_DefaultPrintViewStatus,
+        newViewStatus.toString()
+      )
+      .then((setting) => {
+        this.defaultPrintViewStatusSetting.set(setting);
+      });
   }
 
   buildFormFromPrintDetail(print: PrintDetail): FormGroup<{

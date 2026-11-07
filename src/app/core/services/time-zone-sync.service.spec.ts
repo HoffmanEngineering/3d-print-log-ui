@@ -28,7 +28,9 @@ describe('TimeZoneSyncService', () => {
     settings.getCurrentUsersSettingByType.mockReturnValue(
       Promise.resolve(saved === null ? null : ({ value: saved } as UserSetting))
     );
-    settings.addOrUpdateSetting.mockReturnValue(Promise.resolve());
+    settings.addOrUpdateSetting.mockReturnValue(
+      Promise.resolve({} as UserSetting)
+    );
     TestBed.configureTestingModule({
       providers: [
         { provide: UserSettingService, useValue: settings },
@@ -75,7 +77,7 @@ describe('TimeZoneSyncService', () => {
     const service = create(null);
     settings.addOrUpdateSetting
       .mockReturnValueOnce(Promise.reject(new Error('offline')))
-      .mockReturnValueOnce(Promise.resolve());
+      .mockReturnValueOnce(Promise.resolve({} as UserSetting));
 
     await service.syncOnce();
     await service.syncOnce();

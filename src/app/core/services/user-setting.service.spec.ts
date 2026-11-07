@@ -357,6 +357,170 @@ describe('UserSettingService', () => {
       );
       await promise;
     });
+
+    it('resolves to the saved setting', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Name
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Currency_Name,
+        'EUR'
+      );
+      await tick();
+      httpTesting.expectOne(apiUrl).flush(makeDto({ id: 5, value: 'EUR' }));
+
+      const saved = await promise;
+      expect(saved.id).toBe(5);
+      expect(saved.value).toBe('EUR');
+    });
+
+    it('a second write while the create is in flight waits for it, then PUTs (never a second POST)', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Prints_LastSelectedPrinterId
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const first = service.addOrUpdateSetting(
+        UserSettingType.Prints_LastSelectedPrinterId,
+        '1'
+      );
+      const second = service.addOrUpdateSetting(
+        UserSettingType.Prints_LastSelectedPrinterId,
+        '2'
+      );
+      await tick();
+
+      const post = httpTesting.expectOne(apiUrl);
+      expect(post.request.method).toBe('POST');
+      post.flush(
+        makeDto({
+          id: 42,
+          userSettingTypeId: UserSettingType.Prints_LastSelectedPrinterId,
+          value: '1',
+        })
+      );
+      await first;
+      await tick();
+
+      const put = httpTesting.expectOne(apiUrl);
+      expect(put.request.method).toBe('PUT');
+      expect(put.request.body).toEqual({ id: 42, value: '2' });
+      put.flush(
+        makeDto({
+          id: 42,
+          userSettingTypeId: UserSettingType.Prints_LastSelectedPrinterId,
+          value: '2',
+        })
+      );
+      expect((await second).value).toBe('2');
+    });
+
+    it('writes to different setting types do not wait for each other', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Name
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      void service.addOrUpdateSetting(UserSettingType.Currency_Name, 'EUR');
+      void service.addOrUpdateSetting(UserSettingType.Currency_Symbol, '€');
+      await tick();
+
+      const posts = httpTesting.match(apiUrl);
+      expect(posts.length).toBe(2);
+      posts.forEach((r, i) => r.flush(makeDto({ id: i + 1 })));
+    });
+
+    it('on a 400 because the row already exists (another tab), refetches and PUTs', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Currency_Symbol,
+        '€'
+      );
+      await tick();
+      httpTesting
+        .expectOne((r) => r.method === 'POST')
+        .flush('UserSetting for this SettingTypeId already exists.', {
+          status: 400,
+          statusText: 'Bad Request',
+        });
+      await tick();
+
+      const existing = makeDto({
+        id: 77,
+        userSettingTypeId: UserSettingType.Currency_Symbol,
+        value: '$',
+      });
+      httpTesting.expectOne((r) => r.method === 'GET').flush([existing]);
+      await tick();
+
+      const put = httpTesting.expectOne((r) => r.method === 'PUT');
+      expect(put.request.body).toEqual({ id: 77, value: '€' });
+      put.flush({ ...existing, value: '€' });
+      expect((await promise).value).toBe('€');
+    });
+
+    it('rethrows a 400 when the refetch finds no row', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Symbol
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const promise = service.addOrUpdateSetting(
+        UserSettingType.Currency_Symbol,
+        '€'
+      );
+      const settled = promise.then(
+        () => 'resolved',
+        (e) => e.status
+      );
+      await tick();
+      httpTesting
+        .expectOne((r) => r.method === 'POST')
+        .flush('invalid', { status: 400, statusText: 'Bad Request' });
+      await tick();
+      httpTesting.expectOne((r) => r.method === 'GET').flush([]);
+
+      expect(await settled).toBe(400);
+    });
+
+    it('a failed write does not block the next one for that type', async () => {
+      const primed = service.getCurrentUsersSettingByType(
+        UserSettingType.Currency_Name
+      );
+      httpTesting.expectOne(apiUrl).flush([]);
+      await primed;
+
+      const first = service
+        .addOrUpdateSetting(UserSettingType.Currency_Name, 'EUR')
+        .catch(() => 'failed');
+      const second = service.addOrUpdateSetting(
+        UserSettingType.Currency_Name,
+        'GBP'
+      );
+      await tick();
+      httpTesting
+        .expectOne(apiUrl)
+        .flush('down', { status: 503, statusText: 'Service Unavailable' });
+      expect(await first).toBe('failed');
+      await tick();
+
+      const post = httpTesting.expectOne(apiUrl);
+      expect(post.request.method).toBe('POST');
+      expect(post.request.body.value).toBe('GBP');
+      post.flush(makeDto({ value: 'GBP' }));
+      expect((await second).value).toBe('GBP');
+    });
   });
 });
 

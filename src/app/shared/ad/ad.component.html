@@ -1,8 +1,8 @@
 @if (showAd()) {
   <aside aria-label="Advertisement" class="ad-wrapper">
-    <ng-adsense
-      [adSlot]="adSlot()"
+    <app-ad-slot
+      [adSlot]="adSlot() ?? AD_SLOTS.DEFAULT"
       [fullWidthResponsive]="fullWidthResponsive()"
-    ></ng-adsense>
+    ></app-ad-slot>
   </aside>
 }

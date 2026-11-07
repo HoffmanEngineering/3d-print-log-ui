@@ -4,11 +4,7 @@ import {
   withInterceptorsFromDi,
   withXhr,
 } from '@angular/common/http';
-import {
-  ApplicationConfig,
-  ErrorHandler,
-  importProvidersFrom,
-} from '@angular/core';
+import { ApplicationConfig, ErrorHandler } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import {
   provideClientHydration,
@@ -18,7 +14,6 @@ import {
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideLoadingBarInterceptor } from '@ngx-loading-bar/http-client';
 import { provideLoadingBarRouter } from '@ngx-loading-bar/router';
-import { AdsenseModule } from 'ng2-adsense';
 import { provideToastr } from 'ngx-toastr';
 
 import { provideAppRouter } from './app.routes';
@@ -53,14 +48,6 @@ export const appConfig: ApplicationConfig = {
       positionClass: 'toast-bottom-right',
       preventDuplicates: true,
     }),
-    importProvidersFrom(
-      AdsenseModule.forRoot({
-        adClient: 'ca-pub-7759478851543974',
-        adSlot: 1448468680,
-        adFormat: 'auto',
-        fullWidthResponsive: true,
-      })
-    ),
     { provide: CelebrationPresenter, useClass: LazyCelebrationPresenter },
     { provide: ErrorHandler, useClass: ErrorHandlerService },
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),

@@ -64,7 +64,6 @@
     "html5-qrcode": "^2.3.8",
     "lodash-es": "^4.18.1",
     "minisearch": "^7.2.0",
-    "ng2-adsense": "^13.0.0",
     "ngx-toastr": "^20.0.5",
     "parse-duration": "^2.1.9",
     "qrcode": "^1.5.4",

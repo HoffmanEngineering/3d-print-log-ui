@@ -1,5 +1,4 @@
 import type { Mock, MockedObject } from 'vitest';
-import { AdsenseModule } from 'ng2-adsense';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -119,7 +118,6 @@ describe('FilamentDetailComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -488,7 +486,6 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -699,7 +696,6 @@ describe('FilamentDetailComponent - value serialization', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -1057,7 +1053,6 @@ describe('FilamentDetailComponent - usage panels', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -1216,7 +1211,6 @@ describe('FilamentDetailComponent scanned tag', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         MatNativeDateModule,
         FilamentDetailComponent,
@@ -1691,7 +1685,6 @@ describe('FilamentDetailComponent - autocomplete options', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         MatNativeDateModule,
         FilamentDetailComponent,

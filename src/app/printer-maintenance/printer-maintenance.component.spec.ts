@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { of, Subject } from 'rxjs';
 
@@ -115,8 +114,6 @@ describe('PrinterMaintenanceComponent', () => {
         FormsModule,
         NoopAnimationsModule,
         PrinterAvatarComponent,
-        // The template renders app-ad for real, which needs the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         PrinterMaintenanceComponent,
       ],
       providers: [

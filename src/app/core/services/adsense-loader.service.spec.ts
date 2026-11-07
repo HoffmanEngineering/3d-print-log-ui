@@ -40,6 +40,60 @@ describe('AdsenseLoaderService', () => {
     expect(script.src).toContain('adsbygoogle.js');
   });
 
+  // Slots push only once the script runs, so a push can never outlive the slot that made it.
+  it('reports ready only after the script has loaded', () => {
+    document
+      .querySelectorAll('script[data-adsense-loader]')
+      .forEach((s) => s.remove());
+    const appendSpy = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation(<T extends Node>(node: T): T => node);
+    const service = TestBed.inject(AdsenseLoaderService);
+
+    expect(service.ready()).toBe(false);
+    service.load();
+    expect(service.ready()).toBe(false);
+
+    const script = vi.mocked(appendSpy).mock.calls[0][0] as HTMLScriptElement;
+    script.dispatchEvent(new Event('load'));
+    expect(service.ready()).toBe(true);
+  });
+
+  it('stays not ready when the script fails to load (an ad blocker)', () => {
+    document
+      .querySelectorAll('script[data-adsense-loader]')
+      .forEach((s) => s.remove());
+    const appendSpy = vi
+      .spyOn(document.head, 'appendChild')
+      .mockImplementation(<T extends Node>(node: T): T => node);
+    const service = TestBed.inject(AdsenseLoaderService);
+
+    service.load();
+    const script = vi.mocked(appendSpy).mock.calls[0][0] as HTMLScriptElement;
+    script.dispatchEvent(new Event('error'));
+
+    expect(service.ready()).toBe(false);
+  });
+
+  it('waits for a loader script that is already on the page', () => {
+    document
+      .querySelectorAll('script[data-adsense-loader]')
+      .forEach((s) => s.remove());
+    const existing = document.createElement('script');
+    existing.setAttribute('data-adsense-loader', '');
+    document.head.appendChild(existing);
+    try {
+      const service = TestBed.inject(AdsenseLoaderService);
+      service.load();
+      expect(service.ready()).toBe(false);
+
+      existing.dispatchEvent(new Event('load'));
+      expect(service.ready()).toBe(true);
+    } finally {
+      existing.remove();
+    }
+  });
+
   it('never injects the loader in the iOS app', () => {
     document
       .querySelectorAll('script[data-adsense-loader]')

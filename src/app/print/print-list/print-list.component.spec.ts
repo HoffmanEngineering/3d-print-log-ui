@@ -1,5 +1,4 @@
 import type { MockedObject } from 'vitest';
-import { AdsenseModule } from 'ng2-adsense';
 import { MediaMatcher } from '@angular/cdk/layout';
 import {
   Component,
@@ -179,7 +178,6 @@ describe('PrintListComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         DurationPipe,
         LocaleDatePipe,
         RouterTestingModule,

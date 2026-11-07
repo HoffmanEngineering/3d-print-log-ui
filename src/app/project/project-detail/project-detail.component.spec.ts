@@ -8,7 +8,6 @@ import {
 } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
-import { ADSENSE_TOKEN } from 'ng2-adsense';
 import { ProjectDetailComponent } from './project-detail.component';
 import {
   ProjectService,
@@ -21,6 +20,7 @@ import {
   PrintSummary,
   PrintStatus,
 } from 'src/app/core/services/print.service';
+import { AdEligibilityService } from '../../shared/ad/ad-eligibility.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -93,6 +93,11 @@ describe('ProjectDetailComponent', () => {
       providers: [
         { provide: ProjectService, useValue: mockProjectService },
         { provide: PrintService, useValue: mockPrintService },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         { provide: AuthService, useValue: mockAuthService },
         {
           provide: ActivatedRoute,
@@ -103,10 +108,6 @@ describe('ProjectDetailComponent', () => {
           useValue: {
             open: vi.fn().mockName('MatDialog.open'),
           },
-        },
-        {
-          provide: ADSENSE_TOKEN,
-          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
@@ -553,6 +554,11 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       providers: [
         { provide: ProjectService, useValue: mockProjectService },
         { provide: PrintService, useValue: mockPrintService },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         { provide: AuthService, useValue: mockAuthService },
         {
           provide: ActivatedRoute,
@@ -569,10 +575,6 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
           useValue: {
             navigate: vi.fn().mockName('Router.navigate'),
           },
-        },
-        {
-          provide: ADSENSE_TOKEN,
-          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
@@ -741,6 +743,11 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
       providers: [
         { provide: ProjectService, useValue: projectService },
         { provide: PrintService, useValue: printService },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         { provide: AuthService, useValue: { userProfile: signal(null) } },
         { provide: MetaTagService, useValue: metaTags },
         { provide: SeoService, useValue: seoService },
@@ -757,10 +764,6 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
           useValue: {
             navigate: vi.fn().mockName('Router.navigate'),
           },
-        },
-        {
-          provide: ADSENSE_TOKEN,
-          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
         },
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),

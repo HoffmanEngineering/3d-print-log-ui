@@ -8,7 +8,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 
@@ -152,8 +151,6 @@ describe('PrinterDetailComponent', () => {
         PrinterConnectionsComponent,
         PrinterSlotsComponent,
         PrinterSpoolmanComponent,
-        // The template renders app-ad for real, which needs the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         PrinterDetailComponent,
       ],
       providers: [

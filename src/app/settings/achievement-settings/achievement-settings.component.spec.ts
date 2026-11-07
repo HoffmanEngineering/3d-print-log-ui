@@ -33,7 +33,9 @@ describe('AchievementSettingsComponent', () => {
           : null
       )
     );
-    settings.addOrUpdateSetting.mockReturnValue(Promise.resolve());
+    settings.addOrUpdateSetting.mockReturnValue(
+      Promise.resolve({} as UserSetting)
+    );
     logging = {
       logEvent: vi.fn().mockName('LoggingService.logEvent'),
     } as unknown as MockedObject<LoggingService>;
@@ -140,7 +142,10 @@ describe('AchievementSettingsComponent', () => {
     await render();
     const resolvers: (() => void)[] = [];
     settings.addOrUpdateSetting.mockImplementation(
-      () => new Promise<void>((r) => resolvers.push(r))
+      () =>
+        new Promise<UserSetting>((r) =>
+          resolvers.push(() => r({} as UserSetting))
+        )
     );
 
     fixture.componentInstance.form.controls.celebrations.setValue('quiet');

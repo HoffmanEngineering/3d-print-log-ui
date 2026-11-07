@@ -100,9 +100,10 @@ describe('EditPrintDetailComponent', () => {
     };
 
     const mockUserSettingService = {
-      updateUserSetting: vi
+      addOrUpdateSetting: vi
         .fn()
-        .mockName('UserSettingService.updateUserSetting'),
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
       getCurrentUsersSettingByType: vi
         .fn()
         .mockName('UserSettingService.getCurrentUsersSettingByType'),
@@ -905,8 +906,7 @@ describe('EditPrintDetailComponent', () => {
 
         expect(component.saving()).toBe(true);
         expect(
-          (TestBed.inject(ToastrService) as MockedObject<ToastrService>)
-            .success
+          (TestBed.inject(ToastrService) as MockedObject<ToastrService>).success
         ).toHaveBeenCalledWith('Save successful!');
       });
 
@@ -975,8 +975,7 @@ describe('EditPrintDetailComponent', () => {
         string,
         unknown
       >;
-      settings['addUserSetting'] = vi.fn().mockReturnValue(of({}));
-      settings['updateUserSetting'] = vi.fn().mockReturnValue(of({}));
+      settings['addOrUpdateSetting'] = vi.fn().mockResolvedValue({});
       component.printForm.get('id')!.setValue(null);
       component.printForm.get('printerId')!.setValue(2);
       fixture.detectChanges();
@@ -1007,8 +1006,7 @@ describe('EditPrintDetailComponent', () => {
         const settings = TestBed.inject(
           UserSettingService
         ) as unknown as Record<string, unknown>;
-        settings['addUserSetting'] = vi.fn().mockReturnValue(of({}));
-        settings['updateUserSetting'] = vi.fn().mockReturnValue(of({}));
+        settings['addOrUpdateSetting'] = vi.fn().mockResolvedValue({});
         component.printForm.get('id')!.setValue(null);
         component.printForm.get('printerId')!.setValue(2);
         fixture.detectChanges();
@@ -1588,17 +1586,12 @@ describe('EditPrintDetailComponent', () => {
     }
 
     function writtenPrinterIds(): string[] {
-      return [
-        ...vi
-          .mocked(settings['addUserSetting'])
-          .mock.calls.filter(
-            (c) => c[0] === UserSettingType.Prints_LastSelectedPrinterId
-          )
-          .map((c) => c[1] as string),
-        ...vi
-          .mocked(settings['updateUserSetting'])
-          .mock.calls.map((c) => c[1] as string),
-      ];
+      return vi
+        .mocked(settings['addOrUpdateSetting'])
+        .mock.calls.filter(
+          (c) => c[0] === UserSettingType.Prints_LastSelectedPrinterId
+        )
+        .map((c) => c[1] as string);
     }
 
     beforeEach(() => {
@@ -1606,10 +1599,9 @@ describe('EditPrintDetailComponent', () => {
         string,
         Mock
       >;
-      settings['addUserSetting'] = vi
+      settings['addOrUpdateSetting'] = vi
         .fn()
-        .mockReturnValue(of({ id: 3, value: '' }));
-      settings['updateUserSetting'].mockReturnValue(of({ id: 3, value: '' }));
+        .mockResolvedValue({ id: 3, value: '' });
       printerService = TestBed.inject(
         PrinterService
       ) as MockedObject<PrinterService>;

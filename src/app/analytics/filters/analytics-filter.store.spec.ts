@@ -103,6 +103,26 @@ describe('AnalyticsFilterStore', () => {
     expect(store.printerIds()).toEqual([7]);
   });
 
+  it('drops material and project ids that are not GUIDs, and statuses that do not exist', () => {
+    // The API answers a malformed GUID or an unknown status with a 400, which turned a stale or
+    // hand-edited link into an error page instead of an unfiltered one.
+    const guid = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+    const upper = 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D';
+
+    store.initFromUrl({
+      filamentIds: `${guid},not-a-guid,123`,
+      projectIds: `{${guid}},${upper},${guid}x`,
+      statuses: `${PrintStatus.Success},0,7,99,-1,${PrintStatus.PartialSuccess}`,
+    });
+
+    expect(store.filamentIds()).toEqual([guid]);
+    expect(store.projectIds()).toEqual([upper]);
+    expect(store.statuses()).toEqual([
+      PrintStatus.Success,
+      PrintStatus.PartialSuccess,
+    ]);
+  });
+
   it('counts active filters for the mobile chip badge, excluding the date range', () => {
     vi.spyOn(router, 'navigate').mockResolvedValue(true);
 

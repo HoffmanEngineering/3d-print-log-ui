@@ -2,6 +2,8 @@ import type { MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatDateRangeInput } from '@angular/material/datepicker';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -188,6 +190,37 @@ describe('AnalyticsFilterBarComponent', () => {
 
     expect(store.customFrom()).toEqual(new Date(2026, 2, 10));
     expect(store.customTo()).toEqual(new Date(2026, 2, 12));
+  });
+
+  it('caps both ends of the custom range at today', () => {
+    store.setPreset('custom');
+    fixture.detectChanges();
+
+    const rangeInput = fixture.debugElement.query(
+      By.directive(MatDateRangeInput)
+    ).componentInstance as MatDateRangeInput<Date>;
+    const max = rangeInput.max!;
+    const today = new Date();
+
+    expect(max.getFullYear()).toBe(today.getFullYear());
+    expect(max.getMonth()).toBe(today.getMonth());
+    expect(max.getDate()).toBe(today.getDate());
+  });
+
+  it('does not apply a range that starts in the future (the API would see it reversed)', () => {
+    // The API clamps toDate to now, so a future start ends up after the end and is a 400.
+    store.setPreset('custom');
+    fixture.detectChanges();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const later = new Date(tomorrow);
+    later.setDate(later.getDate() + 5);
+
+    fixture.componentInstance.onCustomStart(tomorrow);
+    fixture.componentInstance.onCustomEnd(later);
+
+    expect(store.customFrom()).toBeNull();
+    expect(store.customTo()).toBeNull();
   });
 
   it('does not apply a half-specified range', () => {

@@ -272,4 +272,31 @@ describe('PrinterMaintenanceComponent', () => {
       expect(text()).toContain('Replace nozzle');
     });
   });
+
+  describe('toggleDone', () => {
+    it('saves an existing row', async () => {
+      await setUp([anEntry()]);
+      const entry = component.entries()[0];
+
+      component.toggleDone(entry, true);
+
+      expect(entry.done).toBe(true);
+      expect(
+        maintenanceService.updatePrinterMaintenanceEntry
+      ).toHaveBeenCalledWith(entry);
+    });
+
+    it('only marks a new, unsaved row: there is nothing to PUT yet', async () => {
+      await setUp([anEntry()]);
+      component.addEntry();
+      const draft = component.entries()[0];
+
+      component.toggleDone(draft, true);
+
+      expect(draft.done).toBe(true);
+      expect(
+        maintenanceService.updatePrinterMaintenanceEntry
+      ).not.toHaveBeenCalled();
+    });
+  });
 });

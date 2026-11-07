@@ -99,6 +99,7 @@ describe('VersionReleaseNoteDialogService', () => {
       addOrUpdateSetting: async (type: UserSettingType, value: string) => {
         accountWrites.push([type, value]);
         account.set(type, value);
+        return { userSettingTypeId: type, value } as UserSetting;
       },
     };
 

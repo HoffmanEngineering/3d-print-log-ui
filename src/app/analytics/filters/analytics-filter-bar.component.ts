@@ -171,6 +171,9 @@ export class AnalyticsFilterBarComponent {
    * simply for editing the first half of their own range. Picking a start therefore clears
    * the staged end, matching what the picker does on screen.
    */
+  /** The last day the custom range can pick (both ends). */
+  readonly today = new Date();
+
   private readonly pendingStart = signal<Date | null>(null);
   private readonly pendingEnd = signal<Date | null>(null);
 
@@ -190,6 +193,9 @@ export class AnalyticsFilterBarComponent {
     const to = this.pendingEnd();
 
     if (!from || !to || from > to) return;
+    // A typed date skips the picker's [max]. A start after today reaches the API as a reversed
+    // range (it clamps the end to now), which it rejects with a 400.
+    if (from.getTime() > Date.now()) return;
 
     this.store.setCustomRange(from, to);
   }

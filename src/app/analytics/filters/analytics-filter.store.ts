@@ -97,6 +97,14 @@ export function resolvePresetRange(
   }
 }
 
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isGuid = (value: string) => GUID.test(value);
+
+/** The numeric values of PrintStatus (a numeric enum also maps names to numbers). */
+const KNOWN_STATUSES = new Set<number>(
+  Object.values(PrintStatus).filter((v): v is number => typeof v === 'number')
+);
+
 /**
  * Single owner of analytics filter state. The URL is its serialization, so every view is
  * linkable, shareable, and survives a reload.
@@ -212,11 +220,19 @@ export class AnalyticsFilterStore {
     }
 
     this.printerIds.set(this.parseNumberList(params['printerIds']));
+    // Unknown statuses and malformed ids are dropped, not sent: the API answers either with a
+    // 400, so a stale or hand-edited link would show an error instead of the page.
     this.statuses.set(
-      this.parseNumberList(params['statuses']) as PrintStatus[]
+      this.parseNumberList(params['statuses']).filter((s) =>
+        KNOWN_STATUSES.has(s)
+      ) as PrintStatus[]
     );
-    this.filamentIds.set(this.parseStringList(params['filamentIds']));
-    this.projectIds.set(this.parseStringList(params['projectIds']));
+    this.filamentIds.set(
+      this.parseStringList(params['filamentIds']).filter(isGuid)
+    );
+    this.projectIds.set(
+      this.parseStringList(params['projectIds']).filter(isGuid)
+    );
     this.comparePrevious.set(
       String(params['comparePrevious'] ?? '') === 'true'
     );

@@ -365,7 +365,12 @@ export class PrinterMaintenanceComponent implements OnInit, OnDestroy {
   toggleDone(entry: PrinterMaintenanceDto, checked: boolean) {
     entry.done = checked;
 
-    // save entry
+    // A new row has no id yet: saveEntry sends `done` with the create. A PUT would hit
+    // /PrinterMaintenance/00000000-0000-0000-0000-000000000000.
+    if (entry.id === EMPTY_GUID) {
+      return;
+    }
+
     this.printerMaintenanceService
       .updatePrinterMaintenanceEntry(entry)
       .subscribe(() => {

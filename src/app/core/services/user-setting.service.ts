@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
@@ -100,6 +100,11 @@ export class UserSettingService {
   private loaded = false;
   private loadingPromise: Promise<Map<UserSettingType, UserSetting>> | null =
     null;
+  /** The newest write per setting type, so a later write for that type waits for it. */
+  private readonly pendingWrites = new Map<
+    UserSettingType,
+    Promise<UserSetting>
+  >();
 
   public async getCurrentUsersSettingByType(
     userSettingTypeId: UserSettingType
@@ -178,24 +183,59 @@ export class UserSettingService {
   }
 
   /**
-   * Writes a setting without the caller having to know whether a row exists.
+   * Writes a setting without the caller having to know whether a row exists. Every component
+   * that saves a setting goes through here, never through addUserSetting directly.
    *
-   * The API's CreateUserSetting rejects a second row for the same type, and the database now
-   * enforces that too, so choosing PUT vs POST is not a caller's concern — getting it wrong
-   * is a 500, not a silent duplicate.
+   * The API's CreateUserSetting rejects a second row for the same type (400), and the database
+   * enforces that too. Two things used to send that second POST: a second change made before
+   * the first create returned, and a row created in another tab. So writes for one type run one
+   * after another (a write waits for the one in flight, then sees its row and PUTs), and a 400
+   * on create refetches the settings and PUTs to the row it finds.
    */
-  public async addOrUpdateSetting(
+  public addOrUpdateSetting(
     settingTypeId: UserSettingType,
     newValue: string
-  ): Promise<void> {
+  ): Promise<UserSetting> {
+    const previous = this.pendingWrites.get(settingTypeId);
+    const write = (previous ?? Promise.resolve())
+      // A failed earlier write is its caller's to handle; this one still runs.
+      .catch(() => undefined)
+      .then(() => this.writeSetting(settingTypeId, newValue));
+
+    this.pendingWrites.set(settingTypeId, write);
+    const cleanUp = () => {
+      if (this.pendingWrites.get(settingTypeId) === write) {
+        this.pendingWrites.delete(settingTypeId);
+      }
+    };
+    write.then(cleanUp, cleanUp);
+    return write;
+  }
+
+  private async writeSetting(
+    settingTypeId: UserSettingType,
+    newValue: string
+  ): Promise<UserSetting> {
     const existing = await this.getCurrentUsersSettingByType(settingTypeId);
 
     if (existing) {
-      await lastValueFrom(this.updateUserSetting(existing.id, newValue));
-      return;
+      return lastValueFrom(this.updateUserSetting(existing.id, newValue));
     }
 
-    await lastValueFrom(this.addUserSetting(settingTypeId, newValue));
+    try {
+      return await lastValueFrom(this.addUserSetting(settingTypeId, newValue));
+    } catch (err) {
+      if (!(err instanceof HttpErrorResponse) || err.status !== 400) {
+        throw err;
+      }
+      // "Already exists": the row was created elsewhere since the settings were read.
+      await lastValueFrom(this.fetchSettings());
+      const created = this.settingsMap.get(settingTypeId);
+      if (!created) {
+        throw err;
+      }
+      return lastValueFrom(this.updateUserSetting(created.id, newValue));
+    }
   }
 
   addUserSetting(settingTypeId: UserSettingType, newValue: string) {

@@ -40,7 +40,9 @@ describe('EmailNoticeComponent', () => {
         ? ({ value: seenAt } as UserSetting)
         : null
     );
-    settings.addOrUpdateSetting.mockReturnValue(Promise.resolve());
+    settings.addOrUpdateSetting.mockReturnValue(
+      Promise.resolve({} as UserSetting)
+    );
     logging = {
       logEvent: vi.fn().mockName('LoggingService.logEvent'),
       logException: vi.fn().mockName('LoggingService.logException'),

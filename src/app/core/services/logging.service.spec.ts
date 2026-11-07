@@ -96,6 +96,64 @@ describe('LoggingService', () => {
     expect(JSON.stringify(fakeAi.emittedDuringLoad)).not.toContain('SECRET');
   });
 
+  it('drops third-party dependencies and keeps the API, its own origin and Auth0', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: LoggingService, useClass: TestableLoggingService },
+      ],
+    });
+    const service = TestBed.inject(LoggingService) as TestableLoggingService;
+    const fakeAi = makeFakeAi();
+    fakeAi.addTelemetryInitializer.mockImplementation((fn: any) =>
+      fakeAi.initializers.push(fn)
+    );
+    service.importResult = Promise.resolve(makeFakeModule(fakeAi));
+    await service.runInitialize();
+
+    const send = (target: string) =>
+      fakeAi.initializers.every(
+        (fn) =>
+          fn({
+            baseType: 'RemoteDependencyData',
+            baseData: { target, name: 'GET /' },
+          }) !== false
+      );
+
+    expect(send(`${environment.printLogApiUrl}/api/Prints`)).toBe(true);
+    expect(send(`${location.origin}/assets/x.json`)).toBe(true);
+    expect(send('https://tenant.auth0.com/oauth/token')).toBe(true);
+    expect(send('https://region1.analytics.google.com/g/collect')).toBe(false);
+  });
+
+  it('drops a known third-party exception with no frame from the app, and keeps the rest', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: LoggingService, useClass: TestableLoggingService },
+      ],
+    });
+    const service = TestBed.inject(LoggingService) as TestableLoggingService;
+    const fakeAi = makeFakeAi();
+    fakeAi.addTelemetryInitializer.mockImplementation((fn: any) =>
+      fakeAi.initializers.push(fn)
+    );
+    service.importResult = Promise.resolve(makeFakeModule(fakeAi));
+    await service.runInitialize();
+
+    const send = (message: string) =>
+      fakeAi.initializers.every(
+        (fn) =>
+          fn({
+            baseType: 'ExceptionData',
+            baseData: {
+              exceptions: [{ typeName: 'Error', message, parsedStack: [] }],
+            },
+          }) !== false
+      );
+
+    expect(send('Uncaught Error: int64')).toBe(false);
+    expect(send("Cannot read properties of null (reading 'x')")).toBe(true);
+  });
+
   it('should be created (no-key stub path)', () => {
     const service = TestBed.inject(LoggingService);
     expect(service).toBeTruthy();

@@ -82,7 +82,9 @@ describe('OnboardingService', () => {
     );
     settings.addOrUpdateSetting.mockImplementation(async (type) => {
       await Promise.resolve();
-      store.set(type, setting(type));
+      const saved = setting(type);
+      store.set(type, saved);
+      return saved;
     });
     printers = {
       getCurrentUserPrinterSummaries: vi

@@ -4,7 +4,7 @@ import {
   withInterceptorsFromDi,
   withXhr,
 } from '@angular/common/http';
-import { ApplicationConfig, ErrorHandler } from '@angular/core';
+import { ApplicationConfig } from '@angular/core';
 import { MAT_DATE_LOCALE } from '@angular/material/core';
 import {
   provideClientHydration,
@@ -20,7 +20,7 @@ import { provideAppRouter } from './app.routes';
 import { AchievementRefreshInterceptor } from './core/http/achievement-refresh.interceptor';
 import { AuthInterceptorService } from './core/http/auth-interceptor.service';
 import { CelebrationPresenter } from './core/services/achievement-celebration.service';
-import { ErrorHandlerService } from './core/services/error-handler.service';
+import { provideAppErrorHandling } from './core/services/error-handler.service';
 import { LazyCelebrationPresenter } from './shared/achievements/lazy-celebration-presenter';
 
 /** Shared by the browser and the server; app.config.server.ts adds to it. */
@@ -49,7 +49,7 @@ export const appConfig: ApplicationConfig = {
       preventDuplicates: true,
     }),
     { provide: CelebrationPresenter, useClass: LazyCelebrationPresenter },
-    { provide: ErrorHandler, useClass: ErrorHandlerService },
+    provideAppErrorHandling(),
     provideClientHydration(withEventReplay(), withNoIncrementalHydration()),
     {
       provide: MAT_DATE_LOCALE,

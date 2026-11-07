@@ -1,6 +1,7 @@
-import { EnvironmentProviders } from '@angular/core';
+import { EnvironmentProviders, inject } from '@angular/core';
 import {
   provideRouter,
+  withNavigationErrorHandler,
   Routes,
   withInMemoryScrolling,
   withPreloading,
@@ -9,6 +10,7 @@ import { environment } from 'src/environments/environment';
 import { authGuard } from './core/guards/auth.guard';
 import { homepageRedirectGuard } from './core/guards/homepage-redirect.guard';
 import { pendingChangesGuard } from './core/guards/pending-changes.guard';
+import { ChunkLoadRecoveryService } from './core/routing/chunk-load-recovery';
 import { SelectivePreloadStrategy } from './core/routing/selective-preload.strategy';
 import { HomeComponent } from './home/home.component';
 import { SlicerLandingComponent } from './slicer/slicer-landing.component';
@@ -250,6 +252,11 @@ export function provideAppRouter(
       // being restored.
       anchorScrolling: 'enabled',
     }),
-    withPreloading(SelectivePreloadStrategy)
+    withPreloading(SelectivePreloadStrategy),
+    // A tab left open across a deploy asks for chunk files the new build no
+    // longer has. Reload once, to the page the user was going to.
+    withNavigationErrorHandler((event) => {
+      inject(ChunkLoadRecoveryService).recover(event.error, event.url);
+    })
   );
 }

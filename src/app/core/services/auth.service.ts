@@ -8,6 +8,7 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
 import { createAuth0Client, Auth0Client } from '@auth0/auth0-spa-js';
+import { ToastrService } from 'ngx-toastr';
 
 import {
   combineLatest,
@@ -25,6 +26,7 @@ import {
   filter,
   shareReplay,
   startWith,
+  take,
   tap,
   timeout,
 } from 'rxjs/operators';
@@ -52,6 +54,26 @@ const SIGNUP_WINDOW_MS = 10 * 60 * 1000;
 const SIGNUP_LOGGED_KEY_PREFIX = 'pl_signup_logged_';
 /** How long background sign-up logging waits on the profile, then on the status lookup. */
 const SIGNUP_LOG_TIMEOUT_MS = 10000;
+
+/**
+ * Token errors that mean this browser's Auth0 session is over: the refresh token was revoked,
+ * rotated away or expired (`invalid_grant`), or there is none to use.
+ */
+const SESSION_ENDED_ERRORS = new Set([
+  'invalid_grant',
+  'login_required',
+  'missing_refresh_token',
+]);
+/** sessionStorage: when this tab last sent the user back to Auth0 after the session ended. */
+const SESSION_RELOGIN_KEY = 'pl_session_relogin_at';
+/** A second ended session this soon after the last one signs the user out instead of looping. */
+const SESSION_RELOGIN_WINDOW_MS = 60 * 1000;
+
+/** Errors handleRedirectCallback throws for a callback URL with no login in progress. */
+const CALLBACK_STATE_ERRORS = new Set([
+  'missing_transaction',
+  'state_mismatch',
+]);
 
 export interface UserProfileInfo {
   id: number;
@@ -254,14 +276,13 @@ export class AuthService {
         from(client.getTokenSilently({ ...options, detailedResponse: false }))
       ),
       catchError((err) => {
-        if (err.error === 'missing_refresh_token') {
-          if (this.loggedIn) {
-            // logout is async now (push teardown runs first); nothing here can await it.
-            void this.logout();
-          }
+        // Only for a signed-in user: an anonymous visitor on a public page gets
+        // missing_refresh_token on every request, and that is expected.
+        if (SESSION_ENDED_ERRORS.has(err?.error) && this.loggedIn === true) {
+          this.endExpiredSession(err.error);
         }
 
-        return throwError(err);
+        return throwError(() => err);
       })
     ) as unknown as Observable<string>; // TODO: Figure out why getTokenSilently isn't giving the right type
   }
@@ -366,9 +387,47 @@ export class AuthService {
     );
     // Subscribe to authentication completion observable
     // Response will be an array of user and login status
-    authComplete$.subscribe(() => {
-      void this.navigateAfterCallback(targetRoute, source);
+    authComplete$.subscribe({
+      next: () => {
+        void this.navigateAfterCallback(targetRoute, source);
+      },
+      error: (error: unknown) => this.handleCallbackError(error),
     });
+  }
+
+  /**
+   * Leaves /callback whatever went wrong, so the user is never stuck on its spinner, and
+   * replaces the callback URL in history so Back does not land on it again. Never signs in
+   * from here: a callback that fails again would loop.
+   */
+  private handleCallbackError(error: unknown): void {
+    const e = (error ?? {}) as {
+      error?: unknown;
+      error_description?: unknown;
+      message?: unknown;
+    };
+    const code = typeof e.error === 'string' ? e.error : undefined;
+    const logging = this.injector.get(LoggingService);
+
+    if (
+      (code && CALLBACK_STATE_ERRORS.has(code)) ||
+      (!code && e.message === 'Invalid state')
+    ) {
+      // A revisited or bookmarked callback URL, or a login that finished in another tab.
+      logging.logEvent('Auth_CallbackInvalidState', { error: code });
+    } else if (code) {
+      // An error Auth0 sent back, such as access_denied from a rule or a declined consent.
+      const description =
+        typeof e.error_description === 'string' && e.error_description
+          ? e.error_description
+          : code;
+      logging.logEvent('Auth_CallbackError', { error: code, description });
+      this.injector.get(ToastrService).error(description, 'Sign-in failed');
+    } else {
+      this.logException(error);
+    }
+
+    void this.router.navigateByUrl('/', { replaceUrl: true });
   }
 
   /**
@@ -486,15 +545,10 @@ export class AuthService {
     if (environment.devAuthBypass) {
       return;
     }
-    // Stop notification polling
-    this.notificationService.stopPolling();
-    this.userSettingService.clearCache();
-    // The signed thumbnail map is per user. Clearing it here rather than waiting for the
-    // store's own next read means the previous user's printer photos cannot survive on
-    // screen in a session that outlives the Auth0 redirect.
-    this.injector.get(PrinterThumbnailStore).invalidate();
-    this.injector.get(LoggingService).clearAuthenticatedUser();
-    this.injector.get(OnboardingService).clear();
+    // The push teardown mints a token. If Auth0 refuses it, this logout is already ending the
+    // session: don't let endExpiredSession start a sign-in on top of it.
+    this.sessionEnding = true;
+    this.clearLocalUserState();
 
     await this.runPushTeardown();
 
@@ -506,6 +560,83 @@ export class AuthService {
         logoutParams: { returnTo: `${window.location.origin}` },
       });
     });
+  }
+
+  /** Everything this app holds for the signed-in user, short of the Auth0 session itself. */
+  private clearLocalUserState(): void {
+    // Stop notification polling
+    this.notificationService.stopPolling();
+    this.userSettingService.clearCache();
+    // The signed thumbnail map is per user. Clearing it here rather than waiting for the
+    // store's own next read means the previous user's printer photos cannot survive on
+    // screen in a session that outlives the Auth0 redirect.
+    this.injector.get(PrinterThumbnailStore).invalidate();
+    this.injector.get(LoggingService).clearAuthenticatedUser();
+    this.injector.get(OnboardingService).clear();
+  }
+
+  /** Set while an ended session is being torn down, so parallel failures act once. */
+  private sessionEnding = false;
+
+  /**
+   * Auth0 refused this browser's refresh token. Left alone, isAuthenticated() stays true, every
+   * API call fails in the interceptor and the notification poll retries forever. Instead: clear
+   * the local state and the SDK's cache (no redirect to Auth0's logout page), then send the user
+   * to sign in again, back to the page they were on. If that already happened in the last
+   * minute, a fresh sign-in did not help, so land on / signed out instead of looping.
+   *
+   * Skips the push teardown logout() runs: it needs a token, and minting one is what failed.
+   */
+  private endExpiredSession(reason: string): void {
+    if (this.sessionEnding || !this.isBrowser || environment.devAuthBypass) {
+      return;
+    }
+    this.sessionEnding = true;
+
+    const relogin = this.claimRelogin();
+    // Before clearLocalUserState, so the event still carries the user id.
+    this.injector.get(LoggingService).logEvent('Auth_SessionExpired', {
+      reason,
+      action: relogin ? 'relogin' : 'signedOut',
+    });
+    this.clearLocalUserState();
+    this.loggedIn = false;
+    this.setUserProfile(null);
+
+    const { pathname, search, hash } = window.location;
+    const target = `${pathname}${search}${hash}`;
+
+    this.auth0Client$.pipe(take(1)).subscribe(async (client: Auth0Client) => {
+      try {
+        // Clears the SDK's cache and its is-authenticated cookie without leaving the page.
+        await client.logout({ openUrl: false });
+      } catch (error) {
+        this.logException(error);
+      }
+
+      if (relogin) {
+        this.login(target);
+      } else {
+        this.sessionEnding = false;
+        void this.router.navigateByUrl('/');
+      }
+    });
+  }
+
+  /** True (and records the time) unless this tab already re-signed-in within the window. */
+  private claimRelogin(): boolean {
+    const now = Date.now();
+    try {
+      const last = Number(sessionStorage.getItem(SESSION_RELOGIN_KEY));
+      if (last && now - last < SESSION_RELOGIN_WINDOW_MS) {
+        return false;
+      }
+      sessionStorage.setItem(SESSION_RELOGIN_KEY, String(now));
+      return true;
+    } catch {
+      // No storage means no loop guard: sign out rather than risk a redirect loop.
+      return false;
+    }
   }
 
   /**

@@ -15,7 +15,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import currency from 'currency.js';
 import { ToastrService } from 'ngx-toastr';
-import { AdsenseModule } from 'ng2-adsense';
 import { ViewPrintDetailComponent } from './view-print-detail.component';
 import { PrintDetailSummaryComponent } from './print-detail-summary/print-detail-summary.component';
 import {
@@ -23,6 +22,7 @@ import {
   PrintStatus,
   PrintViewStatus,
 } from 'src/app/core/services/print.service';
+import { AdEligibilityService } from '../../shared/ad/ad-eligibility.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
@@ -210,12 +210,7 @@ describe('ViewPrintDetailComponent', () => {
       // pulled in through ViewPrintDetailComponent's own imports, so the schema
       // would suppress nothing while hiding genuine template typos. The HTTP
       // providers exist because app-file-attachment-section fetches on init.
-      imports: [
-        ViewPrintDetailComponent,
-        RouterTestingModule,
-        // app-ad and app-sidebar-ad render for real and need the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
+      imports: [ViewPrintDetailComponent, RouterTestingModule],
       providers: [
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
@@ -234,6 +229,11 @@ describe('ViewPrintDetailComponent', () => {
         { provide: MetaTagService, useValue: metaService },
         { provide: SeoService, useValue: seoServiceSpy },
         { provide: UserSettingService, useValue: userSettingServiceSpy },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         {
           provide: AuthService,
           useValue: {

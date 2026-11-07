@@ -148,6 +148,10 @@ export class LoggingService {
           correlationHeaderExcludedDomains: ['*.auth0.com'],
           enableRequestHeaderTracking: false,
           enableResponseHeaderTracking: true,
+          // Uncaught errors reach ErrorHandlerService through Angular's global error
+          // listeners (provideAppErrorHandling), which logs them. The SDK's own window.onerror
+          // hook would report each one a second time.
+          disableExceptionTracking: true,
         },
       });
       // Before loading: the SDK sends the initial page view from inside loadAppInsights(), and on

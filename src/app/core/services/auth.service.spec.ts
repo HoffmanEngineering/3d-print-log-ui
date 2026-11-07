@@ -3,7 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { GoogleAnalyticsService } from './google-analytics.service';
-import { defer, NEVER, of, throwError } from 'rxjs';
+import { defer, firstValueFrom, NEVER, of, throwError } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 import { environment } from 'src/environments/environment';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
@@ -633,6 +634,262 @@ describe('AuthService', () => {
         });
         await vi.runAllTimersAsync();
       });
+    });
+  });
+
+  describe('ending a session Auth0 no longer accepts', () => {
+    const RELOGIN_KEY = 'pl_session_relogin_at';
+
+    let service: AuthService;
+    let client: {
+      getTokenSilently: Mock;
+      logout: Mock;
+      loginWithRedirect: Mock;
+    };
+    let logEvent: Mock;
+    let navigate: Mock;
+
+    /** The SDK's GenericError for a refresh token Auth0 has revoked or rotated away. */
+    const invalidGrant = Object.assign(
+      new Error('Unknown or invalid refresh token.'),
+      {
+        error: 'invalid_grant',
+        error_description: 'Unknown or invalid refresh token.',
+      }
+    );
+
+    function currentUrl(): string {
+      const { pathname, search, hash } = window.location;
+      return `${pathname}${search}${hash}`;
+    }
+
+    function failToken(error: unknown = invalidGrant): Promise<unknown> {
+      client.getTokenSilently.mockRejectedValue(error);
+      return firstValueFrom(service.getTokenSilently$()).catch(
+        (e: unknown) => e
+      );
+    }
+
+    beforeEach(() => {
+      sessionStorage.removeItem(RELOGIN_KEY);
+      service = TestBed.inject(AuthService);
+      client = {
+        getTokenSilently: vi.fn(),
+        logout: vi.fn().mockResolvedValue(undefined),
+        loginWithRedirect: vi.fn().mockResolvedValue(undefined),
+      };
+      (service as unknown as { auth0Client$: unknown }).auth0Client$ =
+        of(client);
+      service.loggedIn = true;
+      logEvent = vi
+        .spyOn(TestBed.inject(LoggingService), 'logEvent')
+        .mockReturnValue(undefined);
+      vi.spyOn(
+        TestBed.inject(LoggingService),
+        'clearAuthenticatedUser'
+      ).mockReturnValue(undefined);
+      navigate = vi
+        .spyOn(TestBed.inject(Router), 'navigateByUrl')
+        .mockResolvedValue(true);
+    });
+
+    afterEach(() => {
+      sessionStorage.removeItem(RELOGIN_KEY);
+    });
+
+    it.each(['invalid_grant', 'login_required', 'missing_refresh_token'])(
+      'on %s, stops polling, clears the local cache without a redirect, then signs in again',
+      async (code) => {
+        const error = { error: code, message: code };
+
+        const thrown = await failToken(error);
+        await vi.waitFor(() =>
+          expect(client.loginWithRedirect).toHaveBeenCalled()
+        );
+
+        expect(thrown).toBe(error);
+        expect(mockNotificationService.stopPolling).toHaveBeenCalled();
+        expect(client.logout).toHaveBeenCalledExactlyOnceWith({
+          openUrl: false,
+        });
+        expect(client.logout.mock.invocationCallOrder[0]).toBeLessThan(
+          client.loginWithRedirect.mock.invocationCallOrder[0]
+        );
+        expect(client.loginWithRedirect).toHaveBeenCalledTimes(1);
+        expect(client.loginWithRedirect.mock.lastCall![0].appState).toEqual({
+          target: currentUrl(),
+        });
+        expect(service.loggedIn).toBe(false);
+        expect(logEvent).toHaveBeenCalledWith('Auth_SessionExpired', {
+          reason: code,
+          action: 'relogin',
+        });
+      }
+    );
+
+    // Every API call in flight fails at once; they must not each start a redirect.
+    it('ends the session once when parallel requests fail together', async () => {
+      await Promise.all([failToken(), failToken(), failToken()]);
+      await vi.waitFor(() =>
+        expect(client.loginWithRedirect).toHaveBeenCalled()
+      );
+
+      expect(client.logout).toHaveBeenCalledTimes(1);
+      expect(client.loginWithRedirect).toHaveBeenCalledTimes(1);
+      expect(mockNotificationService.stopPolling).toHaveBeenCalledTimes(1);
+    });
+
+    // A fresh sign-in that fails again within a minute would otherwise loop through Auth0.
+    it('goes to / signed out when the session already ended within the last minute', async () => {
+      sessionStorage.setItem(RELOGIN_KEY, String(Date.now() - 10 * 1000));
+
+      await failToken();
+      await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/'));
+
+      expect(client.logout).toHaveBeenCalledExactlyOnceWith({
+        openUrl: false,
+      });
+      expect(client.loginWithRedirect).not.toHaveBeenCalled();
+      expect(service.loggedIn).toBe(false);
+      expect(logEvent).toHaveBeenCalledWith('Auth_SessionExpired', {
+        reason: 'invalid_grant',
+        action: 'signedOut',
+      });
+    });
+
+    it('signs in again when the last attempt was more than a minute ago', async () => {
+      sessionStorage.setItem(RELOGIN_KEY, String(Date.now() - 2 * 60 * 1000));
+
+      await failToken();
+      await vi.waitFor(() =>
+        expect(client.loginWithRedirect).toHaveBeenCalled()
+      );
+
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    // Anonymous visitors on public pages get missing_refresh_token on every request.
+    it('leaves a signed-out visitor alone', async () => {
+      service.loggedIn = false;
+
+      await failToken({ error: 'missing_refresh_token' });
+      await Promise.resolve();
+
+      expect(client.logout).not.toHaveBeenCalled();
+      expect(client.loginWithRedirect).not.toHaveBeenCalled();
+      expect(mockNotificationService.stopPolling).not.toHaveBeenCalled();
+    });
+
+    // logout() mints a token for the push teardown; failing there must not start a sign-in.
+    it('does not sign in again when the token fails during an explicit logout', async () => {
+      client.getTokenSilently.mockRejectedValue(invalidGrant);
+      service.pushTeardown = vi.fn().mockResolvedValue(undefined);
+
+      await service.logout();
+      await Promise.resolve();
+
+      expect(client.loginWithRedirect).not.toHaveBeenCalled();
+      expect(client.logout).toHaveBeenCalledTimes(1);
+      expect(client.logout.mock.lastCall![0].openUrl).toBeUndefined();
+    });
+
+    it('leaves the session alone on other token errors', async () => {
+      const error = { error: 'timeout', message: 'Timeout' };
+
+      const thrown = await failToken(error);
+      await Promise.resolve();
+
+      expect(thrown).toBe(error);
+      expect(client.logout).not.toHaveBeenCalled();
+      expect(client.loginWithRedirect).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('auth callback errors', () => {
+    let service: AuthService;
+    let toastr: { error: Mock };
+    let logEvent: Mock;
+    let logException: Mock;
+    let navigate: Mock;
+    let loginWithRedirect: Mock;
+
+    function failCallback(error: unknown) {
+      const fields = service as unknown as Record<string, unknown>;
+      fields['handleRedirectCallback$'] = throwError(() => error);
+      service.handleAuthCallback();
+    }
+
+    beforeEach(() => {
+      toastr = { error: vi.fn() };
+      TestBed.overrideProvider(ToastrService, { useValue: toastr });
+      service = TestBed.inject(AuthService);
+      loginWithRedirect = vi.fn();
+      (service as unknown as { auth0Client$: unknown }).auth0Client$ = of({
+        loginWithRedirect,
+      });
+      logEvent = vi
+        .spyOn(TestBed.inject(LoggingService), 'logEvent')
+        .mockReturnValue(undefined);
+      logException = vi
+        .spyOn(TestBed.inject(LoggingService), 'logException')
+        .mockReturnValue(undefined);
+      navigate = vi
+        .spyOn(TestBed.inject(Router), 'navigateByUrl')
+        .mockResolvedValue(true);
+    });
+
+    // A bookmarked or revisited /callback URL, or a login finished in another tab.
+    it.each([
+      ['missing_transaction', 'Invalid state'],
+      ['state_mismatch', 'Invalid state'],
+    ])(
+      'on %s, drops the callback URL and goes home without signing in',
+      (code, message) => {
+        failCallback(Object.assign(new Error(message), { error: code }));
+
+        expect(navigate).toHaveBeenCalledExactlyOnceWith('/', {
+          replaceUrl: true,
+        });
+        expect(loginWithRedirect).not.toHaveBeenCalled();
+        expect(toastr.error).not.toHaveBeenCalled();
+        expect(logEvent).toHaveBeenCalledWith('Auth_CallbackInvalidState', {
+          error: code,
+        });
+        expect(logException).not.toHaveBeenCalled();
+      }
+    );
+
+    it('shows the description of an Auth0 error such as access_denied', () => {
+      failCallback(
+        Object.assign(new Error('User did not authorize the request'), {
+          error: 'access_denied',
+          error_description: 'User did not authorize the request',
+        })
+      );
+
+      expect(toastr.error).toHaveBeenCalledExactlyOnceWith(
+        'User did not authorize the request',
+        'Sign-in failed'
+      );
+      expect(navigate).toHaveBeenCalledExactlyOnceWith('/', {
+        replaceUrl: true,
+      });
+      expect(logEvent).toHaveBeenCalledWith('Auth_CallbackError', {
+        error: 'access_denied',
+        description: 'User did not authorize the request',
+      });
+      expect(logException).not.toHaveBeenCalled();
+    });
+
+    it('still leaves the callback page on an unexpected error', () => {
+      const error = new Error('network down');
+
+      failCallback(error);
+
+      expect(navigate).toHaveBeenCalledExactlyOnceWith('/', {
+        replaceUrl: true,
+      });
+      expect(logException).toHaveBeenCalledWith(error);
     });
   });
 });

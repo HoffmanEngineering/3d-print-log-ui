@@ -177,6 +177,9 @@ describe('LoggingService', () => {
       expect(cfg.correlationHeaderExcludedDomains).toEqual(['*.auth0.com']);
       expect(cfg.enableRequestHeaderTracking).toBe(false);
       expect(cfg.enableResponseHeaderTracking).toBe(true);
+      // Angular's global error listeners report uncaught errors through
+      // ErrorHandlerService; the SDK's own window.onerror hook would send each twice.
+      expect(cfg.disableExceptionTracking).toBe(true);
       expect(fakeAi.loadAppInsights).toHaveBeenCalledTimes(1);
       expect(fakeAi.context.application.ver).toBe(environment.version);
     });

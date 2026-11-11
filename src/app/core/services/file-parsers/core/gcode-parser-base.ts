@@ -129,12 +129,23 @@ export abstract class GcodeParserBase implements GcodeNewPrintParser {
     const colors = settings.getStringList('filament_colour');
     const types = settings.getStringList('filament_type');
 
+    return this.buildUsageRows(lengthsMm, gramsBySlot, (i) =>
+      this.describeFilamentSlot(i, colors[i], types[i])
+    );
+  }
+
+  /** One row per entry with a positive length; `describe` gets the entry's index. */
+  protected buildUsageRows(
+    lengthsMm: number[],
+    gramsByEntry: number[],
+    describe: (index: number) => string
+  ): PrintFilamentSummaryDto[] {
     const usage: PrintFilamentSummaryDto[] = [];
     lengthsMm.forEach((mm, i) => {
       if (mm <= 0) {
         return;
       }
-      const grams = gramsBySlot[i];
+      const grams = gramsByEntry[i];
       usage.push({
         id: null,
         filament: OTHER_FILAMENT,
@@ -142,7 +153,7 @@ export abstract class GcodeParserBase implements GcodeNewPrintParser {
         estimatedSource: PrintFilamentSourceMeasurement.Length,
         estimatedLengthInM: +(mm / 1000).toFixed(3),
         estimatedAmountMg: grams > 0 ? Math.round(grams * 1000) : undefined,
-        notes: this.describeFilamentSlot(i, colors[i], types[i]),
+        notes: describe(i),
       });
     });
     return usage;

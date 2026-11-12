@@ -6,7 +6,7 @@ navLabel: Projects
 group: features
 order: 20
 mode: how-to
-updated: 2026-09-02
+updated: 2026-11-11
 related: [prints]
 ---
 
@@ -67,6 +67,21 @@ and leave the finish tracking your prints.
 
 A project with no prints yet has no finish date, and its start date is the day
 you created it. In the print list, projects are ordered by their start date.
+
+### Project Images {#images}
+
+Open a project and click the <mat-icon inline="true">edit</mat-icon> button to
+add images. Click **Upload Image** for the first one, or the **+** tile in the
+thumbnail strip for more; you can select several files at once. You can drag the thumbnails to change their order, and
+click the star on a thumbnail to make it the **default** image. The new images
+are uploaded when you save the project.
+
+Each project can have up to **5 images** on the free tier, or **20** with
+[Pro](/docs/pro-subscription). Adding images is disabled once you reach your
+limit. A project that already has more images than your plan allows, such as
+one you filled while on Pro, keeps all of them: you can still view, reorder,
+delete them and change the default image, but you cannot add another until the
+project is below the limit.
 
 ### Sharing a Project
 

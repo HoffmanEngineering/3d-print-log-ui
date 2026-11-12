@@ -44,13 +44,15 @@
                   cdkAutosizeMaxRows="10"
                 ></textarea>
                 <mat-hint align="end">
-                  {{ 2000 - newComment.length }} characters remaining.</mat-hint
+                  {{ 2000 - newComment().length }} characters
+                  remaining.</mat-hint
                 >
               </mat-form-field>
               <button
                 id="btn-add-print-comment"
                 mat-raised-button
                 color="accent"
+                [disabled]="posting()"
                 (click)="addComment()"
                 style="margin-left: auto"
               >

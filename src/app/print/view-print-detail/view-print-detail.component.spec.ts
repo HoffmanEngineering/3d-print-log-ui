@@ -725,12 +725,26 @@ describe('ViewPrintDetailComponent', () => {
 
   // This component is OnPush and the POST response lands in its own tick with
   // nothing marked dirty, so mutating the fetched array did not repaint.
+  // The comment is posted by the real PrintCommentsComponent rendered here, so
+  // this also checks the child's `commentAdded` output is wired to the list.
   it('renders a comment that arrives after the initial render', async () => {
     const posted = new Subject<any>();
     await setup({ viewerId: OWNER_ID });
     printServiceSpy.addPrintComment.mockReturnValue(posted.asObservable());
 
-    component.addComment('Nice print');
+    const root = fixture.nativeElement as HTMLElement;
+    const box = root.querySelector(
+      '#add-comment-textarea'
+    ) as HTMLTextAreaElement;
+    box.value = 'Nice print';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (root.querySelector('#btn-add-print-comment') as HTMLButtonElement).click();
+
+    expect(printServiceSpy.addPrintComment).toHaveBeenCalledWith(
+      basePrint.id,
+      'Nice print'
+    );
     posted.next({
       id: 99,
       body: 'Nice print',

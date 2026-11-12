@@ -62,6 +62,20 @@ describe('copyPrintDetailResolver', () => {
     ] as unknown as PrintDetail['images']);
   });
 
+  // getPrintImage answers '' when an image cannot be fetched. Copied as is, the form showed a
+  // broken photo, and saving created the print and then failed to upload ''.
+  it('leaves out an image that could not be fetched', async () => {
+    printService.getPrintImage.mockImplementation((_printId, imageId) =>
+      of(imageId === 1 ? '' : `data:image/${imageId}`)
+    );
+
+    const copy = await copyOf('7');
+
+    expect(copy.print!.images).toEqual([
+      { id: null, isDefault: true, url: 'data:image/2', displayOrder: 0 },
+    ] as unknown as PrintDetail['images']);
+  });
+
   it('gives each filament usage row a new id', async () => {
     const copy = await copyOf('7');
 

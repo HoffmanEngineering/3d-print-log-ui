@@ -96,7 +96,7 @@
                   $safeNavigationMigration(images()[selectedImageIndex()]?.id)
                 "
                 [editable]="true"
-                [maxImages]="5"
+                [maxImages]="maxImages()"
                 (imageSelected)="onImageSelected($event)"
                 (imageDeleted)="onImageDeleted($event)"
                 (defaultChanged)="onDefaultChanged($event)"
@@ -107,6 +107,7 @@
                 #fileInput
                 type="file"
                 accept="image/*"
+                multiple
                 style="display: none"
                 (change)="onFileSelected($event)"
               />

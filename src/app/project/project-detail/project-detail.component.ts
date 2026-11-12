@@ -29,8 +29,17 @@ import {
   HttpErrorResponse,
 } from '@angular/common/http';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
-import { concat, forkJoin, of } from 'rxjs';
-import { mergeMap, take, toArray } from 'rxjs/operators';
+import {
+  EMPTY,
+  Observable,
+  concat,
+  defer,
+  forkJoin,
+  of,
+  throwError,
+} from 'rxjs';
+import { catchError, map, mergeMap, take, tap, toArray } from 'rxjs/operators';
+import { ToastrService } from 'ngx-toastr';
 import {
   ProjectService,
   ProjectDetailDto,
@@ -60,6 +69,8 @@ import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 import { withMilliliters } from 'src/app/shared/utils/filament-display.utils';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
@@ -81,6 +92,25 @@ function readSaveError(err: unknown): string {
     if (body && body.length <= 200) return body;
   }
   return 'This project could not be saved. Please try again.';
+}
+
+/**
+ * The cap the API named when it refused an upload for the per-project image limit
+ * ("Maximum of 5 images per project allowed"), or null for any other failure. An API from
+ * before the cap never sends it, so the page's own check is all that applies there.
+ */
+export function readImageLimitRefusal(err: unknown): number | null {
+  if (!(err instanceof HttpErrorResponse) || err.status !== 400) return null;
+  const body = typeof err.error === 'string' ? err.error : '';
+  const match = /Maximum of (\d+) images per project/i.exec(body);
+  return match ? Number(match[1]) : null;
+}
+
+/** New images that reached the API, by the staged image they came from. */
+interface UploadOutcome {
+  uploaded: Map<ProjectImageValue, number>;
+  /** The cap the API refused an upload at, or null when every image was uploaded. */
+  refusedAtLimit: number | null;
 }
 
 @Component({
@@ -120,6 +150,13 @@ export class ProjectDetailComponent implements OnInit {
   private readonly loggingService = inject(LoggingService);
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly toastr = inject(ToastrService);
+  private readonly subscriptionService = inject(SubscriptionService);
+  /** False in the iOS app, where Pro is never sold (#366). */
+  private readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
+  /** Images allowed on one project, by subscription tier: the same cap as prints and printers. */
+  readonly maxImages = this.subscriptionService.maxImages;
 
   readonly fileInputRef =
     viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
@@ -435,26 +472,24 @@ export class ProjectDetailComponent implements OnInit {
     this.isSaving.set(true);
     let createdId: string;
     let uploadedIds: number[] = [];
+    let refusedAtLimit: number | null = null;
 
     this.projectService
       .createProject(dto)
       .pipe(
         mergeMap((created) => {
           createdId = created.id;
-          return stagedImages.length === 0
-            ? of([] as ProjectImageDto[])
-            : concat(
-                ...stagedImages.map((img) =>
-                  this.projectService.uploadImage(createdId, img.file!)
-                )
-              ).pipe(toArray());
+          return this.uploadNewImages(createdId, stagedImages);
         }),
-        mergeMap((uploadResults: ProjectImageDto[]) => {
-          uploadedIds = uploadResults.map((r) => r.id);
+        mergeMap((outcome: UploadOutcome) => {
+          refusedAtLimit = outcome.refusedAtLimit;
+          uploadedIds = stagedImages
+            .map((img) => outcome.uploaded.get(img))
+            .filter((id): id is number => id !== undefined);
           const defaultImage = stagedImages.find((img) => img.isDefault);
-          if (!defaultImage) return of(null);
-          const defaultIdx = stagedImages.indexOf(defaultImage);
-          const defaultId = uploadedIds[defaultIdx];
+          const defaultId = defaultImage
+            ? outcome.uploaded.get(defaultImage)
+            : undefined;
           return defaultId
             ? this.projectService.setDefaultImage(createdId, defaultId)
             : of(null);
@@ -481,6 +516,9 @@ export class ProjectDetailComponent implements OnInit {
           this.loggingService.logEvent('ProjectDetail_Created', {
             hasImages: stagedImages.length > 0,
           });
+          if (refusedAtLimit !== null) {
+            this.onUploadRefusedAtLimit(refusedAtLimit);
+          }
           this.router.navigate(['/projects', updated.id], { replaceUrl: true });
         },
         error: (err: unknown) => {
@@ -515,29 +553,39 @@ export class ProjectDetailComponent implements OnInit {
     this.saveErrorMessage.set('');
     this.isSaving.set(true);
 
-    let uploadedIds: number[] = [];
-
-    const upload$ =
-      newImages.length === 0
-        ? of([] as ProjectImageDto[])
-        : concat(
-            ...newImages.map((img) =>
-              this.projectService.uploadImage(p.id, img.file!)
-            )
-          ).pipe(toArray());
+    let uploaded = new Map<ProjectImageValue, number>();
+    let refusedAtLimit: number | null = null;
 
     this.projectService
       .updateProject(p.id, dto)
       .pipe(
-        mergeMap(() => upload$),
-        mergeMap((uploadResults: ProjectImageDto[]) => {
-          uploadedIds = uploadResults.map((r) => r.id);
+        // Deletes go first: the API counts a project's images against the cap, so a project
+        // at the cap that swaps one image for another must lose the old one before the new
+        // one can be added. Each delete is forgotten as soon as it succeeds, so if a later
+        // step fails, Save again does not send it a second time (the API would answer 404).
+        mergeMap(() =>
+          idsToDelete.length === 0
+            ? of(null)
+            : forkJoin(
+                idsToDelete.map((id) =>
+                  this.projectService.deleteImage(p.id, id).pipe(
+                    tap(() => {
+                      this.imageIdsToDelete = this.imageIdsToDelete.filter(
+                        (pending) => pending !== id
+                      );
+                    })
+                  )
+                )
+              )
+        ),
+        mergeMap(() => this.uploadNewImages(p.id, newImages)),
+        mergeMap((outcome: UploadOutcome) => {
+          uploaded = outcome.uploaded;
+          refusedAtLimit = outcome.refusedAtLimit;
 
           let defaultId: number | null = defaultImage?.id ?? null;
-          if (!defaultId) {
-            const newDefaultIdx = newImages.findIndex((img) => img.isDefault);
-            if (newDefaultIdx >= 0)
-              defaultId = uploadedIds[newDefaultIdx] ?? null;
+          if (!defaultId && defaultImage) {
+            defaultId = uploaded.get(defaultImage) ?? null;
           }
           const defaultChanged =
             defaultId !== null && defaultId !== this.defaultImageIdOnLoad;
@@ -546,23 +594,14 @@ export class ProjectDetailComponent implements OnInit {
             ? this.projectService.setDefaultImage(p.id, defaultId)
             : of(null);
         }),
-        mergeMap(() =>
-          idsToDelete.length === 0
-            ? of(null)
-            : forkJoin(
-                idsToDelete.map((id) =>
-                  this.projectService.deleteImage(p.id, id)
-                )
-              )
-        ),
         mergeMap(() => {
           const existingOrdered = existingImages
             .filter((img) => !idsToDelete.includes(img.id!))
             .map((img) => ({ id: img.id!, displayOrder: img.displayOrder }));
 
           const newOrdered = newImages
-            .map((img, i) => ({
-              id: uploadedIds[i],
+            .map((img) => ({
+              id: uploaded.get(img),
               displayOrder: img.displayOrder,
             }))
             .filter((x) => x.id !== undefined) as {
@@ -597,12 +636,89 @@ export class ProjectDetailComponent implements OnInit {
             deletedImageCount: idsToDelete.length,
             reordered: snapshot.length > 1,
           });
+          if (refusedAtLimit !== null) {
+            this.onUploadRefusedAtLimit(refusedAtLimit);
+          }
         },
         error: (err: unknown) => {
           this.isSaving.set(false);
           this.saveErrorMessage.set(readSaveError(err));
         },
       });
+  }
+
+  /**
+   * Uploads staged images one at a time, in order. A refusal for the per-project image cap
+   * stops the run (every later upload would be refused too) and is reported in the outcome
+   * rather than as an error, so the project and the images that fit are still saved. Any
+   * other failure fails the save as before.
+   */
+  private uploadNewImages(
+    projectId: string,
+    staged: ProjectImageValue[]
+  ): Observable<UploadOutcome> {
+    const uploaded = new Map<ProjectImageValue, number>();
+    let refusedAtLimit: number | null = null;
+    if (staged.length === 0) return of({ uploaded, refusedAtLimit });
+
+    return concat(
+      ...staged.map((img) =>
+        defer(() =>
+          refusedAtLimit !== null
+            ? EMPTY
+            : this.projectService.uploadImage(projectId, img.file!).pipe(
+                tap((dto: ProjectImageDto) => {
+                  uploaded.set(img, dto.id);
+                  this.recordUploadedImage(img, dto.id);
+                }),
+                catchError((err: unknown) => {
+                  const limit = readImageLimitRefusal(err);
+                  if (limit === null) return throwError(() => err);
+                  refusedAtLimit = limit;
+                  return EMPTY;
+                })
+              )
+        )
+      )
+    ).pipe(
+      toArray(),
+      map(() => ({ uploaded, refusedAtLimit }))
+    );
+  }
+
+  /**
+   * A staged image takes its id as soon as it is uploaded, as print photos do, so when a later
+   * step fails, Save again treats it as an existing image instead of uploading it again.
+   */
+  private recordUploadedImage(staged: ProjectImageValue, id: number): void {
+    this.images.update((imgs) =>
+      imgs.map((img) =>
+        img === staged ? { ...img, id, file: undefined } : img
+      )
+    );
+  }
+
+  /** The API held the project to a lower cap than the page showed, most likely after a plan change. */
+  private onUploadRefusedAtLimit(limit: number): void {
+    this.subscriptionService.loadSubscription();
+    this.showImageLimitReached(limit);
+  }
+
+  /** The notice the print page gives at the image cap. */
+  private showImageLimitReached(limit: number): void {
+    if (this.subscriptionService.isPro()) {
+      this.toastr.warning(`Maximum ${limit} images allowed`, 'Limit Reached');
+      return;
+    }
+    const message = `Free accounts allow ${limit} images per project.`;
+    this.toastr.info(
+      this.canPurchasePro ? `${message} Upgrade to Pro for more.` : message,
+      'Image Limit Reached'
+    );
+    this.loggingService.logEvent('ProjectDetail_ImageLimitUpgradePrompt', {
+      currentCount: this.images().length,
+      maxImages: limit,
+    });
   }
 
   onAddImageClicked(): void {
@@ -612,18 +728,33 @@ export class ProjectDetailComponent implements OnInit {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    const file = input.files[0];
-    const url = URL.createObjectURL(file);
-    const newImage: ProjectImageValue = {
-      file,
-      url,
-      resolvedUrl: this.sanitizer.bypassSecurityTrustUrl(url),
-      isDefault: this.images().length === 0,
-      displayOrder: this.images().length,
-    };
-    this.images.update((imgs) => [...imgs, newImage]);
+    const files = Array.from(input.files);
     input.value = '';
-    this.loggingService.logEvent('ProjectDetail_ImageUploaded');
+
+    // A project already past the cap (from before it, or a lapsed Pro plan) has no room.
+    const room = Math.max(0, this.maxImages() - this.images().length);
+    const accepted = files.slice(0, room);
+    if (accepted.length < files.length) {
+      this.showImageLimitReached(this.maxImages());
+    }
+    if (accepted.length === 0) return;
+
+    this.images.update((imgs) => [
+      ...imgs,
+      ...accepted.map((file, i): ProjectImageValue => {
+        const url = URL.createObjectURL(file);
+        return {
+          file,
+          url,
+          resolvedUrl: this.sanitizer.bypassSecurityTrustUrl(url),
+          isDefault: imgs.length === 0 && i === 0,
+          displayOrder: imgs.length + i,
+        };
+      }),
+    ]);
+    this.loggingService.logEvent('ProjectDetail_ImageUploaded', {
+      count: accepted.length,
+    });
   }
 
   onImageSelected(image: { id?: number; url?: string }): void {

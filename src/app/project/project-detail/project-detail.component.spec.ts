@@ -28,6 +28,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { ToastrService } from 'ngx-toastr';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 import {
   SeoLookup,
   SeoMetadata,
@@ -51,6 +54,15 @@ const mockProject: ProjectDetailDto = {
   startDateOverride: null,
   finishDateOverride: null,
 };
+
+function toastrStub() {
+  return {
+    success: vi.fn().mockName('ToastrService.success'),
+    error: vi.fn().mockName('ToastrService.error'),
+    warning: vi.fn().mockName('ToastrService.warning'),
+    info: vi.fn().mockName('ToastrService.info'),
+  };
+}
 
 describe('ProjectDetailComponent', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
@@ -111,6 +123,7 @@ describe('ProjectDetailComponent', () => {
         },
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
+        { provide: ToastrService, useValue: toastrStub() },
       ],
     }).compileComponents();
 
@@ -578,6 +591,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
         },
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
+        { provide: ToastrService, useValue: toastrStub() },
       ],
     }).compileComponents();
 
@@ -767,6 +781,7 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
         },
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
+        { provide: ToastrService, useValue: toastrStub() },
       ],
     }).compileComponents();
 
@@ -831,5 +846,448 @@ describe('ProjectDetailComponent — metadata from /seo', () => {
     metaTags.restoreShellRobots.mockClear();
     fixture.destroy();
     expect(metaTags.restoreShellRobots).toHaveBeenCalled();
+  });
+});
+
+/**
+ * Project images share the per-entity cap prints and printers have: 5 on Free, 20 on Pro.
+ * The page enforces it as the print page does (the add control goes away at the cap, a
+ * selection past it is trimmed with a toast), and an API that refuses an upload anyway
+ * (another tab, a lapsed Pro plan) still leaves a saved project, not a failed save.
+ */
+describe('ProjectDetailComponent — image limit', () => {
+  let fixture: ComponentFixture<ProjectDetailComponent>;
+  let component: ProjectDetailComponent;
+  let projectService: MockedObject<ProjectService>;
+  let toastr: ReturnType<typeof toastrStub>;
+  let subscription: {
+    isPro: WritableSignal<boolean>;
+    maxImages: WritableSignal<number>;
+    loadSubscription: Mock;
+  };
+
+  const formValue = {
+    name: 'Test Voron Build',
+    reference: '',
+    description: '',
+    url: '',
+    viewStatus: ProjectViewStatus.Private,
+    startDateOverride: null,
+    finishDateOverride: null,
+  };
+
+  const imagesOf = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      id: 100 + i,
+      isDefault: i === 0,
+      displayOrder: i,
+    }));
+
+  const pngFile = (name: string) =>
+    new File(['png'], name, { type: 'image/png' });
+
+  const selectFiles = (files: File[]) =>
+    component.onFileSelected({
+      target: { files, value: 'C:\\fakepath\\x.png' },
+    } as unknown as Event);
+
+  const limitRefusal = (max: number) =>
+    throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 400,
+          error: `Maximum of ${max} images per project allowed`,
+        })
+    );
+
+  const create = async (
+    opts: {
+      imageCount?: number;
+      isPro?: boolean;
+      maxImages?: number;
+      canPurchasePro?: boolean;
+      id?: string;
+    } = {}
+  ) => {
+    const project = { ...mockProject, images: imagesOf(opts.imageCount ?? 0) };
+    projectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+      createProject: vi.fn().mockName('ProjectService.createProject'),
+      updateProject: vi.fn().mockName('ProjectService.updateProject'),
+      uploadImage: vi.fn().mockName('ProjectService.uploadImage'),
+      deleteImage: vi.fn().mockName('ProjectService.deleteImage'),
+      reorderImages: vi.fn().mockName('ProjectService.reorderImages'),
+      setDefaultImage: vi.fn().mockName('ProjectService.setDefaultImage'),
+    } as unknown as MockedObject<ProjectService>;
+    projectService.getProjectById.mockReturnValue(of(project));
+    projectService.createProject.mockReturnValue(
+      of({ ...mockProject, id: 'new-guid-123' })
+    );
+    projectService.updateProject.mockReturnValue(of(project));
+    projectService.reorderImages.mockReturnValue(of(void 0));
+    projectService.setDefaultImage.mockReturnValue(of(void 0));
+    projectService.deleteImage.mockReturnValue(of(void 0));
+
+    toastr = toastrStub();
+    subscription = {
+      isPro: signal(opts.isPro ?? false),
+      maxImages: signal(opts.maxImages ?? 5),
+      loadSubscription: vi
+        .fn()
+        .mockName('SubscriptionService.loadSubscription'),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [ProjectDetailComponent, NoopAnimationsModule],
+      providers: [
+        { provide: ProjectService, useValue: projectService },
+        {
+          provide: PrintService,
+          useValue: {
+            getPrintSummaries: vi.fn().mockReturnValue(
+              of({
+                items: [],
+                paging: {
+                  totalCount: 0,
+                  currentPage: 1,
+                  pageSize: 100,
+                  totalPages: 0,
+                },
+              })
+            ),
+          },
+        },
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
+        { provide: AuthService, useValue: { userProfile: signal({ id: 1 }) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { params: { id: opts.id ?? 'abc-123' } } },
+        },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ToastrService, useValue: toastr },
+        { provide: SubscriptionService, useValue: subscription },
+        { provide: CAN_PURCHASE_PRO, useValue: opts.canPurchasePro ?? true },
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  const startEditing = () => {
+    component.onEditClick();
+    fixture.detectChanges();
+  };
+
+  const el = (): HTMLElement => fixture.nativeElement;
+  const thumbnails = () => el().querySelectorAll('li.thumbnail').length;
+  const addButton = () => el().querySelector('.add-button');
+  const limitMessage = () =>
+    el().querySelector('.limit-message')?.textContent?.trim() ?? null;
+
+  describe('the add control', () => {
+    it('is replaced by the limit message once a Free project has 5 images', async () => {
+      await create({ imageCount: 5 });
+      startEditing();
+
+      expect(thumbnails()).toBe(5);
+      expect(addButton()).toBeNull();
+      expect(limitMessage()).toBe('Maximum 5 images reached');
+    });
+
+    it('stays for a Pro project with 5 images, up to the Pro cap', async () => {
+      await create({ imageCount: 5, isPro: true, maxImages: 20 });
+      startEditing();
+
+      expect(addButton()).not.toBeNull();
+      expect(limitMessage()).toBeNull();
+    });
+
+    it('is replaced at 20 images for Pro', async () => {
+      await create({ imageCount: 20, isPro: true, maxImages: 20 });
+      startEditing();
+
+      expect(addButton()).toBeNull();
+      expect(limitMessage()).toBe('Maximum 20 images reached');
+    });
+  });
+
+  describe('a project already over the cap', () => {
+    it('still shows every image when viewing', async () => {
+      await create({ imageCount: 12 });
+
+      const carousel = el().querySelector('app-image-carousel');
+      expect(carousel).not.toBeNull();
+      expect(component.carouselImages().length).toBe(12);
+    });
+
+    it('lists every image when editing, without an add control', async () => {
+      await create({ imageCount: 12 });
+      startEditing();
+
+      expect(thumbnails()).toBe(12);
+      expect(el().querySelectorAll('.delete-btn').length).toBe(12);
+      expect(addButton()).toBeNull();
+      expect(limitMessage()).toBe('Maximum 5 images reached');
+    });
+
+    it('offers the add control again once deleted below the cap', async () => {
+      await create({ imageCount: 7 });
+      startEditing();
+
+      for (let i = 0; i < 3; i++) {
+        (el().querySelector('.delete-btn') as HTMLButtonElement).click();
+        fixture.detectChanges();
+      }
+
+      expect(thumbnails()).toBe(4);
+      expect(addButton()).not.toBeNull();
+    });
+  });
+
+  describe('selecting files', () => {
+    it('refuses a file at the cap with the upgrade prompt for Free', async () => {
+      await create({ imageCount: 5 });
+      startEditing();
+
+      selectFiles([pngFile('a.png')]);
+      fixture.detectChanges();
+
+      expect(thumbnails()).toBe(5);
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project. Upgrade to Pro for more.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('leaves out the upgrade sentence where Pro cannot be bought', async () => {
+      await create({ imageCount: 5, canPurchasePro: false });
+      startEditing();
+
+      selectFiles([pngFile('a.png')]);
+
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('refuses a file at the cap with a plain warning for Pro', async () => {
+      await create({ imageCount: 20, isPro: true, maxImages: 20 });
+      startEditing();
+
+      selectFiles([pngFile('a.png')]);
+
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Maximum 20 images allowed',
+        'Limit Reached'
+      );
+      expect(toastr.info).not.toHaveBeenCalled();
+    });
+
+    it('stages several selected files at once', async () => {
+      await create({ imageCount: 1 });
+      startEditing();
+
+      selectFiles([pngFile('a.png'), pngFile('b.png')]);
+      fixture.detectChanges();
+
+      expect(thumbnails()).toBe(3);
+      expect(toastr.info).not.toHaveBeenCalled();
+    });
+
+    it('stages only the files that fit and says why the rest were left out', async () => {
+      await create({ imageCount: 3 });
+      startEditing();
+
+      selectFiles([pngFile('a.png'), pngFile('b.png'), pngFile('c.png')]);
+      fixture.detectChanges();
+
+      expect(thumbnails()).toBe(5);
+      expect(component.images().map((i) => i.file?.name)).toEqual([
+        undefined,
+        undefined,
+        undefined,
+        'a.png',
+        'b.png',
+      ]);
+      expect(limitMessage()).toBe('Maximum 5 images reached');
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project. Upgrade to Pro for more.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('accepts more than one file in the picker', async () => {
+      await create({ imageCount: 1 });
+      startEditing();
+
+      const input = el().querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
+      expect(input.multiple).toBe(true);
+    });
+  });
+
+  describe('saving', () => {
+    it('deletes removed images before uploading new ones, so a full project can swap images', async () => {
+      await create({ imageCount: 5 });
+      startEditing();
+      const calls: string[] = [];
+      projectService.deleteImage.mockImplementation(() => {
+        calls.push('delete');
+        return of(void 0);
+      });
+      projectService.uploadImage.mockImplementation(() => {
+        calls.push('upload');
+        return of({ id: 500, isDefault: false, displayOrder: 5 });
+      });
+
+      component.onImageDeleted({ id: 104 });
+      selectFiles([pngFile('a.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(calls).toEqual(['delete', 'upload']);
+    });
+
+    it('keeps the images that fit when the API refuses one past its cap', async () => {
+      await create({ imageCount: 2, isPro: true, maxImages: 20 });
+      startEditing();
+      projectService.uploadImage
+        .mockReturnValueOnce(of({ id: 200, isDefault: false, displayOrder: 2 }))
+        .mockReturnValueOnce(limitRefusal(3))
+        .mockReturnValue(of({ id: 999, isDefault: false, displayOrder: 9 }));
+
+      selectFiles([pngFile('a.png'), pngFile('b.png'), pngFile('c.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      // Stops at the refusal: every later upload would be refused too.
+      expect(projectService.uploadImage).toHaveBeenCalledTimes(2);
+      expect(projectService.reorderImages).toHaveBeenCalledWith(
+        'abc-123',
+        [100, 101, 200]
+      );
+      expect(component.isEditing()).toBe(false);
+      expect(component.saveErrorMessage()).toBe('');
+      expect(el().querySelector('[data-cy="project-save-error"]')).toBeNull();
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Maximum 3 images allowed',
+        'Limit Reached'
+      );
+      // The plan the page thought it had was out of date.
+      expect(subscription.loadSubscription).toHaveBeenCalled();
+    });
+
+    it('shows the Free upgrade prompt when the API refuses a Free upload', async () => {
+      await create({ imageCount: 4 });
+      startEditing();
+      projectService.uploadImage.mockReturnValue(limitRefusal(5));
+
+      selectFiles([pngFile('a.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(component.isEditing()).toBe(false);
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project. Upgrade to Pro for more.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('still reports any other refused upload as a failed save', async () => {
+      await create({ imageCount: 0 });
+      startEditing();
+      projectService.uploadImage.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 400,
+              error: 'Image must be under 10MB.',
+            })
+        )
+      );
+
+      selectFiles([pngFile('a.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(component.isEditing()).toBe(true);
+      expect(component.saveErrorMessage()).toBe('Image must be under 10MB.');
+    });
+
+    it('retries a failed save without deleting or uploading anything twice', async () => {
+      await create({ imageCount: 3 });
+      startEditing();
+      projectService.uploadImage
+        .mockReturnValueOnce(of({ id: 300, isDefault: false, displayOrder: 2 }))
+        .mockReturnValueOnce(
+          throwError(() => new HttpErrorResponse({ status: 500 }))
+        )
+        .mockReturnValueOnce(
+          of({ id: 301, isDefault: false, displayOrder: 3 })
+        );
+
+      component.onImageDeleted({ id: 102 });
+      selectFiles([pngFile('a.png'), pngFile('b.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(component.isEditing()).toBe(true);
+      expect(component.saveErrorMessage()).not.toBe('');
+
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(projectService.deleteImage).toHaveBeenCalledTimes(1);
+      expect(projectService.uploadImage).toHaveBeenCalledTimes(3);
+      expect(
+        vi.mocked(projectService.uploadImage).mock.calls.map((c) => c[1].name)
+      ).toEqual(['a.png', 'b.png', 'b.png']);
+      expect(projectService.reorderImages).toHaveBeenLastCalledWith(
+        'abc-123',
+        [100, 101, 300, 301]
+      );
+      expect(component.isEditing()).toBe(false);
+    });
+
+    it('creates the project with the images that fit when the API refuses the rest', async () => {
+      await create({ id: 'new', isPro: true, maxImages: 20 });
+      projectService.getProjectById.mockReturnValue(
+        of({ ...mockProject, id: 'new-guid-123' })
+      );
+      projectService.uploadImage
+        .mockReturnValueOnce(of({ id: 300, isDefault: true, displayOrder: 0 }))
+        .mockReturnValueOnce(limitRefusal(1));
+      const router = TestBed.inject(Router) as MockedObject<Router>;
+
+      selectFiles([pngFile('a.png'), pngFile('b.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(projectService.reorderImages).toHaveBeenCalledWith(
+        'new-guid-123',
+        [300]
+      );
+      expect(router.navigate).toHaveBeenCalledWith(
+        ['/projects', 'new-guid-123'],
+        { replaceUrl: true }
+      );
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Maximum 1 images allowed',
+        'Limit Reached'
+      );
+    });
   });
 });

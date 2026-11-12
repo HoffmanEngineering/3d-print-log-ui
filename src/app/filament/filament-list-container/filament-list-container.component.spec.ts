@@ -2,7 +2,10 @@ import type { Mock } from 'vitest';
 import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
@@ -218,5 +221,29 @@ describe('FilamentListContainerComponent actions', () => {
     expect(dialog.open.mock.lastCall![1].data.body).toContain(
       '"Spool &lt;A&gt; rack"'
     );
+  });
+
+  // Wires the real FilamentService: the bug was in which remaining amount it used.
+  it('marks a spool empty from its current remaining amount, not the list row', () => {
+    const http = TestBed.inject(HttpTestingController);
+
+    // The row was loaded at 1000 g; a 20 g print has been logged since.
+    component.markAsEmpty({
+      id: 'spool-x',
+      filamentRemaining: 1_000_000,
+    } as FilamentSummary);
+
+    http
+      .expectOne((r) => r.method === 'GET')
+      .flush({
+        id: 'spool-x',
+        filamentRemaining: 980_000,
+        filamentAdjustments: [],
+        isActive: true,
+      });
+
+    const put = http.expectOne((r) => r.method === 'PUT');
+    expect(put.request.body.filamentAdjustments.at(-1).amountMg).toBe(-980_000);
+    expect(put.request.body.isActive).toBe(false);
   });
 });

@@ -479,19 +479,13 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Mark a filament as empty.
+   * Mark a filament as empty. The service zeroes the amount the spool has now; the row's
+   * `filamentRemaining` may predate a print logged since the list loaded.
    */
   public markAsEmpty(filament: FilamentSummary) {
-    const remainingAmount = filament.filamentRemaining;
-    if (isNumber(remainingAmount)) {
-      const adjustmentAmount = -remainingAmount;
+    if (isNumber(filament.filamentRemaining)) {
       this.filamentService
-        .addAdjustmentAmount(
-          filament.id,
-          adjustmentAmount,
-          this.EMPTY_FILAMENT_ADJUSTMENT_NOTE,
-          false
-        )
+        .markEmpty(filament.id, this.EMPTY_FILAMENT_ADJUSTMENT_NOTE)
         .subscribe((_) => {
           this.updateFilter().then(() => {
             this.toastrService.success(

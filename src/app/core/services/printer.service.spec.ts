@@ -84,6 +84,50 @@ describe('PrinterService', () => {
     expect(request.request.body.slotCount).toBe(4);
     request.flush({});
   });
+
+  describe('loaded spools on update', () => {
+    const printer = (loadedFilaments: unknown) =>
+      ({
+        id: 3,
+        name: 'MK4',
+        make: 'Prusa',
+        model: 'MK4',
+        description: '',
+        isActive: true,
+        category: { nickname: 'FFF' },
+        loadedFilaments,
+      }) as unknown as PrinterDetail;
+
+    // The API keeps what is loaded when the list is absent.
+    it('leaves loadedFilaments out of the body when the printer carries none', () => {
+      service.updatePrinter(printer(undefined)).subscribe();
+
+      const request = httpMock.expectOne(`${base}/3`);
+      expect('loadedFilaments' in request.request.body).toBe(false);
+      request.flush({});
+    });
+
+    it('sends an empty list, which unloads everything', () => {
+      service.updatePrinter(printer([])).subscribe();
+
+      const request = httpMock.expectOne(`${base}/3`);
+      expect(request.request.body.loadedFilaments).toEqual([]);
+      request.flush({});
+    });
+
+    it('sends each spool as an id and a filamentId', () => {
+      service
+        .updatePrinter(printer([{ id: 'pf-a', filament: { id: 'spool-a' } }]))
+        .subscribe();
+
+      const request = httpMock.expectOne(`${base}/3`);
+      expect(request.request.body.loadedFilaments).toEqual([
+        { id: 'pf-a', filamentId: 'spool-a' },
+      ]);
+      request.flush({});
+    });
+  });
+
   describe('catalog link', () => {
     const printer = (extra: object = {}) =>
       ({

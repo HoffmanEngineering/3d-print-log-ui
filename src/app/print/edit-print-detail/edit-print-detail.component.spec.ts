@@ -836,6 +836,69 @@ describe('EditPrintDetailComponent', () => {
       });
     });
 
+    // The completion inputs were seeded once and then went stale. Editing Completion Time
+    // afterwards combined the stale date with the new time, got a negative duration and
+    // silently cleared Actual Print Time.
+    describe('after the duration or the start changes', () => {
+      const completionTimeInput = () =>
+        (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+          'input[aria-label="The time of completion."]'
+        )!;
+
+      beforeEach(() => {
+        component.printForm.controls.printTimeInSeconds.setValue('1h');
+      });
+
+      it('shows the new completion when Actual Print Time changes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(completionTimeInput().value, 'seeded').toBe('23:41:46');
+
+        component.printForm.controls.printTimeInSeconds.setValue('3h');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        expect(completionTimeInput().value).toBe('01:41:46');
+        expect(component.getActualCompletedDateOnly()!.getDate()).toBe(19);
+      });
+
+      it('shows the new completion date when the start date changes', () => {
+        component.printForm.controls.startDate.setValue(new Date(2026, 1, 20));
+
+        expect(component.getActualCompletedDateOnly()!.getDate()).toBe(20);
+        expect(component.getActualCompletedTimeOnly()).toBe('23:41:46');
+      });
+
+      it('keeps Actual Print Time when Completion Time is edited next', () => {
+        component.printForm.controls.startDate.setValue(new Date(2026, 1, 20));
+
+        component.updateActualCompletedTimeOnly('23:11:46');
+
+        expect(component.printForm.controls.printTimeInSeconds.value).toBe(
+          '30m '
+        );
+      });
+
+      it('clears the completion when Actual Print Time is cleared', () => {
+        component.printForm.controls.printTimeInSeconds.setValue('');
+
+        expect(component.getActualCompletedDateOnly()).toBeNull();
+        expect(component.getActualCompletedTimeOnly()).toBe('');
+      });
+
+      it('keeps a completion time typed before its date when the start changes', () => {
+        component.printForm.controls.printTimeInSeconds.setValue('');
+        component.updateActualCompletedTimeOnly(COMPLETION_TIME_STR);
+
+        component.printForm.controls.startTime.setValue('21:00:00');
+
+        expect(component.getActualCompletedTimeOnly()).toBe(
+          COMPLETION_TIME_STR
+        );
+      });
+    });
+
     describe('setActualCompletedDateToNow', () => {
       it('should populate rawCompletionDate and rawCompletionTime with the current datetime', () => {
         const before = new Date();
@@ -1428,6 +1491,114 @@ describe('EditPrintDetailComponent', () => {
 
     expect(printService.addPrint).toHaveBeenCalledTimes(1);
     expect(printService.patchPrint).not.toHaveBeenCalled();
+  });
+
+  // The print POST succeeded, then a photo failed. The form said the print wasn't saved and kept
+  // a null id, so Save again created a second print (and deducted the spools twice).
+  describe('a new print whose photo fails to upload', () => {
+    let printService: Record<string, Mock>;
+    let toastr: MockedObject<ToastrService>;
+
+    const photo = (name: string, displayOrder: number) =>
+      component.createItem({
+        id: undefined,
+        file: new File(['x'], name, { type: 'image/jpeg' }),
+        url: 'data:image/jpeg;base64,eA==',
+        isDefault: displayOrder === 0,
+        displayOrder,
+      });
+
+    beforeEach(() => {
+      printService = TestBed.inject(PrintService) as unknown as Record<
+        string,
+        Mock
+      >;
+      printService['addPrint'].mockReturnValue(of({ id: 42 }));
+      printService['patchPrint'].mockReturnValue(of({ id: 42 }));
+      printService['uploadPrintImage'] = vi.fn();
+      printService['setImageAsDefault'] = vi.fn().mockReturnValue(of({}));
+      printService['reorderImages'] = vi.fn().mockReturnValue(of(undefined));
+      toastr = TestBed.inject(ToastrService) as MockedObject<ToastrService>;
+      const logger = TestBed.inject(LoggingService) as unknown as Record<
+        string,
+        unknown
+      >;
+      logger['logTrace'] = vi.fn();
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
+        Promise.resolve(true)
+      );
+
+      component.printForm.controls.title.setValue('New print');
+      component.filamentUsage.clear();
+    });
+
+    it('says the print was saved, and a retry updates it instead of creating another', () => {
+      component.images.push(photo('a.jpg', 0));
+      printService['uploadPrintImage'].mockReturnValueOnce(
+        throwError(() => new Error('413'))
+      );
+
+      component.onSubmit();
+
+      expect(toastr.error).toHaveBeenCalledWith(
+        'Your print was saved, but its photos were not. Save again to retry them.',
+        'Photos not saved'
+      );
+      expect(component.saving()).toBe(false);
+
+      printService['uploadPrintImage'].mockReturnValueOnce(of({ id: 9 }));
+      component.onSubmit();
+
+      expect(printService['addPrint']).toHaveBeenCalledTimes(1);
+      expect(printService['uploadPrintImage']).toHaveBeenCalledTimes(2);
+      expect(printService['uploadPrintImage'].mock.lastCall![0]).toBe(42);
+      expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/prints']);
+    });
+
+    it('does not upload a photo again that went up before another failed', () => {
+      component.images.push(photo('a.jpg', 0));
+      component.images.push(photo('b.jpg', 1));
+      printService['uploadPrintImage']
+        .mockReturnValueOnce(of({ id: 9 }))
+        .mockReturnValueOnce(throwError(() => new Error('500')));
+
+      component.onSubmit();
+      printService['uploadPrintImage'].mockReturnValueOnce(of({ id: 10 }));
+      component.onSubmit();
+
+      const uploaded = printService['uploadPrintImage'].mock.calls.map(
+        (c) => (c[1] as File).name
+      );
+      expect(uploaded).toEqual(['a.jpg', 'b.jpg', 'b.jpg']);
+    });
+
+    it('still counts the retry as the new print it created', () => {
+      const analytics = TestBed.inject(
+        GoogleAnalyticsService
+      ) as MockedObject<GoogleAnalyticsService>;
+      component.images.push(photo('a.jpg', 0));
+      printService['uploadPrintImage']
+        .mockReturnValueOnce(throwError(() => new Error('500')))
+        .mockReturnValueOnce(of({ id: 9 }));
+
+      component.onSubmit();
+      component.onSubmit();
+
+      expect(analytics.emitConversion).toHaveBeenCalledTimes(1);
+    });
+
+    it('keeps the old message when the print itself was not saved', () => {
+      printService['addPrint'].mockReturnValue(
+        throwError(() => new Error('400'))
+      );
+
+      component.onSubmit();
+
+      expect(toastr.error).toHaveBeenCalledWith(
+        "Your print wasn't saved. Check the form and try again.",
+        'Save failed'
+      );
+    });
   });
 
   // The printers have to be in the route data BEFORE the first change detection: creating
@@ -2695,6 +2866,189 @@ describe('EditPrintDetailComponent', () => {
 
         expect(onboarding.markWelcomeFinished).not.toHaveBeenCalled();
         expect(analytics.emitConversion).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('opened with other route data', () => {
+    let editor: ComponentFixture<EditPrintDetailComponent> | undefined;
+
+    function openWith(
+      data: Record<string, unknown>
+    ): ComponentFixture<EditPrintDetailComponent> {
+      const route = TestBed.inject(ActivatedRoute) as unknown as {
+        data: Observable<Record<string, unknown>>;
+      };
+      let resolved: Record<string, unknown>;
+      route.data.subscribe((d) => (resolved = d));
+      route.data = of({ ...resolved!, ...data });
+      editor = TestBed.createComponent(EditPrintDetailComponent);
+      editor.detectChanges();
+      return editor;
+    }
+
+    afterEach(() => editor?.destroy());
+
+    // The loader turns a failed fetch into a null print, and a null print is a new one, so
+    // /prints/5/edit showed a blank New Print form whose Save created a print.
+    describe('an existing print that could not be loaded', () => {
+      it('leaves for the print page instead of showing a blank new print', () => {
+        const navigate = vi
+          .spyOn(TestBed.inject(Router), 'navigate')
+          .mockReturnValue(Promise.resolve(true));
+        const route = TestBed.inject(ActivatedRoute) as unknown as {
+          snapshot: unknown;
+        };
+        route.snapshot = {
+          queryParamMap: convertToParamMap({}),
+          paramMap: convertToParamMap({ id: '5' }),
+        };
+
+        openWith({ print: { print: null, user: null } });
+
+        expect(navigate).toHaveBeenCalledWith(['/prints', 5], {
+          replaceUrl: true,
+        });
+        expect(
+          (TestBed.inject(ToastrService) as MockedObject<ToastrService>).error
+        ).toHaveBeenCalledWith(
+          "That print couldn't be loaded, so it can't be edited.",
+          'Print not loaded'
+        );
+      });
+
+      it('still opens a new print on /prints/new/edit', () => {
+        const navigate = vi
+          .spyOn(TestBed.inject(Router), 'navigate')
+          .mockReturnValue(Promise.resolve(true));
+        const route = TestBed.inject(ActivatedRoute) as unknown as {
+          snapshot: unknown;
+        };
+        route.snapshot = {
+          queryParamMap: convertToParamMap({}),
+          paramMap: convertToParamMap({ id: 'new' }),
+        };
+
+        const f = openWith({ print: { print: null, user: null } });
+
+        expect(navigate).not.toHaveBeenCalled();
+        expect(f.componentInstance.printForm.controls.id.value).toBeNull();
+      });
+    });
+
+    // The setting was saved on every toggle but no route resolved it, and `!!"false"` is true.
+    describe('the remembered Allow Comments', () => {
+      const allowCommentsChecked = (f: ComponentFixture<unknown>) =>
+        (f.nativeElement as HTMLElement).querySelector<HTMLInputElement>(
+          '#edit-allow-comments input[type="checkbox"]'
+        )!.checked;
+
+      it('leaves Allow Comments off on a new print when it was last turned off', () => {
+        const f = openWith({
+          lastAllowCommentsSetting: { id: 3, value: 'false' },
+          print: { print: null },
+        });
+
+        expect(f.componentInstance.printForm.controls.allowComments.value).toBe(
+          false
+        );
+        expect(allowCommentsChecked(f)).toBe(false);
+      });
+
+      it('turns Allow Comments on when it was last turned on', () => {
+        const f = openWith({
+          lastAllowCommentsSetting: { id: 3, value: 'true' },
+          print: { print: null },
+        });
+
+        expect(allowCommentsChecked(f)).toBe(true);
+      });
+    });
+
+    // Changing the printer on a new print refills the usage rows from its loaded spools.
+    describe('changing the printer of a new print', () => {
+      let printerService: MockedObject<PrinterService>;
+      const spool = (id: string) => ({
+        id: `pf-${id}`,
+        filament: { id, displayName: `Spool ${id}`, materialType: 'PLA' },
+      });
+      const rowSpools = (form: EditPrintDetailComponent) =>
+        form.filamentUsage.controls.map(
+          (row) => (row.get('filament')!.value as { id: string } | null)?.id
+        );
+
+      beforeEach(() => {
+        printerService = TestBed.inject(
+          PrinterService
+        ) as MockedObject<PrinterService>;
+        const settings = TestBed.inject(
+          UserSettingService
+        ) as unknown as Record<string, unknown>;
+        settings['addOrUpdateSetting'] = vi.fn().mockResolvedValue({});
+      });
+
+      it("drops the previous printer's extra spools", () => {
+        printerService.getLoadedFilamentForPrinter.mockImplementation(
+          (printerId) =>
+            of(
+              printerId === 2
+                ? [spool('A1'), spool('A2')]
+                : printerId === 3
+                  ? [spool('B1')]
+                  : []
+            ) as never
+        );
+        const f = openWith({ print: { print: null } });
+        const form = f.componentInstance;
+
+        form.printForm.controls.printerId.setValue(2);
+        expect(rowSpools(form), 'printer A').toEqual(['A1', 'A2']);
+        form.printForm.controls.printerId.setValue(3);
+        f.detectChanges();
+
+        expect(rowSpools(form)).toEqual(['B1']);
+        const text = (f.nativeElement as HTMLElement).textContent!;
+        expect(text).toContain('Spool B1');
+        expect(text).not.toContain('Spool A2');
+      });
+
+      it('keeps a row the user added', () => {
+        printerService.getLoadedFilamentForPrinter.mockImplementation(
+          (printerId) =>
+            of(
+              printerId === 2
+                ? [spool('A1'), spool('A2')]
+                : printerId === 3
+                  ? [spool('B1')]
+                  : []
+            ) as never
+        );
+        const f = openWith({ print: { print: null } });
+        const form = f.componentInstance;
+
+        form.printForm.controls.printerId.setValue(2);
+        form.addNewFilamentUsage();
+        form.printForm.controls.printerId.setValue(3);
+
+        expect(rowSpools(form)).toEqual(['B1', undefined]);
+      });
+
+      it("ignores the first printer's spools when they arrive after the second's", () => {
+        const slowA = new Subject<unknown>();
+        printerService.getLoadedFilamentForPrinter.mockImplementation(
+          (printerId) =>
+            (printerId === 2
+              ? slowA
+              : of(printerId === 3 ? [spool('B1')] : [])) as never
+        );
+        const f = openWith({ print: { print: null } });
+        const form = f.componentInstance;
+
+        form.printForm.controls.printerId.setValue(2);
+        form.printForm.controls.printerId.setValue(3);
+        slowA.next([spool('A1'), spool('A2')]);
+
+        expect(rowSpools(form)).toEqual(['B1']);
       });
     });
   });

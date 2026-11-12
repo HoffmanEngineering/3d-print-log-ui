@@ -34,7 +34,15 @@ import {
   CdkDrag,
   CdkDragHandle,
 } from '@angular/cdk/drag-drop';
-import { concat, forkJoin, Observable, of, Subscription } from 'rxjs';
+import {
+  concat,
+  defer,
+  forkJoin,
+  Observable,
+  of,
+  Subject,
+  Subscription,
+} from 'rxjs';
 import {
   catchError,
   defaultIfEmpty,
@@ -43,6 +51,7 @@ import {
   mergeMap,
   switchMap,
   take,
+  tap,
   timeout,
   toArray,
 } from 'rxjs/operators';
@@ -51,6 +60,7 @@ import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guar
 import { FilamentSummary } from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
+  PrinterFilamentSummaryDto,
   PrinterService,
   PrinterSummary,
 } from 'src/app/core/services/printer.service';
@@ -378,6 +388,18 @@ export class EditPrintDetailComponent
    */
   private printOnLoad: Omit<PrintDetail, 'comments'> | null = null;
 
+  /** The print this form created, when a photo step after it failed and the form stayed open. */
+  private createdPrintId: number | null = null;
+
+  /**
+   * Usage rows a printer's loaded spools added. Picking another printer removes the ones
+   * nobody has touched, so the old printer's extra spools are not deducted on save.
+   */
+  private readonly rowsAddedFromPrinter = new Set<AbstractControl>();
+
+  /** Printer ids to refill the usage rows from; switchMap drops an earlier printer's answer. */
+  private readonly usageRefills = new Subject<number | null>();
+
   public printers: PrinterSummary[] = [];
 
   private printerLabelCache = new Map<number, string>();
@@ -555,8 +577,14 @@ export class EditPrintDetailComponent
     this.onboardingMode.set(
       this.activatedRoute.snapshot.queryParamMap.get('onboarding') === '1'
     );
+    this.subscribeToUsageRefills();
 
     this.activatedRoute.data.subscribe((data) => {
+      if (this.leaveWhenPrintFailedToLoad(data.print.print)) {
+        // The template needs a form for the moment before the navigation lands.
+        this.printForm ??= this.buildFormFromPrintDetail(null);
+        return;
+      }
       this.preferredCurrencyNameSetting = data.preferredCurrencyNameSetting;
       this.currencies = data.currencies;
 
@@ -664,6 +692,7 @@ export class EditPrintDetailComponent
                 );
 
                 this.filamentUsage.push(newFormGroup);
+                this.rowsAddedFromPrinter.add(newFormGroup);
               }
             }
 
@@ -701,6 +730,26 @@ export class EditPrintDetailComponent
           );
         }
       });
+  }
+
+  /**
+   * `/prints/:id/edit` gets a null print when the fetch failed (the loader never errors), and a
+   * null print is a new one: the form showed a blank New Print whose Save created a print. It
+   * goes to the print's page instead, which explains a print that is not there.
+   */
+  private leaveWhenPrintFailedToLoad(print: PrintDetail | null): boolean {
+    const requestedId = Number(
+      this.activatedRoute.snapshot.paramMap?.get('id') ?? NaN
+    );
+    if (print !== null || !Number.isInteger(requestedId)) {
+      return false;
+    }
+    this.toastr.error(
+      "That print couldn't be loaded, so it can't be edited.",
+      'Print not loaded'
+    );
+    void this.router.navigate(['/prints', requestedId], { replaceUrl: true });
+    return true;
   }
 
   getDefaultMeasureTypeForSelectedPrinter(printerId: number | null) {
@@ -845,6 +894,26 @@ export class EditPrintDetailComponent
       });
   }
 
+  /**
+   * One pipeline for every refill, so picking printer A then B cannot let a slow answer for A
+   * land after B's and put A's spools back. Set up once: ngOnInit's data handler runs again
+   * when the route is reused.
+   */
+  private subscribeToUsageRefills(): void {
+    this.usageRefills
+      .pipe(
+        switchMap((printerId) =>
+          this.printerService
+            .getLoadedFilamentForPrinter(printerId)
+            .pipe(map((loadedFilament) => ({ printerId, loadedFilament })))
+        ),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(({ printerId, loadedFilament }) =>
+        this.applyLoadedFilament(printerId, loadedFilament)
+      );
+  }
+
   /** A new print whose usage rows the user has not touched takes the printer's loaded spools. */
   private canRefillUsageFromPrinter(): boolean {
     return (
@@ -854,43 +923,61 @@ export class EditPrintDetailComponent
 
   /** Puts the printer's loaded filament into the usage rows, adding a row per extra spool. */
   private refillUsageFromLoadedFilament(printerId: number | null): void {
-    this.printerService
-      .getLoadedFilamentForPrinter(printerId)
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((loadedFilament) => {
-        const defaultMeasureType =
-          this.getDefaultMeasureTypeForSelectedPrinter(printerId);
+    this.usageRefills.next(printerId);
+  }
 
-        for (let i = 1; i <= loadedFilament.length; i++) {
-          const filament = loadedFilament[i - 1].filament;
+  private applyLoadedFilament(
+    printerId: number | null,
+    loadedFilament: PrinterFilamentSummaryDto[]
+  ): void {
+    const defaultMeasureType =
+      this.getDefaultMeasureTypeForSelectedPrinter(printerId);
 
-          if (this.filamentUsage.length >= i) {
-            this.filamentUsage
-              .at(i - 1)
-              .get('filament')
-              .setValue(filament);
-          }
-          // Else, add a new control:
-          else {
-            const newFormGroup = this.GetNewFilamentUsageForm(
-              EMPTY_GUID,
-              0,
-              0,
-              0,
-              defaultMeasureType,
-              0,
-              0,
-              0,
-              defaultMeasureType,
-              filament,
-              ''
-            );
+    for (let i = 1; i <= loadedFilament.length; i++) {
+      const filament = loadedFilament[i - 1].filament;
 
-            this.filamentUsage.push(newFormGroup);
-          }
-        }
-        this.changeDetector.markForCheck();
-      });
+      if (this.filamentUsage.length >= i) {
+        this.filamentUsage
+          .at(i - 1)
+          .get('filament')
+          .setValue(filament);
+      }
+      // Else, add a new control:
+      else {
+        const newFormGroup = this.GetNewFilamentUsageForm(
+          EMPTY_GUID,
+          0,
+          0,
+          0,
+          defaultMeasureType,
+          0,
+          0,
+          0,
+          defaultMeasureType,
+          filament,
+          ''
+        );
+
+        this.filamentUsage.push(newFormGroup);
+        this.rowsAddedFromPrinter.add(newFormGroup);
+      }
+    }
+
+    // Rows an earlier printer's spools added, past this printer's, would otherwise stay and be
+    // deducted from that printer's spools on save. Only rows nobody has edited go; a row the
+    // user added, or one from the slicer file, is never in the set.
+    for (
+      let i = this.filamentUsage.length - 1;
+      i >= loadedFilament.length;
+      i--
+    ) {
+      const row = this.filamentUsage.at(i);
+      if (this.rowsAddedFromPrinter.has(row) && row.pristine) {
+        this.filamentUsage.removeAt(i);
+        this.rowsAddedFromPrinter.delete(row);
+      }
+    }
+    this.changeDetector.markForCheck();
   }
   public HandleFilamentMeasureTypeChange(
     source: PrintFilamentSourceMeasurement
@@ -1163,10 +1250,11 @@ export class EditPrintDetailComponent
       ],
       images: imageArray,
       allowComments: [
-        print && print.allowComments !== null
+        print && print.allowComments != null
           ? print.allowComments
           : this.lastAllowCommentsSetting
-            ? !!this.lastAllowCommentsSetting.value
+            ? // Settings are strings, and `!!"false"` is true.
+              this.lastAllowCommentsSetting.value === 'true'
             : true,
       ],
       allowFileDownloads: new FormControl<boolean>(
@@ -1698,41 +1786,36 @@ export class EditPrintDetailComponent
       (a, b) => (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
     );
 
-    const imagesToUpload = sortedImages.map((image) => {
-      if (image.value.file !== null && image.value.file !== undefined) {
-        return this.printService.uploadPrintImage(
-          printId,
-          image.value.file,
-          image.value.isDefault ?? false
-        );
-      }
-
-      // otherwise, assume its a new image from a data url:
-      return this.printService.uploadPrintImageFromDataUrl(
-        printId,
-        image.value.url,
-        image.value.isDefault ?? false
-      );
-    });
+    // Deferred, so a data URL that cannot be read fails this stream rather than throwing.
+    const imagesToUpload = sortedImages.map((image) =>
+      defer(() =>
+        image.value.file !== null && image.value.file !== undefined
+          ? this.printService.uploadPrintImage(
+              printId,
+              image.value.file,
+              image.value.isDefault ?? false
+            )
+          : // otherwise, assume its a new image from a data url:
+            this.printService.uploadPrintImageFromDataUrl(
+              printId,
+              image.value.url,
+              image.value.isDefault ?? false
+            )
+      ).pipe(
+        // Each photo takes its id as soon as it is uploaded, so when a later one fails, Save
+        // again uploads only the photos still without one.
+        tap((response: any) => {
+          if (response && response.id !== undefined) {
+            image.setValue({ ...image.value, id: response.id });
+          }
+        })
+      )
+    );
 
     // Upload images sequentially to preserve displayOrder
     return concat(...imagesToUpload).pipe(
       toArray(),
-      map((uploadResponses: any[]) => {
-        // Update form controls with newly uploaded image IDs
-        uploadResponses.forEach((response: any, index: number) => {
-          if (response && response.id !== undefined) {
-            const control = sortedImages[index];
-            if (control) {
-              control.setValue({
-                ...control.value,
-                id: response.id,
-              });
-            }
-          }
-        });
-        return { id: printId } as PrintDetail;
-      })
+      map(() => ({ id: printId }) as PrintDetail)
     );
   }
 
@@ -1813,11 +1896,17 @@ export class EditPrintDetailComponent
     // Choose save method and execute pipeline
     const savePrint: Observable<{ id: number }> =
       newPrint.id === null
-        ? this.printService.addPrint(newPrint)
+        ? this.printService
+            .addPrint(newPrint)
+            .pipe(tap((created) => this.recordCreatedPrint(newPrint, created)))
         : this.saveChanges(newPrint.id, newPrint);
 
+    // Set once the print itself is saved, so a failure after it (a photo) is not reported as
+    // the print not being saved.
+    let printSaved = false;
     savePrint
       .pipe(
+        tap(() => (printSaved = true)),
         mergeMap((print) => this.uploadImages(print.id, newImages)),
         mergeMap((print) => this.setDefaultImage(print.id, newDefaultImageId)),
         mergeMap((print) => this.deleteImages(print.id)),
@@ -1825,8 +1914,38 @@ export class EditPrintDetailComponent
       )
       .subscribe({
         next: () => this.handleSaveSuccess(newPrint),
-        error: (err) => this.handleSaveError(err, newPrint),
+        error: (err) => this.handleSaveError(err, newPrint, printSaved),
       });
+  }
+
+  /**
+   * A new print exists from here on, even if a photo step after it fails. The form takes its id,
+   * and what was sent becomes what the form loaded, so Save again patches this print (with only
+   * what changed since) instead of creating a second one and deducting the spools twice.
+   */
+  private recordCreatedPrint(
+    sent: Omit<PrintDetail, 'comments'>,
+    created: { id: number; projectId?: string | null }
+  ): void {
+    this.createdPrintId = created.id;
+    this.printForm.controls.id.setValue(created.id);
+    if (created.projectId) {
+      // The API created the new project with the print; a retry must not create another.
+      this.pendingProjectSelection = {
+        type: 'existing',
+        projectId: created.projectId,
+        projectName: sent.newProjectName ?? '',
+      };
+    }
+    this.printOnLoad = {
+      ...sent,
+      id: created.id,
+      projectId:
+        this.pendingProjectSelection?.type === 'existing'
+          ? this.pendingProjectSelection.projectId
+          : sent.projectId,
+      newProjectName: undefined,
+    };
   }
 
   /**
@@ -1863,9 +1982,12 @@ export class EditPrintDetailComponent
           this.printOnLoad ?? this.printDetail!,
           resolved
         );
-        return Object.keys(patch).length === 0
-          ? of({ id: printId })
-          : this.printService.patchPrint(printId, patch);
+        const save: Observable<{ id: number }> =
+          Object.keys(patch).length === 0
+            ? of({ id: printId })
+            : this.printService.patchPrint(printId, patch);
+        // Saved: if a photo step fails next, Save again sends only what changed after this.
+        return save.pipe(tap(() => (this.printOnLoad = resolved)));
       })
     );
   }
@@ -1954,7 +2076,8 @@ export class EditPrintDetailComponent
    * Handle successful save
    */
   private handleSaveSuccess(newPrint: Omit<PrintDetail, 'comments'>): void {
-    if (newPrint.id === null) {
+    // A retry after a photo failed is still the save of the print this form created.
+    if (newPrint.id === null || newPrint.id === this.createdPrintId) {
       this.afterNewPrintSaved();
     }
 
@@ -2246,19 +2369,30 @@ export class EditPrintDetailComponent
    */
   private handleSaveError(
     err: any,
-    newPrint: Omit<PrintDetail, 'comments'>
+    newPrint: Omit<PrintDetail, 'comments'>,
+    printSaved = false
   ): void {
     this.saving.set(false);
     // Without this a rejected save only stopped the spinner, and looked like nothing happened.
-    this.toastr.error(
-      "Your print wasn't saved. Check the form and try again.",
-      'Save failed'
-    );
+    if (printSaved) {
+      // The print exists; only a photo step failed. Saying it wasn't saved invited a retry
+      // that, for a new print, used to create a duplicate.
+      this.toastr.error(
+        'Your print was saved, but its photos were not. Save again to retry them.',
+        'Photos not saved'
+      );
+    } else {
+      this.toastr.error(
+        "Your print wasn't saved. Check the form and try again.",
+        'Save failed'
+      );
+    }
     // Log only an allowlisted, non-sensitive diagnostic summary. Never serialize
     // the full print object: fields like notes, title, url and fileName can contain
     // private user content and would otherwise leak into telemetry (#leak).
     this.loggingService.logTrace('PrintErr: print save failed', {
       operation: newPrint.id === null ? 'create' : 'update',
+      printSaved,
       printId: newPrint.id,
       printerId: newPrint.printerId,
       status: newPrint.status,
@@ -2650,12 +2784,28 @@ export class EditPrintDetailComponent
       this.printForm.controls.printTimeInSeconds.value
     );
 
+    // The completion inputs show the raw values. When the change came from those inputs they
+    // already hold what the user entered; any other change (the duration, the start) moves the
+    // completion, so they are re-derived. Seeding them only once left them stale, and editing
+    // Completion Time then combined a stale date with the new time.
+    const fromCompletionInputs = this.updatingFromCompletionInputs;
+
     if (
       printTimeInSeconds === null ||
       printTimeInSeconds === undefined ||
       printTimeInSeconds <= 0
     ) {
       this.actualCompletedDate = null;
+      // A completion that was shown goes with its duration. A time typed before any date
+      // stays, so it still applies once a date is picked.
+      if (
+        !fromCompletionInputs &&
+        this.rawCompletionDate !== null &&
+        this.rawCompletionTime !== null
+      ) {
+        this.rawCompletionDate = null;
+        this.rawCompletionTime = null;
+      }
       return;
     }
 
@@ -2663,14 +2813,19 @@ export class EditPrintDetailComponent
       startDate.getTime() + printTimeInSeconds * 1000
     );
 
-    // Seed raw values from the computed date on initial load (before any user interaction)
-    if (this.rawCompletionDate === null && this.rawCompletionTime === null) {
+    if (
+      !fromCompletionInputs ||
+      (this.rawCompletionDate === null && this.rawCompletionTime === null)
+    ) {
       this.rawCompletionDate = new Date(this.actualCompletedDate);
       this.rawCompletionTime = this.actualCompletedDate
         .toTimeString()
         .slice(0, 8);
     }
   }
+
+  /** True while a completion input writes the duration, whose valueChanges recompute. */
+  private updatingFromCompletionInputs = false;
 
   public updateActualCompletedDate(newDate: Date): void {
     const startDate = this.getCombinedStartDateTime();
@@ -2683,10 +2838,15 @@ export class EditPrintDetailComponent
       (new Date(newDate).getTime() - startDate.getTime()) / 1000
     );
 
-    this.printForm.controls.printTimeInSeconds.setValue(
-      this.parseIntoString(difference)
-    );
-    this.getActualCompletedDate();
+    this.updatingFromCompletionInputs = true;
+    try {
+      this.printForm.controls.printTimeInSeconds.setValue(
+        this.parseIntoString(difference)
+      );
+      this.getActualCompletedDate();
+    } finally {
+      this.updatingFromCompletionInputs = false;
+    }
   }
 
   public setActualCompletedDateToNow() {

@@ -35,6 +35,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { TagReading } from 'src/app/core/types/tag-reading';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
@@ -390,7 +391,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete material "${filament.displayName}"? <br /> <br />  This action cannot be undone.`,
+        body: `Are you sure you want to delete material "${escapeHtml(filament.displayName ?? '')}"? <br /> <br />  This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',

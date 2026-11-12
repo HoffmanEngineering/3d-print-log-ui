@@ -970,6 +970,20 @@ describe('PrintListComponent', () => {
       expect(component.bulkActions.isSelected(selectablePrint.id)).toBe(true);
     });
 
+    it('escapes the print title in the delete confirmation', () => {
+      fixture.detectChanges();
+      const open = vi.spyOn(component.dialog, 'open').mockReturnValue({
+        componentInstance: {},
+        afterClosed: () => of(false),
+      } as MatDialogRef<unknown>);
+
+      component.deletePrint({ ...selectablePrint, title: 'Spool <A> rack' });
+
+      expect(
+        (open.mock.lastCall![1] as { data: { body: string } }).data.body
+      ).toContain('"Spool &lt;A&gt; rack"');
+    });
+
     it('should drop a print from the selection when it is deleted on its own', () => {
       fixture.detectChanges();
       vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(

@@ -19,6 +19,7 @@ import { Title } from '@angular/platform-browser';
 import { debounce } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButton } from '@angular/material/button';
@@ -250,7 +251,7 @@ export class PrinterListComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete printer "${printer.name}"? <br /> <br />  This action cannot be undone.`,
+        body: `Are you sure you want to delete printer "${escapeHtml(printer.name ?? '')}"? <br /> <br />  This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',

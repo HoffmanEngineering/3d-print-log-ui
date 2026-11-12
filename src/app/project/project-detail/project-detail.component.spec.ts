@@ -255,6 +255,59 @@ describe('ProjectDetailComponent', () => {
     expect(mockPrintService.deletePrint).toHaveBeenCalledWith(7);
   });
 
+  describe('the model source link', () => {
+    const sourceLink = async (url: string) => {
+      await fixture.whenStable();
+      component.project.set({ ...mockProject, url });
+      fixture.detectChanges();
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('a')
+      ).find((a) => a.textContent!.includes('View model source'));
+    };
+
+    it('links a scheme-less URL to that site, not to a path under /projects', async () => {
+      const link = await sourceLink('printables.com/model/12345');
+
+      expect(link!.getAttribute('href')).toBe(
+        'https://printables.com/model/12345'
+      );
+      expect(link!.rel).toContain('noreferrer');
+    });
+
+    it('does not link a URL with another scheme', async () => {
+      expect(await sourceLink('data:text/html,<h1>hi</h1>')).toBeUndefined();
+    });
+  });
+
+  describe('confirm dialogs', () => {
+    const body = () =>
+      (TestBed.inject(MatDialog).open as Mock).mock.lastCall![1].data
+        .body as string;
+
+    beforeEach(async () => {
+      await fixture.whenStable();
+      (TestBed.inject(MatDialog).open as Mock).mockReturnValue({
+        afterClosed: () => of(false),
+      });
+    });
+
+    it('escapes the print title', () => {
+      component.onPrintDeleted({ id: 7, title: 'Spool <A> rack' } as never);
+
+      expect(body()).toContain('"Spool &lt;A&gt; rack"');
+    });
+
+    it('escapes the project name', () => {
+      component.project.set({ ...mockProject, name: '<a href="x">y</a>' });
+
+      component.onDeleteProject();
+
+      expect(body()).toContain(
+        '<strong>&lt;a href=&quot;x&quot;&gt;y&lt;/a&gt;</strong>'
+      );
+    });
+  });
+
   it('should call PrintService.updatePrintStatus when onPrintStatusChanged is called', async () => {
     component.onPrintStatusChanged({ id: 7, status: PrintStatus.Failed });
     await fixture.whenStable();

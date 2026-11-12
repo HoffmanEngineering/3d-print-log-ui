@@ -159,6 +159,18 @@ describe('PrinterListComponent', () => {
     });
   });
 
+  it('escapes the printer name in the delete confirmation', async () => {
+    await setUp([aPrinter()]);
+    const open = vi.mocked(TestBed.inject(MatDialog).open);
+    open.mockReturnValue({ afterClosed: () => of(false) } as never);
+
+    component.deletePrinter(aPrinter({ name: 'Spool <A> rack' }) as never);
+
+    expect(
+      (open.mock.lastCall![1] as { data: { body: string } }).data.body
+    ).toContain('"Spool &lt;A&gt; rack"');
+  });
+
   describe('paging from page 3', () => {
     const rows = () =>
       (fixture.nativeElement as HTMLElement).querySelectorAll('tr.mat-mdc-row')

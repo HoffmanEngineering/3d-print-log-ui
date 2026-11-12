@@ -13,6 +13,7 @@ import {
 import {
   PrintService,
   PrintStatus,
+  PrintSummary,
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -480,6 +481,17 @@ describe('PrintGroupedViewComponent', () => {
 
     // Expanded state should be cleared
     expect(component.expandedProjectPrints().size).toBe(0);
+  });
+
+  it('escapes the print title in the delete confirmation', () => {
+    const open = vi.mocked(TestBed.inject(MatDialog).open);
+    open.mockReturnValue({ afterClosed: () => of(false) } as never);
+
+    component.deletePrint({ id: 7, title: 'Spool <A> rack' } as PrintSummary);
+
+    expect(
+      (open.mock.lastCall![1] as { data: { body: string } }).data.body
+    ).toContain('"Spool &lt;A&gt; rack"');
   });
 
   describe('getPrintEndDate', () => {

@@ -656,6 +656,15 @@ export class PrintListComponent implements OnInit, OnDestroy {
           .filter((f) => f != null)
       );
 
+      // filamentFilterResolver leaves out a filament the API no longer has (a
+      // bookmarked URL can outlive the spool). That filter has no chip to
+      // remove, so drop it and fetch the list without it.
+      if (this.filterByFilaments().length < this.filterByFilamentIds().length) {
+        this.filterByFilamentIds.set(this.filterByFilaments().map((f) => f.id));
+        this.currentPage.set(1);
+        this.updateFilter();
+      }
+
       if (this.activeFilterCount() > 0) {
         this.isFilterPanelOpen.set(true);
       }
@@ -685,10 +694,16 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
 
-    // Load display'd columns.
-    const columns = JSON.parse(
-      localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
-    );
+    // Load display'd columns. A value that is not JSON falls through to the
+    // defaults below rather than breaking the page.
+    let columns: unknown = null;
+    try {
+      columns = JSON.parse(
+        localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
+      );
+    } catch {
+      columns = null;
+    }
 
     // Error correction
     if (
@@ -748,6 +763,23 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   private handlePagedList(response: PagedList<PrintSummary>) {
+    // Deleting the only print on the last page refetches that page, and the API
+    // answers with no items while the total still fills earlier pages. Step back
+    // to the last page that has prints. The target is always lower than the
+    // page asked for, so this cannot loop.
+    const { currentPage, pageSize, totalCount } = response.paging;
+    const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+    if (
+      response.items.length === 0 &&
+      totalCount > 0 &&
+      currentPage > lastPage
+    ) {
+      this.currentPage.set(lastPage);
+      this.pageSize.set(pageSize);
+      this.updateFilter();
+      return;
+    }
+
     this.prints.set(response.items);
     // Reached from the resolver on first activation and from every refetch, so
     // this is the one place that knows rows have actually been painted.
@@ -913,6 +945,11 @@ export class PrintListComponent implements OnInit, OnDestroy {
           t: new Date().getTime(),
         },
         relativeTo: this.activatedRoute,
+        // The URL only mirrors the filters so a reload or a shared link keeps
+        // them. A new entry per change made Back step through old filters while
+        // the rows stayed on the latest results (the query-param subscription
+        // does not refetch), and it took one Back per keystroke to leave.
+        replaceUrl: true,
       })
       .then(() => {
         // The grouped view renders /Prints/grouped and never reads this flat

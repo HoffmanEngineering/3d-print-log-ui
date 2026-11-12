@@ -1296,4 +1296,134 @@ describe('PrintListComponent', () => {
       fixture.debugElement.query(By.css('td app-printer-avatar'))
     ).toBeTruthy();
   });
+
+  describe('a page past the end', () => {
+    const summary = (id: number) =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2021-05-27'),
+        printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+        filamentUsage: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    beforeEach(() => {
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
+        Promise.resolve(true)
+      );
+    });
+
+    // 11 prints at 10 per page: deleting the one on page 2 refetches page 2,
+    // and the API answers with no items but a total that still has a page 1.
+    it('steps back to the last page that has prints and fetches it', async () => {
+      TestBed.inject(ActivatedRoute).data = of({
+        printList: {
+          items: [summary(11)],
+          paging: {
+            currentPage: 2,
+            pageSize: 10,
+            totalCount: 11,
+            totalPages: 2,
+          },
+        } as PagedList<PrintSummary>,
+        printers: [],
+        filaments: [],
+      });
+      mockPrintService.getPrintSummaries.mockImplementation(
+        (pageNumber: number) =>
+          of({
+            items:
+              pageNumber === 1
+                ? Array.from({ length: 10 }, (_, i) => summary(i + 1))
+                : [],
+            paging: {
+              currentPage: pageNumber,
+              pageSize: 10,
+              totalCount: 10,
+              totalPages: 1,
+            },
+          } as PagedList<PrintSummary>)
+      );
+      fixture.detectChanges();
+
+      await component.updateFilter();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const pages = mockPrintService.getPrintSummaries.mock.calls.map(
+        (call) => call[0]
+      );
+      expect(pages).toEqual([2, 1]);
+      expect(component.currentPage()).toBe(1);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Print 10'
+      );
+    });
+
+    it('does not keep refetching when page 1 is empty too', async () => {
+      mockPrintService.getPrintSummaries.mockReturnValue(
+        of({
+          items: [],
+          paging: {
+            currentPage: 1,
+            pageSize: 10,
+            totalCount: 3,
+            totalPages: 1,
+          },
+        } as PagedList<PrintSummary>)
+      );
+      fixture.detectChanges();
+
+      await component.updateFilter();
+      await fixture.whenStable();
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // Back used to step through every keystroke's URL while the rows stayed on
+  // the latest results; replacing the entry keeps the two from disagreeing.
+  it('replaces the history entry when the filters change', () => {
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(Promise.resolve(true));
+    fixture.detectChanges();
+
+    component.searchText = 'benchy';
+    component.updateFilter();
+
+    expect(navigate.mock.lastCall?.[1]).toEqual(
+      expect.objectContaining({ replaceUrl: true })
+    );
+  });
+
+  // filamentFilterResolver leaves out a filament the API no longer has, so the
+  // filter on it has no chip to remove; drop it and fetch without it.
+  it('drops a filament filter whose filament could not be found', async () => {
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(Promise.resolve(true));
+    Object.assign(TestBed.inject(ActivatedRoute), {
+      queryParamMap: of(convertToParamMap({ filterByFilamentId: ['gone'] })),
+    });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.filterByFilamentIds()).toEqual([]);
+    expect(
+      navigate.mock.lastCall?.[1]?.queryParams?.filterByFilamentId
+    ).toEqual([]);
+    expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([]);
+  });
+
+  it('falls back to the default columns when the saved layout is not JSON', () => {
+    localStorage.setItem('print_table_displayed_columns', '{not json');
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(component.displayedColumns()).toContain('title');
+    localStorage.removeItem('print_table_displayed_columns');
+  });
 });

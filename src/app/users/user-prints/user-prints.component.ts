@@ -77,6 +77,8 @@ export class UserPrintsComponent implements OnInit {
   public debouncedUpdateFilter;
 
   readonly showLoadMore = signal(true);
+  /** The search the list was last requested with. */
+  private loadedSearch = '';
   printListSubscription: Subscription;
 
   constructor() {
@@ -101,8 +103,7 @@ export class UserPrintsComponent implements OnInit {
           this.filterByStatus.set(null);
         }
         firstUser = false;
-        this.clearPrints();
-        this.updateFilter();
+        this.applyFilter();
       });
     });
   }
@@ -111,11 +112,11 @@ export class UserPrintsComponent implements OnInit {
     this.activatedRoute.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
-        if (params.has('searchText')) {
-          this.searchText.set(params.get('searchText'));
-          this.clearPrints();
-          this.pageNumber = 1;
-          this.updateFilter();
+        // Clearing the box removes the param, so its absence is a change too.
+        const search = params.get('searchText') ?? '';
+        if (search !== this.loadedSearch) {
+          this.searchText.set(search);
+          this.applyFilter();
         }
       });
   }
@@ -123,11 +124,20 @@ export class UserPrintsComponent implements OnInit {
   public clearPrints() {
     this.prints.set([]);
   }
+
+  /** Starts the list over from the first page, for a new filter or user. */
+  public applyFilter(): Promise<void> {
+    this.pageNumber = 1;
+    this.clearPrints();
+    return this.updateFilter();
+  }
+
   public async updateFilter(): Promise<void> {
     return new Promise((resolve) => {
       if (this.printListSubscription) {
         this.printListSubscription.unsubscribe();
       }
+      this.loadedSearch = this.searchText();
       this.printListSubscription = this.printService
         .getPrintSummaries(
           this.pageNumber,

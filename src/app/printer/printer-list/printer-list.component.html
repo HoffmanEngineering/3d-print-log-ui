@@ -23,7 +23,7 @@
       <mat-checkbox
         type="checkbox"
         [(ngModel)]="includeInactive"
-        (ngModelChange)="updateFilter()"
+        (ngModelChange)="applyFilter()"
         >Include Inactive</mat-checkbox
       >
     </div>
@@ -213,6 +213,7 @@
   <mat-paginator
     [length]="totalCount()"
     [pageSize]="pageSize()"
+    [pageIndex]="(currentPage() ?? 1) - 1"
     [pageSizeOptions]="[5, 10, 25, 100]"
     (page)="pageChange($event)"
   >

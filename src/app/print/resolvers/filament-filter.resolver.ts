@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { ResolveFn } from '@angular/router';
-import { forkJoin, of, throwError } from 'rxjs';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import {
   FilamentService,
@@ -21,7 +21,22 @@ export const filamentFilterResolver: ResolveFn<FilamentSummary[]> = (route) => {
     return of([] as FilamentSummary[]);
   }
 
-  const filamentService = inject(FilamentService);
+  return loadFilterFilaments(inject(FilamentService), ids);
+};
+
+/**
+ * The filaments with these ids, leaving out any the API no longer has (404) or will not
+ * show (403). The prints list makes the same lookup when Back restores a filament filter
+ * it has not loaded yet.
+ */
+export function loadFilterFilaments(
+  filamentService: FilamentService,
+  ids: string[]
+): Observable<FilamentSummary[]> {
+  if (ids.length === 0) {
+    return of([]);
+  }
+
   return forkJoin(
     ids.map((id) =>
       filamentService
@@ -40,4 +55,4 @@ export const filamentFilterResolver: ResolveFn<FilamentSummary[]> = (route) => {
       details.filter((d) => d !== null).map(filamentDetailToSummary)
     )
   );
-};
+}

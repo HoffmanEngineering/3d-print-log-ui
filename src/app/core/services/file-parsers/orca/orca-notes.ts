@@ -11,7 +11,7 @@ export const ORCA_FAMILY_SETTING_KEYS: readonly string[] = [
   'wall_loops',
   'sparse_infill_density',
   'sparse_infill_pattern',
-  'support_filament',
+  'enable_support',
   'support_on_build_plate_only',
   'ooze_prevention',
   'draft_shield',
@@ -73,9 +73,10 @@ export function buildOrcaFamilyNotes(
     }
   }
 
-  if (settings.getNumber('support_filament') === 1) {
-    const buildplateOnly =
-      settings.getNumber('support_on_build_plate_only') === 1;
+  // enable_support is the switch. support_filament, which this once read, is
+  // the filament index used for supports (0 = the object's own filament).
+  if (settings.getBoolean('enable_support')) {
+    const buildplateOnly = settings.getBoolean('support_on_build_plate_only');
     const supportType = buildplateOnly ? 'Touching Buildplate' : 'Everywhere';
     notes += `Support: Enabled ${supportType}`.trim() + '\n';
   } else {

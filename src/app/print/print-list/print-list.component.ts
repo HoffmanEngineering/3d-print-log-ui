@@ -16,6 +16,7 @@ import { Title } from '@angular/platform-browser';
 import {
   ActivatedRoute,
   NavigationEnd,
+  ParamMap,
   Router,
   RouterLink,
 } from '@angular/router';
@@ -24,7 +25,10 @@ import { ActiveToast, ToastrService } from 'ngx-toastr';
 import { Subject, Subscription } from 'rxjs';
 import { filter, finalize, map, take } from 'rxjs/operators';
 import { setIfChanged } from 'src/app/core/utils/set-if-changed';
-import { FilamentSummary } from 'src/app/core/services/filament.service';
+import {
+  FilamentService,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { GcodeFileParserService } from 'src/app/core/services/gcode-file-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
@@ -98,7 +102,8 @@ import { PrintImageComponent } from '../../shared/print-image/print-image.compon
 import { ProjectChipComponent } from '../../shared/project-chip/project-chip.component';
 import { FilamentUsageSummaryComponent } from '../../shared/filament-usage-summary/filament-usage-summary.component';
 import { AdComponent } from '../../shared/ad/ad.component';
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, Location } from '@angular/common';
+import { loadFilterFilaments } from '../resolvers/filament-filter.resolver';
 import { DurationPipe } from '../../shared/pipes/duration.pipe';
 import { LocaleDatePipe } from '../../shared/pipes/locale-date.pipe';
 import { FilamentColorSwatchStylePipe } from '../../shared/pipes/filament-color-swatch-style.pipe';
@@ -108,6 +113,24 @@ export interface ColumnDefinition {
   displayName: string;
   description: string;
 }
+
+/**
+ * What a call to `updateFilter()` changes, which decides what happens to the history entry:
+ *
+ * - `filter`: the user picked a filter, sort, page or page size. Pushes an entry, so Back
+ *   returns to the list as it was.
+ * - `search`: the debounced search box. Pushes like a filter, except that it replaces an
+ *   entry a search created, so a burst of typing leaves one entry rather than a trail.
+ * - `refresh`: the same list again, or a correction the list made on its own (a page past
+ *   the end, a filament that no longer exists). Replaces the entry: Back must not land on a
+ *   URL the list has already moved away from, and bounce forward again.
+ */
+export type PrintListChange = 'filter' | 'search' | 'refresh';
+
+/** The history state key that records which kind of change created an entry. */
+export const PRINT_LIST_ENTRY_STATE_KEY = 'printListEntry';
+
+type PrintListEntryKind = 'filter' | 'search';
 
 /**
  * The no-printer toast shows at most once per page load, however many times the list is
@@ -191,6 +214,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
   private readonly loggingService = inject(LoggingService);
   private readonly gcodeParserService = inject(GcodeFileParserService);
   private readonly newPrintStoreService = inject(NewPrintStoreService);
+  private readonly location = inject(Location);
+  private readonly filamentService = inject(FilamentService);
+
+  /**
+   * Every filament this list has a summary for, by id: the resolver's, and any picked in
+   * the search dialog. Back can restore a filament filter, and its chip needs the summary.
+   */
+  private readonly knownFilaments = new Map<string, FilamentSummary>();
+
+  /** The lookup for filaments a restored filter names that are not known yet. */
+  private filamentLookupSubscription: Subscription | null = null;
 
   readonly prints = signal<PrintSummary[]>([]);
 
@@ -348,7 +382,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
     // Only on an actual change, and only in that direction: the grouped view
     // loads its own feed.
     if (previous !== value && value === 'list') {
-      this.updateFilter();
+      this.updateFilter('refresh');
     }
   }
 
@@ -382,6 +416,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   };
 
   public debouncedUpdateFilter;
+
+  /** Drops a search still waiting on its debounce. */
+  private readonly cancelPendingSearch: () => void;
 
   public sortColumn = PrintSummarySortColumn.StartDate;
   public sortDirection = SortDirection.Desc;
@@ -556,8 +593,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
     // appear while the user was still typing, before a request even exists.
     const debouncedFilterUpdate = debounce(() => {
       this.currentPage.set(1);
-      this.updateFilter();
+      this.updateFilter('search');
     }, 400);
+    this.cancelPendingSearch = () => debouncedFilterUpdate.cancel();
 
     this.debouncedUpdateFilter = () => {
       this.isLoading.set(true);
@@ -595,6 +633,8 @@ export class PrintListComponent implements OnInit, OnDestroy {
     this.printerRedirectSubscription?.unsubscribe?.();
 
     this.subscriptions?.unsubscribe?.();
+    this.filamentLookupSubscription?.unsubscribe();
+    this.cancelPendingSearch();
 
     this.loadingIndicator.destroy();
   }
@@ -602,39 +642,37 @@ export class PrintListComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.titleService.setTitle('My Prints - 3D Print Log');
 
-    this.activatedRoute.queryParamMap.subscribe((params) => {
-      if (params.has('searchText')) {
-        this.searchText = params.get('searchText');
-      }
-      if (params.has('filterByStatus')) {
-        this.filterByStatus.set(+params.get('filterByStatus'));
-      }
-      if (params.has('sortDirection')) {
-        this.sortDirection = +params.get('sortDirection');
-      }
-      if (params.has('sortColumn')) {
-        this.sortColumn = +params.get('sortColumn');
-      }
+    // The first emission is the URL the list opened on, whose page the resolver
+    // has already fetched: that includes a return from a print's Close, which is
+    // a location.back() and builds this component afresh. After that, the params
+    // change for two reasons. updateFilter() wrote them, and the list already
+    // holds that state and fetches it itself. Or the user went Back or Forward to
+    // an earlier entry, and the list has to take on that entry's state and fetch
+    // it, or the URL and the search box move while the rows stay put.
+    //
+    // The router delivers query params while it activates the route, before the
+    // navigation ends, so currentNavigation() is the navigation that produced
+    // this emission.
+    let isFirstEmission = true;
+    this.subscriptions.add(
+      this.activatedRoute.queryParamMap.subscribe((params) => {
+        const trigger = this.router.currentNavigation()?.trigger;
+        const isHistoryTraversal =
+          trigger === 'popstate' || trigger === 'hashchange';
 
-      // setIfChanged, not set: these are signals compared with Object.is, so a
-      // fresh array is always a "change" even when it holds the same ids (and
-      // `[]` vs `[]` is the common case). Every updateFilter() writes the
-      // filters back into the URL, so a plain set() made each navigation emit
-      // on both signals, and the grouped view re-fetched its feed twice per
-      // keystroke — cancelling the request already in flight each time.
-      setIfChanged(
-        this.filterByPrinterIds,
-        params.getAll('filterByPrinterId').map((id) => +id)
-      );
-      setIfChanged(
-        this.filterByFilamentIds,
-        params.getAll('filterByFilamentId')
-      );
+        if (isFirstEmission) {
+          isFirstEmission = false;
+          this.applyQueryParams(params);
+        } else if (isHistoryTraversal) {
+          this.applyQueryParams(params);
+          this.restoreFromHistory();
+        }
 
-      // searchText and the sort are plain fields, and the params change after
-      // first render too (back and forward): nothing else would mark this view.
-      this.changeDetector.markForCheck();
-    });
+        // searchText and the sort are plain fields: nothing else would mark
+        // this view after Back or Forward.
+        this.changeDetector.markForCheck();
+      })
+    );
 
     this.activatedRoute.data.subscribe((data) => {
       this.defaultFilamentPriceSetting = data.defaultFilamentPriceSetting;
@@ -649,12 +687,22 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
       this.printers.set(data.printers);
       this.filaments = data.filaments;
+      this.rememberFilaments(data.filaments ?? []);
 
       this.filterByFilaments.set(
         this.filterByFilamentIds()
           .map((id) => this.filaments.find((f) => f.id === id))
           .filter((f) => f != null)
       );
+
+      // filamentFilterResolver leaves out a filament the API no longer has (a
+      // bookmarked URL can outlive the spool). That filter has no chip to
+      // remove, so drop it and fetch the list without it.
+      if (this.filterByFilaments().length < this.filterByFilamentIds().length) {
+        this.filterByFilamentIds.set(this.filterByFilaments().map((f) => f.id));
+        this.currentPage.set(1);
+        this.updateFilter('refresh');
+      }
 
       if (this.activeFilterCount() > 0) {
         this.isFilterPanelOpen.set(true);
@@ -685,10 +733,16 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     this.mobileQuery = this.media.matchMedia('(max-width: 800px)');
 
-    // Load display'd columns.
-    const columns = JSON.parse(
-      localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
-    );
+    // Load display'd columns. A value that is not JSON falls through to the
+    // defaults below rather than breaking the page.
+    let columns: unknown = null;
+    try {
+      columns = JSON.parse(
+        localStorage.getItem(this.PRINT_TABLE_DISPLAYED_COLUMNS)
+      );
+    } catch {
+      columns = null;
+    }
 
     // Error correction
     if (
@@ -748,6 +802,23 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   private handlePagedList(response: PagedList<PrintSummary>) {
+    // Deleting the only print on the last page refetches that page, and the API
+    // answers with no items while the total still fills earlier pages. Step back
+    // to the last page that has prints. The target is always lower than the
+    // page asked for, so this cannot loop.
+    const { currentPage, pageSize, totalCount } = response.paging;
+    const lastPage = Math.max(1, Math.ceil(totalCount / pageSize));
+    if (
+      response.items.length === 0 &&
+      totalCount > 0 &&
+      currentPage > lastPage
+    ) {
+      this.currentPage.set(lastPage);
+      this.pageSize.set(pageSize);
+      this.updateFilter('refresh');
+      return;
+    }
+
     this.prints.set(response.items);
     // Reached from the resolver on first activation and from every refetch, so
     // this is the one place that knows rows have actually been painted.
@@ -893,11 +964,17 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * `PrintSummary` for each selected print, so a batch can act on prints that
    * have since scrolled off the current page.
    */
-  public updateFilter() {
-    this.isLoading.set(true);
-    this.loadingIndicator.start();
+  public updateFilter(change: PrintListChange = 'filter') {
+    this.startLoading();
 
     localStorage.setItem('print_list_page_size', this.pageSize().toString(10));
+
+    const entryKind = this.currentEntryKind();
+    const replaceUrl =
+      change === 'refresh' || (change === 'search' && entryKind === 'search');
+    // A refresh replaces the entry without changing what kind of change made it.
+    const kind: PrintListEntryKind =
+      change === 'refresh' ? (entryKind ?? 'filter') : change;
 
     return this.router
       .navigate(['.'], {
@@ -913,56 +990,191 @@ export class PrintListComponent implements OnInit, OnDestroy {
           t: new Date().getTime(),
         },
         relativeTo: this.activatedRoute,
+        replaceUrl,
+        state: { [PRINT_LIST_ENTRY_STATE_KEY]: kind },
       })
-      .then(() => {
-        // The grouped view renders /Prints/grouped and never reads this flat
-        // page, so fetching it here put a second request on every keystroke
-        // whose response was parsed and then thrown away.
-        //
-        // The resolver cannot cover this refetch: runGuardsAndResolvers
-        // defaults to 'paramsChange', which compares path params and URL
-        // segments only, so a query-param navigation never re-runs it. It
-        // populates first activation; every refetch after that is this call.
-        if (this.viewMode !== 'list') {
+      .then(() => this.fetchList());
+  }
+
+  /**
+   * Fetches the page the current filters, sort and paging describe, without
+   * touching the URL. Expects startLoading() to have been called.
+   */
+  private fetchList(): void {
+    // The grouped view renders /Prints/grouped and never reads this flat
+    // page, so fetching it here put a second request on every keystroke
+    // whose response was parsed and then thrown away.
+    //
+    // The resolver cannot cover this refetch: runGuardsAndResolvers
+    // defaults to 'paramsChange', which compares path params and URL
+    // segments only, so a query-param navigation never re-runs it. It
+    // populates first activation; every refetch after that is this call.
+    if (this.viewMode !== 'list') {
+      this.isLoading.set(false);
+      this.loadingIndicator.stop();
+      return;
+    }
+
+    this.printSearchSubscription?.unsubscribe?.();
+
+    this.printSearchSubscription = this.printService
+      .getPrintSummaries(
+        this.currentPage(),
+        this.pageSize(),
+        this.searchText || '',
+        this.filterByStatus(),
+        this.filterByPrinterIds(),
+        this.filterByFilamentIds(),
+        this.sortDirection,
+        this.sortColumn,
+        undefined
+      )
+      // Only stop() moves into finalize. It is the refcounted one, and the
+      // unsubscribe above CANCELS whatever was in flight — a cancelled
+      // source reaches neither next nor error, so a stop() in the subscriber
+      // leaked one `pending` per superseded request and stranded the
+      // progress bar for the life of the page. `isLoading` is a plain flag
+      // and stays where it was, cleared when a response actually lands.
+      .pipe(finalize(() => this.loadingIndicator.stop()))
+      .subscribe(
+        (prints) => {
+          this.handlePagedList(prints);
           this.isLoading.set(false);
-          this.loadingIndicator.stop();
-          return;
+        },
+        () => {
+          // A failed first load leaves the list empty, so the NEXT attempt
+          // is still a first paint — hasLoadedOnce is only set on success,
+          // in handlePagedList.
+          this.isLoading.set(false);
         }
+      );
+  }
 
-        this.printSearchSubscription?.unsubscribe?.();
+  private startLoading(): void {
+    this.isLoading.set(true);
+    this.loadingIndicator.start();
+  }
 
-        this.printSearchSubscription = this.printService
-          .getPrintSummaries(
-            this.currentPage(),
-            this.pageSize(),
-            this.searchText || '',
-            this.filterByStatus(),
-            this.filterByPrinterIds(),
-            this.filterByFilamentIds(),
-            this.sortDirection,
-            this.sortColumn,
-            undefined
-          )
-          // Only stop() moves into finalize. It is the refcounted one, and the
-          // unsubscribe above CANCELS whatever was in flight — a cancelled
-          // source reaches neither next nor error, so a stop() in the subscriber
-          // leaked one `pending` per superseded request and stranded the
-          // progress bar for the life of the page. `isLoading` is a plain flag
-          // and stays where it was, cleared when a response actually lands.
-          .pipe(finalize(() => this.loadingIndicator.stop()))
-          .subscribe(
-            (prints) => {
-              this.handlePagedList(prints);
-              this.isLoading.set(false);
-            },
-            () => {
-              // A failed first load leaves the list empty, so the NEXT attempt
-              // is still a first paint — hasLoadedOnce is only set on success,
-              // in handlePagedList.
-              this.isLoading.set(false);
-            }
-          );
-      });
+  /**
+   * Which kind of change created the history entry the browser is on, from the
+   * state updateFilter() leaves on it. Null for an entry the list did not make,
+   * such as the one it was opened on.
+   */
+  private currentEntryKind(): PrintListEntryKind | null {
+    const state = this.location.getState() as Record<string, unknown> | null;
+    const kind = state?.[PRINT_LIST_ENTRY_STATE_KEY];
+    return kind === 'filter' || kind === 'search' ? kind : null;
+  }
+
+  /**
+   * Takes on the whole list state an entry's query params describe. A param the
+   * URL leaves out means that filter is off, or the default resetFilters() uses.
+   */
+  private applyQueryParams(params: ParamMap): void {
+    this.searchText = params.get('searchText') ?? '';
+
+    const status = params.get('filterByStatus');
+    this.filterByStatus.set(status ? (+status as PrintStatus) : null);
+
+    // setIfChanged, not set: these are signals compared with Object.is, so a
+    // fresh array is always a "change" even when it holds the same ids (and
+    // `[]` vs `[]` is the common case). The grouped view refetches its feed when
+    // either changes, so a plain set() would refetch it for filters Back left
+    // exactly as they were.
+    setIfChanged(
+      this.filterByPrinterIds,
+      params.getAll('filterByPrinterId').map((id) => +id)
+    );
+    setIfChanged(this.filterByFilamentIds, params.getAll('filterByFilamentId'));
+
+    const sortDirection = params.get('sortDirection');
+    this.sortDirection = sortDirection ? +sortDirection : SortDirection.Desc;
+    const sortColumn = params.get('sortColumn');
+    this.sortColumn = sortColumn
+      ? +sortColumn
+      : PrintSummarySortColumn.StartDate;
+
+    const pageNumber = +params.get('pageNumber');
+    this.currentPage.set(pageNumber > 0 ? pageNumber : 1);
+    const pageSize = +params.get('pageSize');
+    this.pageSize.set(
+      pageSize > 0 ? pageSize : (this.pageSize() ?? this.savedPageSize())
+    );
+  }
+
+  /** The page size printListResolver falls back to. */
+  private savedPageSize(): number {
+    const saved = +localStorage.getItem('print_list_page_size');
+    return saved > 0 ? saved : 10;
+  }
+
+  /**
+   * Back or Forward landed on an earlier entry, whose state applyQueryParams()
+   * has just taken on. Fetches it without navigating: the URL is already right,
+   * and a new navigation would push over the entry the user stepped to.
+   */
+  private restoreFromHistory(): void {
+    // A search typed just before Back would otherwise fire after it and push
+    // the abandoned text over the entry the user went back to.
+    this.cancelPendingSearch();
+
+    this.startLoading();
+    this.fetchList();
+
+    this.restoreFilamentChips();
+  }
+
+  /**
+   * Gives each restored filament filter its chip, looking up any filament this
+   * list has not seen. A filter whose filament cannot be found is dropped, as
+   * on first load, so no filter is left active without a chip to remove it.
+   */
+  private restoreFilamentChips(): void {
+    this.filamentLookupSubscription?.unsubscribe();
+    this.filamentLookupSubscription = null;
+
+    const ids = this.filterByFilamentIds();
+    const knownChips = () =>
+      ids
+        .map((id) => this.knownFilaments.get(id))
+        .filter((f): f is FilamentSummary => f != null);
+
+    const applyChips = () => {
+      const chips = knownChips();
+      this.filterByFilaments.set(chips);
+      if (chips.length < ids.length) {
+        this.filterByFilamentIds.set(chips.map((f) => f.id));
+        this.currentPage.set(1);
+        this.updateFilter('refresh');
+      }
+    };
+
+    const missing = ids.filter((id) => !this.knownFilaments.has(id));
+    if (missing.length === 0) {
+      applyChips();
+      return;
+    }
+
+    this.filterByFilaments.set(knownChips());
+    this.filamentLookupSubscription = loadFilterFilaments(
+      this.filamentService,
+      missing
+    ).subscribe({
+      next: (found) => {
+        this.rememberFilaments(found);
+        applyChips();
+      },
+      error: (error) => {
+        this.loggingService.logException(error);
+        applyChips();
+      },
+    });
+  }
+
+  private rememberFilaments(filaments: FilamentSummary[]): void {
+    for (const filament of filaments) {
+      this.knownFilaments.set(filament.id, filament);
+    }
   }
 
   public share(print: PrintSummary) {
@@ -1020,7 +1232,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
           // The selection outlives the reload now, so a deleted print has to be
           // taken out of it explicitly or a later batch would act on a dead id.
           this.bulkActions.deselect(print.id);
-          this.updateFilter().then(() => {
+          this.updateFilter('refresh').then(() => {
             this.toastrService.success(
               'Print removed successfully.',
               'Success'
@@ -1373,6 +1585,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed().subscribe((filaments: FilamentSummary[] | null) => {
       if (filaments?.length) {
+        this.rememberFilaments(filaments);
         for (const filament of filaments) {
           if (!this.filterByFilamentIds().includes(filament.id)) {
             this.filterByFilamentIds.update((ids) => [...ids, filament.id]);
@@ -1402,7 +1615,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
    * already narrowed the selection to the prints that failed.
    */
   public onBulkActionCompleted(): void {
-    this.updateFilter();
+    this.updateFilter('refresh');
   }
 
   public navigateToNewProject(): void {

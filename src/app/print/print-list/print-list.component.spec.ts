@@ -1,4 +1,4 @@
-import type { MockedObject } from 'vitest';
+import type { MockInstance, MockedObject } from 'vitest';
 import { MediaMatcher } from '@angular/cdk/layout';
 import {
   Component,
@@ -6,6 +6,8 @@ import {
   output,
   ChangeDetectionStrategy,
 } from '@angular/core';
+import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -13,10 +15,22 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import {
+  ActivatedRoute,
+  Navigation,
+  ParamMap,
+  Params,
+  Router,
+  convertToParamMap,
+} from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import {
+  FilamentDetail,
+  FilamentService,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintFilamentSourceMeasurement,
@@ -32,6 +46,7 @@ import {
 } from 'src/app/print/testing/resin-print-fixtures';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { PrinterService } from 'src/app/core/services/printer.service';
@@ -198,6 +213,14 @@ describe('PrintListComponent', () => {
         { provide: ToastrService, useValue: mockToastrService },
         { provide: PrintService, useValue: mockPrintService },
         { provide: UserSettingService, useValue: mockUserSettingService },
+        {
+          provide: FilamentService,
+          useValue: {
+            getFilamentDetail: vi
+              .fn()
+              .mockName('FilamentService.getFilamentDetail'),
+          },
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -1295,5 +1318,453 @@ describe('PrintListComponent', () => {
     expect(
       fixture.debugElement.query(By.css('td app-printer-avatar'))
     ).toBeTruthy();
+  });
+
+  describe('a page past the end', () => {
+    const summary = (id: number) =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2021-05-27'),
+        printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+        filamentUsage: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    beforeEach(() => {
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
+        Promise.resolve(true)
+      );
+    });
+
+    // 11 prints at 10 per page: deleting the one on page 2 refetches page 2,
+    // and the API answers with no items but a total that still has a page 1.
+    it('steps back to the last page that has prints and fetches it', async () => {
+      TestBed.inject(ActivatedRoute).data = of({
+        printList: {
+          items: [summary(11)],
+          paging: {
+            currentPage: 2,
+            pageSize: 10,
+            totalCount: 11,
+            totalPages: 2,
+          },
+        } as PagedList<PrintSummary>,
+        printers: [],
+        filaments: [],
+      });
+      mockPrintService.getPrintSummaries.mockImplementation(
+        (pageNumber: number) =>
+          of({
+            items:
+              pageNumber === 1
+                ? Array.from({ length: 10 }, (_, i) => summary(i + 1))
+                : [],
+            paging: {
+              currentPage: pageNumber,
+              pageSize: 10,
+              totalCount: 10,
+              totalPages: 1,
+            },
+          } as PagedList<PrintSummary>)
+      );
+      fixture.detectChanges();
+
+      await component.updateFilter();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const pages = mockPrintService.getPrintSummaries.mock.calls.map(
+        (call) => call[0]
+      );
+      expect(pages).toEqual([2, 1]);
+      expect(component.currentPage()).toBe(1);
+      const navigate = vi.mocked(TestBed.inject(Router).navigate);
+      expect(navigate.mock.calls[0][1]?.replaceUrl).toBeFalsy();
+      expect(navigate.mock.lastCall?.[1]?.replaceUrl).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Print 10'
+      );
+    });
+
+    it('does not keep refetching when page 1 is empty too', async () => {
+      mockPrintService.getPrintSummaries.mockReturnValue(
+        of({
+          items: [],
+          paging: {
+            currentPage: 1,
+            pageSize: 10,
+            totalCount: 3,
+            totalPages: 1,
+          },
+        } as PagedList<PrintSummary>)
+      );
+      fixture.detectChanges();
+
+      await component.updateFilter();
+      await fixture.whenStable();
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('browser history', () => {
+    const summary = (id: number) =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2021-05-27'),
+        printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+        filamentUsage: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    const filament = (id: string, displayName: string) =>
+      ({ id, displayName }) as FilamentSummary;
+
+    let queryParams$: BehaviorSubject<ParamMap>;
+    let navigation: Navigation | null;
+    let navigate: MockInstance<Router['navigate']>;
+    let filamentService: MockedObject<FilamentService>;
+
+    /** Back or Forward to an entry with these query params. */
+    const traverseTo = async (params: Params) => {
+      navigation = { trigger: 'popstate', extras: {} } as Navigation;
+      queryParams$.next(convertToParamMap(params));
+      navigation = null;
+      // Not whenStable(): some of these specs fake the timers it waits on.
+      await Promise.resolve();
+      fixture.detectChanges();
+    };
+
+    const startWith = (params: Params, filaments: FilamentSummary[] = []) => {
+      queryParams$.next(convertToParamMap(params));
+      Object.assign(TestBed.inject(ActivatedRoute), {
+        data: of({
+          printList: {
+            items: [summary(100)],
+            paging: {
+              currentPage: +(params.pageNumber ?? 1),
+              pageSize: +(params.pageSize ?? 10),
+              totalCount: 500,
+              totalPages: 50,
+            },
+          } as PagedList<PrintSummary>,
+          printers: [],
+          filaments,
+        }),
+      });
+      fixture.detectChanges();
+    };
+
+    const lastNavigationExtras = () => navigate.mock.lastCall?.[1];
+
+    beforeEach(() => {
+      queryParams$ = new BehaviorSubject(convertToParamMap({}));
+      navigation = null;
+      Object.assign(TestBed.inject(ActivatedRoute), {
+        queryParamMap: queryParams$,
+      });
+
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'currentNavigation').mockImplementation(
+        () => navigation
+      );
+      navigate = vi
+        .spyOn(router, 'navigate')
+        .mockReturnValue(Promise.resolve(true));
+
+      filamentService = TestBed.inject(
+        FilamentService
+      ) as MockedObject<FilamentService>;
+
+      // The API echoes the page asked for, with one row named after the page.
+      mockPrintService.getPrintSummaries.mockImplementation(
+        (pageNumber: number, pageSize: number) =>
+          of({
+            items: [summary(pageNumber)],
+            paging: {
+              currentPage: pageNumber,
+              pageSize,
+              totalCount: 500,
+              totalPages: Math.ceil(500 / pageSize),
+            },
+          } as PagedList<PrintSummary>)
+      );
+    });
+
+    afterEach(() => {
+      localStorage.removeItem('print_list_page_size');
+    });
+
+    it('pushes a history entry for a filter, sort or page change', () => {
+      startWith({});
+
+      component.sortData({ active: '1', direction: 'asc' });
+      expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+
+      component.pageChange({ pageIndex: 2, pageSize: 25, length: 500 });
+      expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+
+      component.resetFilters();
+      expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+    });
+
+    it('restores every filter, the sort and the page on Back, and fetches that list', async () => {
+      startWith({
+        searchText: 'benchy',
+        filterByStatus: `${PrintStatus.Failed}`,
+        filterByPrinterId: ['4'],
+        sortDirection: `${SortDirection.Asc}`,
+        sortColumn: `${PrintSummarySortColumn.Title}`,
+        pageNumber: '3',
+        pageSize: '25',
+      });
+      expect(component.filterByStatus()).toBe(PrintStatus.Failed);
+
+      await traverseTo({ searchText: 'ben', pageNumber: '2', pageSize: '50' });
+
+      expect(component.searchText).toBe('ben');
+      expect(component.filterByStatus()).toBeNull();
+      expect(component.filterByPrinterIds()).toEqual([]);
+      expect(component.filterByFilamentIds()).toEqual([]);
+      expect(component.sortDirection).toBe(SortDirection.Desc);
+      expect(component.sortColumn).toBe(PrintSummarySortColumn.StartDate);
+      expect(component.currentPage()).toBe(2);
+      expect(component.pageSize()).toBe(50);
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall).toEqual([
+        2,
+        50,
+        'ben',
+        null,
+        [],
+        [],
+        SortDirection.Desc,
+        PrintSummarySortColumn.StartDate,
+        undefined,
+      ]);
+      // Restoring is not a new change: the URL is already right.
+      expect(navigate).not.toHaveBeenCalled();
+
+      const text = (fixture.nativeElement as HTMLElement).textContent;
+      expect(text).toContain('Print 2');
+      expect(text).not.toContain('Print 100');
+    });
+
+    it('restores a status, printers and the sort that the newer entry had cleared', async () => {
+      startWith({});
+
+      await traverseTo({
+        filterByStatus: `${PrintStatus.Pending}`,
+        filterByPrinterId: ['1', '2'],
+        sortDirection: `${SortDirection.Asc}`,
+        sortColumn: `${PrintSummarySortColumn.Title}`,
+      });
+
+      expect(component.filterByStatus()).toBe(PrintStatus.Pending);
+      expect(component.filterByPrinterIds()).toEqual([1, 2]);
+      expect(component.sortDirection).toBe(SortDirection.Asc);
+      expect(component.sortColumn).toBe(PrintSummarySortColumn.Title);
+      // No page in the URL is page 1, at the size already showing.
+      expect(component.currentPage()).toBe(1);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall).toEqual([
+        1,
+        10,
+        '',
+        PrintStatus.Pending,
+        [1, 2],
+        [],
+        SortDirection.Asc,
+        PrintSummarySortColumn.Title,
+        undefined,
+      ]);
+    });
+
+    it('drops a search that is still waiting on its debounce', async () => {
+      vi.useFakeTimers();
+      startWith({});
+
+      component.searchText = 'typed after';
+      component.debouncedUpdateFilter();
+      await traverseTo({ searchText: 'older' });
+      await vi.advanceTimersByTimeAsync(400);
+
+      expect(component.searchText).toBe('older');
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('does not fetch twice for a navigation it started itself', async () => {
+      startWith({});
+      navigate.mockImplementation((_commands, extras) => {
+        navigation = { trigger: 'imperative', extras } as Navigation;
+        queryParams$.next(convertToParamMap(extras?.queryParams ?? {}));
+        navigation = null;
+        return Promise.resolve(true);
+      });
+
+      component.filterByStatus.set(PrintStatus.Failed);
+      await component.updateFilter();
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+    });
+
+    // Close on a print uses location.back(), which builds the list afresh on a
+    // popstate navigation. The resolver has already fetched that page.
+    it('does not refetch what the resolver loaded when it is created by Back', () => {
+      navigation = { trigger: 'popstate', extras: {} } as Navigation;
+      startWith({
+        searchText: 'benchy',
+        filterByStatus: `${PrintStatus.Failed}`,
+        pageNumber: '3',
+        pageSize: '25',
+      });
+      navigation = null;
+
+      expect(mockPrintService.getPrintSummaries).not.toHaveBeenCalled();
+      expect(component.searchText).toBe('benchy');
+      expect(component.filterByStatus()).toBe(PrintStatus.Failed);
+      expect(component.currentPage()).toBe(3);
+      expect(component.pageSize()).toBe(25);
+    });
+
+    it('restores filament chips from filaments it has already loaded', async () => {
+      const pla = filament('f1', 'Red PLA');
+      startWith({ filterByFilamentId: ['f1'] }, [pla]);
+
+      component.removeFilamentFilter(pla);
+      await traverseTo({ filterByFilamentId: ['f1'] });
+
+      expect(component.filterByFilamentIds()).toEqual(['f1']);
+      expect(component.filterByFilaments()).toEqual([pla]);
+      expect(filamentService.getFilamentDetail).not.toHaveBeenCalled();
+    });
+
+    it('looks up a restored filament it has not loaded yet', async () => {
+      filamentService.getFilamentDetail.mockReturnValue(
+        of({ id: 'f9', displayName: 'Galaxy Black' } as FilamentDetail)
+      );
+      startWith({});
+
+      await traverseTo({ filterByFilamentId: ['f9'] });
+
+      expect(filamentService.getFilamentDetail).toHaveBeenCalledWith('f9');
+      expect(component.filterByFilaments().map((f) => f.displayName)).toEqual([
+        'Galaxy Black',
+      ]);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([
+        'f9',
+      ]);
+    });
+
+    it('drops a restored filament filter whose filament is gone, replacing the entry', async () => {
+      filamentService.getFilamentDetail.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 404 }))
+      );
+      startWith({});
+
+      await traverseTo({ filterByFilamentId: ['gone'] });
+      await fixture.whenStable();
+
+      expect(component.filterByFilamentIds()).toEqual([]);
+      expect(lastNavigationExtras()?.queryParams?.filterByFilamentId).toEqual(
+        []
+      );
+      expect(lastNavigationExtras()?.replaceUrl).toBe(true);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([]);
+    });
+
+    describe('search typing', () => {
+      let entryState: unknown;
+
+      beforeEach(() => {
+        vi.useFakeTimers();
+        entryState = null;
+        vi.spyOn(TestBed.inject(Location), 'getState').mockImplementation(
+          () => entryState
+        );
+        // Each navigation leaves its state on the entry it creates or replaces.
+        navigate.mockImplementation((_commands, extras) => {
+          entryState = extras?.state ?? null;
+          return Promise.resolve(true);
+        });
+      });
+
+      const typeAndPause = async (text: string) => {
+        component.searchText = text;
+        component.debouncedUpdateFilter();
+        await vi.advanceTimersByTimeAsync(400);
+      };
+
+      it('pushes the first search after a different kind of change', async () => {
+        startWith({});
+
+        await typeAndPause('ben');
+
+        expect(navigate).toHaveBeenCalledTimes(1);
+        expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+      });
+
+      it('replaces the entry an earlier search created', async () => {
+        startWith({});
+
+        await typeAndPause('ben');
+        await typeAndPause('benchy');
+
+        expect(navigate).toHaveBeenCalledTimes(2);
+        expect(navigate.mock.calls[0][1]?.replaceUrl).toBeFalsy();
+        expect(navigate.mock.calls[1][1]?.replaceUrl).toBe(true);
+        expect(navigate.mock.calls[1][1]?.queryParams?.searchText).toBe(
+          'benchy'
+        );
+      });
+
+      it('pushes a search that follows a filter change', async () => {
+        startWith({});
+
+        await typeAndPause('ben');
+        component.sortData({ active: '1', direction: 'asc' });
+        await vi.advanceTimersByTimeAsync(0);
+        await typeAndPause('benchy');
+
+        expect(navigate).toHaveBeenCalledTimes(3);
+        expect(navigate.mock.calls[1][1]?.replaceUrl).toBeFalsy();
+        expect(navigate.mock.calls[2][1]?.replaceUrl).toBeFalsy();
+      });
+    });
+  });
+
+  // filamentFilterResolver leaves out a filament the API no longer has, so the
+  // filter on it has no chip to remove; drop it and fetch without it.
+  it('drops a filament filter whose filament could not be found', async () => {
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(Promise.resolve(true));
+    Object.assign(TestBed.inject(ActivatedRoute), {
+      queryParamMap: of(convertToParamMap({ filterByFilamentId: ['gone'] })),
+    });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.filterByFilamentIds()).toEqual([]);
+    expect(
+      navigate.mock.lastCall?.[1]?.queryParams?.filterByFilamentId
+    ).toEqual([]);
+    // An automatic correction, not a user's choice: Back must not land on the
+    // broken URL and bounce forward again.
+    expect(navigate.mock.lastCall?.[1]?.replaceUrl).toBe(true);
+    expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([]);
+  });
+
+  it('falls back to the default columns when the saved layout is not JSON', () => {
+    localStorage.setItem('print_table_displayed_columns', '{not json');
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(component.displayedColumns()).toContain('title');
+    localStorage.removeItem('print_table_displayed_columns');
   });
 });

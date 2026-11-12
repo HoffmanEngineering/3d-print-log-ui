@@ -52,6 +52,16 @@ describe('CuraSlicerFileParserService', () => {
     });
   });
 
+  it('parses the settings block of a file saved with CRLF line endings', async () => {
+    const lf = await service.parse(singleExtruderTestFile.data);
+    const crlf = await service.parse(
+      singleExtruderTestFile.data.replace(/\r?\n/g, '\r\n')
+    );
+
+    expect(crlf.notes).toContain('Profile:');
+    expect(crlf.notes).toBe(lf.notes);
+  });
+
   it('degrades to an empty note when the settings block is missing', async () => {
     const print = await service.parse(
       ';Generated with Cura_SteamEngine 5.0\n;TIME:10\n;End of Gcode\n'

@@ -37,7 +37,6 @@ import { Comment } from 'src/app/core/services/comment.service';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
-  PrintService,
   PrintStatus,
   PrintViewStatus,
 } from '../../core/services/print.service';
@@ -106,7 +105,6 @@ const LOADING_STATE: PrintDetailState = {
 export class ViewPrintDetailComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly printService = inject(PrintService);
   private readonly printDetailLoader = inject(PrintDetailLoaderService);
   private readonly authService = inject(AuthService);
   private readonly metaService = inject(MetaTagService);
@@ -483,20 +481,17 @@ export class ViewPrintDetailComponent {
     this.router.navigate([this.isOwner() ? '/prints' : '/']);
   }
 
-  addComment(newComment: string): void {
-    const print = this.print();
-    if (!print) {
-      return;
-    }
-    this.printService
-      .addPrintComment(print.id, newComment)
-      .subscribe((comment) =>
-        this.comments.update((list) => [...list, comment])
-      );
+  /**
+   * The child posts the comment (so it can keep the typed text and report a
+   * refusal) and hands over the saved row; the list lives here, so the repaint
+   * happens here.
+   */
+  appendComment(added: Comment): void {
+    this.comments.update((list) => [...list, added]);
   }
 
   /**
-   * Counterpart to `addComment`. The child has already deleted the comment on
+   * Counterpart to `appendComment`. The child has already deleted the comment on
    * the server by the time this runs; the list lives here, so the repaint has
    * to happen here too.
    */

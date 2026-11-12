@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-30
+updated: 2026-11-12
 related: [prints]
 ---
 
@@ -96,7 +96,10 @@ Usage will be considered the currently loaded filament for the selected printer.
 
 **Manual Load** - In a printer's **Edit Page**, you can manually load and unload
 filament. Simply click **Load Material** to select a new filament, or click
-**Unload** to remove a currently loaded filament.
+**Unload** to remove a currently loaded filament. These changes are saved when
+you click **Submit**. If you leave the loaded material as it was, saving changes
+only the other fields, so a roll that a new print or a connected printer loaded
+while the page was open stays loaded.
 
 **Automatic Unload** - A roll can only be currently loaded by one Printer at a
 time, so if a roll is added to a new printer, it's automatically unloaded from

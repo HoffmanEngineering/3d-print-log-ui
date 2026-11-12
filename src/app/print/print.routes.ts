@@ -16,6 +16,7 @@ import {
   defaultElectricityWattageSettingResolver,
   defaultFilamentPriceSettingResolver,
   defaultPrintViewStatusSettingResolver,
+  lastAllowCommentsSettingResolver,
   lastSelectedPrinterSettingResolver,
 } from '../core/resolvers/user-setting.resolvers';
 import { currentUserPrinterSummariesResolver } from '../core/resolvers/current-user-printer-summaries.resolver';
@@ -65,7 +66,8 @@ export const PRINT_ROUTES: Routes = [
           lastSelectedPrintSetting: lastSelectedPrinterSettingResolver,
           defaultPrintViewStatusSetting: defaultPrintViewStatusSettingResolver,
           defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
-          lastFilamentMeasureSettings: lastFilamentMeasureSettingResolver,
+          lastMaterialMeasureSettings: lastFilamentMeasureSettingResolver,
+          lastAllowCommentsSetting: lastAllowCommentsSettingResolver,
           currencies: currenciesResolver,
           preferredCurrencyNameSetting: currencyNameSettingResolver,
           preferredCurrencySymbolSetting: currencySymbolSettingResolver,
@@ -86,6 +88,7 @@ export const PRINT_ROUTES: Routes = [
           defaultPrintViewStatusSetting: defaultPrintViewStatusSettingResolver,
           defaultFilamentPriceSetting: defaultFilamentPriceSettingResolver,
           lastMaterialMeasureSettings: lastFilamentMeasureSettingResolver,
+          lastAllowCommentsSetting: lastAllowCommentsSettingResolver,
           currencies: currenciesResolver,
           preferredCurrencyNameSetting: currencyNameSettingResolver,
           preferredCurrencySymbolSetting: currencySymbolSettingResolver,

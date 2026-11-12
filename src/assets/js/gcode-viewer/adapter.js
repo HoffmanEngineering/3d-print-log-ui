@@ -5,6 +5,11 @@
  */
 
 window.addEventListener("message", (event) => {
+    // Only the app page that hosts this frame may send G-code to parse. Sibling frames
+    // (ads) can reach this window through top.frames.
+    if (event.source !== window.parent || !event.data || typeof event.data !== "object") {
+        return;
+    }
     const type = event.data.type;
 
     switch(type) {

@@ -20,7 +20,7 @@
         <mat-label> Status</mat-label>
         <mat-select
           [(ngModel)]="filterByStatus"
-          (ngModelChange)="clearPrints(); updateFilter()"
+          (ngModelChange)="applyFilter()"
         >
           <mat-option [value]="-1">All</mat-option>
           <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>

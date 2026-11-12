@@ -61,6 +61,7 @@ import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { ProjectImageComponent } from 'src/app/shared/project-image/project-image.component';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { PrintShareDialogComponent } from 'src/app/print/print-share-dialog/print-share-dialog.component';
 import { ColumnDefinition } from '../print-list.component';
 import { PrintListSkeletonComponent } from '../print-list-skeleton/print-list-skeleton.component';
@@ -681,7 +682,7 @@ export class PrintGroupedViewComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete print "${print.title}"? <br /><br /> This action cannot be undone.`,
+        body: `Are you sure you want to delete print "${escapeHtml(print.title ?? '')}"? <br /><br /> This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',

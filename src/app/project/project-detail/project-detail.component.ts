@@ -73,6 +73,8 @@ import { SubscriptionService } from 'src/app/core/services/subscription.service'
 import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
 import { withMilliliters } from 'src/app/shared/utils/filament-display.utils';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
+import { safeExternalUrl } from 'src/app/shared/utils/external-url.utils';
 import {
   SEO_PENDING,
   SeoLookupState,
@@ -164,6 +166,10 @@ export class ProjectDetailComponent implements OnInit {
   private readonly resolvedUrls = signal<Map<number, SafeUrl>>(new Map());
 
   readonly project = signal<ProjectDetailDto | null>(null);
+  /** The model source as an absolute http(s) URL, or null when it must not be linked. */
+  protected readonly sourceUrl = computed(() =>
+    safeExternalUrl(this.project()?.url)
+  );
   readonly prints = signal<PrintSummary[]>([]);
   readonly loading = signal(true);
   readonly isEditing = signal(false);
@@ -380,7 +386,7 @@ export class ProjectDetailComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete print "${print.title}"?<br /><br />This action cannot be undone.`,
+        body: `Are you sure you want to delete print "${escapeHtml(print.title ?? '')}"?<br /><br />This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',
@@ -839,7 +845,7 @@ export class ProjectDetailComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete Project',
-        body: `Are you sure you want to delete <strong>${p.name}</strong>? This cannot be undone.`,
+        body: `Are you sure you want to delete <strong>${escapeHtml(p.name ?? '')}</strong>? This cannot be undone.`,
         yesText: 'Delete Project',
         yesColor: 'warn',
         noText: 'Cancel',

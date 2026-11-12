@@ -46,6 +46,7 @@ import { NewPrintStoreService } from 'src/app/core/stores/new-print-store.servic
 import { PagedList } from 'src/app/core/types/paging';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
 import {
   FilamentPrice,
   FilamentPriceInvalid,
@@ -1218,7 +1219,7 @@ export class PrintListComponent implements OnInit, OnDestroy {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete print "${print.title}"? <br /> <br />  This action cannot be undone.`,
+        body: `Are you sure you want to delete print "${escapeHtml(print.title ?? '')}"? <br /> <br />  This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',

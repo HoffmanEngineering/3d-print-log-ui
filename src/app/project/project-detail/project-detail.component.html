@@ -152,9 +152,9 @@
             @if (p.description) {
               <p class="description">{{ p.description }}</p>
             }
-            @if (p.url) {
+            @if (sourceUrl(); as url) {
               <p>
-                <a [href]="p.url" target="_blank" rel="noopener"
+                <a [href]="url" target="_blank" rel="noopener noreferrer"
                   >View model source</a
                 >
               </p>

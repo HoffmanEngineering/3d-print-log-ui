@@ -6,7 +6,10 @@ import {
   ChangeDetectionStrategy,
   signal,
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { ToastrService } from 'ngx-toastr';
+import { escapeHtml } from '../core/utils/escape-html';
+import { openSimpleDialog } from '../shared/simple-dialog/simple-dialog.component';
 import {
   ApiKeyService,
   UserApiKeySummary,
@@ -75,9 +78,12 @@ export class ApikeysComponent implements OnInit {
   private readonly clipboard = inject(Clipboard);
   private readonly toastrService = inject(ToastrService);
   private readonly metaService = inject(MetaTagService);
+  private readonly dialog = inject(MatDialog);
 
-  readonly keys = signal<UserApiKeySummary[]>([]);
+  readonly keys = signal<UserApiKeySummaryWithKey[]>([]);
   readonly loading = signal(false);
+  /** A create is in flight; Submit stays disabled so a double click makes one key. */
+  readonly creating = signal(false);
 
   public displayedColumns: string[] = [
     'description',
@@ -97,7 +103,13 @@ export class ApikeysComponent implements OnInit {
 
     this.loading.set(true);
     this.apiKeyService.getApiKeySummaryForUser().subscribe((keys) => {
-      this.keys.set(keys);
+      // A key created while this request was in flight is missing from it. Keep that row:
+      // its secret is shown only once, here.
+      this.keys.update((current) => {
+        const created = current.filter((k) => k.privateKey !== undefined);
+        const createdIds = new Set(created.map((k) => k.id));
+        return [...created, ...keys.filter((k) => !createdIds.has(k.id))];
+      });
       this.loading.set(false);
     });
   }
@@ -113,8 +125,13 @@ export class ApikeysComponent implements OnInit {
   }
 
   addNewKey() {
+    if (this.creating()) {
+      return;
+    }
+    this.creating.set(true);
     this.apiKeyService.createNewApiKey(this.newKeyDescription).subscribe(
       (newKey) => {
+        this.creating.set(false);
         this.newKeyDescription = '';
         this.addingKey.set(false);
 
@@ -139,6 +156,7 @@ export class ApikeysComponent implements OnInit {
         );
       },
       (_) => {
+        this.creating.set(false);
         this.toastrService.error(
           'An error occurred while creating key. Try again in a few seconds.'
         );
@@ -151,7 +169,33 @@ export class ApikeysComponent implements OnInit {
     this.toastrService.success('Key Copied to Clipboard', 'Success');
   }
 
-  deleteKey(keyId: string) {
+  /** Deleting a key breaks whatever uses it at once and cannot be undone, so it asks first. */
+  deleteKey(key: UserApiKeySummary) {
+    const description = key.description?.trim();
+    openSimpleDialog(
+      this.dialog,
+      {
+        title: 'Delete API key?',
+        body:
+          (description
+            ? `Delete the key "${escapeHtml(description)}"?`
+            : 'Delete this key?') +
+          ' Anything that uses it, such as a printer or plugin, stops working right away. This cannot be undone.',
+        yesText: 'Delete',
+        yesColor: 'warn',
+        noText: 'Cancel',
+      },
+      { maxWidth: '400px' }
+    )
+      .afterClosed()
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.removeKey(key.id);
+        }
+      });
+  }
+
+  private removeKey(keyId: string) {
     this.apiKeyService.deleteApiKey(keyId).subscribe(
       (_) => {
         this.keys.update((keys) => keys.filter((key) => key.id !== keyId));

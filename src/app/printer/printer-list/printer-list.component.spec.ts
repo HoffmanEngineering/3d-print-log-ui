@@ -1,6 +1,9 @@
 import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NgModel } from '@angular/forms';
+import { MatCheckbox } from '@angular/material/checkbox';
 import { MatDialog } from '@angular/material/dialog';
+import { MatPaginator } from '@angular/material/paginator';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute } from '@angular/router';
@@ -153,6 +156,119 @@ describe('PrinterListComponent', () => {
       await setUp([aPrinter({ defaultImageThumbnailUrl: null })]);
 
       expect(fixture.debugElement.query(By.css('app-signed-image'))).toBeNull();
+    });
+  });
+
+  it('escapes the printer name in the delete confirmation', async () => {
+    await setUp([aPrinter()]);
+    const open = vi.mocked(TestBed.inject(MatDialog).open);
+    open.mockReturnValue({ afterClosed: () => of(false) } as never);
+
+    component.deletePrinter(aPrinter({ name: 'Spool <A> rack' }) as never);
+
+    expect(
+      (open.mock.lastCall![1] as { data: { body: string } }).data.body
+    ).toContain('"Spool &lt;A&gt; rack"');
+  });
+
+  describe('paging from page 3', () => {
+    const rows = () =>
+      (fixture.nativeElement as HTMLElement).querySelectorAll('tr.mat-mdc-row')
+        .length;
+    const paginator = () =>
+      fixture.debugElement.query(By.directive(MatPaginator))
+        .componentInstance as MatPaginator;
+    const lastCall = () =>
+      vi.mocked(printerService.getCurrentUserPrinterSummaries).mock.lastCall!;
+
+    let all: PrinterSummarySimple[];
+
+    // Like the API: Skip((page-1)*size), no clamping, the requested page echoed back.
+    const api = (pageNumber: number, size: number, search: string) => {
+      const matched = all.filter((p) => !search || p.name.includes(search));
+      return {
+        items: matched.slice((pageNumber - 1) * size, pageNumber * size),
+        paging: {
+          currentPage: pageNumber,
+          pageSize: size,
+          totalCount: matched.length,
+          totalPages: Math.ceil(matched.length / size),
+        },
+      } as PagedList<PrinterSummarySimple>;
+    };
+
+    const setUpOnPage3 = async (count: number) => {
+      all = Array.from({ length: count }, (_, i) =>
+        aPrinter({ id: i + 1, name: i < 2 ? `Prusa ${i}` : `Ender ${i}` })
+      ) as PrinterSummarySimple[];
+      await setUp([]);
+      printerService.getCurrentUserPrinterSummaries.mockImplementation(((
+        pageNumber: number,
+        size: number,
+        search: string
+      ) => of(api(pageNumber, size, search))) as never);
+      // Start from a first page of five, then page with the paginator.
+      component['handlePagedList'](api(1, 5, ''));
+      fixture.detectChanges();
+      paginator().nextPage();
+      paginator().nextPage();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      expect(lastCall()[0]).toBe(3);
+    };
+
+    it('asks for page 1 when the search changes', async () => {
+      await setUpOnPage3(12);
+      vi.useFakeTimers();
+      const input = (fixture.nativeElement as HTMLElement).querySelector(
+        '#printer-list-search-input'
+      ) as HTMLInputElement;
+      input.value = 'Prusa';
+      input.dispatchEvent(new Event('input'));
+      await vi.advanceTimersByTimeAsync(500);
+      vi.useRealTimers();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(lastCall()[2]).toBe('Prusa');
+      expect(lastCall()[0]).toBe(1);
+      expect(rows()).toBe(2);
+      expect(paginator().pageIndex).toBe(0);
+    });
+
+    it('asks for page 1 when Include Inactive is toggled', async () => {
+      await setUpOnPage3(12);
+      fixture.debugElement
+        .query(By.directive(MatCheckbox))
+        .injector.get(NgModel)
+        .viewToModelUpdate(true);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(lastCall()[3]).toBe(true);
+      expect(lastCall()[0]).toBe(1);
+      expect(paginator().pageIndex).toBe(0);
+    });
+
+    it('steps back a page when a delete empties the last one', async () => {
+      await setUpOnPage3(11);
+      expect(rows()).toBe(1);
+      vi.mocked(TestBed.inject(MatDialog).open).mockReturnValue({
+        afterClosed: () => of(true),
+      } as never);
+      printerService.deletePrinter.mockImplementation(((id: number) => {
+        all = all.filter((p) => p.id !== id);
+        return of(undefined);
+      }) as never);
+
+      component.deletePrinter(all[10]);
+      await fixture.whenStable();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(lastCall()[0]).toBe(2);
+      expect(rows()).toBe(5);
+      expect(paginator().pageIndex).toBe(1);
     });
   });
 

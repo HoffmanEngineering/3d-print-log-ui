@@ -24,11 +24,10 @@ export interface SimpleDialogData {
 }
 
 /**
- * Standalone on purpose. Root-provided services open this dialog directly (the release note
- * popup fires on login, before any lazy feature module has run), so it cannot depend on
- * SharedModule for its directive scope: an NgModule that has never been evaluated registers no
- * scope, Angular silently drops the unmatched `mat-*` attribute directives, and the dialog
- * renders as bare HTML.
+ * Imports its own directives on purpose. Root-provided services open this dialog directly (the
+ * release note popup fires on login, before any lazy section has run), and Angular silently
+ * drops a `mat-*` attribute directive no import supplies, so borrowing a section's scope would
+ * render the dialog as bare HTML.
  */
 @Component({
   selector: 'app-simple-dialog',

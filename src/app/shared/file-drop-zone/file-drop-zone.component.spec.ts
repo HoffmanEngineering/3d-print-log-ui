@@ -24,7 +24,9 @@ describe('FileDropZoneComponent', () => {
     const file = new File(['content'], 'test.gcode', {
       type: 'application/octet-stream',
     });
-    const spy = spyOn(component.filesSelected, 'emit');
+    const spy = vi
+      .spyOn(component.filesSelected, 'emit')
+      .mockReturnValue(undefined);
 
     const mockFileList = {
       0: file,
@@ -37,10 +39,10 @@ describe('FileDropZoneComponent', () => {
 
     const event = new DragEvent('drop');
     Object.defineProperty(event, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'stopPropagation', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'dataTransfer', {
       value: { files: mockFileList },
@@ -53,10 +55,10 @@ describe('FileDropZoneComponent', () => {
   it('should show drag-over state', () => {
     const event = new DragEvent('dragover');
     Object.defineProperty(event, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'stopPropagation', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     component.onDragOver(event);
     expect(component.isDragOver()).toBe(true);
@@ -79,10 +81,10 @@ describe('FileDropZoneComponent', () => {
 
     const event = new DragEvent('dragover');
     Object.defineProperty(event, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'stopPropagation', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     component.onDragOver(event);
     expect(component.isDragOver()).toBe(false);
@@ -95,7 +97,9 @@ describe('FileDropZoneComponent', () => {
     const file = new File(['content'], 'test.gcode', {
       type: 'application/octet-stream',
     });
-    const spy = spyOn(component.filesSelected, 'emit');
+    const spy = vi
+      .spyOn(component.filesSelected, 'emit')
+      .mockReturnValue(undefined);
 
     const mockFileList = {
       0: file,
@@ -108,10 +112,10 @@ describe('FileDropZoneComponent', () => {
 
     const event = new DragEvent('drop');
     Object.defineProperty(event, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'stopPropagation', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'dataTransfer', {
       value: { files: mockFileList },
@@ -125,7 +129,9 @@ describe('FileDropZoneComponent', () => {
     const file = new File(['content'], 'model.stl', {
       type: 'application/octet-stream',
     });
-    const spy = spyOn(component.filesSelected, 'emit');
+    const spy = vi
+      .spyOn(component.filesSelected, 'emit')
+      .mockReturnValue(undefined);
 
     const mockFileList = {
       0: file,
@@ -147,7 +153,9 @@ describe('FileDropZoneComponent', () => {
   });
 
   it('should NOT emit via onFileInputChange when no files selected', () => {
-    const spy = spyOn(component.filesSelected, 'emit');
+    const spy = vi
+      .spyOn(component.filesSelected, 'emit')
+      .mockReturnValue(undefined);
 
     const mockInput = {
       files: null,
@@ -160,7 +168,9 @@ describe('FileDropZoneComponent', () => {
   });
 
   it('should NOT emit when drop has no files', () => {
-    const spy = spyOn(component.filesSelected, 'emit');
+    const spy = vi
+      .spyOn(component.filesSelected, 'emit')
+      .mockReturnValue(undefined);
 
     const mockFileList = {
       length: 0,
@@ -170,10 +180,10 @@ describe('FileDropZoneComponent', () => {
 
     const event = new DragEvent('drop');
     Object.defineProperty(event, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'stopPropagation', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'dataTransfer', {
       value: { files: mockFileList },
@@ -186,7 +196,7 @@ describe('FileDropZoneComponent', () => {
   it('should keep isDragOver true after entering a child element (dragenter twice, dragleave once)', () => {
     const enterEvent = new DragEvent('dragenter');
     Object.defineProperty(enterEvent, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
 
     component.onDragEnter(enterEvent);
@@ -200,7 +210,9 @@ describe('FileDropZoneComponent', () => {
     fixture.componentRef.setInput('acceptExtensions', ['.gcode', '.stl']);
     fixture.detectChanges();
 
-    const spy = spyOn(component.filesSelected, 'emit');
+    const spy = vi
+      .spyOn(component.filesSelected, 'emit')
+      .mockReturnValue(undefined);
 
     const file = new File(['content'], 'document.pdf', {
       type: 'application/pdf',
@@ -216,10 +228,10 @@ describe('FileDropZoneComponent', () => {
 
     const event = new DragEvent('drop');
     Object.defineProperty(event, 'preventDefault', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'stopPropagation', {
-      value: jasmine.createSpy(),
+      value: vi.fn(),
     });
     Object.defineProperty(event, 'dataTransfer', {
       value: { files: mockFileList },

@@ -1,14 +1,14 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import {
   Component,
   NO_ERRORS_SCHEMA,
   signal,
   WritableSignal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { RouterTestingModule } from '@angular/router/testing';
-import { BehaviorSubject } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -19,21 +19,25 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { NavbarComponent } from './navbar.component';
 
 /** The real bell loads notifications and achievements; the navbar only places it. */
-@Component({ selector: 'app-notification-bell', template: '' })
+@Component({
+  selector: 'app-notification-bell',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '',
+})
 class NotificationBellStubComponent {}
 
 describe('NavbarComponent', () => {
   let component: NavbarComponent;
   let fixture: ComponentFixture<NavbarComponent>;
-  let profile$: BehaviorSubject<UserProfileInfo | null>;
+  let profile: WritableSignal<UserProfileInfo | null>;
   let loggedIn: WritableSignal<boolean | null>;
   let hasUnread: WritableSignal<boolean>;
 
-  beforeEach(waitForAsync(() => {
-    profile$ = new BehaviorSubject<UserProfileInfo | null>(null);
+  beforeEach(async () => {
+    profile = signal<UserProfileInfo | null>(null);
     loggedIn = signal<boolean | null>(false);
     const mockAuthService: Partial<AuthService> = {
-      userProfile$: profile$.asObservable(),
+      userProfile: profile,
       isLoggedIn: loggedIn,
     };
     const mockSubscriptionService = {
@@ -44,7 +48,7 @@ describe('NavbarComponent', () => {
       hasUnreadReleases: hasUnread,
       firstUnreadAnchor: signal('v1.52.0'),
     };
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [NavbarComponent, RouterTestingModule, MatMenuModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
@@ -61,7 +65,7 @@ describe('NavbarComponent', () => {
         add: { imports: [NotificationBellStubComponent] },
       })
       .compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavbarComponent);
@@ -117,7 +121,7 @@ describe('NavbarComponent', () => {
     const host = () => fixture.nativeElement as HTMLElement;
     const signIn = () => {
       loggedIn.set(true);
-      profile$.next({
+      profile.set({
         id: 3,
         profilePicture: 'https://example.com/me.png',
       } as UserProfileInfo);
@@ -154,7 +158,7 @@ describe('NavbarComponent', () => {
 
       it('points at the user even when they have no profile picture', async () => {
         loggedIn.set(true);
-        profile$.next({ id: 5 } as UserProfileInfo);
+        profile.set({ id: 5 } as UserProfileInfo);
         fixture.detectChanges();
 
         await openProfileMenu();
@@ -164,7 +168,7 @@ describe('NavbarComponent', () => {
 
       it('is absent while the profile has not loaded', async () => {
         loggedIn.set(true);
-        profile$.next(null);
+        profile.set(null);
         fixture.detectChanges();
 
         await openProfileMenu();
@@ -177,7 +181,7 @@ describe('NavbarComponent', () => {
       signIn();
 
       loggedIn.set(false);
-      profile$.next(null);
+      profile.set(null);
       fixture.detectChanges();
 
       expect(host().querySelector('#loginButton')).not.toBeNull();

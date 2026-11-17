@@ -33,7 +33,10 @@ import {
   switchMap,
 } from 'rxjs/operators';
 import { ComponentCanDeactivate } from 'src/app/core/guards/pending-changes.guard';
-import { FilamentSummary } from 'src/app/core/services/filament.service';
+import {
+  FilamentSourceMeasurement,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { EMPTY_GUID } from 'src/app/core/services/print.service';
 import {
@@ -50,13 +53,6 @@ import {
 } from '../../core/services/printer.service';
 import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { MaterialCategory } from 'src/app/core/services/material-categories.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultLayoutGapDirective,
-  DefaultFlexDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import {
   MatCard,
   MatCardTitle,
@@ -84,7 +80,6 @@ import { MatIcon } from '@angular/material/icon';
 import { PrinterConnectionsComponent } from '../printer-connections/printer-connections.component';
 import { PrinterSpoolmanComponent } from '../printer-spoolman/printer-spoolman.component';
 import { AdComponent } from '../../shared/ad/ad.component';
-import { DefaultShowHideDirective } from '@ngbracket/ngx-layout/extended';
 import { SidebarAdComponent } from '../../shared/ad/sidebar-ad.component';
 import { isPlatformBrowser } from '@angular/common';
 import {
@@ -147,16 +142,11 @@ function listInProse(items: string[]): string {
   templateUrl: './printer-detail.component.html',
   styleUrls: ['./printer-detail.component.scss'],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultLayoutGapDirective,
     MatCard,
-    DefaultFlexDirective,
     FormsModule,
     ReactiveFormsModule,
     MatCardTitle,
     MatCardContent,
-    FlexFillDirective,
     EntityImagesPanelComponent_1,
     MatFormField,
     MatLabel,
@@ -177,7 +167,6 @@ function listInProse(items: string[]): string {
     PrinterSpoolmanComponent,
     MatCardActions,
     AdComponent,
-    DefaultShowHideDirective,
     SidebarAdComponent,
     RemainingPipe,
     FilamentColorSwatchStylePipe,
@@ -189,6 +178,22 @@ export class PrinterDetailComponent
 {
   /** False for a spool with no starting weight, whose remaining is null. */
   protected readonly isRemainingTracked = isRemainingTracked;
+
+  /**
+   * A resin bottle, shown in mL only (printlog-bridge#97). The summary's `source` says so
+   * (3d-print-log-api#294). An API older than that sends none, and then a bottle is told by
+   * its remaining figures: it has no diameter and so no length remaining, while a filament
+   * spool tracked by weight always has one.
+   */
+  protected isMeasuredInMl(filament: FilamentSummary | null): boolean {
+    if (filament?.source != null) {
+      return filament.source === FilamentSourceMeasurement.Volume;
+    }
+    return (
+      isRemainingTracked(filament?.filamentVolumeRemainingInMl) &&
+      !isRemainingTracked(filament?.filamentLengthRemainingInM)
+    );
+  }
 
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);

@@ -49,10 +49,10 @@ describe('DocRelatedComponent', () => {
     ).toBe(target.description);
   });
 
-  it('renders nothing for a page that declares no related pages', async () => {
+  it('renders nothing for a page that declares no related pages', async (context) => {
     const alone = routed.find((page) => page.related.length === 0);
     if (!alone) {
-      pending('every doc page declares a related page');
+      context.skip('every doc page declares a related page');
       return;
     }
 

@@ -1,17 +1,13 @@
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import {
-  discardPeriodicTasks,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
 import { NotificationType } from '../types/notification';
@@ -23,10 +19,26 @@ describe('NotificationService', () => {
   const base = `${environment.printLogApiUrl}/api/notifications`;
   const countUrl = `${base}/unread-count`;
 
+  let visibility: DocumentVisibilityState;
+  let online: boolean;
+
+  const setVisibility = (state: DocumentVisibilityState) => {
+    visibility = state;
+    document.dispatchEvent(new Event('visibilitychange'));
+  };
+
   beforeEach(() => {
+    // Headless Chromium's own answers are not ours to rely on; the test decides.
+    visibility = 'visible';
+    online = true;
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(
+      () => visibility
+    );
+    vi.spyOn(navigator, 'onLine', 'get').mockImplementation(() => online);
+
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -36,23 +48,25 @@ describe('NotificationService', () => {
 
   afterEach(() => http.verify());
 
-  it('startPolling fetches immediately then every 30s', fakeAsync(() => {
+  it('startPolling fetches immediately then every 60s', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 0 });
 
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 2, unreadAchievementCount: 0 });
 
     expect(service.unreadCount()).toBe(2);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('poll sets unreadAchievementCount from response', fakeAsync(() => {
+  it('poll sets unreadAchievementCount from response', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
@@ -60,16 +74,17 @@ describe('NotificationService', () => {
 
     expect(service.unreadAchievementCount()).toBe(2);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('pollTick increments on every response even when counts are unchanged', fakeAsync(() => {
+  it('pollTick increments on every response even when counts are unchanged', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     const before = service.pollTick();
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 1 });
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 1 });
@@ -80,8 +95,8 @@ describe('NotificationService', () => {
 
     expect(service.pollTick()).toBe(before + 3);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
   it('getNotifications sends type param', () => {
     service
@@ -107,10 +122,11 @@ describe('NotificationService', () => {
       expect(req.request.body.notificationIds.length).toBe(size);
       req.flush(null);
     }
-    expect(done).toBeTrue();
+    expect(done).toBe(true);
   });
 
-  it('markMultipleAsRead decrements counts optimistically', fakeAsync(() => {
+  it('markMultipleAsRead decrements counts optimistically', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
@@ -122,40 +138,120 @@ describe('NotificationService', () => {
     expect(service.unreadCount()).toBe(2);
     expect(service.unreadAchievementCount()).toBe(0);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('stopPolling then startPolling runs exactly one poller', fakeAsync(() => {
+  it('stopPolling then startPolling runs exactly one poller', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http.expectOne(countUrl).flush({ unreadCount: 0 });
     service.stopPolling();
     service.startPolling();
     http.expectOne(countUrl).flush({ unreadCount: 0 });
 
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http.expectOne(countUrl).flush({ unreadCount: 0 });
 
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('a failed poll does not stop polling', fakeAsync(() => {
+  it('a failed poll does not stop polling', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
       .flush('down', { status: 503, statusText: 'Service Unavailable' });
 
-    tick(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 2, unreadAchievementCount: 1 });
 
     expect(service.unreadAchievementCount()).toBe(1);
     service.stopPolling();
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 
-  it('stopPolling resets both counts', fakeAsync(() => {
+  describe('tab visibility and connectivity', () => {
+    it('does not poll while the tab is hidden', async () => {
+      vi.useFakeTimers();
+      setVisibility('hidden');
+      service.startPolling();
+      http.expectNone(countUrl);
+
+      await vi.advanceTimersByTimeAsync(5 * 60000);
+      http.expectNone(countUrl);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('stops polling when the tab is hidden', async () => {
+      vi.useFakeTimers();
+      service.startPolling();
+      http.expectOne(countUrl).flush({ unreadCount: 1 });
+
+      setVisibility('hidden');
+      await vi.advanceTimersByTimeAsync(5 * 60000);
+      http.expectNone(countUrl);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('refreshes at once when the tab becomes visible again, then keeps polling', async () => {
+      vi.useFakeTimers();
+      service.startPolling();
+      http.expectOne(countUrl).flush({ unreadCount: 1 });
+      setVisibility('hidden');
+      await vi.advanceTimersByTimeAsync(10 * 60000);
+
+      setVisibility('visible');
+      http.expectOne(countUrl).flush({ unreadCount: 3 });
+      expect(service.unreadCount()).toBe(3);
+
+      await vi.advanceTimersByTimeAsync(60000);
+      http.expectOne(countUrl).flush({ unreadCount: 4 });
+      expect(service.unreadCount()).toBe(4);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('skips polls while offline and refreshes when the connection returns', async () => {
+      vi.useFakeTimers();
+      online = false;
+      service.startPolling();
+      http.expectNone(countUrl);
+      await vi.advanceTimersByTimeAsync(3 * 60000);
+      http.expectNone(countUrl);
+
+      online = true;
+      window.dispatchEvent(new Event('online'));
+      http.expectOne(countUrl).flush({ unreadCount: 2 });
+      expect(service.unreadCount()).toBe(2);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('stopPolling ends polling even when the tab becomes visible afterward', async () => {
+      vi.useFakeTimers();
+      service.startPolling();
+      http.expectOne(countUrl).flush({ unreadCount: 1 });
+
+      service.stopPolling();
+      setVisibility('hidden');
+      setVisibility('visible');
+      await vi.advanceTimersByTimeAsync(5 * 60000);
+      http.expectNone(countUrl);
+      vi.clearAllTimers();
+    });
+  });
+
+  it('stopPolling resets both counts', async () => {
+    vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
@@ -165,6 +261,6 @@ describe('NotificationService', () => {
 
     expect(service.unreadCount()).toBe(0);
     expect(service.unreadAchievementCount()).toBe(0);
-    discardPeriodicTasks();
-  }));
+    vi.clearAllTimers();
+  });
 });

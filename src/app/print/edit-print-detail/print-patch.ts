@@ -2,6 +2,7 @@ import {
   PatchPrintDTO,
   PrintClearableField,
   PrintDetail,
+  PrintFilamentSummaryDto,
   toPutPrintFilamentSummary,
 } from 'src/app/core/services/print.service';
 
@@ -17,7 +18,9 @@ type EditablePrint = Omit<PrintDetail, 'comments'>;
  *
  * - A field emptied by the user goes in `clear`, since PATCH reads null as "keep".
  * - `filamentUsage` is all or nothing: sending it replaces every row, so it is sent only when
- *   a row was added, removed, reordered or edited.
+ *   a row was added, removed, reordered or edited. Each row carries `actualIsEstimate` back, or
+ *   the API resets it (api#282), except a row whose actual figure the user changed: that one is
+ *   now a measurement.
  * - Legacy (`filamentType`, `filamentUsageMg`, `estimatedFilamentUsageMg`) and read-only fields
  *   (external source, `curaSettingId`) are never sent.
  * - `newProjectName` is not handled here: PATCH cannot create a project, so the caller creates
@@ -87,9 +90,20 @@ export function buildPrintPatch(
   const loadedUsage = (loaded.filamentUsage ?? []).map(
     toPutPrintFilamentSummary
   );
-  const editedUsage = (edited.filamentUsage ?? []).map(
-    toPutPrintFilamentSummary
+  const loadedRows = new Map(
+    (loaded.filamentUsage ?? [])
+      .filter((row) => row.id != null)
+      .map((row) => [row.id, row])
   );
+  const editedUsage = (edited.filamentUsage ?? []).map((row) => {
+    const put = toPutPrintFilamentSummary(row);
+    // What the user typed over an estimate is a measurement.
+    const before = row.id != null ? loadedRows.get(row.id) : undefined;
+    if (put.actualIsEstimate && (!before || actualFigureChanged(before, row))) {
+      put.actualIsEstimate = false;
+    }
+    return put;
+  });
   if (JSON.stringify(loadedUsage) !== JSON.stringify(editedUsage)) {
     patch.filamentUsage = editedUsage;
   }
@@ -131,6 +145,18 @@ export function buildPrintPatch(
       patch[field] = now;
     }
   }
+}
+
+function actualFigureChanged(
+  before: PrintFilamentSummaryDto,
+  after: PrintFilamentSummaryDto
+): boolean {
+  return (
+    before.source !== after.source ||
+    (before.amountMg ?? null) !== (after.amountMg ?? null) ||
+    (before.lengthInM ?? null) !== (after.lengthInM ?? null) ||
+    (before.volumeMl ?? null) !== (after.volumeMl ?? null)
+  );
 }
 
 function toWholeSeconds(

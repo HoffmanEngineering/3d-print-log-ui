@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { of, throwError, lastValueFrom } from 'rxjs';
@@ -10,10 +11,10 @@ import { CuraParserService } from '../services/integration/cura-parser.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 
 describe('printDetailResolver', () => {
-  let printService: jasmine.SpyObj<PrintService>;
-  let userService: jasmine.SpyObj<UserService>;
-  let loggingService: jasmine.SpyObj<LoggingService>;
-  let store: jasmine.SpyObj<NewPrintStoreService>;
+  let printService: MockedObject<PrintService>;
+  let userService: MockedObject<UserService>;
+  let loggingService: MockedObject<LoggingService>;
+  let store: MockedObject<NewPrintStoreService>;
 
   const routeFor = (id: string) =>
     ({
@@ -22,22 +23,22 @@ describe('printDetailResolver', () => {
     }) as unknown as ActivatedRouteSnapshot;
 
   beforeEach(() => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'getPrintDetail',
-    ]);
-    userService = jasmine.createSpyObj<UserService>('UserService', [
-      'getUserSummary',
-    ]);
-    store = jasmine.createSpyObj<NewPrintStoreService>('NewPrintStoreService', [
-      'hasNewPrint',
-      'getNewPrint',
-      'getNewPrintMeta',
-      'clear',
-    ]);
-    store.hasNewPrint.and.returnValue(false);
-    loggingService = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-    ]);
+    printService = {
+      getPrintDetail: vi.fn().mockName('PrintService.getPrintDetail'),
+    } as unknown as MockedObject<PrintService>;
+    userService = {
+      getUserSummary: vi.fn().mockName('UserService.getUserSummary'),
+    } as unknown as MockedObject<UserService>;
+    store = {
+      hasNewPrint: vi.fn().mockName('NewPrintStoreService.hasNewPrint'),
+      getNewPrint: vi.fn().mockName('NewPrintStoreService.getNewPrint'),
+      getNewPrintMeta: vi.fn().mockName('NewPrintStoreService.getNewPrintMeta'),
+      clear: vi.fn().mockName('NewPrintStoreService.clear'),
+    } as unknown as MockedObject<NewPrintStoreService>;
+    store.hasNewPrint.mockReturnValue(false);
+    loggingService = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -47,20 +48,19 @@ describe('printDetailResolver', () => {
         { provide: NewPrintStoreService, useValue: store },
         {
           provide: CuraParserService,
-          useValue: jasmine.createSpyObj<CuraParserService>(
-            'CuraParserService',
-            ['parse']
-          ),
+          useValue: {
+            parse: vi.fn().mockName('CuraParserService.parse'),
+          },
         },
       ],
     });
   });
 
   it('resolves with a null user when getUserSummary fails', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       of({ id: 1, title: 'Public print', createdByUserId: 7 } as any)
     );
-    userService.getUserSummary.and.returnValue(
+    userService.getUserSummary.mockReturnValue(
       throwError(() => new Error('403'))
     );
 
@@ -75,7 +75,7 @@ describe('printDetailResolver', () => {
   // visitor lands on / — so the "Print not found" view was unreachable for the
   // one case it exists to handle (#66).
   it('resolves with a null print when the print request 404s', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       throwError(() => ({ status: 404 }))
     );
 
@@ -89,7 +89,7 @@ describe('printDetailResolver', () => {
   });
 
   it('resolves and logs when the print request fails unexpectedly', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       throwError(() => ({ status: 500 }))
     );
 
@@ -105,9 +105,9 @@ describe('printDetailResolver', () => {
 
   it('hands a stored new print to the form with its detected printer names', () => {
     const print = { id: null, title: 'Cube' } as any;
-    store.hasNewPrint.and.returnValue(true);
-    store.getNewPrint.and.returnValue(print);
-    store.getNewPrintMeta.and.returnValue({
+    store.hasNewPrint.mockReturnValue(true);
+    store.getNewPrint.mockReturnValue(print);
+    store.getNewPrintMeta.mockReturnValue({
       detectedPrinterNames: ['X1C', 'Bambu Lab X1 Carbon'],
     });
 
@@ -122,7 +122,7 @@ describe('printDetailResolver', () => {
   });
 
   it('resolves a manual new print with no detected printer', () => {
-    store.hasNewPrint.and.returnValue(false);
+    store.hasNewPrint.mockReturnValue(false);
 
     const value = runResolver(printDetailResolver, routeFor('new')) as any;
 

@@ -54,7 +54,7 @@ const ELEMENT_ALLOWLIST = new Set([
   'button',
   'code',
   'dd',
-  // The doc primitives, declared by DocumentationModule. See
+  // The doc primitives, in every page's imports (DOCS_PAGE_IMPORTS). See
   // src/app/documentation/primitives.
   'doc-callout',
   'doc-figure',

@@ -73,8 +73,10 @@ describe('SignedImageComponent', () => {
     fixture.componentRef.setInput('showDeleteOnHover', true);
     fixture.detectChanges();
 
-    const emitted = spyOn(component.delete, 'emit');
-    const wrapperClick = jasmine.createSpy('wrapperClick');
+    const emitted = vi
+      .spyOn(component.delete, 'emit')
+      .mockReturnValue(undefined);
+    const wrapperClick = vi.fn();
     fixture.nativeElement
       .querySelector('.signed-image')
       .addEventListener('click', wrapperClick);

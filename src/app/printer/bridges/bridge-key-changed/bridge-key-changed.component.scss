@@ -1,0 +1,78 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+:host {
+  display: block;
+}
+
+.changed {
+  padding: 12px 16px;
+  border: 1px solid var(--app-error-text);
+  border-radius: 8px;
+  background: var(--app-surface-container);
+}
+
+p {
+  margin: 0 0 8px;
+}
+
+.title {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--app-error-text);
+
+  mat-icon {
+    flex: none;
+  }
+}
+
+.hint {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+.fingerprint {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 600;
+}
+
+.prints {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin: 8px 0 4px;
+
+  dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-text-secondary);
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 1.125rem;
+  }
+}
+
+.full {
+  margin-bottom: 12px;
+  font-size: 0.875rem;
+
+  summary {
+    cursor: pointer;
+    color: var(--app-text-secondary);
+  }
+
+  .fingerprint {
+    display: block;
+    margin-top: 4px;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+}

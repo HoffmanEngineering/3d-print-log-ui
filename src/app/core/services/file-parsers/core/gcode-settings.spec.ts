@@ -26,7 +26,7 @@ describe('GcodeSettings', () => {
         '; total estimated time: 1h 2m',
         SPACED_EQUALS_OR_COLON
       );
-      expect(s.has('total estimated time')).toBeFalse();
+      expect(s.has('total estimated time')).toBe(false);
     });
 
     it('accepts any separator in the set', () => {
@@ -78,7 +78,7 @@ describe('GcodeSettings', () => {
         ';Generated with Cura_SteamEngine 4.9.0',
         UNSPACED_COLON
       );
-      expect(s.has('Generated with Cura_SteamEngine 4.9.0')).toBeFalse();
+      expect(s.has('Generated with Cura_SteamEngine 4.9.0')).toBe(false);
     });
   });
 
@@ -105,14 +105,14 @@ describe('GcodeSettings', () => {
     });
 
     it('getBoolean accepts 1 and true', () => {
-      expect(s.getBoolean('on')).toBeTrue();
-      expect(s.getBoolean('yes')).toBeTrue();
-      expect(s.getBoolean('off')).toBeFalse();
-      expect(s.getBoolean('missing')).toBeFalse();
+      expect(s.getBoolean('on')).toBe(true);
+      expect(s.getBoolean('yes')).toBe(true);
+      expect(s.getBoolean('off')).toBe(false);
+      expect(s.getBoolean('missing')).toBe(false);
     });
 
     it('empty() has nothing', () => {
-      expect(GcodeSettings.empty().has('a')).toBeFalse();
+      expect(GcodeSettings.empty().has('a')).toBe(false);
     });
   });
 

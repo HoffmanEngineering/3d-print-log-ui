@@ -13,7 +13,6 @@ import {
   computed,
   DestroyRef,
   inject,
-  NgZone,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
@@ -101,7 +100,6 @@ export class DocumentationComponent
   implements OnInit, OnDestroy, AfterViewInit
 {
   private title = inject(Title);
-  private ngZone = inject(NgZone);
 
   /** Slug of the docs page on screen; drives the feedback widget's per-page reset. */
   readonly currentSlug = signal('');
@@ -148,14 +146,12 @@ export class DocumentationComponent
     this.isMobile.set(this.mobileQuery.matches);
 
     this.mobileQueryListener = () => {
-      this.ngZone.run(() => {
-        this.isMobile.set(this.mobileQuery.matches);
-        if (!this.mobileQuery.matches) {
-          this.snav().open();
-        } else {
-          this.snav().close();
-        }
-      });
+      this.isMobile.set(this.mobileQuery.matches);
+      if (!this.mobileQuery.matches) {
+        this.snav().open();
+      } else {
+        this.snav().close();
+      }
     };
 
     this.mobileQuery.addListener(this.mobileQueryListener);

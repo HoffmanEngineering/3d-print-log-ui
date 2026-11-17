@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -8,7 +8,6 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterTestingModule } from '@angular/router/testing';
 import { PricingComponent } from './pricing.component';
 import { CAN_PURCHASE_PRO } from '../../core/pricing/pro-purchase';
-import { SharedModule } from '../../shared/shared.module';
 import { LoggingService } from '../../core/services/logging.service';
 import {
   annualPricePerMonth,
@@ -22,18 +21,15 @@ describe('PricingComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        SharedModule,
-        NoopAnimationsModule,
-        RouterTestingModule,
-        PricingComponent,
-      ],
+      imports: [NoopAnimationsModule, RouterTestingModule, PricingComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();
@@ -56,7 +52,7 @@ describe('PricingComponent', () => {
   });
 
   it('should default isPro to false', () => {
-    expect(component.isPro()).toBeFalse();
+    expect(component.isPro()).toBe(false);
   });
 
   /**
@@ -76,18 +72,19 @@ describe('PricingComponent', () => {
 
     component.checkout('pro_monthly');
     fixture.detectChanges();
-    expect(subscribeButton().disabled)
-      .withContext('disabled while the request is in flight')
-      .toBeTrue();
+    expect(
+      subscribeButton().disabled,
+      'disabled while the request is in flight'
+    ).toBe(true);
 
     httpMock
       .expectOne((req) => req.url.endsWith('/api/Subscription/checkout'))
       .flush({}, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
 
-    expect(subscribeButton().disabled)
-      .withContext('re-enabled so the user can retry')
-      .toBeFalse();
+    expect(subscribeButton().disabled, 're-enabled so the user can retry').toBe(
+      false
+    );
 
     httpMock.verify();
   });
@@ -98,18 +95,15 @@ describe('PricingComponent in the iOS app', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [
-        SharedModule,
-        NoopAnimationsModule,
-        RouterTestingModule,
-        PricingComponent,
-      ],
+      imports: [NoopAnimationsModule, RouterTestingModule, PricingComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
         { provide: CAN_PURCHASE_PRO, useValue: false },
       ],

@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
@@ -52,12 +53,19 @@ function page(
 
 class FakePresenter extends CelebrationPresenter {
   toasts: CelebrationItem[][] = [];
-  toastOptions: { quiet: boolean }[] = [];
+  toastOptions: {
+    quiet: boolean;
+  }[] = [];
   dialogs: CelebrationItem[] = [];
   /** When set, toasts stay open until the test calls the resolver. */
   holdToasts = false;
   closeToast: () => void = () => undefined;
-  toast(items: CelebrationItem[], options: { quiet: boolean }): Promise<void> {
+  toast(
+    items: CelebrationItem[],
+    options: {
+      quiet: boolean;
+    }
+  ): Promise<void> {
     this.toasts.push(items);
     this.toastOptions.push(options);
     if (this.holdToasts) {
@@ -77,12 +85,14 @@ describe('AchievementCelebrationService', () => {
   let notifications: {
     unreadAchievementCount: ReturnType<typeof signal<number>>;
     pollTick: ReturnType<typeof signal<number>>;
-    getNotifications: jasmine.Spy;
-    markMultipleAsRead: jasmine.Spy;
-    refreshUnreadCount: jasmine.Spy;
+    getNotifications: Mock;
+    markMultipleAsRead: Mock;
+    refreshUnreadCount: Mock;
   };
   let celebrations: string | null;
-  let locks: { request: jasmine.Spy } | null;
+  let locks: {
+    request: Mock;
+  } | null;
   let visible: boolean;
   let becomeVisible: () => void;
 
@@ -120,7 +130,9 @@ describe('AchievementCelebrationService', () => {
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     });
@@ -133,11 +145,9 @@ describe('AchievementCelebrationService', () => {
     notifications = {
       unreadAchievementCount: signal(0),
       pollTick: signal(0),
-      getNotifications: jasmine.createSpy('getNotifications'),
-      markMultipleAsRead: jasmine
-        .createSpy('markMultipleAsRead')
-        .and.returnValue(of(undefined)),
-      refreshUnreadCount: jasmine.createSpy('refreshUnreadCount'),
+      getNotifications: vi.fn(),
+      markMultipleAsRead: vi.fn().mockReturnValue(of(undefined)),
+      refreshUnreadCount: vi.fn(),
     };
     celebrations = null;
     locks = null;
@@ -152,7 +162,7 @@ describe('AchievementCelebrationService', () => {
   }
 
   it('fetches when unreadAchievementCount > 0 even if total unchanged', async () => {
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -176,7 +186,7 @@ describe('AchievementCelebrationService', () => {
     const second = Array.from({ length: 5 }, (_, i) =>
       note(`p2-${i}`, 'projects', 1)
     );
-    notifications.getNotifications.and.callFake((p: number) =>
+    notifications.getNotifications.mockImplementation((p: number) =>
       of(p === 1 ? page(first, 1, 2) : page(second, 2, 2))
     );
     setup();
@@ -200,7 +210,7 @@ describe('AchievementCelebrationService', () => {
 
   it('switching off→on plays backlog', async () => {
     celebrations = 'off';
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -217,7 +227,7 @@ describe('AchievementCelebrationService', () => {
   });
 
   it('merges items within one cycle into one toast', async () => {
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(
         page([
           note('a', 'first-printer', 1),
@@ -237,7 +247,7 @@ describe('AchievementCelebrationService', () => {
   });
 
   it('big moment opens dialog', async () => {
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('big', 'prints-logged', 3), note('small', 'projects', 1)]))
     );
     setup();
@@ -251,7 +261,7 @@ describe('AchievementCelebrationService', () => {
 
   it('quiet never opens dialog', async () => {
     celebrations = 'quiet';
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('big', 'first-print', 1), note('sum', null, null, true)]))
     );
     setup();
@@ -265,10 +275,10 @@ describe('AchievementCelebrationService', () => {
 
   it('plays only in the tab holding the Web Lock', async () => {
     locks = {
-      request: jasmine
-        .createSpy('request')
-        .and.callFake((_n: string, _o: unknown, cb: (l: unknown) => unknown) =>
-          cb(null)
+      request: vi
+        .fn()
+        .mockImplementation(
+          (_n: string, _o: unknown, cb: (l: unknown) => unknown) => cb(null)
         ),
     };
     setup();
@@ -279,7 +289,7 @@ describe('AchievementCelebrationService', () => {
     expect(locks.request).toHaveBeenCalledWith(
       'achievement-celebration',
       { ifAvailable: true },
-      jasmine.any(Function)
+      expect.any(Function)
     );
     expect(notifications.getNotifications).not.toHaveBeenCalled();
   });
@@ -287,13 +297,14 @@ describe('AchievementCelebrationService', () => {
   it('retries the lock on the next poll while count unchanged', async () => {
     let attempt = 0;
     locks = {
-      request: jasmine
-        .createSpy('request')
-        .and.callFake((_n: string, _o: unknown, cb: (l: unknown) => unknown) =>
-          cb(++attempt === 1 ? null : {})
+      request: vi
+        .fn()
+        .mockImplementation(
+          (_n: string, _o: unknown, cb: (l: unknown) => unknown) =>
+            cb(++attempt === 1 ? null : {})
         ),
     };
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1), note('b', 'projects', 1)]))
     );
     setup();
@@ -314,7 +325,7 @@ describe('AchievementCelebrationService', () => {
     const items = Array.from({ length: 150 }, (_, i) =>
       note(`n${i}`, 'projects', 1)
     );
-    notifications.getNotifications.and.callFake((p: number) =>
+    notifications.getNotifications.mockImplementation((p: number) =>
       of(page(items.slice((p - 1) * 20, p * 20), p, 8))
     );
     setup();
@@ -322,14 +333,14 @@ describe('AchievementCelebrationService', () => {
     unread(150);
     await settle();
 
-    const ids = notifications.markMultipleAsRead.calls
-      .allArgs()
-      .flatMap((a) => a[0]);
+    const ids = vi
+      .mocked(notifications.markMultipleAsRead)
+      .mock.calls.flatMap((a) => a[0]);
     expect(ids.length).toBe(150);
   });
 
   it('marks played notifications read and refreshes the count', async () => {
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -343,7 +354,7 @@ describe('AchievementCelebrationService', () => {
 
   it('waits while document hidden', async () => {
     visible = false;
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -360,7 +371,7 @@ describe('AchievementCelebrationService', () => {
   });
 
   it('the launch summary plays as its own toast, never a dialog', async () => {
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('sum', null, null, true), note('a', 'first-printer', 1)]))
     );
     setup();
@@ -377,7 +388,7 @@ describe('AchievementCelebrationService', () => {
 
   it('quiet toasts are told they are quiet', async () => {
     celebrations = 'quiet';
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -390,7 +401,7 @@ describe('AchievementCelebrationService', () => {
 
   it('marks a toast read only once it has closed', async () => {
     presenter.holdToasts = true;
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -411,13 +422,12 @@ describe('AchievementCelebrationService', () => {
   });
 
   it('a failed receipt is retried without replaying the celebration', async () => {
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
-    notifications.markMultipleAsRead.and.returnValues(
-      throwError(() => new Error('503')),
-      of(undefined)
-    );
+    notifications.markMultipleAsRead
+      .mockReturnValueOnce(throwError(() => new Error('503')))
+      .mockReturnValueOnce(of(undefined));
     setup();
 
     unread(1);
@@ -427,14 +437,14 @@ describe('AchievementCelebrationService', () => {
 
     expect(presenter.toasts.length).toBe(1);
     expect(notifications.markMultipleAsRead).toHaveBeenCalledTimes(2);
-    expect(notifications.markMultipleAsRead.calls.mostRecent().args[0]).toEqual(
-      ['a']
-    );
+    expect(
+      vi.mocked(notifications.markMultipleAsRead).mock.lastCall[0]
+    ).toEqual(['a']);
   });
 
   it('consumes malformed achievement notifications without showing them', async () => {
     const malformed = { ...note('bad', null, null), achievement: null };
-    notifications.getNotifications.and.returnValue(of(page([malformed])));
+    notifications.getNotifications.mockReturnValue(of(page([malformed])));
     setup();
 
     unread(1);
@@ -447,7 +457,7 @@ describe('AchievementCelebrationService', () => {
 
   it('re-reads the celebration level after waiting to become visible', async () => {
     visible = false;
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();
@@ -464,7 +474,7 @@ describe('AchievementCelebrationService', () => {
 
   it('stop abandons a cycle that is waiting to become visible', async () => {
     visible = false;
-    notifications.getNotifications.and.returnValue(
+    notifications.getNotifications.mockReturnValue(
       of(page([note('a', 'first-printer', 1)]))
     );
     setup();

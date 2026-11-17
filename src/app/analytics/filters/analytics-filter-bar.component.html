@@ -25,7 +25,8 @@
           Reading `valueAsDate` off these inputs does NOT work: Material renders them as
           type=text, where valueAsDate is undefined, so the range was never submitted.
         -->
-        <mat-date-range-input [rangePicker]="picker">
+        <!-- Capped at today: the API clamps the end to now, so a future start reverses the range. -->
+        <mat-date-range-input [rangePicker]="picker" [max]="today">
           <input
             matStartDate
             placeholder="Start"

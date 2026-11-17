@@ -1,23 +1,8 @@
-<div fxLayout="row" fxLayoutAlign="center">
-  <mat-card
-    appearance="outlined"
-    fxFlex="500px"
-    fxFlex.xs="100%"
-    fxFlex.gt-md="1200px"
-  >
-    <div
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
-      fxLayout.gt-md="row"
-      fxLayoutAlign="space-around start"
-    >
-      <mat-card-header
-        fxFlex="grow"
-        fxLayout="column"
-        fxLayoutAlign="start start"
-      >
-        <div fxFlex="grow" class="cover-photo-container">
+<div class="page">
+  <mat-card appearance="outlined" class="profile-card">
+    <div class="profile">
+      <mat-card-header class="profile-header">
+        <div class="grow cover-photo-container">
           @if (userDetail().coverPicture) {
             <img [src]="userDetail().coverPicture" class="cover-photo" />
           }
@@ -58,7 +43,7 @@
             (change)="addCoverPhoto($event)"
           />
         </div>
-        <div fxFlex="grow" class="profile-picture-container">
+        <div class="grow profile-picture-container">
           <div class="profile-picture-wrapper">
             <img [src]="userDetail().profilePicture" class="profile-picture" />
           </div>
@@ -84,23 +69,14 @@
             (change)="addProfilePicture($event)"
           />
         </div>
-        <div
-          fxFlex="grow"
-          fxFlexFill
-          fxLayout="column"
-          fxLayoutAlign="start center"
-        >
-          <div fxFlex="grow" class="user-display-name">
+        <div class="grow about">
+          <div class="grow user-display-name">
             @if (!isEditingDisplayName()) {
-              <div
-                fxLayout="column"
-                fxLayoutAlign="start center"
-                fxLayoutGap="15px"
-              >
-                <h2 fxFlex="grow" aria-label="User name">
+              <div class="stack">
+                <h2 class="grow" aria-label="User name">
                   {{ userDetail().displayName }}
                 </h2>
-                <div fxFlex="grow">
+                <div class="grow">
                   @if (
                     userDetail().id === currentUser()?.id &&
                     !isEditingDescription()
@@ -135,7 +111,7 @@
                     remaining.</mat-hint
                   >
                 </mat-form-field>
-                <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <div class="actions">
                   <button
                     mat-raised-button
                     type="submit"
@@ -157,19 +133,15 @@
               </div>
             }
           </div>
-          <div fxFlex="grow" class="user-bio">
+          <div class="grow user-bio">
             @if (!isEditingDescription()) {
-              <div
-                fxLayout="column"
-                fxLayoutAlign="start center"
-                fxLayoutGap="15px"
-              >
+              <div class="stack">
                 @if (!isEditingDescription()) {
-                  <div style="white-space: pre-wrap" fxFlex>
+                  <div style="white-space: pre-wrap" class="share">
                     {{ userDetail().bio }}
                   </div>
                 }
-                <div fxFlex>
+                <div class="share">
                   @if (
                     userDetail().id === currentUser()?.id &&
                     !isEditingDisplayName()
@@ -202,7 +174,7 @@
                     {{ 1000 - bio().length }} characters remaining.</mat-hint
                   >
                 </mat-form-field>
-                <div fxLayout fxLayoutAlign="center center" fxLayoutGap="15px">
+                <div class="actions">
                   <button
                     mat-raised-button
                     type="submit"
@@ -225,7 +197,7 @@
             }
           </div>
           @if (userDetail().id === currentUser()?.id) {
-            <div fxFlex="grow">
+            <div class="grow">
               <hr />
               <div>
                 <label for="profile-visibility" style="margin-right: 10px">
@@ -249,12 +221,7 @@
               </div>
               @if (viewStatus() !== userDetail().viewStatus) {
                 <div>
-                  <div
-                    style="margin-top: 10px"
-                    fxLayout
-                    fxLayoutAlign="center center"
-                    fxLayoutGap="15px"
-                  >
+                  <div style="margin-top: 10px" class="actions">
                     <button
                       mat-raised-button
                       type="submit"
@@ -279,22 +246,17 @@
             </div>
           }
         </div>
-        <div fxFlex="grow">
+        <div class="grow">
           <app-stats [userId]="userDetail().id"></app-stats>
         </div>
-        <div fxFlex="grow">
+        <div class="grow">
           <app-achievement-strip [userId]="userDetail().id" />
         </div>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="grow fill">
           <app-ad></app-ad>
         </div>
       </mat-card-header>
-      <mat-card-content
-        fxFlex="grow"
-        fxLayout="column"
-        fxLayoutAlign="start stretch"
-        fxLayoutGap="10px"
-      >
+      <mat-card-content class="profile-prints">
         <app-user-prints
           [userId]="userDetail().id"
           [userName]="userDetail().displayName"

@@ -195,3 +195,42 @@
   line-height: 20px;
   color: var(--docs-text-muted);
 }
+
+// Text beside a picture: two columns, stacked below 1280px.
+.docs-markdown .doc-columns {
+  display: flex;
+
+  @media (max-width: 1279.98px) {
+    flex-direction: column;
+  }
+}
+
+.docs-markdown .doc-columns-gap {
+  gap: 15px;
+}
+
+.docs-markdown .doc-column-main {
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+
+.docs-markdown .doc-column {
+  flex: 1 1 0;
+}
+
+// A phone screenshot: no taller than 400px once the columns stack.
+.docs-markdown .doc-phone-shot {
+  @media (max-width: 1279.98px) {
+    max-height: 400px;
+  }
+}
+
+// A wide screenshot, centred and inset below 960px.
+.docs-markdown .doc-shot-narrow {
+  @media (max-width: 959.98px) {
+    display: block;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}

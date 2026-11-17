@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
@@ -26,11 +27,11 @@ describe('PrintBulkActionBarComponent', () => {
   let fixture: ComponentFixture<PrintBulkActionBarComponent>;
   let component: PrintBulkActionBarComponent;
   let bulkActions: PrintBulkActionsService;
-  let printService: jasmine.SpyObj<PrintService>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let printService: MockedObject<PrintService>;
+  let toastr: MockedObject<ToastrService>;
+  let dialog: MockedObject<MatDialog>;
   let dialogRef: {
-    afterClosed: jasmine.Spy;
+    afterClosed: Mock;
   };
 
   const printOne = makePrint(1, 'Benchy');
@@ -40,19 +41,21 @@ describe('PrintBulkActionBarComponent', () => {
     component.statusOptions.find((o) => o.status === PrintStatus.Success)!;
 
   beforeEach(async () => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'bulkUpdatePrints',
-      'bulkDeletePrints',
-    ]);
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
+    printService = {
+      bulkUpdatePrints: vi.fn().mockName('PrintService.bulkUpdatePrints'),
+      bulkDeletePrints: vi.fn().mockName('PrintService.bulkDeletePrints'),
+    } as unknown as MockedObject<PrintService>;
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
     dialogRef = {
-      afterClosed: jasmine.createSpy('afterClosed').and.returnValue(of(true)),
+      afterClosed: vi.fn().mockReturnValue(of(true)),
     };
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.returnValue(dialogRef as any);
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockReturnValue(dialogRef as any);
 
     await TestBed.configureTestingModule({
       imports: [PrintBulkActionBarComponent, NoopAnimationsModule],
@@ -63,10 +66,10 @@ describe('PrintBulkActionBarComponent', () => {
         { provide: MatDialog, useValue: dialog },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj<LoggingService>('LoggingService', [
-            'logEvent',
-            'logException',
-          ]),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
         },
       ],
     }).compileComponents();
@@ -142,7 +145,7 @@ describe('PrintBulkActionBarComponent', () => {
 
   describe('set status', () => {
     it('updates every selected print and reports success', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [printOne.id, printTwo.id], failed: [] })
       );
       bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
@@ -156,7 +159,7 @@ describe('PrintBulkActionBarComponent', () => {
     });
 
     it('reports a partial failure and says the failures stay selected', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({
           succeeded: [printOne.id],
           failed: [{ id: printTwo.id, reason: 'Forbidden' }],
@@ -169,12 +172,12 @@ describe('PrintBulkActionBarComponent', () => {
       expect(toastr.error).toHaveBeenCalled();
       expect(toastr.success).not.toHaveBeenCalled();
       expect(component.resultMessage()).toContain('1 updated, 1 failed');
-      expect(bulkActions.isSelected(printTwo.id)).toBeTrue();
+      expect(bulkActions.isSelected(printTwo.id)).toBe(true);
       expect(bulkActions.selectedCount()).toBe(1);
     });
 
     it('emits batchCompleted so the list can refresh', async () => {
-      printService.bulkUpdatePrints.and.returnValue(
+      printService.bulkUpdatePrints.mockReturnValue(
         of({ succeeded: [printOne.id], failed: [] })
       );
       bulkActions.toggleSelection(printOne);
@@ -195,7 +198,7 @@ describe('PrintBulkActionBarComponent', () => {
 
   describe('delete', () => {
     it('confirms with a dialog naming the count before deleting', async () => {
-      printService.bulkDeletePrints.and.returnValue(
+      printService.bulkDeletePrints.mockReturnValue(
         of({ succeeded: [printOne.id, printTwo.id], failed: [] })
       );
       bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
@@ -213,7 +216,7 @@ describe('PrintBulkActionBarComponent', () => {
     });
 
     it('uses the singular noun for a single print', async () => {
-      printService.bulkDeletePrints.and.returnValue(
+      printService.bulkDeletePrints.mockReturnValue(
         of({ succeeded: [printOne.id], failed: [] })
       );
       bulkActions.toggleSelection(printOne);
@@ -224,7 +227,7 @@ describe('PrintBulkActionBarComponent', () => {
     });
 
     it('deletes nothing when the dialog is dismissed', async () => {
-      dialogRef.afterClosed.and.returnValue(of(false));
+      dialogRef.afterClosed.mockReturnValue(of(false));
       bulkActions.toggleSelectAllOnPage([printOne, printTwo]);
 
       await component.deleteSelected();
@@ -239,7 +242,7 @@ describe('PrintBulkActionBarComponent', () => {
 
     component.clearSelection();
 
-    expect(bulkActions.hasSelection()).toBeFalse();
+    expect(bulkActions.hasSelection()).toBe(false);
   });
 
   describe('the new field actions', () => {
@@ -249,10 +252,12 @@ describe('PrintBulkActionBarComponent', () => {
      * and every action returns immediately when nothing is selected, so a test that
      * forgets the selection asserts nothing.
      */
-    function selectAndStub(method: keyof PrintBulkActionsService): jasmine.Spy {
+    function selectAndStub(method: keyof PrintBulkActionsService): Mock {
       bulkActions.toggleSelection(printOne);
       fixture.detectChanges();
-      return spyOn(bulkActions, method as never).and.resolveTo({
+      return (
+        vi.spyOn(bulkActions, method as never) as unknown as Mock
+      ).mockResolvedValue({
         succeededIds: [printOne.id],
         failedIds: [],
         failuresRetained: false,
@@ -262,7 +267,7 @@ describe('PrintBulkActionBarComponent', () => {
 
     it('opens the project dialog and assigns the chosen project', async () => {
       const setProject = selectAndStub('setProjectForSelected');
-      dialogRef.afterClosed.and.returnValue(
+      dialogRef.afterClosed.mockReturnValue(
         of({ projectId: 'chosen-id', projectName: 'Benchies', created: false })
       );
 
@@ -273,7 +278,7 @@ describe('PrintBulkActionBarComponent', () => {
 
     it('removes the project when the dialog asks for it', async () => {
       const removeProject = selectAndStub('removeProjectFromSelected');
-      dialogRef.afterClosed.and.returnValue(of({ remove: true }));
+      dialogRef.afterClosed.mockReturnValue(of({ remove: true }));
 
       await component.addToProject();
 
@@ -282,7 +287,7 @@ describe('PrintBulkActionBarComponent', () => {
 
     it('does nothing when the project dialog is cancelled', async () => {
       const setProject = selectAndStub('setProjectForSelected');
-      dialogRef.afterClosed.and.returnValue(of(undefined));
+      dialogRef.afterClosed.mockReturnValue(of(undefined));
 
       await component.addToProject();
 
@@ -292,13 +297,13 @@ describe('PrintBulkActionBarComponent', () => {
     it('names the newly created project when the assignment fails', async () => {
       bulkActions.toggleSelection(printOne);
       fixture.detectChanges();
-      spyOn(bulkActions, 'setProjectForSelected').and.resolveTo({
+      vi.spyOn(bulkActions, 'setProjectForSelected').mockResolvedValue({
         succeededIds: [],
         failedIds: [printOne.id],
         failuresRetained: true,
         errorMessage: null,
       });
-      dialogRef.afterClosed.and.returnValue(
+      dialogRef.afterClosed.mockReturnValue(
         of({ projectId: 'created-id', projectName: 'New Batch', created: true })
       );
 
@@ -334,15 +339,14 @@ describe('PrintBulkActionBarComponent', () => {
     });
 
     it('does nothing when nothing is selected', async () => {
-      const setProject = spyOn(
-        bulkActions,
-        'setProjectForSelected'
-      ).and.resolveTo({
-        succeededIds: [],
-        failedIds: [],
-        failuresRetained: false,
-        errorMessage: null,
-      });
+      const setProject = vi
+        .spyOn(bulkActions, 'setProjectForSelected')
+        .mockResolvedValue({
+          succeededIds: [],
+          failedIds: [],
+          failuresRetained: false,
+          errorMessage: null,
+        });
 
       await component.addToProject();
 

@@ -23,40 +23,30 @@ describe('route guard matrix', () => {
       'printer-maintenance',
       'feed',
     ]) {
-      expect(guarded(find(appRoutes, path)))
-        .withContext(path)
-        .toBe(true);
+      expect(guarded(find(appRoutes, path)), path).toBe(true);
     }
   });
 
   it('guards private list/edit children but leaves public print view open', () => {
     const printChildren = find(PRINT_ROUTES, '')?.children ?? [];
-    expect(guarded(find(printChildren, '')))
-      .withContext('prints list')
-      .toBe(true);
-    expect(guarded(find(printChildren, 'copy/:id')))
-      .withContext('print copy')
-      .toBe(true);
-    expect(guarded(find(printChildren, ':id')))
-      .withContext('print view is public')
-      .toBe(false);
+    expect(guarded(find(printChildren, '')), 'prints list').toBe(true);
+    expect(guarded(find(printChildren, 'copy/:id')), 'print copy').toBe(true);
+    expect(guarded(find(printChildren, ':id')), 'print view is public').toBe(
+      false
+    );
   });
 
   it('guards all filament children (detail is private)', () => {
     const children = find(FILAMENT_ROUTES, '')?.children ?? [];
     for (const path of ['', 'copy/:id', ':id']) {
-      expect(guarded(find(children, path)))
-        .withContext(`filament ${path}`)
-        .toBe(true);
+      expect(guarded(find(children, path)), `filament ${path}`).toBe(true);
     }
   });
 
   it('guards all printer children (detail is private)', () => {
     const children = find(PRINTER_ROUTES, '')?.children ?? [];
     for (const path of ['', ':id']) {
-      expect(guarded(find(children, path)))
-        .withContext(`printer ${path}`)
-        .toBe(true);
+      expect(guarded(find(children, path)), `printer ${path}`).toBe(true);
     }
   });
 });

@@ -1,3 +1,4 @@
+import type { Mock, MockedObject } from 'vitest';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { TestBed } from '@angular/core/testing';
 import { CORDOVA_IOS_USER_AGENT, CORDOVA_USER_AGENT } from '../utils/platform';
@@ -19,18 +20,14 @@ class FakeNfcBridge {
   private nfcListeners: (() => void)[] = [];
   private readingListeners: (() => void)[] = [];
 
-  readonly startTagReading = jasmine
-    .createSpy('startTagReading')
-    .and.callFake(() => Promise.resolve(this.status));
-  readonly stopTagReading = jasmine
-    .createSpy('stopTagReading')
-    .and.resolveTo(undefined);
-  readonly nfcStatus = jasmine
-    .createSpy('nfcStatus')
-    .and.callFake(() => Promise.resolve(this.status));
-  readonly openNfcSettings = jasmine
-    .createSpy('openNfcSettings')
-    .and.resolveTo(undefined);
+  readonly startTagReading = vi
+    .fn()
+    .mockImplementation(() => Promise.resolve(this.status));
+  readonly stopTagReading = vi.fn().mockResolvedValue(undefined);
+  readonly nfcStatus = vi
+    .fn()
+    .mockImplementation(() => Promise.resolve(this.status));
+  readonly openNfcSettings = vi.fn().mockResolvedValue(undefined);
 
   consumeTag(): Promise<TagRead | null> {
     const tag = this.queued;
@@ -75,8 +72,8 @@ async function flush(): Promise<void> {
 
 describe('TagReaderService', () => {
   let realUserAgent: PropertyDescriptor | undefined;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let filaments: jasmine.SpyObj<FilamentService>;
+  let logging: MockedObject<LoggingService>;
+  let filaments: MockedObject<FilamentService>;
   const config: ReaderConfig = {
     formats: [{ id: 'snapmaker', scheme: 'mifare-classic', params: {} }],
   };
@@ -121,14 +118,14 @@ describe('TagReaderService', () => {
       Object.getPrototypeOf(navigator),
       'userAgent'
     );
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
-    filaments = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getReaderConfig',
-    ]);
-    filaments.getReaderConfig.and.callFake(() => of(config));
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
+    filaments = {
+      getReaderConfig: vi.fn().mockName('FilamentService.getReaderConfig'),
+    } as unknown as MockedObject<FilamentService>;
+    filaments.getReaderConfig.mockImplementation(() => of(config));
     TestBed.configureTestingModule({
       providers: [
         { provide: LoggingService, useValue: logging },
@@ -148,18 +145,18 @@ describe('TagReaderService', () => {
       );
     }
     delete window.PrintLogNative;
-    jasmine.clock().uninstall();
+    vi.useRealTimers();
   });
 
   it('is unavailable in an ordinary browser', () => {
     installBridge(new FakeNfcBridge());
-    expect(create().available()).toBeFalse();
+    expect(create().available()).toBe(false);
   });
 
   it('is unavailable on an app shell without startTagReading', () => {
     pretendCordova();
     installBridge(null);
-    expect(create().available()).toBeFalse();
+    expect(create().available()).toBe(false);
   });
 
   it('is available on an app shell that can read tags', async () => {
@@ -167,7 +164,7 @@ describe('TagReaderService', () => {
     installBridge(new FakeNfcBridge());
     const service = create();
     await flush();
-    expect(service.available()).toBeTrue();
+    expect(service.available()).toBe(true);
   });
 
   it('is unavailable on a phone without NFC, so no control shows that can never work', async () => {
@@ -177,7 +174,7 @@ describe('TagReaderService', () => {
     installBridge(nfc);
     const service = create();
     await flush();
-    expect(service.available()).toBeFalse();
+    expect(service.available()).toBe(false);
   });
 
   it('is available with NFC turned off, so the screen can offer Turn on', async () => {
@@ -187,7 +184,7 @@ describe('TagReaderService', () => {
     installBridge(nfc);
     const service = create();
     await flush();
-    expect(service.available()).toBeTrue();
+    expect(service.available()).toBe(true);
     expect(service.status()).toBe('off');
   });
 
@@ -231,8 +228,8 @@ describe('TagReaderService', () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
-    jasmine.clock().install();
-    jasmine.clock().mockDate(new Date(2026, 9, 15, 12, 0, 0));
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 15, 12, 0, 0));
     const reads: string[] = [];
     create()
       .listen()
@@ -240,12 +237,12 @@ describe('TagReaderService', () => {
 
     nfc.deliver('04A23F11');
     await flush();
-    jasmine.clock().tick(1999);
+    vi.advanceTimersByTime(1999);
     nfc.deliver('04A23F11');
     await flush();
     nfc.deliver('04B00000');
     await flush();
-    jasmine.clock().tick(2001);
+    vi.advanceTimersByTime(2001);
     nfc.deliver('04A23F11');
     await flush();
 
@@ -256,8 +253,8 @@ describe('TagReaderService', () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
-    jasmine.clock().install();
-    jasmine.clock().mockDate(new Date(2026, 9, 15, 12, 0, 0));
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 15, 12, 0, 0));
     const reads: string[] = [];
     create()
       .listen()
@@ -266,13 +263,13 @@ describe('TagReaderService', () => {
     // A spool resting at the edge of the field drops out and back in.
     nfc.deliver('04A23F11');
     await flush();
-    jasmine.clock().tick(1500);
+    vi.advanceTimersByTime(1500);
     nfc.deliver('04A23F11');
     await flush();
-    jasmine.clock().tick(1500);
+    vi.advanceTimersByTime(1500);
     nfc.deliver('04A23F11');
     await flush();
-    jasmine.clock().tick(2001);
+    vi.advanceTimersByTime(2001);
     nfc.deliver('04A23F11');
     await flush();
 
@@ -317,14 +314,14 @@ describe('TagReaderService', () => {
     pretendCordova();
     const service = create();
     service.listen().subscribe();
-    expect(service.available()).toBeFalse();
+    expect(service.available()).toBe(false);
 
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
     window.dispatchEvent(new Event('printlog-native-ready'));
     await flush();
 
-    expect(service.available()).toBeTrue();
+    expect(service.available()).toBe(true);
     expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
     nfc.deliver('04A23F11');
     await flush();
@@ -345,20 +342,22 @@ describe('TagReaderService', () => {
     installBridge(nfc);
     create().listen().subscribe();
     await flush();
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledWith(config);
   });
 
   it('starts reading with null when the config call fails', async () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
-    filaments.getReaderConfig.and.returnValue(
+    filaments.getReaderConfig.mockReturnValue(
       throwError(() => new Error('offline'))
     );
     const service = create();
     service.listen().subscribe();
     await flush();
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(null);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledWith(null);
     expect(service.status()).toBe('ready');
   });
 
@@ -366,11 +365,14 @@ describe('TagReaderService', () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
-    filaments.getReaderConfig.and.throwError(new Error('not wired'));
+    filaments.getReaderConfig.mockImplementation(() => {
+      throw new Error('not wired');
+    });
     const service = create();
     service.listen().subscribe();
     await flush();
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(null);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledWith(null);
     expect(service.status()).toBe('ready');
   });
 
@@ -378,14 +380,15 @@ describe('TagReaderService', () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
-    filaments.getReaderConfig.and.returnValue(new Subject<ReaderConfig>());
-    jasmine.clock().install();
+    filaments.getReaderConfig.mockReturnValue(new Subject<ReaderConfig>());
+    vi.useFakeTimers();
     create().listen().subscribe();
     await flush();
     expect(nfc.startTagReading).not.toHaveBeenCalled();
-    jasmine.clock().tick(5001);
+    vi.advanceTimersByTime(5001);
     await flush();
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(null);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledWith(null);
   });
 
   it('fetches the config once per session', async () => {
@@ -418,7 +421,7 @@ describe('TagReaderService', () => {
         s.complete();
       }
     });
-    filaments.getReaderConfig.and.returnValue(source);
+    filaments.getReaderConfig.mockReturnValue(source);
     const service = create();
 
     const first = service.listen().subscribe();
@@ -427,7 +430,10 @@ describe('TagReaderService', () => {
     service.listen().subscribe();
     await flush();
 
-    expect(nfc.startTagReading.calls.allArgs()).toEqual([[null], [config]]);
+    expect(vi.mocked(nfc.startTagReading).mock.calls).toEqual([
+      [null],
+      [config],
+    ]);
   });
 
   it('fetches the config as soon as the bridge is ready, before anyone listens', async () => {
@@ -441,7 +447,8 @@ describe('TagReaderService', () => {
     service.listen().subscribe();
     await flush();
     expect(filaments.getReaderConfig).toHaveBeenCalledTimes(1);
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledWith(config);
   });
 
   it('fetches the config when the bridge appears late', async () => {
@@ -460,19 +467,19 @@ describe('TagReaderService', () => {
     pretendCordova();
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
-    filaments.getReaderConfig.and.returnValue(new Subject<ReaderConfig>());
-    jasmine.clock().install();
+    filaments.getReaderConfig.mockReturnValue(new Subject<ReaderConfig>());
+    vi.useFakeTimers();
     const service = create();
     const first = service.listen().subscribe();
     await flush();
-    jasmine.clock().tick(5001);
+    vi.advanceTimersByTime(5001);
     await flush();
     first.unsubscribe();
 
     service.listen().subscribe();
     await flush();
 
-    expect(nfc.startTagReading.calls.allArgs()).toEqual([[null], [null]]);
+    expect(vi.mocked(nfc.startTagReading).mock.calls).toEqual([[null], [null]]);
     expect(filaments.getReaderConfig).toHaveBeenCalledTimes(1);
   });
 
@@ -481,12 +488,12 @@ describe('TagReaderService', () => {
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
     const pending = new Subject<ReaderConfig>();
-    filaments.getReaderConfig.and.returnValue(pending);
-    jasmine.clock().install();
+    filaments.getReaderConfig.mockReturnValue(pending);
+    vi.useFakeTimers();
     const service = create();
     const first = service.listen().subscribe();
     await flush();
-    jasmine.clock().tick(5001);
+    vi.advanceTimersByTime(5001);
     await flush();
     first.unsubscribe();
 
@@ -495,7 +502,10 @@ describe('TagReaderService', () => {
     service.listen().subscribe();
     await flush();
 
-    expect(nfc.startTagReading.calls.allArgs()).toEqual([[null], [config]]);
+    expect(vi.mocked(nfc.startTagReading).mock.calls).toEqual([
+      [null],
+      [config],
+    ]);
   });
 
   it('does not refetch the config for a second listener', async () => {
@@ -555,7 +565,7 @@ describe('TagReaderService', () => {
     // App 1.3.0: no onTagReading, startTagReading takes no parameters.
     const bridge = window.PrintLogNative as PrintLogNativeBridge;
     delete bridge.onTagReading;
-    const legacyStart = jasmine.createSpy('start').and.resolveTo('ready');
+    const legacyStart = vi.fn().mockResolvedValue('ready');
     bridge.startTagReading = () => legacyStart();
     const service = create();
     service.listen().subscribe();
@@ -569,7 +579,7 @@ describe('TagReaderService', () => {
     const nfc = new FakeNfcBridge();
     installBridge(nfc);
     const pending = new Subject<ReaderConfig>();
-    filaments.getReaderConfig.and.returnValue(pending);
+    filaments.getReaderConfig.mockReturnValue(pending);
     const service = create();
 
     service.listen().subscribe().unsubscribe();
@@ -579,14 +589,15 @@ describe('TagReaderService', () => {
     await flush();
 
     expect(nfc.stopTagReading).toHaveBeenCalledTimes(1);
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+    expect(nfc.startTagReading).toHaveBeenCalledWith(config);
   });
 
   it('starts native once when the bridge appears while a start is in flight', async () => {
     pretendCordova();
     const service = create();
     const pending = new Subject<ReaderConfig>();
-    filaments.getReaderConfig.and.returnValue(pending);
+    filaments.getReaderConfig.mockReturnValue(pending);
     service.listen().subscribe();
 
     const nfc = new FakeNfcBridge();
@@ -598,7 +609,9 @@ describe('TagReaderService', () => {
     pending.complete();
     await flush();
 
-    expect(nfc.startTagReading).toHaveBeenCalledOnceWith(config);
+    expect(nfc.startTagReading).toHaveBeenCalledTimes(1);
+
+    expect(nfc.startTagReading).toHaveBeenCalledWith(config);
   });
 
   it('the dev fake tag signals readingStarted before it delivers the read', () => {
@@ -619,7 +632,7 @@ describe('TagReaderService', () => {
   });
 
   describe('in session mode (iOS)', () => {
-    let scanTag: jasmine.Spy;
+    let scanTag: Mock;
 
     /** The Android bridge plus what the iOS shell adds: session mode and scanTag. */
     function installSessionBridge(nfc: FakeNfcBridge): void {
@@ -628,7 +641,7 @@ describe('TagReaderService', () => {
         configurable: true,
       });
       installBridge(nfc);
-      scanTag = jasmine.createSpy('scanTag').and.resolveTo('ready');
+      scanTag = vi.fn().mockResolvedValue('ready');
       Object.assign(window.PrintLogNative!, {
         platform: 'ios',
         tagReadingMode: 'session',
@@ -641,7 +654,7 @@ describe('TagReaderService', () => {
       installBridge(new FakeNfcBridge());
       const passive = create();
       await flush();
-      expect(passive.scansOnDemand()).toBeFalse();
+      expect(passive.scansOnDemand()).toBe(false);
 
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
@@ -653,14 +666,14 @@ describe('TagReaderService', () => {
       installSessionBridge(new FakeNfcBridge());
       const session = create();
       await flush();
-      expect(session.scansOnDemand()).toBeTrue();
+      expect(session.scansOnDemand()).toBe(true);
     });
 
     it('opens the scan sheet only after native has its session, however long the config takes', async () => {
       const nfc = new FakeNfcBridge();
       installSessionBridge(nfc);
       const config$ = new Subject<ReaderConfig>();
-      filaments.getReaderConfig.and.returnValue(config$);
+      filaments.getReaderConfig.mockReturnValue(config$);
       const service = create();
       await flush();
 
@@ -675,7 +688,9 @@ describe('TagReaderService', () => {
       config$.complete();
       await scanned;
 
-      expect(nfc.startTagReading).toHaveBeenCalledBefore(scanTag);
+      expect(
+        Math.min(...vi.mocked(nfc.startTagReading).mock.invocationCallOrder)
+      ).toBeLessThan(Math.min(...vi.mocked(scanTag).mock.invocationCallOrder));
       expect(scanTag).toHaveBeenCalledTimes(1);
       subscription.unsubscribe();
     });
@@ -694,7 +709,7 @@ describe('TagReaderService', () => {
       pretendCordova();
       const nfc = new FakeNfcBridge();
       installBridge(nfc);
-      const scan = jasmine.createSpy('scanTag').and.resolveTo('ready');
+      const scan = vi.fn().mockResolvedValue('ready');
       Object.assign(window.PrintLogNative!, { scanTag: scan });
       const service = create();
       await flush();

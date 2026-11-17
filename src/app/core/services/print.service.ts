@@ -1,9 +1,11 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { from, fromEvent, Observable, of } from 'rxjs';
-import { catchError, concatMap, map, switchMap, take } from 'rxjs/operators';
+import { from, Observable } from 'rxjs';
+import { map, switchMap } from 'rxjs/operators';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { environment } from 'src/environments/environment';
+import { apiUrl } from 'src/app/core/utils/api-url';
+import { readImageWithFallback } from 'src/app/core/utils/read-image';
 
 import {
   ImageResizerService,
@@ -80,6 +82,12 @@ export interface PrintImage {
    * base64 encoded URLs.
    */
   url?: string;
+
+  /**
+   * Path of the 320px thumbnail, relative to the API base URL. Absent from APIs older than
+   * #281; callers fall back to the full image.
+   */
+  thumbnailUrl?: string | null;
 }
 
 export interface PrintFilamentSummaryDto {
@@ -102,6 +110,12 @@ export interface PrintFilamentSummaryDto {
 
   source: PrintFilamentSourceMeasurement;
   estimatedSource: PrintFilamentSourceMeasurement;
+
+  /**
+   * The actual figure is the slicer's estimate, not a measurement: a printer that can't measure
+   * what it feeds (Bambu, PrusaLink) reports it this way (api#282). Absent on older APIs.
+   */
+  actualIsEstimate?: boolean;
 
   notes?: string;
 }
@@ -127,6 +141,12 @@ export interface PutPrintFilamentSummaryDto {
   source: PrintFilamentSourceMeasurement;
   estimatedSource: PrintFilamentSourceMeasurement;
 
+  /**
+   * The actual figure is the slicer's estimate, not a measurement: a printer that can't measure
+   * what it feeds (Bambu, PrusaLink) reports it this way (api#282). Absent on older APIs.
+   */
+  actualIsEstimate?: boolean;
+
   notes?: string;
 }
 
@@ -138,6 +158,11 @@ export interface PrintSummary {
   status: PrintStatus;
 
   defaultPrintImageId: number;
+  /**
+   * Path of the default image's thumbnail, relative to the API base URL. Null when the print
+   * has no image; absent from APIs older than #281.
+   */
+  defaultPrintImageThumbnailUrl?: string | null;
   createdByUserId: number;
   estimatedPrintTimeInSeconds: number | null;
   printTimeInSeconds: number | null;
@@ -145,6 +170,8 @@ export interface PrintSummary {
   sumActualFilamentWeightMg: number;
   sumEstimatedFilamentWeightMg: number;
   totalFilamentWeightMg: number;
+  /** Resin used, in mL (3d-print-log-api#294). Absent from older APIs. */
+  totalFilamentVolumeMl?: number;
   filamentUsage: PrintFilamentSummaryDto[];
 
   /**
@@ -228,6 +255,21 @@ export interface PatchPrintDTO {
   clear?: PrintClearableField[];
 }
 
+/**
+ * True when a usage row records an actual figure, checked in the measurement the row is sourced
+ * from. A Volume-sourced (resin) row records `volumeMl` and leaves `amountMg` null, so testing
+ * `amountMg` alone treats it as estimate-only and prices or shows its estimate instead.
+ */
+export function hasActualUsage(fu: PrintFilamentSummaryDto): boolean {
+  if (fu.source == PrintFilamentSourceMeasurement.Length) {
+    return (fu.lengthInM ?? 0) > 0;
+  }
+  if (fu.source == PrintFilamentSourceMeasurement.Volume) {
+    return (fu.volumeMl ?? 0) > 0;
+  }
+  return (fu.amountMg ?? 0) > 0;
+}
+
 /** One usage row in the shape the API takes on write (PATCH and the legacy PUT). */
 export function toPutPrintFilamentSummary(
   pf: PrintFilamentSummaryDto
@@ -244,6 +286,8 @@ export function toPutPrintFilamentSummary(
     lengthInM: pf.lengthInM,
     volumeMl: pf.volumeMl,
     source: pf.source,
+    // PATCH and PUT replace every row and reset the flag unless it is sent back (api#282).
+    actualIsEstimate: pf.actualIsEstimate ?? false,
     notes: pf.notes,
   };
 }
@@ -612,27 +656,19 @@ export class PrintService {
   }
 
   /**
-   * Returns the print's image as a base64 encoded dataUrl
+   * Returns the print's image as a base64 encoded dataUrl, or '' when it cannot be loaded.
+   *
+   * @param thumbnailPath The image's `thumbnailUrl` (relative to the API base), for a small
+   *   slot. Fetched instead of the full image; if it fails, the full image is fetched. Absent
+   *   from APIs older than #281, which get the full image as before.
    */
-  public getPrintImage(printId: number, imageId: number): Observable<string> {
+  public getPrintImage(
+    printId: number,
+    imageId: number,
+    thumbnailPath?: string | null
+  ): Observable<string> {
     const url = `${this.baseApi}/api/Prints/${printId}/image/${imageId}`;
-    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
-
-    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
-      concatMap((image) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(image);
-        return fromEvent(reader, 'load');
-      }),
-      take(1),
-      map((e) => {
-        // result includes identifier 'data:image/png;base64,' plus the base64 data
-        const data = (e.target as FileReader).result as string;
-
-        return data;
-      }),
-      catchError((err) => of(''))
-    );
+    return readImageWithFallback(this.http, apiUrl(thumbnailPath), url);
   }
 
   public setImageAsDefault(printId: number, imageId: number) {
@@ -707,14 +743,7 @@ export class PrintService {
       // null, so testing amountMg alone sent it down the estimated path and — when there was no
       // estimate — reported a confident $0.00 instead of its real cost.
       // Pinned by print-cost-fixtures.spec.ts against the shared corpus.
-      const hasActual =
-        fu.source == PrintFilamentSourceMeasurement.Length
-          ? (fu.lengthInM ?? 0) > 0
-          : fu.source == PrintFilamentSourceMeasurement.Volume
-            ? (fu.volumeMl ?? 0) > 0
-            : (fu.amountMg ?? 0) > 0;
-
-      if (hasActual) {
+      if (hasActualUsage(fu)) {
         const price = this.calculatePrintCost({
           currencySymbol,
           filament: fu.filament,

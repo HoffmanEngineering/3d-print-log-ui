@@ -25,14 +25,8 @@ href="https://github.com/ChristopherHoffman/3d-print-log-cura-plugin/releases"
 >latest release from GitHub</a > and drag/drop into Cura to install.
 
 <img
-    class="fade-in"
+    class="fade-in doc-shot-narrow"
     alt="Installing the 3D Print Log Uploader plugin from the Ultimaker Cura Marketplace"
-    [ngStyle.lt-md]="{
-      display: 'block',
-      'max-width': '90%',
-      'margin-left': 'auto',
-      'margin-right': 'auto',
-    }"
     src="./assets/docs-3dprintloguploader-cura-install_2400a87afa5el.png"
   />
 
@@ -48,8 +42,8 @@ with the information from Cura.
 
 ### Customize Settings {#customize-settings}
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <p>
         You can customize the list of logged settings through Cura's
         <strong>Extensions</strong> -> <strong>3D Print Log</strong> ->
@@ -66,15 +60,9 @@ with the information from Cura.
         back to the default selection.
       </p>
     </div>
-    <div fxFlex>
+    <div class="doc-column">
       <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
+        class="fade-in doc-shot-narrow"
         alt="The Customize Settings to Log dialog inside of Cura"
         src="./assets/docs-3dprintloguploader-cura-setting-dialog_d85e4adef.png"
       />

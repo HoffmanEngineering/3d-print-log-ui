@@ -1,5 +1,6 @@
+import type { Mock, MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Routes } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 
 import { TEST_CATALOG } from '../../../achievements/testing/achievement-fixtures';
@@ -7,6 +8,10 @@ import { AchievementService } from '../../../core/services/achievement.service';
 import { LoggingService } from '../../../core/services/logging.service';
 import { MyAchievements } from '../../../core/types/achievement';
 import { NextAchievementHintComponent } from './next-achievement-hint.component';
+
+// These specs navigate (a link click, a save), and a route the TestBed doesn't know
+// fails with an unhandled 'Cannot match any routes', which fails the run.
+const ANYWHERE: Routes = [{ path: '**', children: [] }];
 
 const ME: MyAchievements = {
   earnedTierCount: 0,
@@ -18,20 +23,18 @@ const ME: MyAchievements = {
 
 describe('NextAchievementHintComponent', () => {
   let fixture: ComponentFixture<NextAchievementHintComponent>;
-  let dismissHint: jasmine.Spy;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let dismissHint: Mock;
+  let logging: MockedObject<LoggingService>;
 
   function render(me$: Observable<MyAchievements>): HTMLElement {
-    dismissHint = jasmine
-      .createSpy('dismissHint')
-      .and.returnValue(of(undefined));
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    dismissHint = vi.fn().mockReturnValue(of(undefined));
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     TestBed.configureTestingModule({
       imports: [NextAchievementHintComponent],
       providers: [
-        provideRouter([]),
+        provideRouter(ANYWHERE),
         { provide: LoggingService, useValue: logging },
         {
           provide: AchievementService,
@@ -91,14 +94,16 @@ describe('NextAchievementHintComponent', () => {
   });
 
   it('uses a me passed in instead of fetching its own', () => {
-    const me = jasmine.createSpy('me').and.returnValue(of(ME));
+    const me = vi.fn().mockReturnValue(of(ME));
     TestBed.configureTestingModule({
       imports: [NextAchievementHintComponent],
       providers: [
-        provideRouter([]),
+        provideRouter(ANYWHERE),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
         {
           provide: AchievementService,

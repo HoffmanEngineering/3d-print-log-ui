@@ -13,7 +13,7 @@
     <app-chart-frame
       class="activity-tab__chart"
       #seriesFrame
-      [title]="seriesLabels[metric()] + ' over time'"
+      [title]="seriesLabels[plottedMetric()] + ' over time'"
       [csv]="seriesCsv()"
       [state]="state()"
       [coverage]="data()?.coverage ?? null"
@@ -30,12 +30,15 @@
         chartActions
         class="activity-tab__metric"
         aria-label="Metric to plot"
-        [value]="metric()"
+        [value]="plottedMetric()"
         (change)="setMetric($event.value)"
       >
         <mat-button-toggle value="count">Prints</mat-button-toggle>
         <mat-button-toggle value="time">Print time</mat-button-toggle>
         <mat-button-toggle value="filament">Filament</mat-button-toggle>
+        @if (resinAvailable()) {
+          <mat-button-toggle value="resin">Resin</mat-button-toggle>
+        }
         <mat-button-toggle value="cost" [disabled]="!costAvailable()"
           >Cost</mat-button-toggle
         >
@@ -50,7 +53,7 @@
       <table chartDataTable>
         <caption>
           {{
-            seriesLabels[metric()]
+            seriesLabels[plottedMetric()]
           }}
           per period
         </caption>

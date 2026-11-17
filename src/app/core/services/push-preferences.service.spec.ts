@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { PushPreferencesService } from './push-preferences.service';
 import {
@@ -8,13 +9,17 @@ import {
 
 describe('PushPreferencesService', () => {
   let service: PushPreferencesService;
-  let userSettings: jasmine.SpyObj<UserSettingService>;
+  let userSettings: MockedObject<UserSettingService>;
 
   beforeEach(() => {
-    userSettings = jasmine.createSpyObj('UserSettingService', [
-      'getCurrentUsersSettingByType',
-      'addOrUpdateSetting',
-    ]);
+    userSettings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting'),
+    } as unknown as MockedObject<UserSettingService>;
 
     TestBed.configureTestingModule({
       providers: [{ provide: UserSettingService, useValue: userSettings }],
@@ -27,41 +32,41 @@ describe('PushPreferencesService', () => {
   }
 
   it('treats an absent setting as enabled', async () => {
-    userSettings.getCurrentUsersSettingByType.and.resolveTo(null);
-    await expectAsync(
+    userSettings.getCurrentUsersSettingByType.mockResolvedValue(null);
+    await expect(
       service.isEnabled(UserSettingType.Push_PrintFailed)
-    ).toBeResolvedTo(true);
+    ).resolves.toEqual(true);
   });
 
   it('treats the literal "false" as disabled', async () => {
-    userSettings.getCurrentUsersSettingByType.and.resolveTo(
+    userSettings.getCurrentUsersSettingByType.mockResolvedValue(
       settingWithValue('false')
     );
-    await expectAsync(
+    await expect(
       service.isEnabled(UserSettingType.Push_PrintFailed)
-    ).toBeResolvedTo(false);
+    ).resolves.toEqual(false);
   });
 
   it('trims and lowercases before comparing', async () => {
-    userSettings.getCurrentUsersSettingByType.and.resolveTo(
+    userSettings.getCurrentUsersSettingByType.mockResolvedValue(
       settingWithValue('  FALSE ')
     );
-    await expectAsync(
+    await expect(
       service.isEnabled(UserSettingType.Push_PrintFailed)
-    ).toBeResolvedTo(false);
+    ).resolves.toEqual(false);
   });
 
   it('treats an unrecognised value as enabled, matching the API', async () => {
-    userSettings.getCurrentUsersSettingByType.and.resolveTo(
+    userSettings.getCurrentUsersSettingByType.mockResolvedValue(
       settingWithValue('garbage')
     );
-    await expectAsync(
+    await expect(
       service.isEnabled(UserSettingType.Push_PrintFailed)
-    ).toBeResolvedTo(true);
+    ).resolves.toEqual(true);
   });
 
   it('writes the canonical string', async () => {
-    userSettings.addOrUpdateSetting.and.resolveTo(undefined);
+    userSettings.addOrUpdateSetting.mockResolvedValue(undefined);
     await service.setEnabled(UserSettingType.Push_PrintCompleted, false);
     expect(userSettings.addOrUpdateSetting).toHaveBeenCalledWith(
       UserSettingType.Push_PrintCompleted,

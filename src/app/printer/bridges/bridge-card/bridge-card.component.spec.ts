@@ -1,0 +1,467 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { provideRouter } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import {
+  Bridge,
+  BridgePrinter,
+  BridgesService,
+  DiscoveredPrinter,
+  DiscoveredPrinterState,
+} from 'src/app/core/services/bridges.service';
+import { LoggingService } from 'src/app/core/services/logging.service';
+import { ConnectionStatus } from 'src/app/core/services/connection.service';
+import {
+  OTHER_BRIDGE_KEY,
+  bridge,
+  bridgePrinter,
+  discovered,
+} from '../testing/bridge-fixtures';
+import { By } from '@angular/platform-browser';
+import { BridgeCredentialsComponent } from '../bridge-credentials/bridge-credentials.component';
+import { CrossBridge, Sighting } from '../bridge-grouping';
+import { BridgeCardComponent } from './bridge-card.component';
+
+describe('BridgeCardComponent', () => {
+  let fixture: ComponentFixture<BridgeCardComponent>;
+
+  const found: DiscoveredPrinter[] = [
+    discovered({
+      id: 1,
+      state: DiscoveredPrinterState.New,
+      name: 'Workshop X1C',
+    }),
+    discovered({
+      id: 2,
+      kind: 'moonraker',
+      name: 'voron',
+      model: 'Voron 2.4',
+      address: '192.168.1.50',
+      port: 7125,
+      serial: null,
+      state: DiscoveredPrinterState.Configured,
+      printerEntryId: null,
+    }),
+    discovered({
+      id: 3,
+      kind: 'prusalink',
+      name: 'MK4',
+      address: '192.168.1.61',
+      port: 80,
+      serial: null,
+      state: DiscoveredPrinterState.Connected,
+      printerEntryId: 7,
+    }),
+    discovered({
+      id: 4,
+      kind: 'bambu',
+      name: "Neighbor's A1",
+      state: DiscoveredPrinterState.Ignored,
+    }),
+    discovered({
+      id: 5,
+      // A kind the bridge reports but has no adapter for in this build.
+      kind: 'creality',
+      name: 'Creality K1',
+      address: '192.168.1.70',
+      port: 80,
+      serial: null,
+      state: DiscoveredPrinterState.New,
+    }),
+  ];
+  const entries: BridgePrinter[] = [
+    bridgePrinter({
+      id: 7,
+      printerId: 5,
+      printerName: 'MK4',
+      kind: 'prusalink',
+      host: '192.168.1.61',
+      port: 80,
+      serial: null,
+    }),
+  ];
+
+  async function create(
+    b: Bridge = bridge(),
+    d: DiscoveredPrinter[] | null = found,
+    p: BridgePrinter[] | null = entries
+  ) {
+    await TestBed.configureTestingModule({
+      imports: [BridgeCardComponent, NoopAnimationsModule],
+      providers: [
+        provideRouter([]),
+        {
+          provide: BridgesService,
+          useValue: {
+            setSecret: vi.fn().mockName('BridgesService.setSecret'),
+            clearSecret: vi.fn().mockName('BridgesService.clearSecret'),
+          },
+        },
+        {
+          provide: LoggingService,
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
+        },
+        {
+          provide: ToastrService,
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
+        },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(BridgeCardComponent);
+    fixture.componentRef.setInput('bridge', b);
+    fixture.componentRef.setInput('discovered', d);
+    fixture.componentRef.setInput('printers', p);
+    fixture.detectChanges();
+  }
+
+  function all(id: string): HTMLElement[] {
+    return Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll(
+        `[data-testid="${id}"]`
+      )
+    );
+  }
+
+  function one(id: string): HTMLElement | null {
+    return all(id)[0] ?? null;
+  }
+
+  it('shows the bridge, its status, version and networks', async () => {
+    await create(
+      bridge({ updateAvailable: true, latestAgentVersion: '0.3.1' })
+    );
+    expect(one('bridge-name')!.textContent).toContain('Garage NAS');
+    expect(one('bridge-location')!.textContent).toContain('Workshop');
+    expect(one('bridge-status')!.textContent).toContain('Online');
+    expect(one('bridge-update')!.textContent).toContain('0.3.1 is available');
+    expect(one('bridge-networks')!.textContent).toContain('192.168.1.0/24');
+    expect(one('bridge-revoke-link')!.getAttribute('href')).toBe(
+      '/settings#paired-devices'
+    );
+  });
+
+  it('says when a bridge is stale and turns Scan now off', async () => {
+    await create(bridge({ status: ConnectionStatus.Stale }));
+    expect(one('bridge-status')!.textContent).toContain('Stale');
+    expect(one('bridge-stale')).not.toBeNull();
+    expect((one('bridge-scan') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('groups what it found by state', async () => {
+    await create();
+    expect(all('bridge-connected-row').length).toBe(1);
+    expect(all('bridge-new-row').length).toBe(2);
+    expect(all('bridge-configured-row').length).toBe(1);
+    expect(all('bridge-ignored-row').length).toBe(1);
+  });
+
+  it('offers Connect only for kinds the bridge can watch', async () => {
+    await create();
+    const rows = all('bridge-new-row');
+    expect(rows[0].querySelector('[data-testid="bridge-connect"]')).not.toBe(
+      null
+    );
+    expect(rows[1].querySelector('[data-testid="bridge-connect"]')).toBe(null);
+    expect(rows[1].textContent).toContain("can't log this kind");
+  });
+
+  it('keeps config-file printers read-only', async () => {
+    await create();
+    const row = one('bridge-configured-row')!;
+    expect(row.textContent).toContain('Managed by the config file');
+    expect(row.querySelector('button')).toBeNull();
+  });
+
+  it('links a config-file printer to the 3D Print Log printer it logs to', async () => {
+    await create(bridge(), [
+      discovered({
+        id: 20,
+        kind: 'moonraker',
+        name: 'u1',
+        model: null,
+        address: '192.168.4.207',
+        port: 7125,
+        state: DiscoveredPrinterState.Configured,
+        printerId: 42,
+        printerName: 'Snapmaker U1',
+      }),
+    ]);
+    const row = one('bridge-configured-row')!;
+    const link = row.querySelector<HTMLAnchorElement>(
+      '[data-testid="bridge-configured-printer-link"]'
+    )!;
+    expect(link).not.toBeNull();
+    expect(link.textContent!.trim()).toBe('Snapmaker U1');
+    expect(link.getAttribute('href')).toBe('/printers/42');
+    const meta = row.querySelector('.meta')!.textContent!.replace(/\s+/g, ' ');
+    expect(meta).toContain('192.168.4.207:7125');
+    expect(meta).toContain('u1 in the config file');
+    expect(row.querySelector('button')).toBeNull();
+  });
+
+  it('titles a config-file printer by its name, then its address, without a linked printer', async () => {
+    await create(bridge(), [
+      discovered({
+        id: 21,
+        kind: 'moonraker',
+        name: 'lava',
+        model: null,
+        address: '192.168.4.207',
+        port: 7125,
+        state: DiscoveredPrinterState.Configured,
+      }),
+      discovered({
+        id: 22,
+        kind: 'moonraker',
+        name: null,
+        model: null,
+        address: '192.168.4.42',
+        port: 7125,
+        state: DiscoveredPrinterState.Configured,
+        printerId: null,
+        printerName: null,
+      }),
+    ]);
+    const rows = all('bridge-configured-row');
+    expect(
+      rows.map((r) => r.querySelector('.name')!.textContent!.trim())
+    ).toEqual(['lava', '192.168.4.42']);
+    for (const r of rows) {
+      expect(
+        r.querySelector('[data-testid="bridge-configured-printer-link"]')
+      ).toBeNull();
+      expect(r.textContent).toContain('Managed by the config file');
+    }
+  });
+
+  it('offers to remove an app entry the config file overrides', async () => {
+    const both = found.map((d) =>
+      d.id === 3 ? { ...d, state: DiscoveredPrinterState.Configured } : d
+    );
+    await create(bridge(), both);
+    let removed: BridgePrinter | undefined;
+    fixture.componentInstance.disconnect.subscribe((e) => (removed = e));
+    expect(one('bridge-config-wins')).not.toBeNull();
+    one('bridge-remove-app-entry')!.click();
+    expect(removed?.id).toBe(7);
+  });
+
+  it('emits connect, ignore, unignore, disconnect and add by address', async () => {
+    await create();
+    const c = fixture.componentInstance;
+    const events: string[] = [];
+    c.connect.subscribe((d) => events.push(`connect:${d?.id ?? 'address'}`));
+    c.ignore.subscribe((d) => events.push(`ignore:${d.id}`));
+    c.unignore.subscribe((d) => events.push(`unignore:${d.id}`));
+    c.disconnect.subscribe((e) => events.push(`disconnect:${e.id}`));
+
+    one('bridge-connect')!.click();
+    one('bridge-ignore')!.click();
+    one('bridge-unignore')!.click();
+    one('bridge-disconnect')!.click();
+    one('bridge-add-by-address')!.click();
+
+    expect(events).toEqual([
+      'connect:1',
+      'ignore:1',
+      'unignore:4',
+      'disconnect:7',
+      'connect:address',
+    ]);
+  });
+
+  it('shows the [app_printer] section on demand when the API lists no credential fields', async () => {
+    await create(bridge(), found, [
+      { ...entries[0], secretFields: undefined, secrets: undefined },
+    ]);
+    expect(one('bridge-snippet')).toBeNull();
+    one('bridge-credentials-toggle')!.click();
+    fixture.detectChanges();
+    expect(one('bridge-snippet')!.textContent).toContain('[app_printer 7]');
+    expect(one('bridge-credentials')).toBeNull();
+  });
+
+  it('opens the credentials of a connected printer and says their state in its row', async () => {
+    await create(bridge(), found, [
+      {
+        ...entries[0],
+        secretFields: ['password', 'username', 'api_key'],
+        secrets: [],
+        credentialIssues: [{ field: 'password', code: 'missing' }],
+      },
+    ]);
+    const summary = one('bridge-credential-summary')!;
+    expect(summary.textContent).toContain('needs the password');
+    expect(summary.classList).toContain('warn');
+    const toggle = one('bridge-credentials-toggle')!;
+    expect(toggle.textContent).toContain('Credentials');
+    toggle.click();
+    fixture.detectChanges();
+    expect(one('bridge-credentials')).not.toBeNull();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('passes a key confirmation, entry changes and reloads up', async () => {
+    await create(bridge({ pendingPublicKey: OTHER_BRIDGE_KEY.publicKey }));
+    const events: string[] = [];
+    const card = fixture.componentInstance;
+    card.confirmKey.subscribe((f) => events.push(`confirm:${f}`));
+    card.reloadBridge.subscribe(() => events.push('reload'));
+    for (let i = 0; i < 100 && !one('bridge-key-confirm'); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      fixture.detectChanges();
+    }
+    one('bridge-key-confirm')!.click();
+    expect(events).toEqual([`confirm:${OTHER_BRIDGE_KEY.fingerprint}`]);
+  });
+
+  it('shows Scanning while a requested scan is not done', async () => {
+    await create(
+      bridge({
+        scanRequestedAt: '2026-10-27T18:05:00Z',
+        lastSweepAt: '2026-10-27T17:00:00Z',
+      })
+    );
+    expect(one('bridge-scanning')).not.toBeNull();
+    expect(one('bridge-scan')).toBeNull();
+  });
+
+  it('renames with the trimmed name and location', async () => {
+    await create();
+    let renamed: unknown;
+    fixture.componentInstance.rename.subscribe((r) => (renamed = r));
+    one('bridge-edit')!.click();
+    fixture.detectChanges();
+    fixture.componentInstance.form.setValue({
+      name: '  Garage  ',
+      location: '',
+    });
+    one('bridge-edit-save')!.click();
+    fixture.detectChanges();
+    expect(renamed).toEqual({ name: 'Garage', location: '' });
+    expect(one('bridge-edit-form')).toBeNull();
+  });
+
+  it('offers a retry when its printers could not be loaded', async () => {
+    await create(bridge(), null, null);
+    expect(one('bridge-load-failed')).not.toBeNull();
+    expect(one('bridge-new-row')).toBeNull();
+  });
+
+  it('tells its inline editor the full key warning is shown above', async () => {
+    await create();
+    one('bridge-credentials-toggle')!.click();
+    fixture.detectChanges();
+    const editor = fixture.debugElement.query(
+      By.directive(BridgeCredentialsComponent)
+    ).componentInstance as BridgeCredentialsComponent;
+    expect(editor.keyWarningAbove()).toBe(true);
+  });
+
+  describe('with other bridges', () => {
+    const attic: Sighting = {
+      bridgeId: 9,
+      bridgeName: 'Attic Pi',
+      printer: discovered({ id: 118, address: '192.168.2.61' }),
+      onOwnNetwork: true,
+    };
+
+    function cross(parts: Partial<CrossBridge> = {}): CrossBridge {
+      return {
+        alsoFoundBy: new Map(),
+        listedElsewhere: new Map(),
+        entrySightings: new Map(),
+        ...parts,
+      };
+    }
+
+    async function createWith(
+      c: CrossBridge,
+      canMove = true,
+      d: DiscoveredPrinter[] = found
+    ) {
+      await create(bridge(), d, entries);
+      fixture.componentRef.setInput('cross', c);
+      fixture.componentRef.setInput('canMove', canMove);
+      fixture.detectChanges();
+    }
+
+    it('offers Move on a connected printer, and says who else found it', async () => {
+      await createWith(cross({ entrySightings: new Map([[7, [attic]]]) }));
+      let moved: BridgePrinter | undefined;
+      fixture.componentInstance.move.subscribe((e) => (moved = e));
+      expect(one('bridge-also-found')!.textContent).toContain('Attic Pi');
+      one('bridge-move')!.click();
+      expect(moved?.id).toBe(7);
+    });
+
+    it('offers no Move with a single bridge, or when the config file has the printer', async () => {
+      await createWith(cross(), false);
+      expect(one('bridge-move')).toBeNull();
+
+      TestBed.resetTestingModule();
+      await createWith(cross(), true, [
+        discovered({
+          id: 3,
+          kind: 'prusalink',
+          state: DiscoveredPrinterState.Configured,
+          printerEntryId: 7,
+        }),
+      ]);
+      expect(one('bridge-config-wins')).not.toBeNull();
+      expect(one('bridge-move')).toBeNull();
+    });
+
+    it('lists a printer found by two bridges once, with a Connect for the other bridge', async () => {
+      await createWith(cross({ alsoFoundBy: new Map([[1, [attic]]]) }));
+      let via: Sighting | undefined;
+      fixture.componentInstance.connectVia.subscribe((s) => (via = s));
+      const row = all('bridge-new-row').find((r) =>
+        r.textContent!.includes('Workshop X1C')
+      )!;
+      expect(row.textContent).toContain('Also found by Attic Pi');
+      (
+        row.querySelector('[data-testid="bridge-connect-via"]') as HTMLElement
+      ).click();
+      expect(via).toBe(attic);
+    });
+
+    it('leaves out a printer another bridge lists or watches, and says where it is', async () => {
+      await createWith(
+        cross({
+          listedElsewhere: new Map([
+            [1, { bridgeId: 9, bridgeName: 'Attic Pi', watched: true }],
+          ]),
+        })
+      );
+      expect(
+        all('bridge-new-row').some((r) =>
+          r.textContent!.includes('Workshop X1C')
+        )
+      ).toBe(false);
+      expect(one('bridge-listed-elsewhere')!.textContent).toContain('Attic Pi');
+    });
+
+    it('warns when another bridge also reported jobs for a printer', async () => {
+      await createWith(cross());
+      fixture.componentRef.setInput('sharedJob', {
+        printerId: 5,
+        printerName: 'X1C',
+        watcherName: 'Attic Pi',
+        count: 3,
+        lastAt: '2026-10-27T10:00:00Z',
+      });
+      fixture.detectChanges();
+      const notice = one('bridge-shared-jobs')!;
+      expect(notice.textContent).toContain('X1C');
+      expect(notice.textContent).toContain('Attic Pi');
+      expect(notice.textContent).toContain('config file');
+      expect(notice.querySelector('a[href="/printers/5"]')).not.toBeNull();
+    });
+  });
+});

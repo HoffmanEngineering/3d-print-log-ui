@@ -29,10 +29,6 @@ import { MatSelectionList, MatListOption } from '@angular/material/list';
 import { FormsModule } from '@angular/forms';
 import { MatIcon } from '@angular/material/icon';
 import { MatTooltip } from '@angular/material/tooltip';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatButton } from '@angular/material/button';
 
 export interface DialogData {
@@ -61,8 +57,6 @@ export interface DialogData {
     MatListOption,
     MatTooltip,
     MatDialogActions,
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatButton,
     MatDialogClose,
   ],

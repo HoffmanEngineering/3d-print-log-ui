@@ -54,7 +54,11 @@ interface SummaryBadge {
                 [category]="b.visual.category"
                 [tier]="b.tier"
                 [oneTime]="b.visual.oneTime"
-                [numeral]="b.visual.family?.tiers?.[b.tier - 1]?.threshold"
+                [numeral]="
+                  $safeNavigationMigration(
+                    b.visual.family?.tiers?.[b.tier - 1]?.threshold
+                  )
+                "
                 [label]="b.visual.title"
                 size="md"
               />
@@ -73,7 +77,9 @@ interface SummaryBadge {
             [category]="v.category"
             [tier]="tier()"
             [oneTime]="v.oneTime"
-            [numeral]="v.family?.tiers?.[tier() - 1]?.threshold"
+            [numeral]="
+              $safeNavigationMigration(v.family?.tiers?.[tier() - 1]?.threshold)
+            "
             [label]="v.title"
             size="lg"
           />

@@ -116,4 +116,35 @@ describe('StatTileComponent', () => {
     expect(el.textContent).toContain('2 prints use estimated material amounts');
     expect(el.textContent).not.toContain('MaterialEstimated');
   });
+
+  // 3d-print-log-api#294: resin is in mL.
+  it('formats milliliters', () => {
+    const el = render({
+      label: 'Resin used',
+      metric: metric(72.75),
+      format: 'milliliters',
+    });
+    expect(el.textContent).toContain('72.8 mL');
+  });
+
+  it('shows resin mL beside grams', () => {
+    const el = render({
+      label: 'Filament used',
+      metric: metric(34000),
+      format: 'grams',
+      volumeMl: 20,
+    });
+    expect(el.textContent).toContain('34.0 kg · 20.0 mL');
+  });
+
+  it('shows no mL beside grams when there is no resin', () => {
+    const el = render({
+      label: 'Filament used',
+      metric: metric(34000),
+      format: 'grams',
+      volumeMl: 0,
+    });
+    expect(el.textContent).toContain('34.0 kg');
+    expect(el.textContent).not.toContain('mL');
+  });
 });

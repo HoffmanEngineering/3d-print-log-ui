@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
@@ -12,7 +13,7 @@ import { FeedListComponent } from './feed-list.component';
 describe('FeedListComponent', () => {
   let fixture: ComponentFixture<FeedListComponent>;
   let component: FeedListComponent;
-  let feedService: jasmine.SpyObj<FeedService>;
+  let feedService: MockedObject<FeedService>;
 
   const item = (id: number, createdDate: string) =>
     ({
@@ -24,8 +25,10 @@ describe('FeedListComponent', () => {
   const text = () => (fixture.nativeElement as HTMLElement).textContent;
 
   beforeEach(() => {
-    feedService = jasmine.createSpyObj<FeedService>('FeedService', ['GetFeed']);
-    feedService.GetFeed.and.returnValue(
+    feedService = {
+      GetFeed: vi.fn().mockName('FeedService.GetFeed'),
+    } as unknown as MockedObject<FeedService>;
+    feedService.GetFeed.mockReturnValue(
       of([item(1, '2026-10-03T00:00:00Z'), item(2, '2026-10-02T00:00:00Z')])
     );
     TestBed.configureTestingModule({
@@ -43,11 +46,11 @@ describe('FeedListComponent', () => {
   it('loads the newest prints on arrival', () => {
     expect(feedService.GetFeed).toHaveBeenCalledTimes(1);
     expect(component.feed().map((p) => p.id)).toEqual([1, 2]);
-    expect(component.loading()).toBeFalse();
+    expect(component.loading()).toBe(false);
   });
 
   it('continues from the oldest print shown', () => {
-    feedService.GetFeed.and.returnValue(of([item(3, '2026-10-01T00:00:00Z')]));
+    feedService.GetFeed.mockReturnValue(of([item(3, '2026-10-01T00:00:00Z')]));
 
     component.loadMore();
 
@@ -58,12 +61,12 @@ describe('FeedListComponent', () => {
   });
 
   it('says so when there is nothing older', () => {
-    feedService.GetFeed.and.returnValue(of([]));
+    feedService.GetFeed.mockReturnValue(of([]));
 
     component.loadMore();
     fixture.detectChanges();
 
-    expect(component.hasMore()).toBeFalse();
+    expect(component.hasMore()).toBe(false);
     expect(text()).toContain("You're all caught up!");
   });
 

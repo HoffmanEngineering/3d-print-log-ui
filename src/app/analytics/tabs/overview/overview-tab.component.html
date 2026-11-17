@@ -23,9 +23,10 @@
       [loading]="state() === 'loading'"
     />
     <app-stat-tile
-      label="Filament used"
-      format="grams"
-      [metric]="data()?.tiles?.filamentGrams ?? null"
+      [label]="filamentTile().label"
+      [format]="filamentTile().format"
+      [metric]="filamentTile().metric"
+      [volumeMl]="filamentTile().volumeMl"
       [loading]="state() === 'loading'"
     />
     <app-stat-tile

@@ -25,7 +25,136 @@ function formatValue(
     return `${(value / 1000).toFixed(1)}g`;
   if (unit === PrintFilamentSourceMeasurement.Length)
     return `${value.toFixed(1)}m`;
-  return `${value.toFixed(1)}ml`;
+  return `${value.toFixed(1)}mL`;
+}
+
+/**
+ * True when a usage row is measured in mL: a resin print (printlog-bridge#97), on either its
+ * actual or its estimated side. Such a row always shows mL. Converting it to grams or meters
+ * would go through the bottle's density or a filament diameter it does not have, and an
+ * unlinked row has neither.
+ */
+export function isVolumeUsage(fu: PrintFilamentSummaryDto): boolean {
+  return (
+    fu.source === PrintFilamentSourceMeasurement.Volume ||
+    fu.estimatedSource === PrintFilamentSourceMeasurement.Volume
+  );
+}
+
+/** The unit a row is shown in: its own (as recorded) when it is measured in mL. */
+function displayUnit(
+  sourceIsVolume: boolean,
+  preferredUnit: PrintFilamentSourceMeasurement
+): PrintFilamentSourceMeasurement {
+  return sourceIsVolume
+    ? PrintFilamentSourceMeasurement.AsRecorded
+    : preferredUnit;
+}
+
+export interface VolumeUsageTotal {
+  ml: number;
+  /** True when any row contributed its estimate, or an actual that is the slicer's figure. */
+  isEstimated: boolean;
+}
+
+/**
+ * The mL a print used, when every one of its rows is measured in mL; otherwise null, and the
+ * caller shows its gram total. The server's gram total converts resin through the bottle's
+ * density and counts an unlinked row as 0, so a resin print's total has to come from its rows.
+ * Each row contributes its actual, else its estimate.
+ */
+export function volumeUsageTotal(
+  rows: readonly PrintFilamentSummaryDto[] | null | undefined
+): VolumeUsageTotal | null {
+  if (!rows?.length || !rows.every(isVolumeUsage)) {
+    return null;
+  }
+  let ml = 0;
+  let isEstimated = false;
+  for (const fu of rows) {
+    const actual =
+      fu.source === PrintFilamentSourceMeasurement.Volume
+        ? (fu.volumeMl ?? 0)
+        : 0;
+    const estimate =
+      fu.estimatedSource === PrintFilamentSourceMeasurement.Volume
+        ? (fu.estimatedVolumeMl ?? 0)
+        : 0;
+    if (actual > 0) {
+      ml += actual;
+      isEstimated ||= fu.actualIsEstimate === true;
+    } else if (estimate > 0) {
+      ml += estimate;
+      isEstimated = true;
+    }
+  }
+  return { ml, isEstimated };
+}
+
+/** "85.0 mL", with a trailing `*` when estimated, as the list's total columns show it. */
+export function formatVolumeTotal(total: VolumeUsageTotal): string {
+  return `${total.ml.toFixed(1)} mL${total.isEstimated ? '*' : ''}`;
+}
+
+const ML_FORMAT = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
+
+/** "20.0 mL", "1,234.5 mL": a server mL total (3d-print-log-api#294). */
+export function formatMilliliters(ml: number): string {
+  return `${ML_FORMAT.format(ml)} mL`;
+}
+
+/**
+ * A server material total with its resin (3d-print-log-api#294). The server sums grams and
+ * mL separately and never folds one into the other, and a resin row with a bottle linked
+ * counts in both (its grams through the bottle's density). So:
+ *
+ * - no mL: the gram text, unchanged, so a filament-only user never sees "0 mL";
+ * - mL and no grams, or grams the caller knows are the resin itself (`gramsAreResin`): mL only;
+ * - otherwise both, "34.0 kg · 20.0 mL".
+ *
+ * `gramsText` is the caller's own formatting of `grams`, so each view keeps its gram style.
+ */
+export function withMilliliters(
+  gramsText: string,
+  grams: number | null | undefined,
+  ml: number | null | undefined,
+  gramsAreResin = false
+): string {
+  if (!ml || ml <= 0) {
+    return gramsText;
+  }
+  if (gramsAreResin || !grams || grams <= 0) {
+    return formatMilliliters(ml);
+  }
+  return `${gramsText} · ${formatMilliliters(ml)}`;
+}
+
+/** {@link volumeUsageTotal} formatted, or null for a print the caller totals in grams. */
+export function volumeTotalLabel(
+  rows: readonly PrintFilamentSummaryDto[] | null | undefined
+): string | null {
+  const total = volumeUsageTotal(rows);
+  return total ? formatVolumeTotal(total) : null;
+}
+
+/**
+ * The compact usage of a row measured in mL ("42.5mL", with `*` when estimated), for views
+ * that otherwise show grams only. Null for any other row.
+ */
+export function volumeUsageLabel(fu: PrintFilamentSummaryDto): string | null {
+  if (!isVolumeUsage(fu)) {
+    return null;
+  }
+  const display = getFilamentPreferredDisplay(
+    fu,
+    PrintFilamentSourceMeasurement.AsRecorded
+  );
+  return display
+    ? display.displayString + (display.isEstimated ? '*' : '')
+    : null;
 }
 
 function actualValue(
@@ -150,8 +279,27 @@ export function buildConversionFallbackTooltip(
   return `${cap} unavailable — showing source unit (${sourceLabel})`;
 }
 
-/** Preferred-unit display for the actual (non-estimated) filament data only. */
+/**
+ * Preferred-unit display for the actual filament data only. Marked estimated when the actual
+ * figure itself is the slicer's estimate (`actualIsEstimate`, api#282).
+ */
 export function getActualPreferredDisplay(
+  fu: PrintFilamentSummaryDto,
+  preferredUnit: PrintFilamentSourceMeasurement
+): FilamentPreferredDisplayResult | null {
+  return markEstimatedActual(
+    fu,
+    actualPreferredDisplay(
+      fu,
+      displayUnit(
+        fu.source === PrintFilamentSourceMeasurement.Volume,
+        preferredUnit
+      )
+    )
+  );
+}
+
+function actualPreferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {
@@ -210,8 +358,12 @@ export function getActualPreferredDisplay(
 /** Preferred-unit display for the estimated filament data only. */
 export function getEstimatedPreferredDisplay(
   fu: PrintFilamentSummaryDto,
-  preferredUnit: PrintFilamentSourceMeasurement
+  requestedUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {
+  const preferredUnit = displayUnit(
+    fu.estimatedSource === PrintFilamentSourceMeasurement.Volume,
+    requestedUnit
+  );
   if (preferredUnit === PrintFilamentSourceMeasurement.AsRecorded) {
     const srcEst = estimatedValue(fu, fu.estimatedSource);
     if (srcEst === null) return null;
@@ -265,6 +417,30 @@ export function getEstimatedPreferredDisplay(
 }
 
 export function getFilamentPreferredDisplay(
+  fu: PrintFilamentSummaryDto,
+  preferredUnit: PrintFilamentSourceMeasurement
+): FilamentPreferredDisplayResult | null {
+  return markEstimatedActual(
+    fu,
+    preferredDisplay(fu, displayUnit(isVolumeUsage(fu), preferredUnit))
+  );
+}
+
+/**
+ * Every result built from the actual figure is `isEstimated: false`, and every one built from
+ * the estimate is `true`, so an actual figure a connector reported as an estimate only needs the
+ * flag turned on.
+ */
+function markEstimatedActual(
+  fu: PrintFilamentSummaryDto,
+  result: FilamentPreferredDisplayResult | null
+): FilamentPreferredDisplayResult | null {
+  return result && !result.isEstimated && fu.actualIsEstimate === true
+    ? { ...result, isEstimated: true }
+    : result;
+}
+
+function preferredDisplay(
   fu: PrintFilamentSummaryDto,
   preferredUnit: PrintFilamentSourceMeasurement
 ): FilamentPreferredDisplayResult | null {

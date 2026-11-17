@@ -18,6 +18,7 @@
         <app-print-image
           [printId]="print().id"
           [imageId]="print().defaultPrintImageId"
+          [thumbnailUrl]="print().defaultPrintImageThumbnailUrl"
         />
         @if (selectionMode()) {
           <!-- Presentation only. The card itself carries the checkbox role and the

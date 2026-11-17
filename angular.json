@@ -15,14 +15,13 @@
       "prefix": "app",
       "architect": {
         "build": {
-          "builder": "@angular-devkit/build-angular:application",
+          "builder": "@angular/build:application",
           "options": {
             "allowedCommonJsDependencies": ["lodash", "moment", "currency.js"],
             "outputPath": {
               "base": "dist/print-log-ui"
             },
             "index": "src/index.html",
-            "polyfills": ["src/polyfills.ts"],
             "tsConfig": "tsconfig.app.json",
             "assets": [
               "src/favicon_1293b2036.ico",
@@ -32,8 +31,16 @@
               "src/llms.txt",
               "src/auth.md",
               "src/index.md",
-              { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
-              { "glob": "**/*", "input": "src/app/documentation/generated/twins", "output": "/" },
+              {
+                "glob": "**/*",
+                "input": "src/well-known",
+                "output": ".well-known"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/app/documentation/generated/twins",
+                "output": "/"
+              },
               "src/404.html",
               "src/staticwebapp.config.json"
             ],
@@ -59,8 +66,16 @@
                 "src/llms.txt",
                 "src/auth.md",
                 "src/index.md",
-                { "glob": "**/*", "input": "src/well-known", "output": ".well-known" },
-                { "glob": "**/*", "input": "src/app/documentation/generated/twins", "output": "/" },
+                {
+                  "glob": "**/*",
+                  "input": "src/well-known",
+                  "output": ".well-known"
+                },
+                {
+                  "glob": "**/*",
+                  "input": "src/app/documentation/generated/twins",
+                  "output": "/"
+                },
                 "src/404.html",
                 "src/staticwebapp.config.json"
               ],
@@ -124,11 +139,19 @@
                   "with": "src/environments/environment.lan.ts"
                 }
               ]
+            },
+            "test": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.unittest.ts"
+                }
+              ]
             }
           }
         },
         "serve": {
-          "builder": "@angular-devkit/build-angular:dev-server",
+          "builder": "@angular/build:dev-server",
           "options": {
             "ssl": true,
             "sslKey": "ssl/server.key",
@@ -153,45 +176,46 @@
           }
         },
         "extract-i18n": {
-          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "builder": "@angular/build:extract-i18n",
           "options": {
             "buildTarget": "print-log-ui:build"
           }
         },
         "test": {
-          "builder": "@angular-devkit/build-angular:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
+            "buildTarget": "print-log-ui:build:test",
             "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "assets": ["src/favicon_1293b2036.ico", "src/assets"],
-            "styles": ["src/styles/theme.scss", "src/styles.scss"],
-            "fileReplacements": [
-              {
-                "replace": "src/environments/environment.ts",
-                "with": "src/environments/environment.unittest.ts"
-              }
+            "runner": "vitest",
+            "providersFile": "src/test-providers.ts",
+            "setupFiles": ["src/test-setup.ts"],
+            "runnerConfig": "vitest-base.config.ts",
+            "browsers": ["chromiumHeadless"],
+            "browserViewport": "800x600",
+            "coverageReporters": [
+              "html",
+              "lcovonly",
+              "text-summary",
+              "json-summary"
             ],
-            "scripts": []
+            "coverageExclude": [
+              "**/*.json",
+              "src/**/*.spec.ts",
+              "src/test-setup.ts",
+              "src/test-providers.ts"
+            ],
+            "coverageThresholds": {
+              "statements": 87,
+              "branches": 77,
+              "functions": 74,
+              "lines": 83
+            }
           }
         },
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
             "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
-          }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "print-log-ui:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "print-log-ui:serve:production"
-            }
           }
         }
       }

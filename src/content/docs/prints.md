@@ -188,8 +188,8 @@ floor and no slicer settings are available.
 
 ### Material Usage {#print-material-usage}
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <p>
         The <strong>Material Usage</strong> section lets you record what
         material was used for the print. Click
@@ -226,15 +226,9 @@ floor and no slicer settings are available.
         <strong>No spool linked</strong>.
       </p>
     </div>
-    <div fxFlex>
+    <div class="doc-column">
       <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
+        class="fade-in doc-shot-narrow"
         alt="Example of Material Usage on the Print Edit Screen"
         src="./assets/docs-print-filament-usage-example_e008efc37fb.png"
       />

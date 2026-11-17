@@ -5,6 +5,7 @@ import { MaterialService } from './material.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('MaterialService', () => {
@@ -14,7 +15,7 @@ describe('MaterialService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

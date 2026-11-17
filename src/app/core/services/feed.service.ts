@@ -24,6 +24,8 @@ export interface PrintFeedSummary {
   status: PrintStatus;
 
   defaultPrintImageId: number;
+  /** Thumbnail path relative to the API base URL; absent from APIs older than #281. */
+  defaultPrintImageThumbnailUrl?: string | null;
   createdByUserId: number;
   estimatedPrintTimeInSeconds: number | null;
   printTimeInSeconds: number | null;

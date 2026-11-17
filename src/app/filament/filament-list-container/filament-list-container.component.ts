@@ -5,6 +5,7 @@ import {
   OnInit,
   inject,
   signal,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
@@ -34,6 +35,7 @@ import { PagedList } from 'src/app/core/types/paging';
 import { TagReading } from 'src/app/core/types/tag-reading';
 import { SortDirection } from 'src/app/core/types/sort-request';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
@@ -129,6 +131,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   protected readonly isRemainingTracked = isRemainingTracked;
 
   private activatedRoute = inject(ActivatedRoute);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private filamentService = inject(FilamentService);
   private titleService = inject(Title);
   private readonly router = inject(Router);
@@ -288,6 +291,10 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       this.filterByEffects = params
         .getAll('effects')
         .map((v) => +v as FilamentEffect);
+
+      // Plain fields, and the params change after first render too (back and
+      // forward): nothing else would mark this view for check.
+      this.changeDetector.markForCheck();
     });
 
     this.activatedRoute.data.subscribe((data) => {
@@ -384,7 +391,7 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete material "${filament.displayName}"? <br /> <br />  This action cannot be undone.`,
+        body: `Are you sure you want to delete material "${escapeHtml(filament.displayName ?? '')}"? <br /> <br />  This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',
@@ -472,19 +479,13 @@ export class FilamentListContainerComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Mark a filament as empty.
+   * Mark a filament as empty. The service zeroes the amount the spool has now; the row's
+   * `filamentRemaining` may predate a print logged since the list loaded.
    */
   public markAsEmpty(filament: FilamentSummary) {
-    const remainingAmount = filament.filamentRemaining;
-    if (isNumber(remainingAmount)) {
-      const adjustmentAmount = -remainingAmount;
+    if (isNumber(filament.filamentRemaining)) {
       this.filamentService
-        .addAdjustmentAmount(
-          filament.id,
-          adjustmentAmount,
-          this.EMPTY_FILAMENT_ADJUSTMENT_NOTE,
-          false
-        )
+        .markEmpty(filament.id, this.EMPTY_FILAMENT_ADJUSTMENT_NOTE)
         .subscribe((_) => {
           this.updateFilter().then(() => {
             this.toastrService.success(

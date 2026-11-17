@@ -1,6 +1,8 @@
+import type { MockedObject } from 'vitest';
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import {
   AuthService,
   UserProfileInfo,
@@ -10,21 +12,22 @@ import { AccountDeactivationBannerComponent } from './account-deactivation-banne
 
 describe('AccountDeactivationBannerComponent', () => {
   let fixture: ComponentFixture<AccountDeactivationBannerComponent>;
-  let userProfile$: BehaviorSubject<UserProfileInfo | null>;
-  let auth: jasmine.SpyObj<AuthService>;
-  let userService: jasmine.SpyObj<UserService>;
+  let userProfile: WritableSignal<UserProfileInfo | null>;
+  let auth: MockedObject<AuthService>;
+  let userService: MockedObject<UserService>;
 
   const deactivated = {
     deactivationDateTime: new Date('2026-10-01T12:00:00Z'),
   } as UserProfileInfo;
 
   const render = (profile: UserProfileInfo | null) => {
-    userProfile$ = new BehaviorSubject(profile);
-    auth = jasmine.createSpyObj<AuthService>(
-      'AuthService',
-      ['updateCurrentUserDeactivationDate'],
-      { userProfile$ }
-    );
+    userProfile = signal(profile);
+    auth = {
+      updateCurrentUserDeactivationDate: vi
+        .fn()
+        .mockName('AuthService.updateCurrentUserDeactivationDate'),
+      userProfile,
+    } as unknown as MockedObject<AuthService>;
     TestBed.configureTestingModule({
       imports: [AccountDeactivationBannerComponent],
       providers: [
@@ -41,9 +44,11 @@ describe('AccountDeactivationBannerComponent', () => {
   };
 
   beforeEach(() => {
-    userService = jasmine.createSpyObj<UserService>('UserService', [
-      'reactivateCurrentUser',
-    ]);
+    userService = {
+      reactivateCurrentUser: vi
+        .fn()
+        .mockName('UserService.reactivateCurrentUser'),
+    } as unknown as MockedObject<UserService>;
   });
 
   it('shows nothing to a signed-out visitor', () => {
@@ -66,7 +71,7 @@ describe('AccountDeactivationBannerComponent', () => {
   it('appears when the account is deactivated while the page is open', () => {
     render({ deactivationDateTime: null } as UserProfileInfo);
 
-    userProfile$.next(deactivated);
+    userProfile.set(deactivated);
     fixture.detectChanges();
 
     expect(
@@ -77,23 +82,14 @@ describe('AccountDeactivationBannerComponent', () => {
   });
 
   it('reactivates the account and clears the deactivation date', () => {
-    userService.reactivateCurrentUser.and.returnValue(
+    userService.reactivateCurrentUser.mockReturnValue(
       of({ deactivationDateTime: null } as UserDetailDto)
     );
 
     render(deactivated)!.querySelector('button')!.click();
 
     expect(userService.reactivateCurrentUser).toHaveBeenCalled();
-    expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledOnceWith(
-      null
-    );
-  });
-
-  it('stops listening to the user profile once destroyed', () => {
-    render(null);
-
-    fixture.destroy();
-
-    expect(userProfile$.observed).toBeFalse();
+    expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledTimes(1);
+    expect(auth.updateCurrentUserDeactivationDate).toHaveBeenCalledWith(null);
   });
 });

@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  fakeAsync,
-  TestBed,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
@@ -16,7 +12,7 @@ import {
 describe('SpoolWeightCalculatorDialogComponent', () => {
   let component: SpoolWeightCalculatorDialogComponent;
   let fixture: ComponentFixture<SpoolWeightCalculatorDialogComponent>;
-  let dialogRef: jasmine.SpyObj<
+  let dialogRef: MockedObject<
     MatDialogRef<SpoolWeightCalculatorDialogComponent>
   >;
 
@@ -26,9 +22,11 @@ describe('SpoolWeightCalculatorDialogComponent', () => {
   };
 
   beforeEach(async () => {
-    dialogRef = jasmine.createSpyObj<
-      MatDialogRef<SpoolWeightCalculatorDialogComponent>
-    >('MatDialogRef', ['close']);
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<
+      MatDialogRef<SpoolWeightCalculatorDialogComponent, any>
+    >;
 
     await TestBed.configureTestingModule({
       imports: [SpoolWeightCalculatorDialogComponent, NoopAnimationsModule],
@@ -53,7 +51,7 @@ describe('SpoolWeightCalculatorDialogComponent', () => {
     expect(preview).not.toBeNull();
     expect(preview!.adjustmentMg).toBe(-200000);
     expect(preview!.measuredRemainingMg).toBe(300000);
-    expect(preview!.negativeRemaining).toBeFalse();
+    expect(preview!.negativeRemaining).toBe(false);
   });
 
   it('closes with the adjustment, measured weight, and a descriptive note on confirm', () => {
@@ -61,8 +59,8 @@ describe('SpoolWeightCalculatorDialogComponent', () => {
     component.confirm();
 
     expect(dialogRef.close).toHaveBeenCalledTimes(1);
-    const result = dialogRef.close.calls.mostRecent()
-      .args[0] as SpoolWeightCalculatorDialogResult;
+    const result = vi.mocked(dialogRef.close).mock
+      .lastCall[0] as SpoolWeightCalculatorDialogResult;
     expect(result.adjustmentG).toBe(-200);
     expect(result.measuredTotalWeightG).toBe(450);
     expect(result.note).toContain('450');
@@ -82,7 +80,8 @@ describe('SpoolWeightCalculatorDialogComponent', () => {
     expect(dialogRef.close).not.toHaveBeenCalled();
   });
 
-  it('shows the numeric preview immediately but debounces the negative-remaining warning', fakeAsync(() => {
+  it('shows the numeric preview immediately but debounces the negative-remaining warning', async () => {
+    vi.useFakeTimers();
     // Measured 100 g total is below the 150 g spool weight -> negative remaining
     component.measuredTotalWeightControl.setValue(100);
     fixture.detectChanges();
@@ -92,10 +91,10 @@ describe('SpoolWeightCalculatorDialogComponent', () => {
     expect(fixture.nativeElement.querySelector('.calc-warning')).toBeNull();
 
     // After the debounce elapses, the warning appears.
-    tick(500);
+    await vi.advanceTimersByTimeAsync(500);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.calc-warning')).not.toBeNull();
-  }));
+  });
 
   it('still allows confirm when the measurement is below the spool weight', () => {
     component.measuredTotalWeightControl.setValue(100);

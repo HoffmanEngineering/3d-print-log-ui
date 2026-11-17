@@ -93,7 +93,7 @@ describe('filamentDetailToSummary', () => {
       JSON.stringify(filamentDetailToSummary(buildDetail()))
     );
 
-    expect('createdDate' in body).toBeFalse();
+    expect('createdDate' in body).toBe(false);
   });
 
   it('defaults the diameter when the detail has none', () => {

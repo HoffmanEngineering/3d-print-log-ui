@@ -1,14 +1,23 @@
+import type { MockedObject } from 'vitest';
 import { ViewportScroller } from '@angular/common';
-import { ApplicationRef, Component } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, RouterOutlet } from '@angular/router';
 
 import { provideAppRouter } from '../../app.routes';
 
-@Component({ template: '' })
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, template: '' })
 class PageComponent {}
 
-@Component({ imports: [RouterOutlet], template: '<router-outlet />' })
+@Component({
+  imports: [RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '<router-outlet />',
+})
 class RootComponent {}
 
 /**
@@ -25,7 +34,7 @@ class RootComponent {}
  * app actually provides.
  */
 describe('router scrolling configuration', () => {
-  let scroller: jasmine.SpyObj<ViewportScroller>;
+  let scroller: MockedObject<ViewportScroller>;
   let host: HTMLElement;
 
   const navigate = async (url: string) => {
@@ -35,14 +44,16 @@ describe('router scrolling configuration', () => {
   };
 
   beforeEach(() => {
-    scroller = jasmine.createSpyObj<ViewportScroller>('ViewportScroller', [
-      'scrollToAnchor',
-      'scrollToPosition',
-      'getScrollPosition',
-      'setHistoryScrollRestoration',
-      'setOffset',
-    ]);
-    scroller.getScrollPosition.and.returnValue([0, 0]);
+    scroller = {
+      scrollToAnchor: vi.fn().mockName('ViewportScroller.scrollToAnchor'),
+      scrollToPosition: vi.fn().mockName('ViewportScroller.scrollToPosition'),
+      getScrollPosition: vi.fn().mockName('ViewportScroller.getScrollPosition'),
+      setHistoryScrollRestoration: vi
+        .fn()
+        .mockName('ViewportScroller.setHistoryScrollRestoration'),
+      setOffset: vi.fn().mockName('ViewportScroller.setOffset'),
+    };
+    scroller.getScrollPosition.mockReturnValue([0, 0]);
 
     TestBed.configureTestingModule({
       providers: [
@@ -71,7 +82,7 @@ describe('router scrolling configuration', () => {
 
   it('still restores scroll position for navigations with no fragment', async () => {
     await navigate('/one');
-    scroller.scrollToPosition.calls.reset();
+    scroller.scrollToPosition.mockClear();
 
     await navigate('/two');
 

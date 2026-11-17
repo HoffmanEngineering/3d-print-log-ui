@@ -3,12 +3,12 @@ import { KeyValue, KeyValuePipe } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   inject,
+  linkedSignal,
   OnInit,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { map } from 'rxjs';
@@ -39,13 +39,6 @@ import {
   PushPreferencesService,
 } from '../core/services/push-preferences.service';
 import { PushPermissionPromptService } from '../core/services/push-permission-prompt.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard } from '@angular/material/card';
 import { MatTooltip } from '@angular/material/tooltip';
 import { MatIcon } from '@angular/material/icon';
@@ -70,12 +63,7 @@ import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
   templateUrl: './settings.component.html',
   styleUrls: ['./settings.component.scss'],
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatCard,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
-    FlexFillDirective,
     MatTooltip,
     MatIcon,
     FormsModule,
@@ -134,7 +122,12 @@ export class SettingsComponent implements OnInit {
     signal<PrintFilamentSourceMeasurement | null>(null);
   public printFilamentSourceMeasurementTypes = PrintFilamentSourceMeasurement;
 
-  readonly deactivateHasBeenClicked = signal(false);
+  // Follows the profile: a deactivated account shows as clicked, and a
+  // reactivation clears it. Clicking sets it in between.
+  readonly deactivateHasBeenClicked = linkedSignal({
+    source: this.authService.userProfile,
+    computation: (user) => !!user?.deactivationDateTime,
+  });
 
   /**
    * NgModel for Profile View Status
@@ -201,7 +194,6 @@ export class SettingsComponent implements OnInit {
   private readonly pushPreferences = inject(PushPreferencesService);
   private readonly nativeBridge = inject(NativeBridgeService);
   private readonly pushPermissionPrompt = inject(PushPermissionPromptService);
-  private readonly destroyRef = inject(DestroyRef);
 
   /**
    * The filament display unit toggles are about 440px wide in a row, wider than a phone
@@ -333,17 +325,6 @@ export class SettingsComponent implements OnInit {
           : null
       );
     });
-
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => {
-        if (user?.deactivationDateTime) {
-          this.deactivateHasBeenClicked.set(true);
-        } else {
-          // If the deactivate date time gets set back to null, then clear the click
-          this.deactivateHasBeenClicked.set(false);
-        }
-      });
   }
 
   public sortByName = (
@@ -377,25 +358,14 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultPrintViewStatus(newViewStatus: PrintViewStatus) {
-    if (this.defaultPrintViewStatusSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultPrintViewStatusSettingOnLoad().id,
-          newViewStatus.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultPrintViewStatusSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Prints_DefaultPrintViewStatus,
-          newViewStatus.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultPrintViewStatusSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Prints_DefaultPrintViewStatus,
+        newViewStatus.toString()
+      )
+      .then((setting) => {
+        this.defaultPrintViewStatusSettingOnLoad.set(setting);
+      });
   }
 
   cancelDefaultPrintViewStatus() {
@@ -407,38 +377,19 @@ export class SettingsComponent implements OnInit {
   }
 
   savePreferredCurrency(newCurrency: string) {
-    if (this.preferredCurrencyNameSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.preferredCurrencyNameSettingOnLoad().id,
-          newCurrency.toString()
-        )
-        .subscribe((setting) => {
-          this.preferredCurrencyNameSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Currency_Name, newCurrency.toString())
-        .subscribe((setting) => {
-          this.preferredCurrencyNameSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(UserSettingType.Currency_Name, newCurrency.toString())
+      .then((setting) => {
+        this.preferredCurrencyNameSettingOnLoad.set(setting);
+      });
 
     const symbol = this.currencies()[newCurrency].symbol;
 
-    if (this.preferredCurrencySymbolSettingOnLoad) {
-      this.userSettingService
-        .updateUserSetting(this.preferredCurrencySymbolSettingOnLoad.id, symbol)
-        .subscribe((setting) => {
-          this.preferredCurrencySymbolSettingOnLoad = setting;
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Currency_Symbol, symbol)
-        .subscribe((setting) => {
-          this.preferredCurrencySymbolSettingOnLoad = setting;
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(UserSettingType.Currency_Symbol, symbol)
+      .then((setting) => {
+        this.preferredCurrencySymbolSettingOnLoad = setting;
+      });
   }
 
   cancelPreferredCurrency() {
@@ -450,25 +401,14 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultFilamentDiameterMm(newDiameterMm: number) {
-    if (this.defaultFilamentDiameterMmSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultFilamentDiameterMmSettingOnLoad().id,
-          newDiameterMm.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Filaments_DefaultDiameterMm,
-          newDiameterMm.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Filaments_DefaultDiameterMm,
+        newDiameterMm.toString()
+      )
+      .then((setting) => {
+        this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
+      });
   }
 
   cancelDefaultFilamentDiameterMm() {
@@ -480,25 +420,14 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultFilamentPrice(newPrice: string) {
-    if (this.defaultFilamentPriceSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultFilamentPriceSettingOnLoad().id,
-          newPrice.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentPriceSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Filaments_DefaultPrice,
-          newPrice.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentPriceSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Filaments_DefaultPrice,
+        newPrice.toString()
+      )
+      .then((setting) => {
+        this.defaultFilamentPriceSettingOnLoad.set(setting);
+      });
   }
 
   cancelDefaultFilamentPrice() {
@@ -510,33 +439,18 @@ export class SettingsComponent implements OnInit {
   }
 
   savePreferredFilamentDisplayUnit(newUnit: PrintFilamentSourceMeasurement) {
-    if (this.preferredFilamentDisplayUnitSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.preferredFilamentDisplayUnitSettingOnLoad().id,
-          newUnit.toString()
-        )
-        .subscribe((setting) => {
-          this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
-          this.loggingService.logEvent(
-            'Settings_PreferredFilamentDisplayUnitChanged',
-            { unit: newUnit }
-          );
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Prints_PreferredFilamentDisplayUnit,
-          newUnit.toString()
-        )
-        .subscribe((setting) => {
-          this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
-          this.loggingService.logEvent(
-            'Settings_PreferredFilamentDisplayUnitChanged',
-            { unit: newUnit }
-          );
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Prints_PreferredFilamentDisplayUnit,
+        newUnit.toString()
+      )
+      .then((setting) => {
+        this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
+        this.loggingService.logEvent(
+          'Settings_PreferredFilamentDisplayUnitChanged',
+          { unit: newUnit }
+        );
+      });
   }
 
   cancelPreferredFilamentDisplayUnit() {
@@ -550,43 +464,24 @@ export class SettingsComponent implements OnInit {
 
   saveDefaultElectricityKwhRate(newRate: string) {
     const rateStr = newRate?.toString();
-    if (this.defaultElectricityKwhRateSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultElectricityKwhRateSettingOnLoad().id,
-          rateStr
-        )
-        .subscribe((setting) => {
-          this.defaultElectricityKwhRateSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Electricity_KwhRate, rateStr)
-        .subscribe((setting) => {
-          this.defaultElectricityKwhRateSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(UserSettingType.Electricity_KwhRate, rateStr)
+      .then((setting) => {
+        this.defaultElectricityKwhRateSettingOnLoad.set(setting);
+      });
     this.loggingService.logEvent('Settings_ElectricityKwhRateChanged');
   }
 
   saveDefaultElectricityWattage(newWattage: string) {
     const wattageStr = newWattage?.toString();
-    if (this.defaultElectricityWattageSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultElectricityWattageSettingOnLoad().id,
-          wattageStr
-        )
-        .subscribe((setting) => {
-          this.defaultElectricityWattageSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Electricity_DefaultWattageW, wattageStr)
-        .subscribe((setting) => {
-          this.defaultElectricityWattageSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Electricity_DefaultWattageW,
+        wattageStr
+      )
+      .then((setting) => {
+        this.defaultElectricityWattageSettingOnLoad.set(setting);
+      });
     this.loggingService.logEvent('Settings_ElectricityDefaultWattageChanged');
   }
 

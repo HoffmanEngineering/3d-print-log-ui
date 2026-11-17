@@ -4,9 +4,17 @@ import {
   DestroyRef,
   OnInit,
   DOCUMENT,
+  effect,
   inject,
   signal,
 } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import {
+  distinctUntilChanged,
+  map,
+  startWith,
+  switchMap,
+} from 'rxjs/operators';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -14,17 +22,15 @@ import { AuthService } from 'src/app/core/services/auth.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
+  SEO_PENDING,
+  SeoLookupState,
+  SeoService,
+} from 'src/app/core/services/seo.service';
+import {
   ProfileViewStatus,
   UserDetailDto,
   UserService,
 } from 'src/app/core/services/user.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-  FlexFillDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard, MatCardHeader, MatCardContent } from '@angular/material/card';
 import { MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
@@ -44,18 +50,13 @@ import { UserPrintsComponent } from '../user-prints/user-prints.component';
   styleUrls: ['./user-profile.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
     MatCard,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
     MatCardHeader,
     MatButton,
     MatMenuTrigger,
     MatIcon,
     MatMenu,
     MatMenuItem,
-    FlexFillDirective,
     MatFormField,
     MatLabel,
     MatInput,
@@ -75,15 +76,14 @@ export class UserProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly toastrService = inject(ToastrService);
   private readonly metaTagService = inject(MetaTagService);
+  private readonly seoService = inject(SeoService);
   private readonly loggingService = inject(LoggingService);
   private readonly document = inject<Document>(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly userDetail = signal<UserDetailDto>(null);
 
-  readonly currentUser = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  readonly currentUser = this.authService.userProfile;
 
   public profileViewStatusTypes = ProfileViewStatus;
 
@@ -105,19 +105,59 @@ export class UserProfileComponent implements OnInit {
   readonly displayName = signal('');
   readonly isEditingDisplayName = signal(false);
 
+  /**
+   * The API's `/seo` answer for the profile on the route. Never waited on: until it settles,
+   * and whenever it is not `ok`, the page describes itself from the resolved user.
+   */
+  private readonly seoLookup = toSignal(
+    this.activatedRoute.data.pipe(
+      map((data) => (data['userDetail'] as UserDetailDto | null)?.id),
+      distinctUntilChanged(),
+      switchMap(
+        (id): Observable<SeoLookupState> =>
+          id != null
+            ? this.seoService
+                .forUser(id)
+                .pipe(startWith<SeoLookupState>(SEO_PENDING))
+            : of<SeoLookupState>({ kind: 'unavailable' })
+      )
+    ),
+    { initialValue: SEO_PENDING as SeoLookupState }
+  );
+
+  constructor() {
+    effect(() => this.setMetaTags());
+
+    // A public profile lifts the shell's noindex; the next page, reached in-app, gets it back.
+    this.destroyRef.onDestroy(() => this.metaTagService.restoreShellRobots());
+  }
+
   ngOnInit(): void {
     this.activatedRoute.data
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((data) => {
         this.userDetail.set(data.userDetail);
         this.viewStatus.set(data.userDetail.viewStatus);
-
-        this.setMetaTags();
       });
   }
 
   setMetaTags() {
     const userDetail = this.userDetail();
+    const seo = this.seoLookup();
+
+    if (seo.kind === 'ok') {
+      this.metaTagService.applySeoMetadata(seo.seo);
+      return;
+    }
+    if (seo.kind === 'not-public') {
+      this.metaTagService.preventIndexing();
+    } else {
+      this.metaTagService.restoreShellRobots();
+    }
+    if (!userDetail) {
+      return;
+    }
+
     this.metaTagService.setTitle(
       `${userDetail.displayName} Profile - 3D Print Log`.trim()
     );
@@ -129,7 +169,9 @@ export class UserProfileComponent implements OnInit {
     const imageUrl =
       userDetail.profilePicture !== '' ? userDetail.profilePicture : '';
 
-    this.metaTagService.setSocialMediaTags(url, title, description, imageUrl);
+    this.metaTagService.setSocialMediaTags(url, title, description, imageUrl, {
+      type: 'profile',
+    });
   }
 
   addCoverPhoto(event) {

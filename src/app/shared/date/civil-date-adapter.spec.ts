@@ -51,12 +51,13 @@ describe('CivilDateAdapter', () => {
     // has to reject civil-shaped-but-unreal input itself rather than delegating.
     const parsed = adapter.parse('2026-02-30') as Date;
 
-    expect(Number.isNaN(parsed.getTime()))
-      .withContext('2026-02-30 must be invalid, not March 2')
-      .toBeTrue();
     expect(
-      Number.isNaN((adapter.parse('2026-13-01') as Date).getTime())
-    ).toBeTrue();
+      Number.isNaN(parsed.getTime()),
+      '2026-02-30 must be invalid, not March 2'
+    ).toBe(true);
+    expect(Number.isNaN((adapter.parse('2026-13-01') as Date).getTime())).toBe(
+      true
+    );
   });
 
   it('passes through null and empty input', () => {

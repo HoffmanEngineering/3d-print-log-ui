@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -24,7 +24,7 @@ describe('FilamentService image gateway', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(FilamentService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -54,7 +54,7 @@ describe('FilamentService image gateway', () => {
       `${api}/api/Filaments/${FILAMENT_ID}/images`
     );
     expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBeTrue();
+    expect(req.request.body instanceof FormData).toBe(true);
     req.flush({});
   });
 

@@ -4,3 +4,52 @@
   padding: 24px 0;
   font-size: 14px;
 }
+
+.page {
+  display: flex;
+  justify-content: center;
+}
+
+.feed-card {
+  flex: 1 1 500px;
+  min-width: 500px;
+  max-width: 500px;
+
+  @media (max-width: 599.98px) {
+    flex: 1 1 100%;
+    min-width: auto;
+    max-width: 100%;
+  }
+
+  @media (min-width: 1280px) {
+    flex: 1 1 1200px;
+    min-width: 1200px;
+    max-width: 1200px;
+  }
+}
+
+.feed-columns {
+  display: flex;
+  flex-flow: column wrap;
+  justify-content: space-around;
+  align-items: flex-start;
+  align-content: flex-start;
+
+  @media (min-width: 1280px) {
+    flex-flow: row nowrap;
+  }
+}
+
+// One print per row, 10px apart.
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 100%;
+  max-height: 100%;
+
+  @media (min-width: 1280px) {
+    max-height: none;
+    max-width: 100%;
+  }
+}

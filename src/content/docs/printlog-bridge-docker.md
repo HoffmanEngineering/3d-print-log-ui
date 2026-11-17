@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 44
 mode: how-to
-updated: 2026-10-15
+updated: 2026-10-27
 related: [printlog-bridge, printlog-bridge-install, snapmaker-u1, printlog-bridge-troubleshooting]
 ---
 
@@ -39,6 +39,7 @@ Everything the bridge keeps is in one folder on the host, mounted at `/data`:
 | Path | What it is |
 | --- | --- |
 | `/data/printlog-bridge.cfg` | The config, which you write |
+| `/data/state/device_token`, `/data/state/device_id` | The bridge's device token and its id, once you pair it |
 | `/data/state/api_key` | The API key, if you store it with `store-key` |
 | `/data/state/outbox.sqlite3`, `/data/state/images/` | Job events and pictures not sent yet |
 | `/data/state/printers/`, `/data/state/status.json` | What has been logged, and what `status` shows |
@@ -86,13 +87,14 @@ services:
     container_name: printlog-bridge
     restart: unless-stopped
     user: "1026:100"
+    network_mode: host
     environment:
       TZ: America/New_York
     volumes:
       - /volume1/docker/printlog-bridge:/data
 ```
 
-`restart: unless-stopped` brings the bridge back after a crash and after the host restarts. `TZ` is optional: set it to your own time zone (a [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), such as `America/Chicago` or `Europe/London`) so the times in the bridge's log match your clock. Without it they're in UTC. It changes nothing else: `status` and 3D Print Log use UTC either way. Unraid sets it for you.
+`network_mode: host` puts the container on the host's network, so the bridge can find the printers on it and list them on the [Bridges](/printers/bridges) screen: printers announce themselves with multicast and broadcast, which Docker's default network doesn't pass on. The bridge opens no port. Docker Desktop (Windows, macOS) can't do this; there, leave the line out and [add printers by address](/docs/printlog-bridge-bridges#by-address). `restart: unless-stopped` brings the bridge back after a crash and after the host restarts. `TZ` is optional: set it to your own time zone (a [tz database name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), such as `America/Chicago` or `Europe/London`) so the times in the bridge's log match your clock. Without it they're in UTC. It changes nothing else: `status` and 3D Print Log use UTC either way. Unraid sets it for you.
 
 On a Synology NAS, open **Container Manager**, then **Project**, then **Create**, with the folder as the project's path and this file as its Compose file. If Container Manager isn't installed, install it from **Package Center**. When it asks you to configure the bridge network, keep the default (`172.17.0.1/16`) unless your home network itself uses `172.17.x.x` addresses. The commands below run over SSH, which you turn on in **Control Panel**, then **Terminal & SNMP**.
 
@@ -100,14 +102,28 @@ Without Compose:
 
 ```
 docker run -d --name printlog-bridge --restart unless-stopped \
-  --user 1026:100 -e TZ=America/New_York \
+  --user 1026:100 --network host -e TZ=America/New_York \
   -v /volume1/docker/printlog-bridge:/data \
   ghcr.io/hoffmanengineering/printlog-bridge:latest
 ```
 
 #### 5. Connect to your account {#connect}
 
-Until one-step pairing arrives (it's planned), the bridge signs in with a [personal API key](/docs/api#api-keys). Create one on the [Personal API Keys](/api-keys) page, then give it to the bridge in one of two ways:
+Pair the bridge with your account. Over SSH, run:
+
+```
+docker run --rm -it --user 1026:100 \
+  -v /volume1/docker/printlog-bridge:/data \
+  ghcr.io/hoffmanengineering/printlog-bridge:latest pair
+```
+
+It shows a QR code and a short code. Scan the QR code with your phone (or open the address it shows and type the code), sign in to 3D Print Log and approve the bridge. It stores the bridge's device token in `/data/state/device_token`, readable only by the container's user, and lists your printers for any `[printer]` without a `printer_id`, so you can set it. Next to the Compose file, `docker compose run --rm printlog-bridge pair` does the same. Then restart the container.
+
+You can also skip this step. Started with no device token or API key, the container pairs by itself: its log (`docker logs -f printlog-bridge`, or **Container Manager**, then **Container**, then **printlog-bridge**, then **Log** on a Synology) shows the QR code and the code, and a new one each time one expires, and the bridge carries on once you approve it. Set `PRINTLOG_BRIDGE_NAME` on the container to choose the name 3D Print Log shows for the bridge (otherwise `printlog-bridge on <container id>`).
+
+The bridge then shows up under **Paired devices** in [Settings](/settings), where you can revoke it, and, once it checks in, on the [Bridges](/printers/bridges) screen with the printers it found. Connect them there instead of adding `[printer]` sections: see [Bridges and printers found on your network](/docs/printlog-bridge-bridges). [Signing in](/docs/printlog-bridge#account) says what its token can do and what revoking does.
+
+**With an API key instead.** For a scripted setup, or when `pair` says pairing isn't available, the bridge signs in with a [personal API key](/docs/api#api-keys). Create one on the [Personal API Keys](/api-keys) page, then give it to the bridge in one of two ways:
 
 - **Store it in the folder**, where only the container's user can read it. Over SSH, run this and paste the key when asked:
 
@@ -132,7 +148,7 @@ docker exec printlog-bridge printlog-bridge doctor
 docker exec printlog-bridge printlog-bridge status
 ```
 
-`doctor` checks the config, the key and every printer, and leaves a support bundle in the folder at `state/printlog-bridge-support.zip`. [Troubleshooting](/docs/printlog-bridge-troubleshooting) explains both commands.
+`doctor` checks the config, the device token or key, and every printer, and leaves a support bundle in the folder at `state/printlog-bridge-support.zip`. [Troubleshooting](/docs/printlog-bridge-troubleshooting) explains both commands.
 
 If the config needs fixing (no key, a printer without `printer_id`), the bridge says what to fix in the container's log and exits, and the restart policy tries again every few seconds. After editing `printlog-bridge.cfg`, restart the container.
 

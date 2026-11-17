@@ -92,9 +92,11 @@
               }
               <app-image-thumbnail-strip
                 [images]="images()"
-                [selectedId]="images()[selectedImageIndex()]?.id"
+                [selectedId]="
+                  $safeNavigationMigration(images()[selectedImageIndex()]?.id)
+                "
                 [editable]="true"
-                [maxImages]="5"
+                [maxImages]="maxImages()"
                 (imageSelected)="onImageSelected($event)"
                 (imageDeleted)="onImageDeleted($event)"
                 (defaultChanged)="onDefaultChanged($event)"
@@ -105,6 +107,7 @@
                 #fileInput
                 type="file"
                 accept="image/*"
+                multiple
                 style="display: none"
                 (change)="onFileSelected($event)"
               />
@@ -136,7 +139,11 @@
                 </app-image-carousel>
                 <app-image-thumbnail-strip
                   [images]="carouselImages()"
-                  [selectedId]="carouselImages()[selectedImageIndex()]?.id"
+                  [selectedId]="
+                    $safeNavigationMigration(
+                      carouselImages()[selectedImageIndex()]?.id
+                    )
+                  "
                   [editable]="false"
                   (imageSelected)="onImageSelected($event)"
                 />
@@ -145,9 +152,9 @@
             @if (p.description) {
               <p class="description">{{ p.description }}</p>
             }
-            @if (p.url) {
+            @if (sourceUrl(); as url) {
               <p>
-                <a [href]="p.url" target="_blank" rel="noopener"
+                <a [href]="url" target="_blank" rel="noopener noreferrer"
                   >View model source</a
                 >
               </p>
@@ -164,10 +171,14 @@
                 }}</span>
               </div>
               <div class="stat">
-                <span class="label">Filament Used</span>
-                <span class="value"
-                  >{{ p.totalFilamentWeightMg / 1000 | number: '1.0-1' }}g</span
-                >
+                <span class="label">{{
+                  (p.totalFilamentVolumeMl ?? 0) > 0
+                    ? 'Material Used'
+                    : 'Filament Used'
+                }}</span>
+                <span class="value" data-cy="project-material-used">{{
+                  materialUsed(p)
+                }}</span>
               </div>
               <div class="stat">
                 <span class="label">Started</span>
@@ -217,7 +228,7 @@
       <app-ad></app-ad>
     </div>
     <div class="ad-sidebar">
-      <app-sidebar-ad></app-sidebar-ad>
+      <app-sidebar-ad [minWidth]="1100"></app-sidebar-ad>
     </div>
   </div>
 }

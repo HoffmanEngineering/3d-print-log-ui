@@ -1,4 +1,3 @@
-import { fakeAsync, flushMicrotasks, tick } from '@angular/core/testing';
 import { withTimeout } from './with-timeout';
 
 describe('withTimeout', () => {
@@ -6,22 +5,23 @@ describe('withTimeout', () => {
     expect(await withTimeout(Promise.resolve(1), 0, 1000)).toBe(1);
   });
 
-  it('resolves to the fallback once the time is up', fakeAsync(() => {
+  it('resolves to the fallback once the time is up', async () => {
+    vi.useFakeTimers();
     let result: number | undefined;
     void withTimeout(new Promise<number>(() => {}), 0, 3000).then(
       (v) => (result = v)
     );
-    tick(2999);
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(2999);
+    await vi.advanceTimersByTimeAsync(0);
     expect(result).toBeUndefined();
-    tick(1);
-    flushMicrotasks();
+    await vi.advanceTimersByTimeAsync(1);
+    await vi.advanceTimersByTimeAsync(0);
     expect(result).toBe(0);
-  }));
+  });
 
   it('passes a rejection through', async () => {
-    await expectAsync(
+    await expect(
       withTimeout(Promise.reject(new Error('boom')), 0, 1000)
-    ).toBeRejectedWithError('boom');
+    ).rejects.toThrowError('boom');
   });
 });

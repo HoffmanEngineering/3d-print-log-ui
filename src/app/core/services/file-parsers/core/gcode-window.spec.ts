@@ -17,8 +17,8 @@ describe('trimGcodeWindow', () => {
     const tail = 'T'.repeat(GCODE_WINDOW_SIZE);
     const result = trimGcodeWindow(head + middle + tail);
     expect(result.length).toBe(GCODE_WINDOW_SIZE * 2 + 1);
-    expect(result.startsWith(head)).toBeTrue();
-    expect(result.endsWith(tail)).toBeTrue();
+    expect(result.startsWith(head)).toBe(true);
+    expect(result.endsWith(tail)).toBe(true);
     expect(result[GCODE_WINDOW_SIZE]).toBe('\n');
     expect(result).not.toContain('M');
   });

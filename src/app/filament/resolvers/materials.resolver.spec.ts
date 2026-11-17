@@ -19,8 +19,6 @@ describe('materialsResolver', () => {
       ],
     });
 
-    await expectAsync(resolveValue(materialsResolver)).toBeResolvedTo(
-      materials
-    );
+    await expect(resolveValue(materialsResolver)).resolves.toEqual(materials);
   });
 });

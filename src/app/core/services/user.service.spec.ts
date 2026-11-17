@@ -6,20 +6,20 @@ import { UserService } from './user.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('UserService', () => {
   beforeEach(() => {
-    const mockImageResizer = jasmine.createSpyObj<ImageResizerService>(
-      'ImageResizerService',
-      ['resizeImage']
-    );
+    const mockImageResizer = {
+      resizeImage: vi.fn().mockName('ImageResizerService.resizeImage'),
+    };
 
     TestBed.configureTestingModule({
       imports: [],
       providers: [
         { provide: ImageResizerService, useValue: mockImageResizer },
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

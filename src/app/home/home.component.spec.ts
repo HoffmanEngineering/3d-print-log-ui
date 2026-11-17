@@ -1,10 +1,12 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { signal } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { AdsenseModule } from 'ng2-adsense';
 
 import { HomeComponent } from './home.component';
+import { AdEligibilityService } from '../shared/ad/ad-eligibility.service';
 import { AuthService } from '../core/services/auth.service';
 import { MetaTagService } from '../core/services/meta-tag.service';
 import { StructuredDataService } from '../core/services/structured-data.service';
@@ -13,47 +15,46 @@ import { LoggingService } from '../core/services/logging.service';
 describe('HomeComponent', () => {
   let component: HomeComponent;
   let fixture: ComponentFixture<HomeComponent>;
-  let auth: jasmine.SpyObj<AuthService>;
-  let meta: jasmine.SpyObj<MetaTagService>;
-  let structuredData: jasmine.SpyObj<StructuredDataService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let auth: MockedObject<AuthService>;
+  let meta: MockedObject<MetaTagService>;
+  let structuredData: MockedObject<StructuredDataService>;
+  let logging: MockedObject<LoggingService>;
 
-  beforeEach(waitForAsync(() => {
-    auth = jasmine.createSpyObj<AuthService>('AuthService', ['login']);
-    meta = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setSeoTags',
-    ]);
-    structuredData = jasmine.createSpyObj<StructuredDataService>(
-      'StructuredDataService',
-      ['setJsonLd']
-    );
+  beforeEach(async () => {
+    auth = {
+      login: vi.fn().mockName('AuthService.login'),
+    } as unknown as MockedObject<AuthService>;
+    meta = {
+      setSeoTags: vi.fn().mockName('MetaTagService.setSeoTags'),
+    } as unknown as MockedObject<MetaTagService>;
+    structuredData = {
+      setJsonLd: vi.fn().mockName('StructuredDataService.setJsonLd'),
+    } as unknown as MockedObject<StructuredDataService>;
 
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
-    TestBed.configureTestingModule({
-      // AdsenseModule.forRoot supplies the AdsenseConfig token that
-      // <app-ad> -> AdsenseComponent injects. Same stub the other specs
-      // rendering an ad use (ad.component.spec.ts:22).
-      imports: [
-        HomeComponent,
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
+    await TestBed.configureTestingModule({
+      imports: [HomeComponent],
       providers: [
         provideRouter([]),
-        // <app-ad> -> SubscriptionService -> HttpClient. Nothing provides it by
-        // default in a standalone TestBed.
-        provideHttpClient(),
+        // Nothing provides HttpClient by default in a standalone TestBed.
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         { provide: AuthService, useValue: auth },
         { provide: MetaTagService, useValue: meta },
         { provide: StructuredDataService, useValue: structuredData },
         { provide: LoggingService, useValue: logging },
       ],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(HomeComponent);
@@ -70,8 +71,8 @@ describe('HomeComponent', () => {
   });
 
   it('gives the JSON-LD apps the same description as the meta tag', () => {
-    const description = meta.setSeoTags.calls.mostRecent().args[0].description;
-    const nodes = structuredData.setJsonLd.calls.mostRecent().args[0];
+    const description = vi.mocked(meta.setSeoTags).mock.lastCall[0].description;
+    const nodes = vi.mocked(structuredData.setJsonLd).mock.lastCall[0];
 
     expect(nodes.map((n) => n['@type'])).toEqual([
       'WebApplication',
@@ -180,35 +181,33 @@ describe('HomeComponent', () => {
         dark.test(i.getAttribute('src') ?? '')
       );
 
-      expect(lightHits.length).toBe(
-        1,
-        `${base} light variant should appear once`
+      expect(lightHits.length, `${base} light variant should appear once`).toBe(
+        1
       );
-      expect(darkHits.length).toBe(
-        1,
-        `${base} dark variant should appear once`
+      expect(darkHits.length, `${base} dark variant should appear once`).toBe(
+        1
       );
 
       // Both must go through NgOptimizedImage, which is what the capture
       // pipeline's rewrite step looks for.
       for (const img of [...lightHits, ...darkHits]) {
-        expect(img.hasAttribute('ngsrc')).toBe(
-          true,
+        expect(
+          img.hasAttribute('ngsrc'),
           `${base} should use ngSrc, not a plain src`
-        );
+        ).toBe(true);
       }
     }
   });
 
   it('uses the hero screenshot as the social preview image', () => {
-    const opts = meta.setSeoTags.calls.mostRecent().args[0];
+    const opts = vi.mocked(meta.setSeoTags).mock.lastCall[0];
 
     expect(opts.imageUrl).toContain('Homepage_PrinterList');
     expect(opts.imageUrl).toMatch(/^https:\/\/www\.3dprintlog\.com\//);
   });
 
   it('advertises the hand-written Markdown twin at /index.md', () => {
-    const opts = meta.setSeoTags.calls.mostRecent().args[0];
+    const opts = vi.mocked(meta.setSeoTags).mock.lastCall[0];
 
     expect(opts.markdownUrl).toBe('https://www.3dprintlog.com/index.md');
   });

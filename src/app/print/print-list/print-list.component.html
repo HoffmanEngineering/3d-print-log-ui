@@ -1,4 +1,4 @@
-<div fxLayout="column" fxLayoutAlign="center" data-cy="capture-print-list">
+<div class="print-list" data-cy="capture-print-list">
   <!-- Header: always visible regardless of view mode -->
   <div class="header" data-cy="capture-print-filters">
     <!-- Row 1: Always visible — action buttons, search, filter toggle -->
@@ -64,11 +64,11 @@
         matBadgeColor="accent"
         matBadgeSize="small"
         [matBadgeHidden]="activeFilterCount() === 0"
-        [attr.aria-expanded]="isFilterPanelOpen"
+        [attr.aria-expanded]="isFilterPanelOpen()"
         aria-controls="filter-panel"
         (click)="toggleFilterPanel()"
       >
-        <mat-icon>{{ isFilterPanelOpen ? 'expand_less' : 'tune' }}</mat-icon>
+        <mat-icon>{{ isFilterPanelOpen() ? 'expand_less' : 'tune' }}</mat-icon>
         Filters
       </button>
     </div>
@@ -77,7 +77,7 @@
     <div
       id="filter-panel"
       class="filter-panel"
-      [class.filter-panel--open]="isFilterPanelOpen"
+      [class.filter-panel--open]="isFilterPanelOpen()"
     >
       <div class="filter-panel-inner">
         <mat-form-field class="filter-field" subscriptSizing="dynamic">
@@ -284,7 +284,7 @@
         data-cy="capture-print-table"
         [class.loading]="showSkeleton()"
         [class.refreshing]="showRefreshing()"
-        fxFlex="grow"
+        class="print-table"
         aria-label="Print List"
         [attr.aria-busy]="showRefreshing() ? 'true' : null"
         [attr.aria-live]="showSkeleton() ? 'off' : 'polite'"
@@ -332,6 +332,7 @@
               <app-print-image
                 [printId]="print.id"
                 [imageId]="print.defaultPrintImageId"
+                [thumbnailUrl]="print.defaultPrintImageThumbnailUrl"
               ></app-print-image>
             </div>
           </td>
@@ -343,6 +344,7 @@
               <app-print-image
                 [printId]="print.id"
                 [imageId]="print.defaultPrintImageId"
+                [thumbnailUrl]="print.defaultPrintImageThumbnailUrl"
               ></app-print-image>
             </div>
           </td>
@@ -520,7 +522,9 @@
           <td mat-cell *matCellDef="let print">
             <app-filament-usage-summary
               [filamentUsage]="print.filamentUsage"
-              [defaultFilamentPrice]="defaultFilamentPriceSetting?.value"
+              [defaultFilamentPrice]="
+                $safeNavigationMigration(defaultFilamentPriceSetting?.value)
+              "
               [currencySymbol]="preferredCurrencySymbolSetting?.value ?? '$'"
               [linkFilaments]="true"
               [showPrices]="true"
@@ -536,7 +540,13 @@
             Total Material (g)
           </th>
           <td mat-cell *matCellDef="let print">
-            {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+            <!-- A resin print's rows are in mL, which the server's gram total
+                 converts through density (printlog-bridge#97). -->
+            @if (volumeTotalLabel(print.filamentUsage); as volume) {
+              {{ volume }}
+            } @else {
+              {{ print.totalFilamentWeightMg / 1000 | number: '1.0-1' }}
+            }
           </td>
         </ng-container>
         <ng-container matColumnDef="totalCost">

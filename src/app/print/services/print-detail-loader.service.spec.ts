@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of, throwError } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -7,20 +8,20 @@ import { PrintDetailLoaderService } from './print-detail-loader.service';
 
 describe('PrintDetailLoaderService', () => {
   let service: PrintDetailLoaderService;
-  let printService: jasmine.SpyObj<PrintService>;
-  let userService: jasmine.SpyObj<UserService>;
-  let loggingService: jasmine.SpyObj<LoggingService>;
+  let printService: MockedObject<PrintService>;
+  let userService: MockedObject<UserService>;
+  let loggingService: MockedObject<LoggingService>;
 
   beforeEach(() => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'getPrintDetail',
-    ]);
-    userService = jasmine.createSpyObj<UserService>('UserService', [
-      'getUserSummary',
-    ]);
-    loggingService = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-    ]);
+    printService = {
+      getPrintDetail: vi.fn().mockName('PrintService.getPrintDetail'),
+    } as unknown as MockedObject<PrintService>;
+    userService = {
+      getUserSummary: vi.fn().mockName('UserService.getUserSummary'),
+    } as unknown as MockedObject<UserService>;
+    loggingService = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -33,10 +34,10 @@ describe('PrintDetailLoaderService', () => {
   });
 
   it('returns the print and its uploader', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       of({ id: 1, createdByUserId: 7 } as any)
     );
-    userService.getUserSummary.and.returnValue(of({ id: 7 } as any));
+    userService.getUserSummary.mockReturnValue(of({ id: 7 } as any));
 
     const result = await lastValueFrom(service.load(1));
 
@@ -45,10 +46,10 @@ describe('PrintDetailLoaderService', () => {
   });
 
   it('degrades to a null user when getUserSummary fails', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       of({ id: 1, title: 'Public print', createdByUserId: 7 } as any)
     );
-    userService.getUserSummary.and.returnValue(
+    userService.getUserSummary.mockReturnValue(
       throwError(() => new Error('403'))
     );
 
@@ -62,7 +63,7 @@ describe('PrintDetailLoaderService', () => {
   // page on its skeleton forever rather than bouncing the visitor home — a
   // different symptom of the same #66 defect, and a worse one.
   it('degrades to a null print when the print request 404s', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       throwError(() => ({ status: 404 }))
     );
 
@@ -74,7 +75,7 @@ describe('PrintDetailLoaderService', () => {
   });
 
   it('degrades and logs when the print request fails unexpectedly', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       throwError(() => ({ status: 500 }))
     );
 
@@ -87,10 +88,10 @@ describe('PrintDetailLoaderService', () => {
   });
 
   it('never emits an error, whatever the failure', async () => {
-    printService.getPrintDetail.and.returnValue(
+    printService.getPrintDetail.mockReturnValue(
       throwError(() => new TypeError('network down'))
     );
 
-    await expectAsync(lastValueFrom(service.load(1))).toBeResolved();
+    await expect(lastValueFrom(service.load(1))).resolves.not.toThrow();
   });
 });

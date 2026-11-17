@@ -5,6 +5,7 @@ import { UsersPrintsStatsService } from './users-prints-stats.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('UsersPrintsStatsService', () => {
@@ -14,7 +15,7 @@ describe('UsersPrintsStatsService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import {
@@ -28,14 +24,14 @@ function fakePrint(id: number): PrintSummary {
 
 describe('FilamentPrintsPanelComponent', () => {
   let fixture: ComponentFixture<FilamentPrintsPanelComponent>;
-  let printService: jasmine.SpyObj<PrintService>;
+  let printService: MockedObject<PrintService>;
 
   beforeEach(async () => {
-    printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'getPrintSummaries',
-      'getPrintImage',
-    ]);
-    printService.getPrintImage.and.returnValue(of('data:image/png;base64,AAA'));
+    printService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      getPrintImage: vi.fn().mockName('PrintService.getPrintImage'),
+    } as unknown as MockedObject<PrintService>;
+    printService.getPrintImage.mockReturnValue(of('data:image/png;base64,AAA'));
 
     await TestBed.configureTestingModule({
       imports: [FilamentPrintsPanelComponent],
@@ -53,8 +49,9 @@ describe('FilamentPrintsPanelComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  it('lists the returned prints', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('lists the returned prints', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       of({
         items: [fakePrint(1), fakePrint(2)],
         paging: { totalCount: 2 },
@@ -62,92 +59,98 @@ describe('FilamentPrintsPanelComponent', () => {
     );
 
     const el = create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
     expect(el.querySelectorAll('app-filament-print-row').length).toBe(2);
-  }));
+  });
 
-  it('filters by this filament', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('filters by this filament', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       of({ items: [], paging: { totalCount: 0 } } as never)
     );
 
     create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
 
-    const filamentIdsArg =
-      printService.getPrintSummaries.calls.mostRecent().args[5];
+    const filamentIdsArg = vi.mocked(printService.getPrintSummaries).mock
+      .lastCall[5];
     expect(filamentIdsArg).toEqual([FILAMENT_ID]);
-  }));
+  });
 
-  it('shows an empty state when nothing used the spool', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('shows an empty state when nothing used the spool', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       of({ items: [], paging: { totalCount: 0 } } as never)
     );
 
     const el = create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
     expect(el.textContent).toContain('No prints have used this material yet');
-  }));
+  });
 
-  it('shows a scoped error without throwing', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('shows a scoped error without throwing', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       throwError(() => new Error('boom'))
     );
 
     const el = create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
     expect(el.textContent).toContain("Couldn't load prints");
-  }));
+  });
 
-  it('refetches when the error state is retried', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('refetches when the error state is retried', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       throwError(() => new Error('boom'))
     );
 
     const el = create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
-    printService.getPrintSummaries.and.returnValue(
+    printService.getPrintSummaries.mockReturnValue(
       of({ items: [fakePrint(1)], paging: { totalCount: 1 } } as never)
     );
     el.querySelector('button')!.click();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
     expect(el.querySelectorAll('app-filament-print-row').length).toBe(1);
-  }));
+  });
 
-  it('links to the filtered print list', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('links to the filtered print list', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       of({ items: [fakePrint(1)], paging: { totalCount: 23 } } as never)
     );
 
     const el = create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
     const link = el.querySelector('a.view-all');
     expect(link?.getAttribute('href')).toContain(
       'filterByFilamentId=' + FILAMENT_ID
     );
-  }));
+  });
 
-  it('does not offer a view-all link when every print is already listed', fakeAsync(() => {
-    printService.getPrintSummaries.and.returnValue(
+  it('does not offer a view-all link when every print is already listed', async () => {
+    vi.useFakeTimers();
+    printService.getPrintSummaries.mockReturnValue(
       of({ items: [fakePrint(1)], paging: { totalCount: 1 } } as never)
     );
 
     const el = create();
-    tick(1000);
+    await vi.advanceTimersByTimeAsync(1000);
     fixture.detectChanges();
 
     expect(el.querySelector('a.view-all')).toBeFalsy();
-  }));
+  });
 });

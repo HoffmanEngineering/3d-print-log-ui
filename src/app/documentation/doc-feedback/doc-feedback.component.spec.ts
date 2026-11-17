@@ -1,17 +1,17 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { DocsTelemetryService } from '../docs-telemetry.service';
 import { DocFeedbackComponent } from './doc-feedback.component';
 
 describe('DocFeedbackComponent', () => {
-  let telemetry: jasmine.SpyObj<DocsTelemetryService>;
+  let telemetry: MockedObject<DocsTelemetryService>;
   let fixture: ComponentFixture<DocFeedbackComponent>;
 
   beforeEach(async () => {
-    telemetry = jasmine.createSpyObj<DocsTelemetryService>(
-      'DocsTelemetryService',
-      ['trackFeedback']
-    );
+    telemetry = {
+      trackFeedback: vi.fn().mockName('DocsTelemetryService.trackFeedback'),
+    } as unknown as MockedObject<DocsTelemetryService>;
 
     await TestBed.configureTestingModule({
       imports: [DocFeedbackComponent, NoopAnimationsModule],
@@ -30,7 +30,7 @@ describe('DocFeedbackComponent', () => {
 
   function click(cy: string): void {
     const el = fixture.nativeElement.querySelector(`[data-cy="${cy}"]`);
-    expect(el).withContext(`missing [data-cy="${cy}"]`).toBeTruthy();
+    expect(el, `missing [data-cy="${cy}"]`).toBeTruthy();
     el.click();
     fixture.detectChanges();
   }
@@ -51,7 +51,9 @@ describe('DocFeedbackComponent', () => {
   it('reports a positive vote as soon as it is given', () => {
     click('doc-feedback-yes');
 
-    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+    expect(telemetry.trackFeedback).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackFeedback).toHaveBeenCalledWith(
       true,
       undefined,
       'prints'
@@ -76,7 +78,9 @@ describe('DocFeedbackComponent', () => {
     typeComment('the QR label section is unclear');
     click('doc-feedback-submit');
 
-    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+    expect(telemetry.trackFeedback).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackFeedback).toHaveBeenCalledWith(
       false,
       'the QR label section is unclear',
       'prints'
@@ -87,7 +91,9 @@ describe('DocFeedbackComponent', () => {
     click('doc-feedback-no');
     click('doc-feedback-skip');
 
-    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+    expect(telemetry.trackFeedback).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackFeedback).toHaveBeenCalledWith(
       false,
       undefined,
       'prints'
@@ -100,7 +106,9 @@ describe('DocFeedbackComponent', () => {
 
     fixture.destroy();
 
-    expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+    expect(telemetry.trackFeedback).toHaveBeenCalledTimes(1);
+
+    expect(telemetry.trackFeedback).toHaveBeenCalledWith(
       false,
       'half-written thought',
       'prints'
@@ -149,7 +157,11 @@ describe('DocFeedbackComponent', () => {
 
       // The vote belongs to the page it was cast on, even though the reader has
       // already moved to the next one by the time it is flushed.
-      expect(telemetry.trackFeedback).toHaveBeenCalledOnceWith(
+      expect(telemetry.trackFeedback).toHaveBeenCalledTimes(1);
+
+      // The vote belongs to the page it was cast on, even though the reader has
+      // already moved to the next one by the time it is flushed.
+      expect(telemetry.trackFeedback).toHaveBeenCalledWith(
         false,
         'could not find the answer',
         'prints'

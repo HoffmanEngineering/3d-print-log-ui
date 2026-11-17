@@ -3,3 +3,14 @@
   max-width: 400px;
   max-height: 400px;
 }
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.image-row {
+  display: flex;
+}

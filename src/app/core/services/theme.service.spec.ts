@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { DOCUMENT } from '@angular/common';
 import { ThemeService, ThemeMode } from './theme.service';
@@ -5,7 +6,10 @@ import { ThemeService, ThemeMode } from './theme.service';
 describe('ThemeService', () => {
   let service: ThemeService;
   let mockDocument: Document;
-  let mockMediaQuery: { matches: boolean; addEventListener: jasmine.Spy };
+  let mockMediaQuery: {
+    matches: boolean;
+    addEventListener: Mock;
+  };
 
   function buildService(
     savedMode: string | null = null,
@@ -16,9 +20,9 @@ describe('ThemeService', () => {
 
     mockMediaQuery = {
       matches: osPrefersDark,
-      addEventListener: jasmine.createSpy(),
+      addEventListener: vi.fn(),
     };
-    spyOn(window, 'matchMedia').and.returnValue(mockMediaQuery as any);
+    vi.spyOn(window, 'matchMedia').mockReturnValue(mockMediaQuery as any);
 
     mockDocument = document;
     mockDocument.documentElement.className = '';
@@ -30,7 +34,7 @@ describe('ThemeService', () => {
     service = TestBed.inject(ThemeService);
   }
 
-  // These specs toggle the real <html> class, and Karma runs every spec against
+  // These specs toggle the real <html> class, and every spec file runs against
   // the same document: a run that ends in dark mode leaves `dark-theme` set for
   // whichever spec happens to come next under random ordering. That is not
   // hypothetical — it silently hid the light variant in the doc-figure layout
@@ -57,9 +61,9 @@ describe('ThemeService', () => {
   it('setMode(dark) adds dark-theme class to body', () => {
     buildService();
     service.setMode('dark');
-    expect(
-      mockDocument.documentElement.classList.contains('dark-theme')
-    ).toBeTrue();
+    expect(mockDocument.documentElement.classList.contains('dark-theme')).toBe(
+      true
+    );
   });
 
   it('setMode(dark) writes to localStorage', () => {
@@ -72,26 +76,26 @@ describe('ThemeService', () => {
     buildService('dark');
     mockDocument.documentElement.classList.add('dark-theme');
     service.setMode('light');
-    expect(
-      mockDocument.documentElement.classList.contains('dark-theme')
-    ).toBeFalse();
+    expect(mockDocument.documentElement.classList.contains('dark-theme')).toBe(
+      false
+    );
   });
 
   it('setMode(system) adds dark-theme when OS prefers dark', () => {
     buildService(null, true /* osPrefersDark */);
     service.setMode('system');
-    expect(
-      mockDocument.documentElement.classList.contains('dark-theme')
-    ).toBeTrue();
+    expect(mockDocument.documentElement.classList.contains('dark-theme')).toBe(
+      true
+    );
   });
 
   it('setMode(system) removes dark-theme when OS prefers light', () => {
     buildService(null, false /* osPrefersDark */);
     mockDocument.documentElement.classList.add('dark-theme');
     service.setMode('system');
-    expect(
-      mockDocument.documentElement.classList.contains('dark-theme')
-    ).toBeFalse();
+    expect(mockDocument.documentElement.classList.contains('dark-theme')).toBe(
+      false
+    );
   });
 
   it('initialize() registers media query change listener', () => {
@@ -99,7 +103,7 @@ describe('ThemeService', () => {
     service.initialize();
     expect(mockMediaQuery.addEventListener).toHaveBeenCalledWith(
       'change',
-      jasmine.any(Function)
+      expect.any(Function)
     );
   });
 
@@ -113,26 +117,28 @@ describe('ThemeService', () => {
   it('media query change re-applies theme only when mode is system', () => {
     buildService('dark', false);
     service.initialize();
-    const [, listener] = mockMediaQuery.addEventListener.calls.first().args;
+    const [, listener] = vi.mocked(mockMediaQuery.addEventListener).mock
+      .calls[0];
 
     // OS switches to dark — should NOT change class since mode is 'dark', not 'system'
     mockDocument.documentElement.classList.remove('dark-theme');
     mockMediaQuery.matches = true;
     listener();
-    expect(
-      mockDocument.documentElement.classList.contains('dark-theme')
-    ).toBeFalse();
+    expect(mockDocument.documentElement.classList.contains('dark-theme')).toBe(
+      false
+    );
   });
 
   it('media query change applies dark-theme when mode is system and OS switches to dark', () => {
     buildService('system', false);
     service.initialize();
-    const [, listener] = mockMediaQuery.addEventListener.calls.first().args;
+    const [, listener] = vi.mocked(mockMediaQuery.addEventListener).mock
+      .calls[0];
 
     mockMediaQuery.matches = true;
     listener();
-    expect(
-      mockDocument.documentElement.classList.contains('dark-theme')
-    ).toBeTrue();
+    expect(mockDocument.documentElement.classList.contains('dark-theme')).toBe(
+      true
+    );
   });
 });

@@ -1,20 +1,19 @@
-import { provideZoneChangeDetection } from '@angular/core';
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { of, Subject } from 'rxjs';
 
-import { SharedModule } from 'src/app/shared/shared.module';
 import {
   PrinterMaintenanceDto,
   PrinterMaintenanceService,
 } from 'src/app/core/services/printer-maintenance.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { provideSectionProviders } from 'src/app/shared/section-providers';
 import { PrinterMaintenanceComponent } from './printer-maintenance.component';
 import { PrinterThumbnailStore } from 'src/app/core/stores/printer-thumbnail-store.service';
 import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
@@ -57,69 +56,81 @@ const anEntry = (overrides: Partial<PrinterMaintenanceDto> = {}) =>
 describe('PrinterMaintenanceComponent', () => {
   let component: PrinterMaintenanceComponent;
   let fixture: ComponentFixture<PrinterMaintenanceComponent>;
-  let maintenanceService: jasmine.SpyObj<PrinterMaintenanceService>;
+  let maintenanceService: MockedObject<PrinterMaintenanceService>;
 
   /**
    * `later` makes the list and save calls answer only when the test says so, the
-   * way HTTP does. Those tests run under zone change detection like the app, with
-   * startup settled first, so a view that is not repainted shows up as stale.
+   * way HTTP does. Those tests settle startup first (the TestBed is zoneless, like
+   * the app), so a view that is not repainted shows up as stale.
    */
   const setUp = async (
     entries: Partial<PrinterMaintenanceDto>[],
     printers: PrinterSummary[] = [aPrinter()],
     later?: Subject<unknown>
   ) => {
-    maintenanceService = jasmine.createSpyObj<PrinterMaintenanceService>(
-      'PrinterMaintenanceService',
-      [
-        'getPrinterMaintenanceCategories',
-        'getCurrentUserPrinterMaintenance',
-        'deletePrinterMaintenanceEntry',
-        'getPrinterMaintenanceEntry',
-        'updatePrinterMaintenanceEntry',
-      ]
-    );
-    maintenanceService.getPrinterMaintenanceCategories.and.returnValue(
+    maintenanceService = {
+      getPrinterMaintenanceCategories: vi
+        .fn()
+        .mockName('PrinterMaintenanceService.getPrinterMaintenanceCategories'),
+      getCurrentUserPrinterMaintenance: vi
+        .fn()
+        .mockName('PrinterMaintenanceService.getCurrentUserPrinterMaintenance'),
+      deletePrinterMaintenanceEntry: vi
+        .fn()
+        .mockName('PrinterMaintenanceService.deletePrinterMaintenanceEntry'),
+      getPrinterMaintenanceEntry: vi
+        .fn()
+        .mockName('PrinterMaintenanceService.getPrinterMaintenanceEntry'),
+      updatePrinterMaintenanceEntry: vi
+        .fn()
+        .mockName('PrinterMaintenanceService.updatePrinterMaintenanceEntry'),
+    } as unknown as MockedObject<PrinterMaintenanceService>;
+    maintenanceService.getPrinterMaintenanceCategories.mockReturnValue(
       of({ categories: ['Nozzle', 'Belts'] } as never)
     );
-    maintenanceService.getCurrentUserPrinterMaintenance.and.returnValue(
+    maintenanceService.getCurrentUserPrinterMaintenance.mockReturnValue(
       later ? (later as never) : of(page(entries))
     );
-    maintenanceService.updatePrinterMaintenanceEntry.and.returnValue(
+    maintenanceService.updatePrinterMaintenanceEntry.mockReturnValue(
       (later ?? of()) as never
     );
 
-    const router = jasmine.createSpyObj<Router>('Router', [
-      'navigate',
-      'navigateByUrl',
-    ]);
-    router.navigate.and.returnValue(Promise.resolve(true));
+    const router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+      navigateByUrl: vi.fn().mockName('Router.navigateByUrl'),
+    };
+    router.navigate.mockReturnValue(Promise.resolve(true));
 
-    const toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    const toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    };
+    const dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [
-        SharedModule,
         FormsModule,
         NoopAnimationsModule,
         PrinterAvatarComponent,
-        // The template renders app-ad for real, which needs the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         PrinterMaintenanceComponent,
       ],
       providers: [
-        ...(later ? [provideZoneChangeDetection()] : []),
+        // The section route's providers: the datepickers need its DateAdapter.
+        ...provideSectionProviders(),
         // Stubbed: the real store would issue its own authenticated fetch.
         {
           provide: PrinterThumbnailStore,
-          useValue: jasmine.createSpyObj<PrinterThumbnailStore>(
-            'PrinterThumbnailStore',
-            ['thumbnailFor', 'invalidate', 'noteLoadFailure']
-          ),
+          useValue: {
+            thumbnailFor: vi
+              .fn()
+              .mockName('PrinterThumbnailStore.thumbnailFor'),
+            invalidate: vi.fn().mockName('PrinterThumbnailStore.invalidate'),
+            noteLoadFailure: vi
+              .fn()
+              .mockName('PrinterThumbnailStore.noteLoadFailure'),
+          },
         },
         {
           provide: PrinterMaintenanceService,
@@ -207,18 +218,82 @@ describe('PrinterMaintenanceComponent', () => {
       const entry = component.entries()[0];
       component.editEntry(entry);
       fixture.detectChanges();
-      expect(fixture.nativeElement.querySelector('td input[matInput]'))
-        .withContext('editing')
-        .toBeTruthy();
+      expect(
+        fixture.nativeElement.querySelector('td input[matInput]'),
+        'editing'
+      ).toBeTruthy();
 
       component.saveEntry(entry);
       later.next({ ...entry, description: 'Replace nozzle, 0.6 mm' });
       fixture.detectChanges();
 
       expect(text()).toContain('Replace nozzle, 0.6 mm');
-      expect(fixture.nativeElement.querySelector('td input[matInput]'))
-        .withContext('editing')
-        .toBeNull();
+      expect(
+        fixture.nativeElement.querySelector('td input[matInput]'),
+        'editing'
+      ).toBeNull();
+    });
+
+    it('saves what was typed, with its printer', () => {
+      const other = aPrinter({ id: 9, name: 'Ender 3' });
+      component.printers.set([aPrinter(), other]);
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      component.editForm.patchValue({
+        printerId: 9,
+        category: 'Belts',
+        description: 'Tension belts',
+      });
+
+      component.saveEntry(entry);
+
+      const sent = vi.mocked(maintenanceService.updatePrinterMaintenanceEntry)
+        .mock.lastCall[0] as PrinterMaintenanceDto;
+      expect(sent.id).toBe(entry.id);
+      expect(sent.category).toBe('Belts');
+      expect(sent.description).toBe('Tension belts');
+      expect(sent.printerId).toBe(9);
+      expect(sent.printer).toBe(other);
+    });
+
+    it('leaves the row as it was on cancel', () => {
+      const entry = component.entries()[0];
+      component.editEntry(entry);
+      component.editForm.patchValue({ description: 'Typed, then cancelled' });
+
+      component.cancelEdit();
+      fixture.detectChanges();
+
+      expect(component.entries()[0]).toBe(entry);
+      expect(entry.description).toBe('Replace nozzle');
+      expect(text()).toContain('Replace nozzle');
+    });
+  });
+
+  describe('toggleDone', () => {
+    it('saves an existing row', async () => {
+      await setUp([anEntry()]);
+      const entry = component.entries()[0];
+
+      component.toggleDone(entry, true);
+
+      expect(entry.done).toBe(true);
+      expect(
+        maintenanceService.updatePrinterMaintenanceEntry
+      ).toHaveBeenCalledWith(entry);
+    });
+
+    it('only marks a new, unsaved row: there is nothing to PUT yet', async () => {
+      await setUp([anEntry()]);
+      component.addEntry();
+      const draft = component.entries()[0];
+
+      component.toggleDone(draft, true);
+
+      expect(draft.done).toBe(true);
+      expect(
+        maintenanceService.updatePrinterMaintenanceEntry
+      ).not.toHaveBeenCalled();
     });
   });
 });

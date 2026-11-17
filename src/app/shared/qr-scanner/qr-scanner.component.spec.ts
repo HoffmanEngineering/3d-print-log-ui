@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { QrScannerComponent } from './qr-scanner.component';
 import {
@@ -15,7 +11,7 @@ import { CameraDevice } from 'html5-qrcode';
 describe('QrScannerComponent', () => {
   let component: QrScannerComponent;
   let fixture: ComponentFixture<QrScannerComponent>;
-  let mockScannerService: jasmine.SpyObj<QrScannerService>;
+  let mockScannerService: MockedObject<QrScannerService>;
 
   const mockCameras: CameraDevice[] = [
     { id: 'camera1', label: 'Front Camera' },
@@ -23,16 +19,16 @@ describe('QrScannerComponent', () => {
   ];
 
   beforeEach(async () => {
-    mockScannerService = jasmine.createSpyObj('QrScannerService', [
-      'getCameras',
-      'startScanning',
-      'stopScanning',
-      'parseFilamentUrl',
-    ]);
+    mockScannerService = {
+      getCameras: vi.fn().mockName('QrScannerService.getCameras'),
+      startScanning: vi.fn().mockName('QrScannerService.startScanning'),
+      stopScanning: vi.fn().mockName('QrScannerService.stopScanning'),
+      parseFilamentUrl: vi.fn().mockName('QrScannerService.parseFilamentUrl'),
+    } as unknown as MockedObject<QrScannerService>;
 
-    mockScannerService.getCameras.and.resolveTo(mockCameras);
-    mockScannerService.startScanning.and.resolveTo();
-    mockScannerService.stopScanning.and.resolveTo();
+    mockScannerService.getCameras.mockResolvedValue(mockCameras);
+    mockScannerService.startScanning.mockResolvedValue(undefined);
+    mockScannerService.stopScanning.mockResolvedValue(undefined);
 
     await TestBed.configureTestingModule({
       imports: [QrScannerComponent, NoopAnimationsModule],
@@ -48,68 +44,73 @@ describe('QrScannerComponent', () => {
   });
 
   it('should start with initializing state', () => {
-    expect(component.initializing()).toBeTrue();
-    expect(component.scanning()).toBeFalse();
+    expect(component.initializing()).toBe(true);
+    expect(component.scanning()).toBe(false);
     expect(component.error()).toBeNull();
   });
 
-  it('should initialize cameras after render', fakeAsync(() => {
+  it('should initialize cameras after render', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockScannerService.getCameras).toHaveBeenCalled();
-  }));
+  });
 
-  it('should prefer back camera when available', fakeAsync(() => {
+  it('should prefer back camera when available', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockScannerService.startScanning).toHaveBeenCalledWith(
       'qr-reader',
-      jasmine.any(Function),
+      expect.any(Function),
       'camera2'
     );
-  }));
+  });
 
-  it('should use first camera when no back camera found', fakeAsync(() => {
+  it('should use first camera when no back camera found', async () => {
+    vi.useFakeTimers();
     const frontOnlyCameras: CameraDevice[] = [
       { id: 'front1', label: 'Front Camera' },
       { id: 'front2', label: 'Secondary Front' },
     ];
-    mockScannerService.getCameras.and.resolveTo(frontOnlyCameras);
+    mockScannerService.getCameras.mockResolvedValue(frontOnlyCameras);
 
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockScannerService.startScanning).toHaveBeenCalledWith(
       'qr-reader',
-      jasmine.any(Function),
+      expect.any(Function),
       'front1'
     );
-  }));
+  });
 
-  it('should show error when no cameras available', fakeAsync(() => {
-    mockScannerService.getCameras.and.resolveTo([]);
+  it('should show error when no cameras available', async () => {
+    vi.useFakeTimers();
+    mockScannerService.getCameras.mockResolvedValue([]);
 
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.error()).toBe('No camera found on this device');
-    expect(component.initializing()).toBeFalse();
+    expect(component.initializing()).toBe(false);
     expect(mockScannerService.startScanning).not.toHaveBeenCalled();
-  }));
+  });
 
-  it('should show error when camera permission denied', fakeAsync(() => {
-    mockScannerService.getCameras.and.rejectWith(
+  it('should show error when camera permission denied', async () => {
+    vi.useFakeTimers();
+    mockScannerService.getCameras.mockRejectedValue(
       new Error('NotAllowedError: Permission denied')
     );
 
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.error()).toContain('Camera permission denied');
-    expect(component.initializing()).toBeFalse();
-  }));
+    expect(component.initializing()).toBe(false);
+  });
 
   it('should stop scanning on destroy', () => {
     component.ngOnDestroy();
@@ -117,7 +118,8 @@ describe('QrScannerComponent', () => {
     expect(mockScannerService.stopScanning).toHaveBeenCalled();
   });
 
-  it('should emit scanned event when QR code detected', fakeAsync(() => {
+  it('should emit scanned event when QR code detected', async () => {
+    vi.useFakeTimers();
     const scanResult: QrScanResult = {
       success: true,
       filamentId: 'test-id',
@@ -130,87 +132,93 @@ describe('QrScannerComponent', () => {
     });
 
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     // Get the callback that was passed to startScanning
-    const callback = mockScannerService.startScanning.calls.mostRecent()
-      .args[1] as (result: QrScanResult) => void;
+    const callback = vi.mocked(mockScannerService.startScanning).mock
+      .lastCall[1] as (result: QrScanResult) => void;
     callback(scanResult);
 
     expect(emittedResult).toEqual(scanResult);
     expect(mockScannerService.stopScanning).toHaveBeenCalled();
-    expect(component.scanning()).toBeFalse();
-  }));
+    expect(component.scanning()).toBe(false);
+  });
 
-  it('should allow camera change', fakeAsync(() => {
+  it('should allow camera change', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
-    mockScannerService.startScanning.calls.reset();
-    mockScannerService.stopScanning.calls.reset();
+    mockScannerService.startScanning.mockClear();
+    mockScannerService.stopScanning.mockClear();
 
     component.onCameraChange('camera1');
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(mockScannerService.stopScanning).toHaveBeenCalled();
     expect(mockScannerService.startScanning).toHaveBeenCalledWith(
       'qr-reader',
-      jasmine.any(Function),
+      expect.any(Function),
       'camera1'
     );
     expect(component.selectedCamera()).toBe('camera1');
-  }));
+  });
 
-  it('should retry scanning on retryScanning call', fakeAsync(() => {
-    mockScannerService.getCameras.and.rejectWith(new Error('Some error'));
+  it('should retry scanning on retryScanning call', async () => {
+    vi.useFakeTimers();
+    mockScannerService.getCameras.mockRejectedValue(new Error('Some error'));
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.error()).not.toBeNull();
 
-    mockScannerService.getCameras.and.resolveTo(mockCameras);
+    mockScannerService.getCameras.mockResolvedValue(mockCameras);
     component.retryScanning();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.error()).toBeNull();
     expect(mockScannerService.getCameras).toHaveBeenCalledTimes(2);
-  }));
+  });
 
-  it('should handle camera in use error', fakeAsync(() => {
-    mockScannerService.getCameras.and.rejectWith(
+  it('should handle camera in use error', async () => {
+    vi.useFakeTimers();
+    mockScannerService.getCameras.mockRejectedValue(
       new Error('NotReadableError: Could not start video source')
     );
 
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.error()).toContain('Camera is in use');
-  }));
+  });
 
-  it('should handle device not found error', fakeAsync(() => {
-    mockScannerService.getCameras.and.rejectWith(
+  it('should handle device not found error', async () => {
+    vi.useFakeTimers();
+    mockScannerService.getCameras.mockRejectedValue(
       new Error('NotFoundError: Requested device not found')
     );
 
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.error()).toBe('No camera found on this device');
-  }));
+  });
 
-  it('should populate cameras list after initialization', fakeAsync(() => {
+  it('should populate cameras list after initialization', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(component.cameras()).toEqual(mockCameras);
     expect(component.cameras().length).toBe(2);
-  }));
+  });
 
-  it('should set scanning to true after successful start', fakeAsync(() => {
+  it('should set scanning to true after successful start', async () => {
+    vi.useFakeTimers();
     fixture.detectChanges();
-    tick();
+    await vi.advanceTimersByTimeAsync(0);
 
-    expect(component.scanning()).toBeTrue();
-    expect(component.initializing()).toBeFalse();
-  }));
+    expect(component.scanning()).toBe(true);
+    expect(component.initializing()).toBe(false);
+  });
 });

@@ -1,7 +1,9 @@
+import { Clipboard } from '@angular/cdk/clipboard';
 import {
   ChangeDetectionStrategy,
   Component,
   DestroyRef,
+  computed,
   inject,
   input,
   signal,
@@ -18,16 +20,32 @@ import {
   ConnectionService,
   ConnectionStatus,
 } from 'src/app/core/services/connection.service';
+import { Bridge, BridgesService } from 'src/app/core/services/bridges.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
 import { externalSourceLabel } from 'src/app/shared/utils/external-source.utils';
+import { isFdmCategory } from '../printer-spoolman/printer-spoolman.component';
+import { bridgeLabel } from '../bridges/bridge-utils';
+import {
+  BRIDGE_SETUPS,
+  BridgeSetupKind,
+  bridgeConfigSnippet,
+  bridgeKindForMake,
+} from './bridge-setup';
+import { connectionSoftware } from './connection-software';
 
 /**
  * The connectors (the bridge, for now) logging prints for one printer (#252): what each one is,
  * whether it is still sending heartbeats, whether a newer release of it is out (printlog-bridge#39),
- * and a way to remove it. Renders nothing for a printer with no connections, which is every
- * printer until the bridge ships.
+ * what the printer runs, and a way to remove it.
+ *
+ * A filament printer with no connections gets a way to set one up instead (printlog-bridge#82):
+ * pick the printer type (Klipper, Bambu Lab, PrusaLink, OctoPrint, Elegoo SDCP, Duet, FlashForge,
+ * Anycubic), see its steps and a config section with this printer's id. A resin printer gets it
+ * only when it is an Anycubic Photon P1 (or P1 Max), with Anycubic as its one type. Anything else
+ * with no connections renders nothing.
  */
 @Component({
   selector: 'app-printer-connections',
@@ -42,12 +60,95 @@ export class PrinterConnectionsComponent {
   private readonly toastr = inject(ToastrService);
   private readonly logging = inject(LoggingService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly clipboard = inject(Clipboard);
+  private readonly bridges = inject(BridgesService);
 
   readonly printerId = input.required<number>();
+  /** The saved printer's category: filament printers, and the Photon P1, are offered the bridge. */
+  readonly category = input<PrinterCategory | null>(null);
+  /** The saved printer's make, to start the setup on the matching printer type. */
+  readonly make = input<string | null>(null);
+  /**
+   * The saved printer's model: of Elegoo's printers only the Centauri Carbon speaks SDCP, and of
+   * Anycubic's only the Kobra S1, the Kobra 3 and the Photon P1 speak LAN mode.
+   */
+  readonly model = input<string | null>(null);
 
   protected readonly connections = signal<Connection[]>([]);
+  /** False until the list loads, so the setup offer never flashes before the rows. */
+  private readonly loaded = signal(false);
   protected readonly ConnectionStatus = ConnectionStatus;
   protected readonly kindLabel = externalSourceLabel;
+  protected readonly software = connectionSoftware;
+
+  /** Bridge names by id, once asked for; a failed lookup leaves it empty ("a bridge"). */
+  private readonly bridgeNames = signal<ReadonlyMap<number, string>>(new Map());
+  private bridgeNamesRequested = false;
+  /** The user has more than one bridge, so a bridge's printer can move to another one. */
+  protected readonly canMove = computed(() => this.bridgeNames().size > 1);
+
+  /** A resin printer: only the types that watch resin printers (Anycubic's Photon P1) apply. */
+  private readonly resin = computed(() => isResinCategory(this.category()));
+  protected readonly setups = computed(() =>
+    this.resin() ? BRIDGE_SETUPS.filter((s) => s.resin) : BRIDGE_SETUPS
+  );
+  protected readonly offerSetup = computed(
+    () =>
+      this.loaded() &&
+      this.connections().length === 0 &&
+      (isFdmCategory(this.category()) ||
+        (this.resin() &&
+          bridgeKindForMake(this.make(), this.model()) === 'anycubic'))
+  );
+  protected readonly setupOpen = signal(false);
+  /** The type the user picked, or null to follow the printer's make. */
+  private readonly pickedKind = signal<BridgeSetupKind | null>(null);
+  protected readonly setupKind = computed(
+    () => this.pickedKind() ?? bridgeKindForMake(this.make(), this.model())
+  );
+  protected readonly setupGuide = computed(
+    () => BRIDGE_SETUPS.find((s) => s.kind === this.setupKind())!.guide
+  );
+  /** The credential the config section holds, and the folder to keep it out of; none for Klipper, SDCP or Anycubic. */
+  protected readonly setupSecret = computed(() => {
+    switch (this.setupKind()) {
+      case 'bambu':
+        return {
+          name: "printer's access code",
+          folder: "Klipper's config folder",
+          checked: "hasn't been checked on every model yet",
+        };
+      case 'prusalink':
+        return {
+          name: "printer's password",
+          folder: "Klipper's config folder",
+          checked: "hasn't been checked on every model yet",
+        };
+      case 'octoprint':
+        return {
+          name: 'OctoPrint API key',
+          folder: "OctoPrint's uploads folder",
+          checked: "hasn't been checked on every model yet",
+        };
+      case 'duet':
+        return {
+          name: "board's password, if it has one",
+          folder: 'a shared folder',
+          checked: "hasn't been checked on a real printer yet",
+        };
+      case 'flashforge':
+        return {
+          name: "printer's check code",
+          folder: 'a shared folder',
+          checked: "hasn't been checked on a real printer yet",
+        };
+      default:
+        return null;
+    }
+  });
+  protected readonly setupSnippet = computed(() =>
+    bridgeConfigSnippet(this.setupKind(), this.printerId())
+  );
 
   constructor() {
     toObservable(this.printerId)
@@ -58,13 +159,63 @@ export class PrinterConnectionsComponent {
             catchError((error) => {
               // The printer form is what this page is for; a failed lookup just hides the panel.
               this.logging.logException(error);
-              return of([] as Connection[]);
+              return of(null);
             })
           )
         ),
         takeUntilDestroyed()
       )
-      .subscribe((connections) => this.connections.set(connections));
+      .subscribe((connections) => {
+        this.connections.set(connections ?? []);
+        this.loaded.set(connections !== null);
+        if (connections?.some((c) => c.bridgeId != null)) {
+          this.loadBridgeNames();
+        }
+      });
+  }
+
+  /** The name of the bridge watching a connection, or "a bridge" when it isn't known. */
+  protected bridgeName(bridgeId: number): string {
+    return this.bridgeNames().get(bridgeId) ?? 'a bridge';
+  }
+
+  /** Once per page: bridges change rarely, and the name is only a label. */
+  private loadBridgeNames(): void {
+    if (this.bridgeNamesRequested) {
+      return;
+    }
+    this.bridgeNamesRequested = true;
+    this.bridges
+      .list()
+      .pipe(
+        catchError(() => of([] as Bridge[])),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((list) =>
+        this.bridgeNames.set(new Map(list.map((b) => [b.id, bridgeLabel(b)])))
+      );
+  }
+
+  protected openSetup(): void {
+    this.setupOpen.set(true);
+    this.logging.logEvent('PrinterConnections_SetupOpened', {
+      kind: this.setupKind(),
+    });
+  }
+
+  protected pickKind(kind: BridgeSetupKind): void {
+    this.pickedKind.set(kind);
+  }
+
+  protected copySetup(): void {
+    if (this.clipboard.copy(this.setupSnippet())) {
+      this.toastr.success('Copied to the clipboard.');
+    } else {
+      this.toastr.error('Could not copy. Select the section and copy it.');
+    }
+    this.logging.logEvent('PrinterConnections_SetupCopied', {
+      kind: this.setupKind(),
+    });
   }
 
   protected confirmDelete(connection: Connection): void {
@@ -109,4 +260,15 @@ export class PrinterConnectionsComponent {
         },
       });
   }
+}
+
+/** A printer that prints in resin, by its category (SLA, or any whose material is resin). */
+function isResinCategory(
+  category: PrinterCategory | null | undefined
+): boolean {
+  return (
+    category != null &&
+    (category.materialCategory?.nickname === 'resin' ||
+      category.nickname === 'SLA')
+  );
 }

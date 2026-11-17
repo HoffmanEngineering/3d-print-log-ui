@@ -14,7 +14,7 @@
         >{{ comment().createdDate | humanize }}</span
       >
     </mat-card-subtitle>
-    <div fxFlex>
+    <div class="header-spacer">
       @if (showDelete()) {
         <button
           id="comment{{ comment().id }}MoreButton"

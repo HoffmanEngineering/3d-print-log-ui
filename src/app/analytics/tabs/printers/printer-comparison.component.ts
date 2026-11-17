@@ -1,8 +1,10 @@
-import { DecimalPipe } from '@angular/common';
+import { DecimalPipe, formatNumber } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
+  LOCALE_ID,
   computed,
+  inject,
   input,
   output,
   signal,
@@ -10,6 +12,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { PrinterRow } from '../../models/analytics.models';
 import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-avatar.component';
+import { withMilliliters } from 'src/app/shared/utils/filament-display.utils';
 
 export type PrinterSortColumn =
   | 'name'
@@ -38,6 +41,13 @@ export class PrinterComparisonComponent {
   readonly rows = input<PrinterRow[]>([]);
   readonly currency = input<string | null>(null);
   readonly layout = input<'table' | 'cards'>('table');
+  /**
+   * Printers whose category takes resin (3d-print-log-api#294): their grams are the resin
+   * weighed through the bottle's density, so their material shows in mL only.
+   */
+  readonly resinPrinterIds = input<ReadonlySet<number>>(new Set());
+
+  private readonly locale = inject(LOCALE_ID);
 
   readonly printerSelect = output<{ printerId: number }>();
 
@@ -55,6 +65,13 @@ export class PrinterComparisonComponent {
     { key: 'maintenanceCost', label: 'Maintenance' },
     { key: 'utilizationPercent', label: 'Utilization' },
   ];
+
+  /** "Material" once any printer used resin; a filament-only fleet keeps "Filament". */
+  readonly materialLabel = computed(() =>
+    this.rows().some((row) => (row.materialMl ?? 0) > 0)
+      ? 'Material'
+      : 'Filament'
+  );
 
   readonly sorted = computed(() => {
     const column = this.sortColumn();
@@ -101,7 +118,14 @@ export class PrinterComparisonComponent {
     return seconds === null ? null : seconds / 3600;
   }
 
-  grams(mg: number): number {
-    return mg / 1000;
+  /** "1,234 g", "72.8 mL" or "34,000 g · 20.0 mL": see withMilliliters. */
+  material(row: PrinterRow): string {
+    const grams = row.materialMg / 1000;
+    return withMilliliters(
+      `${formatNumber(grams, this.locale, '1.0-0')} g`,
+      grams,
+      row.materialMl,
+      this.resinPrinterIds().has(row.printerId)
+    );
   }
 }

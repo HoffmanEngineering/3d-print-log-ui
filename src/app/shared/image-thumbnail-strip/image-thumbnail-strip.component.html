@@ -48,7 +48,10 @@
                 />
               } @else {
                 <img
-                  [src]="image.resolvedUrl ?? (image.url | authImage | async)"
+                  [src]="
+                    image.resolvedUrl ??
+                    (image.thumbnailUrl ?? image.url | authImage | async)
+                  "
                   alt=""
                 />
               }

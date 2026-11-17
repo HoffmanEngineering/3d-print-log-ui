@@ -1,9 +1,10 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, fromEvent, of } from 'rxjs';
-import { catchError, concatMap, map, take } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { SafeUrl } from '@angular/platform-browser';
 import { environment } from 'src/environments/environment';
+import { apiUrl } from 'src/app/core/utils/api-url';
+import { readImageWithFallback } from 'src/app/core/utils/read-image';
 import { PagedList } from '../types/paging';
 import { PrinterSummary } from './printer.service';
 import {
@@ -31,6 +32,8 @@ export interface ProjectImageDto {
   isDefault: boolean;
   displayOrder: number;
   url?: string;
+  /** Thumbnail path relative to the API base URL; absent from APIs older than #281. */
+  thumbnailUrl?: string | null;
 }
 
 export interface ProjectImageValue {
@@ -67,7 +70,14 @@ export interface ProjectSummaryDto {
   totalPrintTimeInSeconds: number;
   totalEstimatedPrintTimeInSeconds: number;
   totalFilamentWeightMg: number;
+  /**
+   * Resin used, in mL (3d-print-log-api#294), beside the gram total and never added to it.
+   * Absent from APIs older than #294.
+   */
+  totalFilamentVolumeMl?: number;
   defaultImageId: number;
+  /** Thumbnail path relative to the API base URL; absent from APIs older than #281. */
+  defaultImageThumbnailUrl?: string | null;
 
   /**
    * Resolved civil date as `YYYY-MM-DD`: the manual override when one is set, otherwise
@@ -99,6 +109,11 @@ export interface ProjectDetailDto {
   totalPrintTimeInSeconds: number;
   totalEstimatedPrintTimeInSeconds: number;
   totalFilamentWeightMg: number;
+  /**
+   * Resin used, in mL (3d-print-log-api#294), beside the gram total and never added to it.
+   * Absent from APIs older than #294.
+   */
+  totalFilamentVolumeMl?: number;
   images: ProjectImageDto[];
 
   /**
@@ -171,7 +186,14 @@ export interface GroupedFeedItemDto {
   totalPrintTimeInSeconds?: number;
   totalEstimatedPrintTimeInSeconds?: number;
   totalFilamentWeightMg?: number;
+  /** Resin used, in mL (3d-print-log-api#294). Null on print rows. */
+  totalFilamentVolumeMl?: number | null;
   defaultProjectImageId?: number;
+  /**
+   * Thumbnail path of the project's default image, relative to the API base URL. Null on print
+   * rows; absent from APIs older than #281.
+   */
+  defaultProjectImageThumbnailUrl?: string | null;
   /** Aggregated filament usage across all project prints, grouped by filament ID. */
   filamentUsage?: PrintFilamentSummaryDto[];
   /** Distinct printers used across all project prints. */
@@ -267,20 +289,18 @@ export class ProjectService {
     );
   }
 
-  getProjectImage(projectId: string, imageId: number): Observable<string> {
+  /**
+   * The project's image as a data URL, or '' when it cannot be loaded. With `thumbnailPath`
+   * (the DTO's `thumbnailUrl`), the thumbnail is fetched instead, falling back to the full
+   * image if it fails.
+   */
+  getProjectImage(
+    projectId: string,
+    imageId: number,
+    thumbnailPath?: string | null
+  ): Observable<string> {
     const url = `${this.baseApi}/api/Projects/${projectId}/images/${imageId}`;
-    const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
-
-    return this.http.get(url, { headers, responseType: 'blob' }).pipe(
-      concatMap((blob) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(blob);
-        return fromEvent(reader, 'load');
-      }),
-      take(1),
-      map((e) => (e.target as FileReader).result as string),
-      catchError(() => of(''))
-    );
+    return readImageWithFallback(this.http, apiUrl(thumbnailPath), url);
   }
 
   getGroupedFeed(

@@ -62,8 +62,8 @@ any Weight Adjustments needed.
 
 ### Material Adjustments {#add-adjustments}
 
-<div fxLayout="row" fxLayout.lt-lg="column">
-    <div fxFlex="grow">
+<div class="doc-columns">
+    <div class="doc-column-main">
       <p>
         Adjustments represent non-print usage of material. Adjustment weights
         are added when calculating the remaining material on a roll, so negative
@@ -78,15 +78,9 @@ any Weight Adjustments needed.
         <li>Tracking material lost when switching colors on a printer.</li>
       </ul>
     </div>
-    <div fxFlex>
+    <div class="doc-column">
       <img
-        class="fade-in"
-        [ngStyle.lt-md]="{
-          display: 'block',
-          'max-width': '90%',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
+        class="fade-in doc-shot-narrow"
         alt="Example of Material Adjustments on the Material Edit Screen"
         src="./assets/docs-filaments-adjustment-example_f4b56af8f6a098.png"
       />

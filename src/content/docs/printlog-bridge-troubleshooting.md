@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 47
 mode: how-to
-updated: 2026-10-14
+updated: 2026-10-27
 related: [printlog-bridge, printlog-bridge-install, printlog-bridge-docker, printlog-bridge-privacy]
 ---
 
@@ -110,7 +110,8 @@ Moonraker accepts one bridge per printer. `another printlog-bridge is already co
 
 #### No prints are logged {#not-logging}
 
-- `3D Print Log API: … rejected the API key`: the key was deleted or mistyped. Create a new one on the [Personal API Keys](/api-keys) page and store it with `store-key`.
+- `re-pair needed: run printlog-bridge pair`: the bridge was revoked under **Paired devices** in [Settings](/settings). Run `printlog-bridge pair` (in Docker, the `pair` command on the [Docker page](/docs/printlog-bridge-docker#connect)). The bridge keeps the prints it finished meanwhile, and logs them within a minute of pairing, with no restart.
+- `3D Print Log API: … rejected the API key`: the key was deleted or mistyped. Create a new one on the [Personal API Keys](/api-keys) page and store it with `store-key`, or [pair the bridge](/docs/printlog-bridge#account) instead.
 - `printer_id isn't set` or `this account has no printer 42`: set `printer_id` to the number at the end of the printer's page in 3D Print Log.
 - `Moonraker's job history is off, so no print can be logged`: add a `[history]` section to `moonraker.conf` and restart Moonraker.
 - `Bridge: not running`: in local mode, the service stops while its config needs fixing. Fix what `doctor` reports, then restart printlog-bridge from Mainsail or Fluidd, or with `sudo systemctl restart printlog-bridge`.

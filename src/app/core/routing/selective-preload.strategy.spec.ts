@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Route } from '@angular/router';
@@ -28,10 +29,8 @@ describe('SelectivePreloadStrategy', () => {
   }
 
   /** A `load` spy that reports whether the chunk fetch was actually started. */
-  function loader(): jasmine.Spy<() => Observable<unknown>> {
-    return jasmine
-      .createSpy('load')
-      .and.returnValue(of('chunk')) as jasmine.Spy<() => Observable<unknown>>;
+  function loader(): Mock {
+    return vi.fn().mockReturnValue(of('chunk')) as Mock;
   }
 
   describe('route opt-in', () => {
@@ -160,9 +159,9 @@ describe('SelectivePreloadStrategy', () => {
       // for the rest of the session. Angular's own PreloadAllModules guards
       // against this with catchError; so must we.
       const strategy = build({});
-      const load = jasmine
-        .createSpy('load')
-        .and.returnValue(throwError(() => new Error('chunk 404')));
+      const load = vi
+        .fn()
+        .mockReturnValue(throwError(() => new Error('chunk 404')));
 
       const result = await firstValue(strategy.preload(preloadable, load));
 
@@ -171,7 +170,9 @@ describe('SelectivePreloadStrategy', () => {
 
     it('recovers when the loader throws synchronously', async () => {
       const strategy = build({});
-      const load = jasmine.createSpy('load').and.throwError('boom');
+      const load = vi.fn().mockImplementation(() => {
+        throw new Error('boom');
+      });
 
       const result = await firstValue(strategy.preload(preloadable, load));
 
@@ -180,9 +181,9 @@ describe('SelectivePreloadStrategy', () => {
 
     it('keeps preloading later routes after one has failed', async () => {
       const strategy = build({});
-      const failing = jasmine
-        .createSpy('load')
-        .and.returnValue(throwError(() => new Error('chunk 404')));
+      const failing = vi
+        .fn()
+        .mockReturnValue(throwError(() => new Error('chunk 404')));
       await firstValue(strategy.preload(preloadable, failing));
 
       const next = loader();

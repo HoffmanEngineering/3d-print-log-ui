@@ -1,6 +1,7 @@
+import type { MockedObject } from 'vitest';
 import { lastSimpleDialogData } from 'src/app/shared/simple-dialog/testing/last-simple-dialog-data';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -8,19 +9,25 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
+import { Clipboard } from '@angular/cdk/clipboard';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
 import { LoggingService } from 'src/app/core/services/logging.service';
+import { PrinterCategory } from 'src/app/core/services/printer-categories.service';
 import { environment } from 'src/environments/environment';
 import { PrinterConnectionsComponent } from './printer-connections.component';
 
 describe('PrinterConnectionsComponent', () => {
   let fixture: ComponentFixture<PrinterConnectionsComponent>;
   let httpMock: HttpTestingController;
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let dialog: MockedObject<MatDialog>;
   let confirm: boolean | undefined;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
+  let clipboard: MockedObject<Clipboard>;
+
+  const fff = { nickname: 'FFF' } as PrinterCategory;
+  const sla = { nickname: 'SLA' } as PrinterCategory;
 
   const base = `${environment.printLogApiUrl}/api/Connections`;
 
@@ -45,31 +52,39 @@ describe('PrinterConnectionsComponent', () => {
 
   beforeEach(async () => {
     confirm = true;
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.callFake(
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockImplementation(
       () =>
         ({
           afterClosed: () => of(confirm),
         }) as any
     );
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
+
+    clipboard = {
+      copy: vi.fn().mockName('Clipboard.copy'),
+    } as unknown as MockedObject<Clipboard>;
+    clipboard.copy.mockReturnValue(true);
 
     await TestBed.configureTestingModule({
       imports: [PrinterConnectionsComponent, NoopAnimationsModule],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         provideRouter([]),
         { provide: MatDialog, useValue: dialog },
         { provide: ToastrService, useValue: toastr },
         { provide: LoggingService, useValue: logging },
+        { provide: Clipboard, useValue: clipboard },
       ],
     }).compileComponents();
 
@@ -162,10 +177,332 @@ describe('PrinterConnectionsComponent', () => {
     expect(status?.classList).toContain('stale');
   });
 
-  it('renders nothing for a printer with no connections', () => {
+  it('renders nothing for a printer with no connections and no category', () => {
     const el = render([]);
 
     expect(el.querySelector('section')).toBeNull();
+  });
+
+  // The bridge logs filament printers only.
+  it('renders nothing for a resin printer with no connections', () => {
+    fixture.componentRef.setInput('category', sla);
+    const el = render([]);
+
+    expect(el.querySelector('section')).toBeNull();
+  });
+
+  // printlog-bridge#82: printers other than Klipper ones.
+  it('shows the firmware and host software the bridge reported', () => {
+    render([
+      connection({
+        kind: 'prusalink',
+        firmwareName: 'Prusa-Firmware-Buddy',
+        firmwareVersion: '6.2.1',
+        hostSoftwareName: 'PrusaLink',
+        hostSoftwareVersion: '2.1.2',
+      }),
+    ]);
+
+    const software = rows()[0].querySelector(
+      '[data-testid="connection-software"]'
+    );
+    expect(squash(rows()[0])).toContain('PrusaLink');
+    expect(squash(software)).toBe(
+      'Prusa-Firmware-Buddy 6.2.1 · PrusaLink 2.1.2'
+    );
+  });
+
+  it('falls back to the Klipper and Moonraker versions of an older bridge', () => {
+    render([
+      connection({ klipperVersion: 'v0.12.0', moonrakerVersion: 'v0.9.3' }),
+    ]);
+
+    expect(
+      squash(rows()[0].querySelector('[data-testid="connection-software"]'))
+    ).toBe('Klipper v0.12.0 · Moonraker v0.9.3');
+  });
+
+  it('shows no software line when the bridge reported none', () => {
+    render([connection()]);
+
+    expect(
+      rows()[0].querySelector('[data-testid="connection-software"]')
+    ).toBeNull();
+  });
+
+  describe('connecting a printer', () => {
+    const setup = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="bridge-setup"]'
+      );
+    const open = () => {
+      (
+        (fixture.nativeElement as HTMLElement).querySelector(
+          '[data-testid="bridge-setup-open"]'
+        ) as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+    };
+    const snippet = () =>
+      setup()?.querySelector('[data-testid="bridge-setup-config"]')
+        ?.textContent;
+    const choose = (kind: string) => {
+      (
+        setup()!.querySelector(
+          `[data-testid="bridge-setup-kind-${kind}"]`
+        ) as HTMLElement
+      ).click();
+      fixture.detectChanges();
+    };
+
+    beforeEach(() => fixture.componentRef.setInput('category', fff));
+
+    it('offers to connect a filament printer that has no connections', () => {
+      const el = render([]);
+
+      expect(el.querySelector('section')).not.toBeNull();
+      expect(setup()).toBeNull();
+      open();
+      expect(setup()).not.toBeNull();
+    });
+
+    it('does not offer it once the printer has a connection', () => {
+      const el = render([connection()]);
+
+      expect(el.querySelector('[data-testid="bridge-setup-open"]')).toBeNull();
+    });
+
+    it('starts with Klipper and its guides, as today', () => {
+      render([]);
+      open();
+
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('url = http://');
+      expect(snippet()).not.toContain('adapter');
+      const links = Array.from(setup()!.querySelectorAll('a')).map((a) =>
+        a.getAttribute('href')
+      );
+      expect(links).toContain('/docs/printlog-bridge-install');
+      expect(links).toContain('/docs/printlog-bridge-docker');
+    });
+
+    it('starts with the type that matches the printer’s make', () => {
+      fixture.componentRef.setInput('make', 'Bambu Lab');
+      render([]);
+      open();
+
+      expect(snippet()).toContain('adapter = bambu');
+    });
+
+    it('shows the Bambu steps and config when Bambu Lab is picked', () => {
+      render([]);
+      open();
+      choose('bambu');
+
+      expect(snippet()).toContain('adapter = bambu');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('serial =');
+      expect(snippet()).toContain('access_code =');
+      expect(squash(setup())).toContain('Developer Mode');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-bambu');
+    });
+
+    it('shows the PrusaLink steps and config when PrusaLink is picked', () => {
+      render([]);
+      open();
+      choose('prusalink');
+
+      expect(snippet()).toContain('adapter = prusalink');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('password =');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-prusalink');
+    });
+
+    it('shows the OctoPrint steps and config when OctoPrint is picked', () => {
+      render([]);
+      open();
+      choose('octoprint');
+
+      expect(snippet()).toContain('adapter = octoprint');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('api_key =');
+      expect(squash(setup())).toContain('Application Keys');
+      expect(squash(setup())).toContain('API key');
+      const links = Array.from(setup()!.querySelectorAll('a')).map((a) =>
+        a.getAttribute('href')
+      );
+      expect(links).toContain('/docs/switch-from-octoprint-webhook');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-octoprint');
+    });
+
+    it('shows the SDCP steps and a config with no credential when Elegoo is picked', () => {
+      render([]);
+      open();
+      choose('sdcp');
+
+      expect(snippet()).toContain('adapter = sdcp');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).not.toContain('password');
+      expect(squash(setup())).toContain('no password');
+      // Nothing secret in this section, so no warning about where to keep it.
+      expect(squash(setup())).not.toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-sdcp');
+    });
+
+    it('starts on SDCP for an Elegoo Centauri Carbon', () => {
+      fixture.componentRef.setInput('make', 'Elegoo');
+      fixture.componentRef.setInput('model', 'Centauri Carbon');
+      render([]);
+      open();
+
+      expect(snippet()).toContain('adapter = sdcp');
+    });
+
+    it('shows the Duet steps, with the password only for a board that has one', () => {
+      render([]);
+      open();
+      choose('duet');
+
+      expect(snippet()).toContain('adapter = duet');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('# password =');
+      expect(squash(setup())).toContain('M551');
+      expect(squash(setup())).toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-duet');
+    });
+
+    it('shows the FlashForge steps, with the check code and no serial to find', () => {
+      render([]);
+      open();
+      choose('flashforge');
+
+      expect(snippet()).toContain('adapter = flashforge');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).toContain('check_code =');
+      expect(snippet()).toContain('# serial =');
+      expect(squash(setup())).toContain('LAN-only mode');
+      expect(squash(setup())).toContain('check code');
+      expect(squash(setup())).toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-flashforge');
+    });
+
+    it('shows the Anycubic steps and a config with no credential', () => {
+      render([]);
+      open();
+      choose('anycubic');
+
+      expect(snippet()).toContain('adapter = anycubic');
+      expect(snippet()).toContain('printer_id = 3');
+      expect(snippet()).not.toContain('password');
+      expect(squash(setup())).toContain('LAN mode');
+      expect(squash(setup())).not.toContain('Keep the config where');
+      expect(
+        setup()!
+          .querySelector('[data-testid="bridge-setup-guide"]')
+          ?.getAttribute('href')
+      ).toBe('/docs/printlog-bridge-anycubic');
+    });
+
+    it('starts on the matching type for a Duet, a FlashForge and an Anycubic Kobra S1', () => {
+      fixture.componentRef.setInput('make', 'Duet3D');
+      render([]);
+      open();
+      expect(snippet()).toContain('adapter = duet');
+
+      fixture.componentRef.setInput('make', 'FlashForge');
+      fixture.detectChanges();
+      expect(snippet()).toContain('adapter = flashforge');
+
+      fixture.componentRef.setInput('make', 'Anycubic');
+      fixture.componentRef.setInput('model', 'Kobra S1');
+      fixture.detectChanges();
+      expect(snippet()).toContain('adapter = anycubic');
+    });
+
+    // The Photon P1 Max is a resin printer: it gets the setup, with Anycubic as its only type.
+    it('offers an Anycubic Photon P1 Max, a resin printer, the Anycubic setup only', () => {
+      fixture.componentRef.setInput('category', sla);
+      fixture.componentRef.setInput('make', 'Anycubic');
+      fixture.componentRef.setInput('model', 'Photon P1 Max');
+      render([]);
+      open();
+
+      expect(snippet()).toContain('adapter = anycubic');
+      const kinds = Array.from(
+        setup()!.querySelectorAll('[data-testid^="bridge-setup-kind-"]')
+      ).map((b) => b.getAttribute('data-testid'));
+      expect(kinds).toEqual(['bridge-setup-kind-anycubic']);
+      expect(squash(setup())).toContain('Photon Workshop');
+    });
+
+    // Any other resin printer has no adapter yet.
+    it('offers nothing for another resin printer', () => {
+      fixture.componentRef.setInput('category', sla);
+      fixture.componentRef.setInput('make', 'Elegoo');
+      fixture.componentRef.setInput('model', 'Saturn 4 Ultra');
+      const el = render([]);
+
+      expect(el.querySelector('section')).toBeNull();
+    });
+
+    it('copies the config section', () => {
+      render([]);
+      open();
+      choose('prusalink');
+
+      (
+        setup()!.querySelector(
+          '[data-testid="bridge-setup-copy"]'
+        ) as HTMLButtonElement
+      ).click();
+
+      expect(clipboard.copy).toHaveBeenCalledWith(
+        expect.stringContaining('adapter = prusalink')
+      );
+      expect(toastr.success).toHaveBeenCalled();
+      expect(logging.logEvent).toHaveBeenCalledWith(
+        'PrinterConnections_SetupCopied',
+        { kind: 'prusalink' }
+      );
+    });
+
+    // The page is a form; a plain <button> inside it would submit the printer.
+    it('uses buttons that do not submit the surrounding form', () => {
+      render([]);
+      open();
+
+      const buttons = Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('button')
+      );
+      expect(buttons.length).toBeGreaterThan(0);
+      for (const b of buttons) {
+        expect(b.getAttribute('type')).toBe('button');
+      }
+    });
   });
 
   // The printer page is a form people come to for other reasons; a failed lookup here must not
@@ -203,7 +540,7 @@ describe('PrinterConnectionsComponent', () => {
     expect(toastr.success).toHaveBeenCalled();
     expect(logging.logEvent).toHaveBeenCalledWith(
       'PrinterConnections_Deleted',
-      jasmine.objectContaining({ kind: 'moonraker' })
+      expect.objectContaining({ kind: 'moonraker' })
     );
   });
 
@@ -247,5 +584,75 @@ describe('PrinterConnectionsComponent', () => {
         .querySelector('[data-testid="connection-delete"]')
         ?.getAttribute('type')
     ).toBe('button');
+  });
+
+  describe('which bridge watches it', () => {
+    const bridges = `${environment.printLogApiUrl}/api/bridges`;
+
+    it('names the bridge and links to the Bridges screen', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock
+        .expectOne(bridges)
+        .flush([{ id: 42, displayName: 'Garage NAS', deviceName: 'nas' }]);
+      fixture.detectChanges();
+
+      const via = rows()[0].querySelector('[data-testid="connection-bridge"]');
+      expect(squash(via)).toContain('Garage NAS');
+      expect(via?.getAttribute('href')).toBe('/printers/bridges');
+    });
+
+    it('offers to move it when the user has another bridge', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock.expectOne(bridges).flush([
+        { id: 42, displayName: 'Garage NAS', deviceName: 'nas' },
+        { id: 9, displayName: 'Attic Pi', deviceName: 'attic' },
+      ]);
+      fixture.detectChanges();
+
+      const move = rows()[0].querySelector('[data-testid="connection-move"]');
+      expect(squash(move)).toContain('Move to another bridge');
+      expect(move?.getAttribute('href')).toBe(
+        `/printers/bridges?move=${fixture.componentInstance.printerId()}`
+      );
+    });
+
+    it('offers no move with a single bridge', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock
+        .expectOne(bridges)
+        .flush([{ id: 42, displayName: 'Garage NAS', deviceName: 'nas' }]);
+      fixture.detectChanges();
+      expect(
+        rows()[0].querySelector('[data-testid="connection-move"]')
+      ).toBeNull();
+    });
+
+    it('says "a bridge" when the bridges cannot be loaded', () => {
+      render([connection({ bridgeId: 42 })]);
+      httpMock
+        .expectOne(bridges)
+        .flush('nope', { status: 404, statusText: 'Not Found' });
+      fixture.detectChanges();
+
+      const via = rows()[0].querySelector('[data-testid="connection-bridge"]');
+      expect(squash(via)).toContain('a bridge');
+    });
+
+    it('does not ask for bridges when no connection has one', () => {
+      render([connection({ bridgeId: null }), connection({ instanceId: 'b' })]);
+      httpMock.expectNone(bridges);
+      expect(
+        rows()[0].querySelector('[data-testid="connection-bridge"]')
+      ).toBeNull();
+    });
+
+    it('points a printer with no connection to the Bridges screen too', () => {
+      fixture.componentRef.setInput('category', fff);
+      render([]);
+      const link = (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-testid="bridge-setup-bridges"]'
+      );
+      expect(link?.getAttribute('href')).toBe('/printers/bridges');
+    });
   });
 });

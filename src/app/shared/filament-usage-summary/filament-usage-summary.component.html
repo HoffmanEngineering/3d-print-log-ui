@@ -59,7 +59,7 @@
         class="price-cell"
         matTooltip="* indicates default material price used"
       >
-        @if (fu.amountMg !== null && fu.amountMg > 0) {
+        @if (hasActualUsage(fu)) {
           {{ getActualPrice(fu) }}
         } @else {
           <div>{{ getEstimatedPrice(fu) }}</div>

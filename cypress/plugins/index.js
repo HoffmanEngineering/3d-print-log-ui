@@ -31,4 +31,12 @@ module.exports = (on, config) => {
       return null;
     },
   });
+
+  // Cypress 16 removed Cypress.env(), and CYPRESS_* variables populate only `env`, which
+  // the browser can no longer read synchronously. The API URL isn't secret, so expose it:
+  // CI sets CYPRESS_apiUrl, and cypress/support/api-url.js reads Cypress.expose('apiUrl').
+  if (config.env.apiUrl !== undefined) {
+    config.expose = { ...config.expose, apiUrl: config.env.apiUrl };
+  }
+  return config;
 };

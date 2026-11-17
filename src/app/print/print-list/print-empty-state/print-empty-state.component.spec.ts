@@ -1,14 +1,19 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Router, UrlTree, provideRouter } from '@angular/router';
+import { Router, UrlTree, provideRouter, Routes } from '@angular/router';
 import { LoggingService } from 'src/app/core/services/logging.service';
 
 import { PrintEmptyStateComponent } from './print-empty-state.component';
 
+// These specs navigate (a link click, a save), and a route the TestBed doesn't know
+// fails with an unhandled 'Cannot match any routes', which fails the run.
+const ANYWHERE: Routes = [{ path: '**', children: [] }];
+
 describe('PrintEmptyStateComponent', () => {
   let fixture: ComponentFixture<PrintEmptyStateComponent>;
   let component: PrintEmptyStateComponent;
-  let mockLogger: jasmine.SpyObj<LoggingService>;
+  let mockLogger: MockedObject<LoggingService>;
 
   const heading = () =>
     (
@@ -23,15 +28,15 @@ describe('PrintEmptyStateComponent', () => {
     ).textContent.trim();
 
   beforeEach(async () => {
-    mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    mockLogger = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [PrintEmptyStateComponent],
       providers: [
-        provideRouter([]),
+        provideRouter(ANYWHERE),
         { provide: LoggingService, useValue: mockLogger },
       ],
     }).compileComponents();
@@ -47,7 +52,7 @@ describe('PrintEmptyStateComponent', () => {
     });
 
     it('should show the first-run heading', () => {
-      expect(component.isFiltered()).toBeFalse();
+      expect(component.isFiltered()).toBe(false);
       expect(heading()).toEqual('Log your first print');
     });
 
@@ -67,7 +72,7 @@ describe('PrintEmptyStateComponent', () => {
     });
 
     it('should emit importGcode and log the event', () => {
-      const emitted = jasmine.createSpy('importGcode');
+      const emitted = vi.fn();
       component.importGcode.subscribe(emitted);
 
       (
@@ -140,7 +145,9 @@ describe('PrintEmptyStateComponent', () => {
 
     it('should send the user to add a printer and back to /prints', () => {
       const router = TestBed.inject(Router);
-      const navigate = spyOn(router, 'navigateByUrl').and.resolveTo(true);
+      const navigate = vi
+        .spyOn(router, 'navigateByUrl')
+        .mockResolvedValue(true);
 
       (
         fixture.debugElement.query(
@@ -148,7 +155,7 @@ describe('PrintEmptyStateComponent', () => {
         ).nativeElement as HTMLButtonElement
       ).click();
 
-      const target = navigate.calls.mostRecent().args[0] as UrlTree;
+      const target = vi.mocked(navigate).mock.lastCall[0] as UrlTree;
       expect(router.serializeUrl(target)).toBe(
         '/printers/new?returnUrl=%2Fprints'
       );
@@ -201,7 +208,7 @@ describe('PrintEmptyStateComponent', () => {
       fixture.componentRef.setInput('searchText', 'benchy');
       fixture.detectChanges();
 
-      expect(component.isFiltered()).toBeTrue();
+      expect(component.isFiltered()).toBe(true);
       expect(message()).toContain('a search for "benchy"');
       expect(message()).not.toContain('active filter');
     });
@@ -211,7 +218,7 @@ describe('PrintEmptyStateComponent', () => {
       fixture.componentRef.setInput('searchText', '   ');
       fixture.detectChanges();
 
-      expect(component.hasSearch()).toBeFalse();
+      expect(component.hasSearch()).toBe(false);
       expect(heading()).toEqual('Log your first print');
     });
 
@@ -219,7 +226,7 @@ describe('PrintEmptyStateComponent', () => {
       fixture.componentRef.setInput('activeFilterCount', 2);
       fixture.detectChanges();
 
-      const emitted = jasmine.createSpy('clearFilters');
+      const emitted = vi.fn();
       component.clearFilters.subscribe(emitted);
 
       (

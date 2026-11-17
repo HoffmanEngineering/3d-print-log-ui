@@ -11,22 +11,29 @@ import { resolveValue } from './testing/run-resolver';
 describe('currentUserPrinterSummariesResolver', () => {
   it("resolves the first hundred of the user's active printers", async () => {
     const printers = [{ id: 1 }, { id: 2 }] as PrinterSummarySimple[];
-    const printerService = jasmine.createSpyObj<PrinterService>(
-      'PrinterService',
-      ['getCurrentUserPrinterSummaries']
-    );
-    printerService.getCurrentUserPrinterSummaries.and.returnValue(
+    const printerService = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    };
+    printerService.getCurrentUserPrinterSummaries.mockReturnValue(
       of({ items: printers } as PagedList<PrinterSummarySimple>)
     );
     TestBed.configureTestingModule({
       providers: [{ provide: PrinterService, useValue: printerService }],
     });
 
-    await expectAsync(
+    await expect(
       resolveValue(currentUserPrinterSummariesResolver)
-    ).toBeResolvedTo(printers);
-    expect(
-      printerService.getCurrentUserPrinterSummaries
-    ).toHaveBeenCalledOnceWith(1, 100, undefined, false);
+    ).resolves.toEqual(printers);
+    expect(printerService.getCurrentUserPrinterSummaries).toHaveBeenCalledTimes(
+      1
+    );
+    expect(printerService.getCurrentUserPrinterSummaries).toHaveBeenCalledWith(
+      1,
+      100,
+      undefined,
+      false
+    );
   });
 });

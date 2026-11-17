@@ -1,0 +1,337 @@
+@if (result(); as r) {
+  <h2 mat-dialog-title>Moved to {{ r.targetName }}</h2>
+  <mat-dialog-content>
+    <p>
+      {{ fromName }} stops watching <strong>{{ printerName }}</strong> within a
+      minute, and {{ r.targetName }} starts.
+    </p>
+    @if (r.dropped) {
+      <p class="warn" data-testid="move-dropped">
+        <mat-icon aria-hidden="true">info</mat-icon>
+        <span>
+          The {{ r.dropped }} didn't move, because it was left empty. If the
+          printer needs it, enter it on {{ r.targetName }}'s card.
+        </span>
+      </p>
+    }
+    @if (r.stale; as stale) {
+      <p class="warn" data-testid="move-stale">
+        <mat-icon aria-hidden="true">warning</mat-icon>
+        <span>{{ stale }}</span>
+      </p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      data-testid="move-done"
+      (click)="close()"
+    >
+      Done
+    </button>
+  </mat-dialog-actions>
+} @else {
+  <h2 mat-dialog-title>Move {{ printerName }} to another bridge</h2>
+  <!-- No form element: a submitted form with a password field prompts to save it. -->
+  <mat-dialog-content [formGroup]="form">
+    <p class="now">
+      {{ kindLabel }} · <span class="mono">{{ currentAddress }}</span> · watched
+      by {{ fromName }}
+    </p>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Move to</mat-label>
+      <mat-select formControlName="toBridgeId" data-testid="move-target">
+        @for (t of targets(); track t.id) {
+          <mat-option [value]="t.id">
+            {{ t.label }}
+            @if (t.stale) {
+              <span class="option-note">· Stale</span>
+            }
+          </mat-option>
+        }
+      </mat-select>
+      @if (form.controls.toBridgeId.hasError('required')) {
+        <mat-error>Pick the bridge to move it to.</mat-error>
+      }
+    </mat-form-field>
+
+    @if (target(); as t) {
+      @if (targetStale()) {
+        <p class="warn" data-testid="move-target-stale">
+          <mat-icon aria-hidden="true">schedule</mat-icon>
+          <span>
+            {{ targetName() }} hasn't checked in since
+            {{ t.lastSeenAt | localeDate: 'datetime' }}. It picks the printer up
+            when it's back; until then no bridge logs its prints.
+          </span>
+        </p>
+      }
+
+      @if (candidate(); as c) {
+        <p class="label" id="move-where-label">
+          Where {{ targetName() }} reaches it
+        </p>
+        <mat-radio-group
+          class="where"
+          aria-labelledby="move-where-label"
+          [value]="where()"
+          (change)="setWhere($event.value)"
+        >
+          <mat-radio-button
+            color="primary"
+            value="found"
+            data-testid="move-choice-found"
+          >
+            <span data-testid="move-found">
+              Where {{ targetName() }} found it:
+              <span class="mono">{{ candidateAddress() }}</span>
+            </span>
+          </mat-radio-button>
+          <mat-radio-button
+            color="primary"
+            value="keep"
+            data-testid="move-choice-keep"
+          >
+            <span data-testid="move-keep">
+              Keep its current address:
+              <span class="mono">{{ currentAddress }}</span>
+            </span>
+          </mat-radio-button>
+        </mat-radio-group>
+        @if (c.match === 'unconfirmed' && where() === 'found') {
+          <div class="warn confirm" data-testid="move-confirm-same">
+            <mat-icon aria-hidden="true">help_outline</mat-icon>
+            <div>
+              <p>
+                {{ targetName() }} knows that printer only by its address, so
+                the app can't tell it's {{ printerName }}. Using the wrong one
+                would log another printer instead.
+              </p>
+              <mat-checkbox
+                color="primary"
+                data-testid="move-same-printer"
+                [checked]="confirmedSame()"
+                (change)="confirmedSame.set($event.checked)"
+                >This is the same printer</mat-checkbox
+              >
+            </div>
+          </div>
+        }
+      }
+      @if (where() === 'keep') {
+        <div data-testid="move-address">
+          @if (!candidate()) {
+            <p class="label">Where {{ targetName() }} reaches it</p>
+          }
+          <div class="address-row">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>IP address or local name</mat-label>
+              <input
+                matInput
+                formControlName="host"
+                autocapitalize="off"
+                spellcheck="false"
+                data-testid="move-host"
+              />
+            </mat-form-field>
+            <mat-form-field
+              class="port"
+              appearance="outline"
+              subscriptSizing="dynamic"
+            >
+              <mat-label>Port</mat-label>
+              <input
+                matInput
+                type="number"
+                formControlName="port"
+                data-testid="move-port"
+              />
+            </mat-form-field>
+          </div>
+          <p class="hint">
+            Keep its address when both bridges are on the same network; change
+            it when {{ targetName() }} reaches it at another one.
+          </p>
+        </div>
+      }
+
+      @if (carriesCredentials()) {
+        <section class="credentials" aria-labelledby="move-credentials-title">
+          <h3 id="move-credentials-title">Credentials</h3>
+          <p class="hint">
+            {{ targetName() }} can't read what was encrypted for {{ fromName }},
+            so enter
+            {{
+              plan().fields.length === 1
+                ? 'it again. It moves'
+                : 'them again. They move'
+            }}
+            together with the printer.
+          </p>
+          @switch (keyState().status) {
+            @case ('loading') {}
+            @case ('ready') {
+              @if (keyChanged(); as fingerprint) {
+                <app-bridge-key-changed
+                  context="move"
+                  [bridgeId]="t.id"
+                  [fingerprint]="fingerprint"
+                />
+              } @else {
+                <div class="key" data-testid="move-key">
+                  <mat-icon class="key-icon" aria-hidden="true">lock</mat-icon>
+                  <div>
+                    <p>
+                      Encrypted in your browser to {{ targetName() }}'s key
+                      <span
+                        class="fingerprint"
+                        data-testid="move-fingerprint"
+                        >{{ shortFingerprint() }}</span
+                      >.
+                    </p>
+                    <p class="hint">
+                      Check that <code>printlog-bridge status</code> on
+                      {{ targetName() }} shows the same fingerprint.
+                      <a
+                        routerLink="/docs/printlog-bridge-bridges"
+                        fragment="encryption-key"
+                        >Why compare?</a
+                      >
+                    </p>
+                    <details class="full">
+                      <summary>The whole fingerprint</summary>
+                      <span class="fingerprint">{{ fullFingerprint() }}</span>
+                    </details>
+                  </div>
+                </div>
+                @if (t.pendingPublicKey) {
+                  <p class="warn" data-testid="move-pending">
+                    <mat-icon aria-hidden="true">warning</mat-icon>
+                    <span>
+                      {{ targetName() }} reported a new encryption key. What you
+                      enter now is encrypted to its current key and has to be
+                      entered again after you confirm the new one.
+                    </span>
+                  </p>
+                }
+                @for (f of plan().fields; track f.field) {
+                  <div
+                    class="field"
+                    [attr.data-testid]="'move-credential-' + f.field"
+                  >
+                    <mat-form-field
+                      appearance="outline"
+                      subscriptSizing="dynamic"
+                    >
+                      <mat-label
+                        >{{ f.label
+                        }}{{ f.required ? '' : ' (optional)' }}</mat-label
+                      >
+                      <input
+                        matInput
+                        [id]="inputId(f.field)"
+                        [type]="f.field === 'username' ? 'text' : 'password'"
+                        [formControl]="controlFor(f.field)"
+                        [attr.autocomplete]="
+                          f.field === 'access_code'
+                            ? 'one-time-code'
+                            : f.field === 'username'
+                              ? 'off'
+                              : 'new-password'
+                        "
+                        (keydown.enter)="submit()"
+                        autocapitalize="off"
+                        spellcheck="false"
+                        data-1p-ignore
+                        data-lpignore="true"
+                      />
+                      @if (f.hint) {
+                        <mat-hint>{{ f.hint }}</mat-hint>
+                      }
+                    </mat-form-field>
+                    @if (fieldErrors()[f.field]; as message) {
+                      <p class="error-text" role="alert">{{ message }}</p>
+                    }
+                  </div>
+                }
+              }
+            }
+            @default {
+              @if (!requiresKey()) {
+                <p class="warn" data-testid="move-optional-dropped">
+                  <mat-icon aria-hidden="true">info</mat-icon>
+                  <span>
+                    {{ targetName() }} can't take credentials from the app, so
+                    the {{ optionalNouns() }} won't move. The printer doesn't
+                    need it to connect; enter it on {{ targetName() }}'s card
+                    later if you use it.
+                  </span>
+                </p>
+              } @else {
+                <p class="warn" data-testid="move-key-unavailable">
+                  <mat-icon aria-hidden="true">lock_open</mat-icon>
+                  <span>
+                    @switch (keyState().status) {
+                      @case ('pending_only') {
+                        {{ targetName() }}'s encryption key waits for you to
+                        confirm it on its card. Confirm it first, then move the
+                        printer.
+                      }
+                      @case ('unavailable') {
+                        This browser can't encrypt credentials, so the printer
+                        can't move with them. Use an up-to-date browser over
+                        https.
+                      }
+                      @case ('invalid') {
+                        {{ targetName() }} reported an encryption key that isn't
+                        valid, so the printer can't move with its credentials.
+                      }
+                      @default {
+                        {{ targetName() }} can't take credentials from the app
+                        yet, and this printer needs them:
+                        <a routerLink="/docs/printlog-bridge" fragment="update"
+                          >update printlog-bridge</a
+                        >
+                        there first.
+                      }
+                    }
+                  </span>
+                </p>
+              }
+            }
+          }
+        </section>
+      }
+    }
+
+    @if (error(); as message) {
+      <p class="error-text" role="alert" data-testid="move-error">
+        {{ message }}
+      </p>
+    }
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button
+      mat-button
+      type="button"
+      mat-dialog-close
+      data-testid="move-cancel"
+      [disabled]="busy()"
+    >
+      Cancel
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      data-testid="move-submit"
+      [disabled]="!canSubmit()"
+      (click)="submit()"
+    >
+      Move
+    </button>
+  </mat-dialog-actions>
+}

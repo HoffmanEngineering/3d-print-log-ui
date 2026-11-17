@@ -15,7 +15,9 @@
               "
             >
               <button mat-button type="button" (click)="sortBy(column.key)">
-                {{ column.label }}
+                {{
+                  column.key === 'materialMg' ? materialLabel() : column.label
+                }}
               </button>
             </th>
           }
@@ -44,7 +46,7 @@
                 }}
               </td>
               <td>{{ hours(row.printTimeSeconds) | number: '1.0-1' }} h</td>
-              <td>{{ grams(row.materialMg) | number: '1.0-0' }} g</td>
+              <td>{{ material(row) }}</td>
               <td>
                 {{
                   row.avgDurationSeconds === null
@@ -101,8 +103,8 @@
             </dd>
             <dt>Print time</dt>
             <dd>{{ hours(row.printTimeSeconds) | number: '1.0-1' }} h</dd>
-            <dt>Filament</dt>
-            <dd>{{ grams(row.materialMg) | number: '1.0-0' }} g</dd>
+            <dt>{{ materialLabel() }}</dt>
+            <dd>{{ material(row) }}</dd>
             <dt>Cost</dt>
             <dd>
               {{ row.cost === null ? '—' : (row.cost | number: '1.2-2') }}

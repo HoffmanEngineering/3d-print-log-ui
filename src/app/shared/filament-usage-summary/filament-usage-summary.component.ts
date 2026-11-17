@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import {
   FilamentPrice,
   FilamentPriceInvalid,
+  hasActualUsage,
   PrintFilamentSourceMeasurement,
   PrintFilamentSummaryDto,
   PrintService,
@@ -34,6 +35,9 @@ import {
 })
 export class FilamentUsageSummaryComponent {
   private readonly printService = inject(PrintService);
+
+  /** Whether a row is priced by its actual figure, in the unit it is sourced from. */
+  protected readonly hasActualUsage = hasActualUsage;
 
   readonly filamentUsage = input<PrintFilamentSummaryDto[]>([]);
   readonly defaultFilamentPrice = input<string | null | undefined>(null);

@@ -32,8 +32,8 @@ NFC tag on a spool: hold the phone to it to pick that material, link the tag to
 a material, or find the spool from the Materials list. See
 [RFID / NFC tags in the Android app](/docs/materials#tags-android).
 
-<div fxLayout="row" fxLayout.lt-lg="column" fxLayoutGap="15px">
-    <div fxFlex>
+<div class="doc-columns doc-columns-gap">
+    <div class="doc-column">
       <img
         style="
           display: block;
@@ -41,18 +41,12 @@ a material, or find the spool from the Materials list. See
           margin-left: auto;
           margin-right: auto;
         "
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
-        class="fade-in"
+        class="fade-in doc-phone-shot"
         alt="Example of a Print through the Android App featuring a Blue Captain America bust"
         src="./assets/docs/android-app/cap_america_48231bd04bd.png"
       />
     </div>
-    <div fxFlex>
+    <div class="doc-column">
       <img
         style="
           display: block;
@@ -60,18 +54,12 @@ a material, or find the spool from the Materials list. See
           margin-left: auto;
           margin-right: auto;
         "
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
-        class="fade-in"
+        class="fade-in doc-phone-shot"
         alt="The home screen of the Android App showing the 3D Print Log Logo"
         src="./assets/docs/android-app/homescreen_655aec71e79.png"
       />
     </div>
-    <div fxFlex>
+    <div class="doc-column">
       <img
         style="
           display: block;
@@ -79,18 +67,12 @@ a material, or find the spool from the Materials list. See
           margin-left: auto;
           margin-right: auto;
         "
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
-        class="fade-in"
+        class="fade-in doc-phone-shot"
         alt="The list of prints shown in the Android App"
         src="./assets/docs/android-app/print-screen_fca3e13340.png"
       />
     </div>
-    <div fxFlex>
+    <div class="doc-column">
       <img
         style="
           display: block;
@@ -98,13 +80,7 @@ a material, or find the spool from the Materials list. See
           margin-left: auto;
           margin-right: auto;
         "
-        [ngStyle.lt-lg]="{
-          display: 'block',
-          'max-height': '400px',
-          'margin-left': 'auto',
-          'margin-right': 'auto',
-        }"
-        class="fade-in"
+        class="fade-in doc-phone-shot"
         alt="The analytics screen of the Android App"
         src="./assets/docs/android-app/analytics_1657a6da1871.png"
       />

@@ -157,3 +157,60 @@ ul {
     }
   }
 }
+
+// Setting up a connection (printlog-bridge#82), shown on a filament printer with none.
+.intro {
+  margin: 0 0 12px;
+}
+
+.setup {
+  padding: 4px 0;
+}
+
+.label {
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+
+.kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.kind.selected {
+  border-color: var(--app-primary);
+  color: var(--app-primary);
+  background-color: var(--app-surface-container);
+}
+
+.steps {
+  margin: 16px 0 12px;
+  padding-inline-start: 20px;
+
+  li + li {
+    margin-top: 6px;
+  }
+}
+
+pre {
+  margin: 0 0 8px;
+  padding: 12px;
+  border-radius: 4px;
+  background-color: var(--app-surface-container);
+  color: var(--app-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup .hint {
+  margin-top: 8px;
+}

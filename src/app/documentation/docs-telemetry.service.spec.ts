@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { DOCUMENT } from '@angular/common';
 import { PLATFORM_ID } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -54,13 +55,13 @@ describe('scrollPercentOf', () => {
 });
 
 describe('DocsTelemetryService', () => {
-  let logging: jasmine.SpyObj<LoggingService>;
+  let logging: MockedObject<LoggingService>;
 
   /** Builds the service with a stubbed document.referrer. */
   function configure(referrer = ''): DocsTelemetryService {
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
@@ -73,7 +74,10 @@ describe('DocsTelemetryService', () => {
   }
 
   function propsOf(call: number): Record<string, unknown> {
-    return logging.logEvent.calls.argsFor(call)[1] as Record<string, unknown>;
+    return vi.mocked(logging.logEvent).mock.calls[call][1] as Record<
+      string,
+      unknown
+    >;
   }
 
   describe('trackPageView', () => {
@@ -84,7 +88,7 @@ describe('DocsTelemetryService', () => {
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'Docs_PageView',
-        jasmine.objectContaining({ slug: 'prints' })
+        expect.objectContaining({ slug: 'prints' })
       );
     });
 
@@ -107,9 +111,9 @@ describe('DocsTelemetryService', () => {
     // #230: the server DOM throws on document.referrer, and the docs layout
     // calls this from ngOnInit, so a throw here emptied every prerendered page.
     it('does nothing during prerendering, without reading document.referrer', () => {
-      logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-        'logEvent',
-      ]);
+      logging = {
+        logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      } as unknown as MockedObject<LoggingService>;
       const serverDocument = {
         get referrer(): string {
           throw new Error('NotYetImplemented');
@@ -193,9 +197,9 @@ describe('DocsTelemetryService', () => {
   describe('trackScrollDepth', () => {
     /** Scroll-depth events only, ignoring the page view. */
     function depthCalls(): Array<Record<string, unknown>> {
-      return logging.logEvent.calls
-        .allArgs()
-        .filter((args) => args[0] === 'Docs_ScrollDepth')
+      return vi
+        .mocked(logging.logEvent)
+        .mock.calls.filter((args) => args[0] === 'Docs_ScrollDepth')
         .map((args) => args[1] as Record<string, unknown>);
     }
 
@@ -206,7 +210,7 @@ describe('DocsTelemetryService', () => {
       service.trackScrollDepth(30, 'prints');
 
       expect(depthCalls()).toEqual([
-        jasmine.objectContaining({ slug: 'prints', bucket: 25 }),
+        expect.objectContaining({ slug: 'prints', bucket: 25 }),
       ]);
     });
 
@@ -248,7 +252,7 @@ describe('DocsTelemetryService', () => {
       service.trackScrollDepth(30, 'materials');
 
       expect(depthCalls().slice(4)).toEqual([
-        jasmine.objectContaining({ slug: 'materials', bucket: 25 }),
+        expect.objectContaining({ slug: 'materials', bucket: 25 }),
       ]);
     });
 
@@ -279,7 +283,7 @@ describe('DocsTelemetryService', () => {
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'Docs_Feedback',
-        jasmine.objectContaining({ slug: 'prints', helpful: true })
+        expect.objectContaining({ slug: 'prints', helpful: true })
       );
     });
 
@@ -292,7 +296,7 @@ describe('DocsTelemetryService', () => {
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'Docs_Feedback',
-        jasmine.objectContaining({ slug: 'prints' })
+        expect.objectContaining({ slug: 'prints' })
       );
     });
 
@@ -304,7 +308,7 @@ describe('DocsTelemetryService', () => {
 
       expect(logging.logEvent).toHaveBeenCalledWith(
         'Docs_Feedback',
-        jasmine.objectContaining({ comment: 'the QR part is unclear' })
+        expect.objectContaining({ comment: 'the QR part is unclear' })
       );
     });
 
@@ -314,7 +318,7 @@ describe('DocsTelemetryService', () => {
 
       service.trackFeedback(false, '   ', 'prints');
 
-      const props = logging.logEvent.calls.mostRecent().args[1] as Record<
+      const props = vi.mocked(logging.logEvent).mock.lastCall[1] as Record<
         string,
         unknown
       >;
@@ -327,7 +331,7 @@ describe('DocsTelemetryService', () => {
 
       service.trackFeedback(false, 'x'.repeat(2000), 'prints');
 
-      const props = logging.logEvent.calls.mostRecent().args[1] as Record<
+      const props = vi.mocked(logging.logEvent).mock.lastCall[1] as Record<
         string,
         unknown
       >;
@@ -467,7 +471,7 @@ describe('isReportableQuery', () => {
       'error: missing_refresh_token',
       'how do I connect my klipper printer to the print log app',
     ]) {
-      expect(isReportableQuery(query)).withContext(query).toBe(true);
+      expect(isReportableQuery(query), query).toBe(true);
     }
   });
 
@@ -493,9 +497,9 @@ describe('isReportableQuery', () => {
       // rescue it.
       'https://api.3dprintlog.com/mcp?token=abc',
     ]) {
-      expect(isReportableQuery(query))
-        .withContext(JSON.stringify(query.slice(0, 40)))
-        .toBe(false);
+      expect(isReportableQuery(query), JSON.stringify(query.slice(0, 40))).toBe(
+        false
+      );
     }
   });
 });

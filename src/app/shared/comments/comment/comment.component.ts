@@ -14,7 +14,6 @@ import {
 } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
 import { MatTooltip } from '@angular/material/tooltip';
-import { DefaultFlexDirective } from '@ngbracket/ngx-layout/flex';
 import { MatButton } from '@angular/material/button';
 import { MatMenuTrigger, MatMenu, MatMenuItem } from '@angular/material/menu';
 import { MatIcon } from '@angular/material/icon';
@@ -33,7 +32,6 @@ import { HumanizePipe } from '../../pipes/humanize.pipe';
     MatCardSubtitle,
     RouterLink,
     MatTooltip,
-    DefaultFlexDirective,
     MatButton,
     MatMenuTrigger,
     MatIcon,

@@ -14,9 +14,9 @@ describe('CuraParserV1pt0pt0Service', () => {
   };
 
   beforeEach(() => {
-    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logTrace',
-    ]);
+    const mockLogger = {
+      logTrace: vi.fn().mockName('LoggingService.logTrace'),
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -26,11 +26,11 @@ describe('CuraParserV1pt0pt0Service', () => {
     });
     service = TestBed.inject(CuraParserV1pt0pt0Service);
 
-    jasmine.clock().mockDate(new Date('2020-09-20 14:00:00'));
+    vi.setSystemTime(new Date('2020-09-20 14:00:00'));
   });
 
   afterEach(() => {
-    jasmine.clock().uninstall();
+    vi.useRealTimers();
   });
 
   it('should be created', () => {
@@ -46,7 +46,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'estimatedPrintTimeInSeconds'> = {
       estimatedPrintTimeInSeconds: 5626,
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   // eslint-disable-next-line max-len
@@ -59,7 +59,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'estimatedPrintTimeInSeconds'> = {
       estimatedPrintTimeInSeconds: 5627,
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should return a print with a null estimated print time when given no 'estimated_print_time_seconds' query param`, async () => {
@@ -71,7 +71,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'estimatedPrintTimeInSeconds'> = {
       estimatedPrintTimeInSeconds: null,
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should return a print with the correct title when given a 'print_name' query param`, async () => {
@@ -83,7 +83,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'title'> = {
       title: 'Test',
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should normalize the Title by converting dashes/underscores/commas into spaces and capitalizing each work in the 'print_name' query param`, async () => {
@@ -96,7 +96,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'title'> = {
       title: 'Test Underscore Space Dash Period Camel Case',
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should return a blank title when not give a 'print_name' query param`, async () => {
@@ -108,7 +108,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'title'> = {
       title: '',
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should return the Filament Used in Mg when given 'material_used_mg' query param`, async () => {
@@ -120,7 +120,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'estimatedFilamentUsageMg'> = {
       estimatedFilamentUsageMg: 1234,
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should round the estimated filament use to the nearest int when given 'material_used_mg' query param with a decimal`, async () => {
@@ -132,7 +132,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'estimatedFilamentUsageMg'> = {
       estimatedFilamentUsageMg: 1235,
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   it(`should return a null Filament Used in Mg when not given a 'material_used_mg' query param`, async () => {
@@ -144,7 +144,7 @@ describe('CuraParserV1pt0pt0Service', () => {
     const expected: Pick<PrintDetail, 'estimatedFilamentUsageMg'> = {
       estimatedFilamentUsageMg: null,
     };
-    expect(printDetail).toEqual(jasmine.objectContaining(expected));
+    expect(printDetail).toEqual(expect.objectContaining(expected));
   });
 
   describe('Notes', () => {
@@ -382,7 +382,10 @@ describe('CuraParserV1pt0pt0Service', () => {
     });
   });
 
-  const tests: { queryString: string; expected: PrintDetail }[] = [
+  const tests: {
+    queryString: string;
+    expected: PrintDetail;
+  }[] = [
     {
       queryString:
         'support_extruder_nr=1&gradual_infill_steps=0&print_name=Low-poly_Rose_Vase.stl&material_used_mg=31944&ironing_enabled=False&support_type=everywhere&magic_spiralize=False&infill_pattern=grid&print_sequence=all_at_once&plugin_version=1.0.0&cura_version=4.7.0&top_thickness=0.8&adhesion_type=skirt&prime_tower_enable=True&adaptive_layer_height_enabled=False&bottom_thickness=0.8&wall_line_count=2&layer_height=0.3&estimated_print_time_seconds=5626&wireframe_enabled=False&retraction_enable=True&machine_name=Geeetech%20A10M&draft_shield_enabled=False&infill_sparse_density=20&mold_enabled=False&magic_fuzzy_skin_enabled=False&cura_build_type=&ooze_shield_enabled=False&time_stamp=1600695741.1860008&support_enabled=True',

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import {
   MatDialog,
@@ -13,7 +14,7 @@ import {
 
 describe('SimpleDialogComponent', () => {
   let fixture: ComponentFixture<SimpleDialogComponent>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<SimpleDialogComponent>>;
+  let dialogRef: MockedObject<MatDialogRef<SimpleDialogComponent>>;
 
   function render(data: SimpleDialogData): HTMLElement {
     // Deliberately no Material modules here. This dialog is opened programmatically by
@@ -36,7 +37,9 @@ describe('SimpleDialogComponent', () => {
   }
 
   beforeEach(() => {
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<MatDialogRef<SimpleDialogComponent, any>>;
   });
 
   it('renders the title and body from the dialog data', () => {
@@ -89,7 +92,9 @@ describe('SimpleDialogComponent', () => {
 
     buttons(el)[0].click();
 
-    expect(dialogRef.close).toHaveBeenCalledOnceWith();
+    expect(dialogRef.close).toHaveBeenCalledTimes(1);
+
+    expect(dialogRef.close).toHaveBeenCalledWith();
   });
 
   // Regression: when the component relied on SharedModule for its directive scope, opening it
@@ -119,18 +124,21 @@ describe('SimpleDialogComponent', () => {
 
 describe('openSimpleDialog', () => {
   it('opens SimpleDialogComponent with the data and the extra config', () => {
-    const dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    const dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    };
     const ref = {} as MatDialogRef<SimpleDialogComponent, boolean>;
-    dialog.open.and.returnValue(ref);
+    dialog.open.mockReturnValue(ref);
 
     const result = openSimpleDialog(
-      dialog,
+      dialog as unknown as MatDialog,
       { title: 'Delete?', body: 'Sure?' },
       { maxWidth: '350px' }
     );
 
     expect(result).toBe(ref);
-    expect(dialog.open).toHaveBeenCalledOnceWith(SimpleDialogComponent, {
+    expect(dialog.open).toHaveBeenCalledTimes(1);
+    expect(dialog.open).toHaveBeenCalledWith(SimpleDialogComponent, {
       maxWidth: '350px',
       data: { title: 'Delete?', body: 'Sure?' },
     });

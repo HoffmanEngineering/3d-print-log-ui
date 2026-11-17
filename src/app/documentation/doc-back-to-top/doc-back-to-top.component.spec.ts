@@ -7,19 +7,19 @@ import { shouldShowBackToTop } from './scroll-target';
 
 describe('shouldShowBackToTop', () => {
   it('stays hidden within the first two screens', () => {
-    expect(shouldShowBackToTop(0, 800)).toBeFalse();
-    expect(shouldShowBackToTop(1600, 800)).toBeFalse();
+    expect(shouldShowBackToTop(0, 800)).toBe(false);
+    expect(shouldShowBackToTop(1600, 800)).toBe(false);
   });
 
   it('appears past two screens', () => {
-    expect(shouldShowBackToTop(1601, 800)).toBeTrue();
+    expect(shouldShowBackToTop(1601, 800)).toBe(true);
   });
 
   it('scales with the viewport rather than a fixed pixel count', () => {
     // The same absolute offset is deep into a short viewport and barely past
     // the fold on a tall one.
-    expect(shouldShowBackToTop(1000, 400)).toBeTrue();
-    expect(shouldShowBackToTop(1000, 900)).toBeFalse();
+    expect(shouldShowBackToTop(1000, 400)).toBe(true);
+    expect(shouldShowBackToTop(1000, 900)).toBe(false);
   });
 });
 
@@ -53,8 +53,8 @@ describe('DocBackToTopComponent', () => {
 
   it('renders the button once the page is scrolled past two screens', () => {
     const element = document.documentElement;
-    spyOnProperty(element, 'scrollTop').and.returnValue(5000);
-    spyOnProperty(element, 'clientHeight').and.returnValue(800);
+    vi.spyOn(element, 'scrollTop', 'get').mockReturnValue(5000);
+    vi.spyOn(element, 'clientHeight', 'get').mockReturnValue(800);
 
     scrolled.next();
     fixture.detectChanges();
@@ -65,11 +65,11 @@ describe('DocBackToTopComponent', () => {
 
   it('scrolls the page to the top and hides itself again', () => {
     const element = document.documentElement;
-    spyOnProperty(element, 'scrollTop').and.returnValue(5000);
-    spyOnProperty(element, 'clientHeight').and.returnValue(800);
+    vi.spyOn(element, 'scrollTop', 'get').mockReturnValue(5000);
+    vi.spyOn(element, 'clientHeight', 'get').mockReturnValue(800);
     // Typed as the two-argument scrollTo(x, y) overload, so the options-object
     // call has to be read back off the spy rather than matched inline.
-    const scrollTo = spyOn(element, 'scrollTo');
+    const scrollTo = vi.spyOn(element, 'scrollTo').mockReturnValue(undefined);
     scrolled.next();
     fixture.detectChanges();
 
@@ -77,10 +77,10 @@ describe('DocBackToTopComponent', () => {
     fixture.detectChanges();
 
     expect(scrollTo).toHaveBeenCalled();
-    expect(scrollTo.calls.mostRecent().args[0]).toEqual(
-      jasmine.objectContaining({ top: 0 })
+    expect(vi.mocked(scrollTo).mock.lastCall[0]).toEqual(
+      expect.objectContaining({ top: 0 })
     );
-    expect(fixture.componentInstance.visible()).toBeFalse();
+    expect(fixture.componentInstance.visible()).toBe(false);
     expect(button()).toBeNull();
   });
 });

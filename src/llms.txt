@@ -53,18 +53,27 @@ Every docs page is also published as Markdown at the same URL plus `.md` (for ex
 - [Achievements](https://www.3dprintlog.com/docs/achievements): Badges for printing milestones.
 - [OrcaSlicer, PrusaSlicer & Bambu uploader](https://www.3dprintlog.com/docs/slic3r-uploader): Send prints straight from the slicer.
 - [Cura plugin](https://www.3dprintlog.com/docs/cura-plugin): Log prints from Ultimaker Cura.
-- [OctoPrint webhook](https://www.3dprintlog.com/docs/octoprint-webhook): Record prints from OctoPrint.
-- [printlog-bridge for Klipper](https://www.3dprintlog.com/docs/printlog-bridge): Log every Klipper/Moonraker print automatically, with filament per tool, pictures and spools.
+- [OctoPrint webhook](https://www.3dprintlog.com/docs/octoprint-webhook): Record prints from OctoPrint with the Webhooks plugin, for printers without printlog-bridge.
+- [printlog-bridge](https://www.3dprintlog.com/docs/printlog-bridge): Log every Klipper/Moonraker, Bambu Lab (LAN), PrusaLink and OctoPrint print automatically, with filament per tool, pictures and spools.
 - [Connect Klipper via Spoolman](https://www.3dprintlog.com/docs/klipper-spoolman): Your 3D Print Log spools in the Mainsail, Fluidd and KlipperScreen spool pickers, through Moonraker's built-in Spoolman support. 1 printer on Free, unlimited on Pro.
 - [Home Assistant via Spoolman](https://www.3dprintlog.com/docs/home-assistant-spoolman): Your spools as Home Assistant sensors (remaining weight, color, low filament) through the community Spoolman integration. Read-only.
 - [3D Print Log for Home Assistant](https://www.3dprintlog.com/docs/home-assistant): A HACS integration with printer, filament, maintenance and account entities, print events and actions.
 - [Install printlog-bridge on the printer](https://www.3dprintlog.com/docs/printlog-bridge-install): Local mode, as a systemd service, and connecting it with an API key.
 - [Run printlog-bridge in Docker](https://www.3dprintlog.com/docs/printlog-bridge-docker): Remote mode on a NAS, home server or Pi.
+- [printlog-bridge Bridges screen](https://www.3dprintlog.com/docs/printlog-bridge-bridges): Printers a bridge found on your network, connected in the app; adding by address; the interim access code section.
 - [printlog-bridge spool macros](https://www.3dprintlog.com/docs/printlog-bridge-spools): PRINTLOG_SET_SPOOL and PRINTLOG_CLEAR_SPOOL, by spool id or tag.
 - [Snapmaker U1](https://www.3dprintlog.com/docs/snapmaker-u1): Per-tool usage and spools from RFID tags with printlog-bridge.
+- [printlog-bridge for Bambu Lab](https://www.3dprintlog.com/docs/printlog-bridge-bambu): X1, P1, A1 and H2 over the printer's LAN connection, with the slicer's grams per AMS tray.
+- [printlog-bridge for Prusa (PrusaLink)](https://www.3dprintlog.com/docs/printlog-bridge-prusalink): MK4, MK3.5, Core One, MINI and XL through PrusaLink, with the slicer's estimate per tool.
+- [printlog-bridge for OctoPrint](https://www.3dprintlog.com/docs/printlog-bridge-octoprint): an OctoPi or any OctoPrint server, with the slicer's estimate per tool and a webcam snapshot.
+- [printlog-bridge for Elegoo Centauri Carbon (SDCP)](https://www.3dprintlog.com/docs/printlog-bridge-sdcp): the Centauri Carbon over SDCP, its local protocol, with the slicer's filament estimate.
+- [printlog-bridge for Duet / RepRapFirmware](https://www.3dprintlog.com/docs/printlog-bridge-duet): Duet 2 and Duet 3 boards, standalone or with a Raspberry Pi, with the filament each tool measured.
+- [printlog-bridge for FlashForge](https://www.3dprintlog.com/docs/printlog-bridge-flashforge): the Adventurer 5M, 5M Pro and AD5X over the LAN API, with the slicer's estimate per IFS slot.
+- [printlog-bridge for Anycubic (LAN mode)](https://www.3dprintlog.com/docs/printlog-bridge-anycubic): the Kobra S1, Kobra 3 and Photon P1 Max in LAN mode, with filament or resin in mL.
 - [printlog-bridge troubleshooting](https://www.3dprintlog.com/docs/printlog-bridge-troubleshooting): The status and doctor commands, logs, traces and common problems.
 - [printlog-bridge privacy](https://www.3dprintlog.com/docs/printlog-bridge-privacy): Every call and field the bridge sends, and how it keeps keys.
 - [Switch from the Moonraker notifier](https://www.3dprintlog.com/docs/switch-from-notifier): Move a Klipper printer from the notifier to printlog-bridge, and how the two run side by side.
+- [Switch from the OctoPrint webhook](https://www.3dprintlog.com/docs/switch-from-octoprint-webhook): Move an OctoPrint printer from the Webhooks plugin to printlog-bridge, and how the two run side by side.
 - [Klipper & Moonraker notifier (legacy)](https://www.3dprintlog.com/docs/klipper): Record prints from Klipper with Moonraker's notifier. New setups should use printlog-bridge.
 - [Android app](https://www.3dprintlog.com/docs/android-app): The mobile app.
 - [Email notifications](https://www.3dprintlog.com/docs/email-notifications): Which emails are sent and how to change them.

@@ -1,7 +1,7 @@
 import {
   enableProdMode,
   mergeApplicationConfig,
-  provideZoneChangeDetection,
+  provideZonelessChangeDetection,
 } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 
@@ -13,11 +13,13 @@ if (environment.production) {
   enableProdMode();
 }
 
-// Zone.js change detection is a browser-only choice: the server bootstrap in
-// main.server.ts has never had it.
+// Zoneless: change detection runs when a signal a template reads changes, an
+// input or a template event marks a view, or code calls markForCheck(). Nothing
+// is patched into the browser's async APIs. The server bootstrap
+// (main.server.ts) has never had zone.js either.
 bootstrapApplication(
   AppComponent,
   mergeApplicationConfig(appConfig, {
-    providers: [provideZoneChangeDetection()],
+    providers: [provideZonelessChangeDetection()],
   })
 ).catch((err) => console.error(err));

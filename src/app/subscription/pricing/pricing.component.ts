@@ -14,12 +14,6 @@ import {
   proPlan,
 } from '../../core/pricing/pro-pricing';
 import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-} from '@ngbracket/ngx-layout/flex';
-import {
   MatCard,
   MatCardContent,
   MatCardHeader,
@@ -36,10 +30,6 @@ import { MatButton } from '@angular/material/button';
   styleUrls: ['./pricing.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
     MatCard,
     MatCardContent,
     RouterLink,

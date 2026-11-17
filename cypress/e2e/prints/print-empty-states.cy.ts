@@ -24,11 +24,7 @@ describe('Print List Empty States', () => {
 
     cy.visit('/prints');
 
-    cy.get('#filter-panel').then(($panel) => {
-      if (!$panel.hasClass('filter-panel--open')) {
-        cy.get('[aria-controls="filter-panel"]').click();
-      }
-    });
+    cy.openFilterPanel();
 
     cy.findByRole('combobox', { name: /status/i }).click();
     cy.findByRole('option', { name: 'Success' }).click();

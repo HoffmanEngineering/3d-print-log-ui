@@ -17,6 +17,7 @@ import { VersionReleaseNoteDialogService } from 'src/app/core/services/version-r
 import { DeferredSkeletonController } from 'src/app/shared/skeleton/deferred-skeleton';
 import { DOC_RELEASES } from '../../generated/docs-manifest';
 import type { ArchivedRelease } from '../../generated/release-notes-archive';
+import { DOCS_PAGE_IMPORTS } from '../../docs-page-imports';
 
 @Component({
   selector: 'app-docs-release-notes',
@@ -26,7 +27,7 @@ import type { ArchivedRelease } from '../../generated/release-notes-archive';
   // releases are a lazily imported chunk, which frontmatter cannot express.
   templateUrl: '../../generated/pages/docs-release-notes.component.html',
   styleUrls: ['./docs-release-notes.component.scss'],
-  standalone: false,
+  imports: [DOCS_PAGE_IMPORTS],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocsReleaseNotesComponent {

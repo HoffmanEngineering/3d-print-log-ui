@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { BehaviorSubject } from 'rxjs';
+import { signal } from '@angular/core';
 import {
   AuthService,
   UserProfileInfo,
@@ -9,13 +9,13 @@ import { UserProfileComponent } from './user-profile.component';
 
 describe('UserProfileComponent (/profile)', () => {
   it("shows the signed-in user's profile", () => {
-    const userProfile$ = new BehaviorSubject<UserProfileInfo | null>({
+    const userProfile = signal<UserProfileInfo | null>({
       id: 3,
       displayName: 'Ada',
     } as UserProfileInfo);
     TestBed.configureTestingModule({
       imports: [UserProfileComponent],
-      providers: [{ provide: AuthService, useValue: { userProfile$ } }],
+      providers: [{ provide: AuthService, useValue: { userProfile } }],
     });
 
     const fixture = TestBed.createComponent(UserProfileComponent);

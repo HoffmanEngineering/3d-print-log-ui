@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   DOCUMENT,
+  DestroyRef,
   ElementRef,
   PLATFORM_ID,
   afterNextRender,
@@ -16,24 +17,36 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { distinctUntilChanged, map, switchMap } from 'rxjs/operators';
+import {
+  distinctUntilChanged,
+  map,
+  startWith,
+  switchMap,
+} from 'rxjs/operators';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import {
+  SEO_PENDING,
+  SeoLookupState,
+  SeoService,
+} from 'src/app/core/services/seo.service';
 import { UserSummaryDto } from 'src/app/core/services/user.service';
 import { environment } from 'src/environments/environment';
+import { apiUrl } from 'src/app/core/utils/api-url';
 import { Comment } from 'src/app/core/services/comment.service';
 import {
   PrintDetail,
   PrintFilamentSourceMeasurement,
-  PrintService,
   PrintStatus,
+  PrintViewStatus,
 } from '../../core/services/print.service';
 import { PushPermissionPromptService } from 'src/app/core/services/push-permission-prompt.service';
 import {
   UserSettingService,
   UserSettingType,
 } from 'src/app/core/services/user-setting.service';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { AdComponent } from 'src/app/shared/ad/ad.component';
+import { SidebarAdComponent } from 'src/app/shared/ad/sidebar-ad.component';
 import { FileAttachmentSectionComponent } from 'src/app/shared/file-attachment-section/file-attachment-section.component';
 import { withDeferredSkeleton } from 'src/app/shared/skeleton/deferred-skeleton';
 import { SkeletonComponent } from 'src/app/shared/skeleton/skeleton.component';
@@ -80,7 +93,8 @@ const LOADING_STATE: PrintDetailState = {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
-    SharedModule,
+    AdComponent,
+    SidebarAdComponent,
     FileAttachmentSectionComponent,
     PrintCommentsComponent,
     PrintDetailHeroComponent,
@@ -91,10 +105,10 @@ const LOADING_STATE: PrintDetailState = {
 export class ViewPrintDetailComponent {
   private readonly activatedRoute = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly printService = inject(PrintService);
   private readonly printDetailLoader = inject(PrintDetailLoaderService);
   private readonly authService = inject(AuthService);
   private readonly metaService = inject(MetaTagService);
+  private readonly seoService = inject(SeoService);
   private readonly document = inject(DOCUMENT);
   private readonly location = inject(Location);
   private readonly userSettingService = inject(UserSettingService);
@@ -147,9 +161,29 @@ export class ViewPrintDetailComponent {
     { initialValue: IDLE_STATE }
   );
 
-  private readonly currentUser = toSignal(this.authService.userProfile$, {
-    initialValue: null,
-  });
+  /**
+   * The API's `/seo` answer for the print on the route, fetched alongside the print and never
+   * waited on: until it settles (and whenever it is not `ok`) the page describes itself from the
+   * print, as it did before `/seo` existed. `startWith` resets it per print id, so a previous
+   * print's answer never describes the next one.
+   */
+  private readonly seoLookup = toSignal(
+    this.activatedRoute.paramMap.pipe(
+      map((params) => Number(params.get('id'))),
+      distinctUntilChanged(),
+      switchMap(
+        (printId): Observable<SeoLookupState> =>
+          Number.isInteger(printId) && this.isBrowser
+            ? this.seoService
+                .forPrint(printId)
+                .pipe(startWith<SeoLookupState>(SEO_PENDING))
+            : of<SeoLookupState>({ kind: 'unavailable' })
+      )
+    ),
+    { initialValue: SEO_PENDING as SeoLookupState }
+  );
+
+  private readonly currentUser = this.authService.userProfile;
 
   private readonly pageRoot = viewChild<ElementRef<HTMLElement>>('pageRoot');
 
@@ -172,9 +206,8 @@ export class ViewPrintDetailComponent {
    * separately-loaded user, which is null when getUserSummary fails.
    * Not "is logged in": a signed-in stranger sees what an anonymous visitor sees.
    *
-   * Ownership reveals ADDITIVELY. userProfile$ is a BehaviorSubject seeded with
-   * null that emits synchronously, so there is no reliable "auth has settled"
-   * moment to gate on — any such gate would open instantly and gate nothing.
+   * Ownership reveals ADDITIVELY. The profile is null until it loads, and
+   * nothing marks "auth has settled", so there is no reliable moment to gate on — any such gate would open instantly and gate nothing.
    * isOwner therefore starts false and can only flip to true.
    *
    * That direction is the safe one: owner-only content is never shown and then
@@ -193,11 +226,18 @@ export class ViewPrintDetailComponent {
     if (!print?.images?.length) {
       return [];
     }
+    // The API serves a private print's images only with the owner's token, which an
+    // <img src> never sends. Without a direct URL the hero fetches them through
+    // PrintService instead, whose request carries it.
+    const isPrivate = print.viewStatus === PrintViewStatus.Private;
     return (
       print.images
         .map((image) => ({
           id: image.id,
-          url: `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
+          url: isPrivate
+            ? undefined
+            : `${environment.printLogApiUrl}/api/Prints/${print.id}/image/${image.id}`,
+          thumbnailUrl: apiUrl(image.thumbnailUrl),
           file: null as File | null,
           isDefault: image.isDefault,
           displayOrder: image.displayOrder,
@@ -289,6 +329,9 @@ export class ViewPrintDetailComponent {
     // describing the previous print.
     effect(() => this.setMetaTags());
 
+    // A public print lifts the shell's noindex; the next page, reached in-app, gets it back.
+    inject(DestroyRef).onDestroy(() => this.metaService.restoreShellRobots());
+
     // Move focus to the page container once content is rendered, so keyboard
     // users are not stranded on <body> after a route change. The container is
     // the skeleton shell too, so this no longer waits on the fetch.
@@ -376,6 +419,21 @@ export class ViewPrintDetailComponent {
 
   private setMetaTags(): void {
     const print = this.print();
+    const seo = this.seoLookup();
+
+    // A public print: describe it exactly as the Worker did for the initial HTML.
+    if (seo.kind === 'ok') {
+      this.metaService.applySeoMetadata(seo.seo);
+      return;
+    }
+    if (seo.kind === 'not-public') {
+      // Private, unlisted or missing (an owner viewing their own private print).
+      this.metaService.preventIndexing();
+    } else {
+      // Pending or unavailable: whatever the shell was served with, not the previous print's.
+      this.metaService.restoreShellRobots();
+    }
+
     if (!print) {
       // The router reuses this component between print ids, so returning here
       // unconditionally left the PREVIOUS print's title on a page now showing
@@ -410,7 +468,9 @@ export class ViewPrintDetailComponent {
       : `${print.title} printed by ${displayName}`;
     const imageUrl = this.socialImage()?.url ?? '';
 
-    this.metaService.setSocialMediaTags(url, title, description, imageUrl);
+    this.metaService.setSocialMediaTags(url, title, description, imageUrl, {
+      type: 'article',
+    });
   }
 
   handleClose(): void {
@@ -421,20 +481,17 @@ export class ViewPrintDetailComponent {
     this.router.navigate([this.isOwner() ? '/prints' : '/']);
   }
 
-  addComment(newComment: string): void {
-    const print = this.print();
-    if (!print) {
-      return;
-    }
-    this.printService
-      .addPrintComment(print.id, newComment)
-      .subscribe((comment) =>
-        this.comments.update((list) => [...list, comment])
-      );
+  /**
+   * The child posts the comment (so it can keep the typed text and report a
+   * refusal) and hands over the saved row; the list lives here, so the repaint
+   * happens here.
+   */
+  appendComment(added: Comment): void {
+    this.comments.update((list) => [...list, added]);
   }
 
   /**
-   * Counterpart to `addComment`. The child has already deleted the comment on
+   * Counterpart to `appendComment`. The child has already deleted the comment on
    * the server by the time this runs; the list lives here, so the repaint has
    * to happen here too.
    */

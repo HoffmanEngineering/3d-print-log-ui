@@ -133,7 +133,7 @@
               [printOwnerUserId]="p.createdByUserId"
               [allowComments]="p.allowComments"
               [comments]="comments()"
-              (addNewComment)="addComment($event)"
+              (commentAdded)="appendComment($event)"
               (commentDeleted)="removeComment($event)"
             ></app-print-comments>
           </section>

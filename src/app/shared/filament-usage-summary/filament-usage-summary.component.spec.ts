@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
@@ -8,16 +9,20 @@ import {
   PrintFilamentSummaryDto,
   PrintService,
 } from 'src/app/core/services/print.service';
+import {
+  estimateOnlyResinUsageRow,
+  resinUsageRow,
+  unlinkedResinUsageRow,
+} from 'src/app/print/testing/resin-print-fixtures';
 
 describe('FilamentUsageSummaryComponent', () => {
   let fixture: ComponentFixture<FilamentUsageSummaryComponent>;
 
   beforeEach(async () => {
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['calculatePrintCost']
-    );
-    mockPrintService.calculatePrintCost.and.returnValue({
+    const mockPrintService = {
+      calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+    };
+    mockPrintService.calculatePrintCost.mockReturnValue({
       valid: true,
       price: currency(0),
       formattedPrice: '$0.00',
@@ -41,6 +46,55 @@ describe('FilamentUsageSummaryComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  // printlog-bridge#97: the resin print a bridge reports, on the print detail page.
+  describe('a resin print', () => {
+    let printService: MockedObject<PrintService>;
+
+    beforeEach(() => {
+      printService = TestBed.inject(PrintService) as MockedObject<PrintService>;
+    });
+
+    function render(rows: PrintFilamentSummaryDto[]): string {
+      fixture.componentRef.setInput('filamentUsage', rows);
+      fixture.componentRef.setInput('showPrices', true);
+      fixture.componentRef.setInput(
+        'preferredUnit',
+        PrintFilamentSourceMeasurement.Weight
+      );
+      fixture.detectChanges();
+      return (fixture.nativeElement as HTMLElement).textContent ?? '';
+    }
+
+    it('shows mL, not grams, for a linked and an unlinked row', () => {
+      const text = render([resinUsageRow(), unlinkedResinUsageRow()]);
+      expect(text).toContain('42.5mL');
+      expect(text).not.toMatch(/\d(\.\d+)?\s?g\b/);
+    });
+
+    it('prices a row by its actual volume, not its estimate', () => {
+      render([resinUsageRow()]);
+      expect(printService.calculatePrintCost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: PrintFilamentSourceMeasurement.Volume,
+          volumeMl: 42.5,
+        })
+      );
+      expect(printService.calculatePrintCost).not.toHaveBeenCalledWith(
+        expect.objectContaining({ volumeMl: 40 })
+      );
+    });
+
+    it('prices an estimate-only row by its estimate', () => {
+      render([estimateOnlyResinUsageRow()]);
+      expect(printService.calculatePrintCost).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: PrintFilamentSourceMeasurement.Volume,
+          volumeMl: 40,
+        })
+      );
+    });
   });
 
   describe('slots', () => {

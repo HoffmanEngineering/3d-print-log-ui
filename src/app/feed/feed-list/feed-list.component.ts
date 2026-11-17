@@ -9,12 +9,6 @@ import {
   FeedService,
   PrintFeedSummary,
 } from 'src/app/core/services/feed.service';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatCard, MatCardContent } from '@angular/material/card';
 import { PrintSummaryCardComponent } from '../../shared/print-summary-card/print-summary-card.component';
 import { MatProgressBar } from '@angular/material/progress-bar';
@@ -27,16 +21,7 @@ import { MatProgressBar } from '@angular/material/progress-bar';
   host: {
     '(window:scroll)': 'onScroll()',
   },
-  imports: [
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    MatCard,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
-    MatCardContent,
-    PrintSummaryCardComponent,
-    MatProgressBar,
-  ],
+  imports: [MatCard, MatCardContent, PrintSummaryCardComponent, MatProgressBar],
 })
 export class FeedListComponent implements OnInit {
   readonly feed = signal<PrintFeedSummary[]>([]);

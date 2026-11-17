@@ -46,7 +46,7 @@ import { InlineEmailNoticeComponent } from '../inline-email-notice/inline-email-
 import { OnboardingService } from '../onboarding.service';
 import { quickAddErrorText } from '../quick-add-error';
 
-export type QuickAddSource = 'welcome' | 'print-form' | 'checklist';
+export type QuickAddSource = 'welcome' | 'print-form' | 'checklist' | 'bridges';
 /** 'welcome' adds Save and add another and a step Continue; 'dialog' has one Add printer. */
 export type QuickAddMode = 'welcome' | 'dialog';
 /** What happens after a successful save. */
@@ -155,6 +155,10 @@ export class QuickAddPrinterComponent implements OnInit {
   readonly showEmailNotice = input(false);
   /** A catalog model to preselect, such as one detected from a slicer file. */
   readonly initialModelId = input<string | null>(null);
+  /** A nickname to start with, such as the name a printer advertises on the network. */
+  readonly initialName = input<string | null>(null);
+  /** Search text to start with when there is no `initialModelId`, such as a reported model. */
+  readonly initialSearch = input<string | null>(null);
   readonly mode = input<QuickAddMode>('dialog');
   /** Welcome mode: the user already has a printer, so an untouched form can just continue. */
   readonly hasSavedPrinters = input(false);
@@ -365,7 +369,16 @@ export class QuickAddPrinterComponent implements OnInit {
       .popular(POPULAR_COUNT)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((list) => this.popular.set(list));
+    const initialName = this.initialName()?.trim();
+    if (initialName) {
+      this.form.controls.name.setValue(initialName);
+      this.nameTouched = true;
+    }
     const initialId = this.initialModelId();
+    const initialSearch = this.initialSearch()?.trim();
+    if (!initialId && initialSearch) {
+      this.form.controls.search.setValue(initialSearch);
+    }
     if (initialId) {
       this.catalog
         .get(initialId)

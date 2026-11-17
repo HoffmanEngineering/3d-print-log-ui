@@ -1,8 +1,7 @@
-<div fxLayout="row" fxLayoutAlign="center">
+<div class="page">
   <mat-card
     appearance="outlined"
-    fxFlex="600px"
-    fxFlex.lt-md="100%"
+    class="result-card"
     style="margin: 32px 16px; text-align: center"
   >
     <mat-card-content>
@@ -10,7 +9,7 @@
       @if (canPurchasePro) {
         <p>You can upgrade to Pro anytime you're ready.</p>
       }
-      <div fxLayout="row" fxLayoutGap="16px" fxLayoutAlign="center">
+      <div class="actions">
         @if (canPurchasePro) {
           <button mat-raised-button color="primary" routerLink="/subscription">
             View Plans

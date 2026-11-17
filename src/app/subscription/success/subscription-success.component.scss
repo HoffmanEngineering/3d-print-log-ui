@@ -1,0 +1,16 @@
+.page {
+  display: flex;
+  justify-content: center;
+}
+
+.result-card {
+  flex: 1 1 600px;
+  min-width: 600px;
+  max-width: 600px;
+
+  @media (max-width: 959.98px) {
+    flex: 1 1 100%;
+    min-width: auto;
+    max-width: 100%;
+  }
+}

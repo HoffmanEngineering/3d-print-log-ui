@@ -5,9 +5,9 @@ import { CallbackComponent } from './callback.component';
 
 describe('CallbackComponent', () => {
   it('finishes the Auth0 login when the redirect lands here', () => {
-    const auth = jasmine.createSpyObj<AuthService>('AuthService', [
-      'handleAuthCallback',
-    ]);
+    const auth = {
+      handleAuthCallback: vi.fn().mockName('AuthService.handleAuthCallback'),
+    };
     TestBed.configureTestingModule({
       imports: [CallbackComponent],
       providers: [{ provide: AuthService, useValue: auth }],

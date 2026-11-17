@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import {
@@ -15,12 +16,14 @@ import {
 import { spoolNumberRedirectGuard } from './spool-number-redirect.guard';
 
 describe('spoolNumberRedirectGuard', () => {
-  let filamentService: jasmine.SpyObj<FilamentService>;
+  let filamentService: MockedObject<FilamentService>;
 
   beforeEach(() => {
-    filamentService = jasmine.createSpyObj<FilamentService>('FilamentService', [
-      'getFilamentBySpoolNumber',
-    ]);
+    filamentService = {
+      getFilamentBySpoolNumber: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBySpoolNumber'),
+    } as unknown as MockedObject<FilamentService>;
     TestBed.configureTestingModule({
       providers: [{ provide: FilamentService, useValue: filamentService }],
     });
@@ -39,7 +42,7 @@ describe('spoolNumberRedirectGuard', () => {
   }
 
   it('redirects a spool number to its material', async () => {
-    filamentService.getFilamentBySpoolNumber.and.returnValue(
+    filamentService.getFilamentBySpoolNumber.mockReturnValue(
       of({ id: 'abc-123' } as FilamentDetail)
     );
 
@@ -48,7 +51,7 @@ describe('spoolNumberRedirectGuard', () => {
   });
 
   it('falls back to the materials list when no spool has the number', async () => {
-    filamentService.getFilamentBySpoolNumber.and.returnValue(
+    filamentService.getFilamentBySpoolNumber.mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 404 }))
     );
 

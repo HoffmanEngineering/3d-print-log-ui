@@ -45,17 +45,17 @@ describe('platform', () => {
   it('recognizes the Android shell as Cordova and Android only', () => {
     pretendUserAgent(CORDOVA_USER_AGENT);
 
-    expect(isCordovaPlatform()).toBeTrue();
-    expect(isCordovaAndroidPlatform()).toBeTrue();
-    expect(isCordovaIosPlatform()).toBeFalse();
+    expect(isCordovaPlatform()).toBe(true);
+    expect(isCordovaAndroidPlatform()).toBe(true);
+    expect(isCordovaIosPlatform()).toBe(false);
   });
 
   it('recognizes the iOS shell as Cordova and iOS only', () => {
     pretendUserAgent(CORDOVA_IOS_USER_AGENT);
 
-    expect(isCordovaPlatform()).toBeTrue();
-    expect(isCordovaIosPlatform()).toBeTrue();
-    expect(isCordovaAndroidPlatform()).toBeFalse();
+    expect(isCordovaPlatform()).toBe(true);
+    expect(isCordovaIosPlatform()).toBe(true);
+    expect(isCordovaAndroidPlatform()).toBe(false);
   });
 
   it('treats a browser, including Safari on iPhone, as neither shell', () => {
@@ -64,15 +64,15 @@ describe('platform', () => {
         '(KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
     );
 
-    expect(isCordovaPlatform()).toBeFalse();
-    expect(isCordovaAndroidPlatform()).toBeFalse();
-    expect(isCordovaIosPlatform()).toBeFalse();
+    expect(isCordovaPlatform()).toBe(false);
+    expect(isCordovaAndroidPlatform()).toBe(false);
+    expect(isCordovaIosPlatform()).toBe(false);
   });
 
   it('resolves the injection tokens from the user agent', () => {
     pretendUserAgent(CORDOVA_IOS_USER_AGENT);
 
-    expect(TestBed.inject(IS_CORDOVA)).toBeTrue();
-    expect(TestBed.inject(IS_CORDOVA_IOS)).toBeTrue();
+    expect(TestBed.inject(IS_CORDOVA)).toBe(true);
+    expect(TestBed.inject(IS_CORDOVA_IOS)).toBe(true);
   });
 });

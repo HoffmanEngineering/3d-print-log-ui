@@ -572,7 +572,9 @@
         } @else {
           <app-material-icon
             [color]="filament.colorHex"
-            [categoryNickname]="filament.materialCategory?.nickname"
+            [categoryNickname]="
+              $safeNavigationMigration(filament.materialCategory?.nickname)
+            "
             [colorPattern]="filament.colorPattern"
             [colors]="filament.colors"
             [finishType]="filament.finishType"

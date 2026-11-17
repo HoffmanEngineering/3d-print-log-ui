@@ -61,7 +61,11 @@ function tooltipFor(family: AchievementFamily, tier: number): string {
                   [category]="f.visual.category"
                   [tier]="f.tier"
                   [oneTime]="f.visual.oneTime"
-                  [numeral]="f.visual.family?.tiers?.[f.tier - 1]?.threshold"
+                  [numeral]="
+                    $safeNavigationMigration(
+                      f.visual.family?.tiers?.[f.tier - 1]?.threshold
+                    )
+                  "
                   [label]="f.visual.title"
                   size="md"
                 />

@@ -15,7 +15,15 @@ import {
 } from 'src/app/core/services/print.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
+import { FilamentColorSwatchStylePipe } from 'src/app/shared/pipes/filament-color-swatch-style.pipe';
+import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
+import { PrintImageComponent } from 'src/app/shared/print-image/print-image.component';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { LongPressDirective } from 'src/app/shared/long-press/long-press.directive';
 import { ProjectChipComponent } from 'src/app/shared/project-chip/project-chip.component';
 import { PrintStatusBadgeComponent } from 'src/app/shared/print-status-badge/print-status-badge.component';
@@ -34,7 +42,15 @@ import { PrinterAvatarComponent } from 'src/app/shared/printer-avatar/printer-av
   imports: [
     RouterLink,
     LongPressDirective,
-    SharedModule,
+    DurationPipe,
+    FilamentColorSwatchStylePipe,
+    LocaleDatePipe,
+    PrintImageComponent,
+    MatButtonModule,
+    MatCardModule,
+    MatIconModule,
+    MatMenuModule,
+    MatTooltipModule,
     ProjectChipComponent,
     PrintStatusBadgeComponent,
     PrinterAvatarComponent,

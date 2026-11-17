@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { DOCS_PAGE_IMPORTS } from '../../docs-page-imports';
 
 @Component({
   selector: 'app-docs-getting-started',
@@ -10,7 +11,7 @@ import { AuthService } from 'src/app/core/services/auth.service';
   // `constants:` cannot express.
   templateUrl: '../../generated/pages/docs-getting-started.component.html',
   styleUrls: ['./docs-getting-started.component.scss'],
-  standalone: false,
+  imports: [DOCS_PAGE_IMPORTS],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DocsGettingStartedComponent {

@@ -103,7 +103,7 @@ describe('Print edit — selecting a material by QR scan', () => {
         .should((text) => {
           expect(text).to.match(/1,000\s*\(g\) remaining/);
           expect(text).to.match(/[1-9][\d,]*\s*\(m\) remaining/);
-          expect(text).to.match(/[1-9][\d,]*\s*\(ml\) remaining/);
+          expect(text).to.match(/[1-9][\d,]*\s*\(mL\) remaining/);
         });
     });
   });

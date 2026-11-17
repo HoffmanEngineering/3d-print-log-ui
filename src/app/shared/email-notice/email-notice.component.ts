@@ -9,10 +9,14 @@ import {
   PLATFORM_ID,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import {
+  takeUntilDestroyed,
+  toObservable,
+  toSignal,
+} from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { NavigationEnd, Router } from '@angular/router';
-import { distinctUntilChanged, filter, map } from 'rxjs';
+import { filter, map } from 'rxjs';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LoggingService } from '../../core/services/logging.service';
@@ -44,6 +48,9 @@ export class EmailNoticeComponent implements OnInit {
   private readonly onboarding = inject(OnboardingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly signedIn$ = toObservable(
+    computed(() => !!this.auth.userProfile())
+  );
 
   readonly visible = signal(false);
 
@@ -78,12 +85,8 @@ export class EmailNoticeComponent implements OnInit {
       return;
     }
 
-    this.auth.userProfile$
-      .pipe(
-        map((user) => !!user),
-        distinctUntilChanged(),
-        takeUntilDestroyed(this.destroyRef)
-      )
+    this.signedIn$
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((signedIn) => {
         if (signedIn) {
           void this.checkSeen();

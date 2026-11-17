@@ -56,6 +56,11 @@ export const lastSelectedPrinterSettingResolver = userSettingResolver(
   UserSettingType.Prints_LastSelectedPrinterId
 );
 
+/** Only a default for a new print's Allow Comments, so a failed fetch must not block the form. */
+export const lastAllowCommentsSettingResolver = optionalUserSettingResolver(
+  UserSettingType.Prints_LastSelectedAllowComments
+);
+
 /** Runs on the public prints/:id route. */
 export const currencySymbolSettingResolver = optionalUserSettingResolver(
   UserSettingType.Currency_Symbol

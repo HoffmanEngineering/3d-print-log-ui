@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -15,7 +15,7 @@ describe('EmailPreferencesApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(EmailPreferencesApiService);
     http = TestBed.inject(HttpTestingController);
@@ -68,7 +68,7 @@ describe('EmailPreferencesApiService', () => {
   it('sends no Authorization header', () => {
     service.read('MANAGE').subscribe();
     const req = http.expectOne(`${base}/preferences`);
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 });

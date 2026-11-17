@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterLink, provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
 import { PrintCardComponent } from './print-card.component';
+import { PrintImageComponent } from 'src/app/shared/print-image/print-image.component';
 import {
   PrintSummary,
   PrintStatus,
@@ -39,15 +40,19 @@ describe('PrintCardComponent', () => {
       imports: [PrintCardComponent, NoopAnimationsModule],
       providers: [
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();
@@ -56,6 +61,18 @@ describe('PrintCardComponent', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('print', mockPrint);
     fixture.detectChanges();
+  });
+
+  it('gives its image the thumbnail path when the API reports one', () => {
+    fixture.componentRef.setInput('print', {
+      ...mockPrint,
+      defaultPrintImageId: 5,
+      defaultPrintImageThumbnailUrl: '/api/Prints/42/image/5/thumbnail',
+    });
+    fixture.detectChanges();
+    const image = fixture.debugElement.query(By.directive(PrintImageComponent))
+      .componentInstance as PrintImageComponent;
+    expect(image.thumbnailUrl()).toBe('/api/Prints/42/image/5/thumbnail');
   });
 
   it('should render the print title', () => {
@@ -74,14 +91,14 @@ describe('PrintCardComponent', () => {
   });
 
   it('should emit deleted output when delete is triggered', () => {
-    const deletedSpy = jasmine.createSpy('deleted');
+    const deletedSpy = vi.fn();
     component.deleted.subscribe(deletedSpy);
     component.onDeleteClicked();
     expect(deletedSpy).toHaveBeenCalledWith(mockPrint);
   });
 
   it('should emit statusChanged when changeStatus is called', () => {
-    const spy = jasmine.createSpy('statusChanged');
+    const spy = vi.fn();
     component.statusChanged.subscribe(spy);
     component.onStatusChange(PrintStatus.Failed);
     expect(spy).toHaveBeenCalledWith({ id: 42, status: PrintStatus.Failed });
@@ -241,15 +258,19 @@ describe('PrintCardComponent — preferred unit', () => {
       imports: [PrintCardComponent, NoopAnimationsModule],
       providers: [
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();

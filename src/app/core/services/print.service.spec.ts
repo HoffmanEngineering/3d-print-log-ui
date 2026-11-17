@@ -6,6 +6,7 @@ import {
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import {
   BulkPrintResult,
@@ -23,7 +24,7 @@ describe('PrintService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -92,8 +93,8 @@ describe('PrintService', () => {
         candidate.url.endsWith('/api/Prints/summary')
       );
 
-      expect(request.request.params.has('fromDate')).toBeFalse();
-      expect(request.request.params.has('toDate')).toBeFalse();
+      expect(request.request.params.has('fromDate')).toBe(false);
+      expect(request.request.params.has('toDate')).toBe(false);
       request.flush(emptyPage);
     });
   });
@@ -107,7 +108,7 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('');
     });
 
@@ -119,7 +120,7 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('');
     });
 
@@ -131,7 +132,7 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('(Electricity rate not set)');
     });
 
@@ -143,7 +144,7 @@ describe('PrintService', () => {
         defaultWattageW: null,
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('(Printer wattage not set)');
     });
 
@@ -156,10 +157,10 @@ describe('PrintService', () => {
         defaultWattageW: null,
         currencySymbol: '$',
       });
-      expect(result.valid).toBeTrue();
+      expect(result.valid).toBe(true);
       if (result.valid) {
         expect(result.cost.value).toBeCloseTo(0.03, 4);
-        expect(result.usesDefaultWattage).toBeFalse();
+        expect(result.usesDefaultWattage).toBe(false);
         expect(result.wattageW).toBe(200);
         expect(result.printTimeHours).toBeCloseTo(1, 4);
       }
@@ -174,10 +175,10 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeTrue();
+      expect(result.valid).toBe(true);
       if (result.valid) {
         expect(result.cost.value).toBeCloseTo(0.06, 4);
-        expect(result.usesDefaultWattage).toBeTrue();
+        expect(result.usesDefaultWattage).toBe(true);
         expect(result.wattageW).toBe(150);
       }
     });
@@ -289,7 +290,7 @@ describe('PrintService', () => {
       service.addPrint(base).subscribe();
 
       const request = httpMock.expectOne((r) => r.method === 'POST');
-      expect('curaSettingId' in request.request.body).toBeFalse();
+      expect('curaSettingId' in request.request.body).toBe(false);
       request.flush({ id: 1 });
     });
   });
@@ -365,6 +366,58 @@ describe('PrintService', () => {
       request.flush({ id: 9 });
 
       expect(saved?.id).toBe(9);
+    });
+  });
+
+  describe('getPrintImage', () => {
+    let httpMock: HttpTestingController;
+    const api = environment.printLogApiUrl;
+    const png = () => new Blob(['x'], { type: 'image/png' });
+
+    beforeEach(() => {
+      httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => httpMock.verify());
+
+    const read = (source: ReturnType<PrintService['getPrintImage']>) =>
+      new Promise<string>((resolve) => source.subscribe(resolve));
+
+    it('fetches the full image when no thumbnail is given', async () => {
+      const result = read(service.getPrintImage(3, 9));
+      const req = httpMock.expectOne(`${api}/api/Prints/3/image/9`);
+      expect(req.request.headers.get('allow-anonymous-request')).toBe('true');
+      req.flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('fetches the thumbnail when the API reported one', async () => {
+      const result = read(
+        service.getPrintImage(3, 9, '/api/Prints/3/image/9/thumbnail')
+      );
+      const req = httpMock.expectOne(`${api}/api/Prints/3/image/9/thumbnail`);
+      expect(req.request.headers.get('allow-anonymous-request')).toBe('true');
+      req.flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('falls back to the full image when the thumbnail fails', async () => {
+      const result = read(
+        service.getPrintImage(3, 9, '/api/Prints/3/image/9/thumbnail')
+      );
+      httpMock
+        .expectOne(`${api}/api/Prints/3/image/9/thumbnail`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+      httpMock.expectOne(`${api}/api/Prints/3/image/9`).flush(png());
+      expect(await result).toMatch(/^data:image\/png;base64,/);
+    });
+
+    it('yields an empty string when the image cannot be loaded', async () => {
+      const result = read(service.getPrintImage(3, 9));
+      httpMock
+        .expectOne(`${api}/api/Prints/3/image/9`)
+        .flush(null, { status: 404, statusText: 'Not Found' });
+      expect(await result).toBe('');
     });
   });
 });

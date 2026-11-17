@@ -3,12 +3,16 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  LOCALE_ID,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
+  untracked,
   viewChild,
 } from '@angular/core';
+import { formatNumber } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -25,8 +29,17 @@ import {
   HttpErrorResponse,
 } from '@angular/common/http';
 import { moveItemInArray } from '@angular/cdk/drag-drop';
-import { concat, forkJoin, of } from 'rxjs';
-import { mergeMap, take, toArray } from 'rxjs/operators';
+import {
+  EMPTY,
+  Observable,
+  concat,
+  defer,
+  forkJoin,
+  of,
+  throwError,
+} from 'rxjs';
+import { catchError, map, mergeMap, take, tap, toArray } from 'rxjs/operators';
+import { ToastrService } from 'ngx-toastr';
 import {
   ProjectService,
   ProjectDetailDto,
@@ -49,11 +62,24 @@ import { todayUtcCivilDate } from 'src/app/core/utils/civil-date';
 import { CivilDatePipe } from 'src/app/shared/pipes/civil-date.pipe';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
-import { SharedModule } from 'src/app/shared/shared.module';
+import { AdComponent } from 'src/app/shared/ad/ad.component';
+import { SidebarAdComponent } from 'src/app/shared/ad/sidebar-ad.component';
+import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { ProjectEditFormComponent } from './project-edit-form/project-edit-form.component';
 import { ImageCarouselComponent } from 'src/app/shared/image-carousel/image-carousel.component';
 import { ImageThumbnailStripComponent } from 'src/app/shared/image-thumbnail-strip/image-thumbnail-strip.component';
 import { environment } from 'src/environments/environment';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
+import { withMilliliters } from 'src/app/shared/utils/filament-display.utils';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
+import { safeExternalUrl } from 'src/app/shared/utils/external-url.utils';
+import {
+  SEO_PENDING,
+  SeoLookupState,
+  SeoService,
+} from 'src/app/core/services/seo.service';
 
 /**
  * The message to show for a failed project save.
@@ -70,6 +96,25 @@ function readSaveError(err: unknown): string {
   return 'This project could not be saved. Please try again.';
 }
 
+/**
+ * The cap the API named when it refused an upload for the per-project image limit
+ * ("Maximum of 5 images per project allowed"), or null for any other failure. An API from
+ * before the cap never sends it, so the page's own check is all that applies there.
+ */
+export function readImageLimitRefusal(err: unknown): number | null {
+  if (!(err instanceof HttpErrorResponse) || err.status !== 400) return null;
+  const body = typeof err.error === 'string' ? err.error : '';
+  const match = /Maximum of (\d+) images per project/i.exec(body);
+  return match ? Number(match[1]) : null;
+}
+
+/** New images that reached the API, by the staged image they came from. */
+interface UploadOutcome {
+  uploaded: Map<ProjectImageValue, number>;
+  /** The cap the API refused an upload at, or null when every image was uploaded. */
+  refusedAtLimit: number | null;
+}
+
 @Component({
   selector: 'app-project-detail',
   templateUrl: './project-detail.component.html',
@@ -82,7 +127,9 @@ function readSaveError(err: unknown): string {
     MatMenuModule,
     MatSelectModule,
     MatProgressSpinnerModule,
-    SharedModule,
+    AdComponent,
+    SidebarAdComponent,
+    DurationPipe,
     ProjectEditFormComponent,
     ImageCarouselComponent,
     ImageThumbnailStripComponent,
@@ -98,10 +145,20 @@ export class ProjectDetailComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly dialog = inject(MatDialog);
   private readonly titleService = inject(Title);
+  private readonly metaTagService = inject(MetaTagService);
+  private readonly seoService = inject(SeoService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly locale = inject(LOCALE_ID);
   private readonly loggingService = inject(LoggingService);
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly toastr = inject(ToastrService);
+  private readonly subscriptionService = inject(SubscriptionService);
+  /** False in the iOS app, where Pro is never sold (#366). */
+  private readonly canPurchasePro = inject(CAN_PURCHASE_PRO);
+
+  /** Images allowed on one project, by subscription tier: the same cap as prints and printers. */
+  readonly maxImages = this.subscriptionService.maxImages;
 
   readonly fileInputRef =
     viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
@@ -109,6 +166,10 @@ export class ProjectDetailComponent implements OnInit {
   private readonly resolvedUrls = signal<Map<number, SafeUrl>>(new Map());
 
   readonly project = signal<ProjectDetailDto | null>(null);
+  /** The model source as an absolute http(s) URL, or null when it must not be linked. */
+  protected readonly sourceUrl = computed(() =>
+    safeExternalUrl(this.project()?.url)
+  );
   readonly prints = signal<PrintSummary[]>([]);
   readonly loading = signal(true);
   readonly isEditing = signal(false);
@@ -126,7 +187,39 @@ export class ProjectDetailComponent implements OnInit {
   imageIdsToDelete: number[] = [];
   private defaultImageIdOnLoad: number | null = null;
 
-  private readonly currentUserId = signal<number | null>(null);
+  private readonly currentUserId = computed(
+    () => this.authService.userProfile()?.id ?? null
+  );
+
+  /** The API's `/seo` answer for this project; never waited on. */
+  private readonly seoLookup = signal<SeoLookupState>(SEO_PENDING);
+
+  /**
+   * Flips once, when the project first loads, which is when its own title goes up. The /seo
+   * answer is applied again then, so it wins whichever of the two arrives first; later saves
+   * (which also set the project) leave the tags alone.
+   */
+  private readonly projectLoaded = computed(() => !!this.project()?.id);
+
+  constructor() {
+    effect(() => {
+      const seo = this.seoLookup();
+      this.projectLoaded();
+      untracked(() => {
+        if (seo.kind === 'ok') {
+          this.metaTagService.applySeoMetadata(seo.seo);
+        } else if (seo.kind === 'not-public') {
+          // Private, unlisted or missing: an owner viewing their own private project.
+          this.metaTagService.preventIndexing();
+        } else {
+          this.metaTagService.restoreShellRobots();
+        }
+      });
+    });
+
+    // A public project lifts the shell's noindex; the next page, reached in-app, gets it back.
+    this.destroyRef.onDestroy(() => this.metaTagService.restoreShellRobots());
+  }
 
   readonly isOwner = computed(() => {
     const p = this.project();
@@ -175,6 +268,19 @@ export class ProjectDetailComponent implements OnInit {
     return Math.max(0, p.printCount - this.prints().length);
   });
 
+  /**
+   * The project's material: grams, with its resin in mL beside them when it has any, or mL
+   * alone when it has no grams (3d-print-log-api#294). See withMilliliters.
+   */
+  materialUsed(p: ProjectDetailDto): string {
+    const grams = p.totalFilamentWeightMg / 1000;
+    return withMilliliters(
+      `${formatNumber(grams, this.locale, '1.0-1')}g`,
+      grams,
+      p.totalFilamentVolumeMl
+    );
+  }
+
   private emptyProject(): ProjectDetailDto {
     return {
       id: '',
@@ -199,10 +305,6 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.authService.userProfile$
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((user) => this.currentUserId.set(user?.id ?? null));
-
     const id = this.route.snapshot.params['id'];
 
     if (id === 'new') {
@@ -211,6 +313,11 @@ export class ProjectDetailComponent implements OnInit {
       this.loading.set(false);
       this.isEditing.set(true);
     } else {
+      this.seoService
+        .forProject(id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((lookup) => this.seoLookup.set(lookup));
+
       this.projectService
         .getProjectById(id)
         .pipe(takeUntilDestroyed(this.destroyRef))
@@ -279,7 +386,7 @@ export class ProjectDetailComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete print "${print.title}"?<br /><br />This action cannot be undone.`,
+        body: `Are you sure you want to delete print "${escapeHtml(print.title ?? '')}"?<br /><br />This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',
@@ -371,26 +478,24 @@ export class ProjectDetailComponent implements OnInit {
     this.isSaving.set(true);
     let createdId: string;
     let uploadedIds: number[] = [];
+    let refusedAtLimit: number | null = null;
 
     this.projectService
       .createProject(dto)
       .pipe(
         mergeMap((created) => {
           createdId = created.id;
-          return stagedImages.length === 0
-            ? of([] as ProjectImageDto[])
-            : concat(
-                ...stagedImages.map((img) =>
-                  this.projectService.uploadImage(createdId, img.file!)
-                )
-              ).pipe(toArray());
+          return this.uploadNewImages(createdId, stagedImages);
         }),
-        mergeMap((uploadResults: ProjectImageDto[]) => {
-          uploadedIds = uploadResults.map((r) => r.id);
+        mergeMap((outcome: UploadOutcome) => {
+          refusedAtLimit = outcome.refusedAtLimit;
+          uploadedIds = stagedImages
+            .map((img) => outcome.uploaded.get(img))
+            .filter((id): id is number => id !== undefined);
           const defaultImage = stagedImages.find((img) => img.isDefault);
-          if (!defaultImage) return of(null);
-          const defaultIdx = stagedImages.indexOf(defaultImage);
-          const defaultId = uploadedIds[defaultIdx];
+          const defaultId = defaultImage
+            ? outcome.uploaded.get(defaultImage)
+            : undefined;
           return defaultId
             ? this.projectService.setDefaultImage(createdId, defaultId)
             : of(null);
@@ -417,6 +522,9 @@ export class ProjectDetailComponent implements OnInit {
           this.loggingService.logEvent('ProjectDetail_Created', {
             hasImages: stagedImages.length > 0,
           });
+          if (refusedAtLimit !== null) {
+            this.onUploadRefusedAtLimit(refusedAtLimit);
+          }
           this.router.navigate(['/projects', updated.id], { replaceUrl: true });
         },
         error: (err: unknown) => {
@@ -451,29 +559,39 @@ export class ProjectDetailComponent implements OnInit {
     this.saveErrorMessage.set('');
     this.isSaving.set(true);
 
-    let uploadedIds: number[] = [];
-
-    const upload$ =
-      newImages.length === 0
-        ? of([] as ProjectImageDto[])
-        : concat(
-            ...newImages.map((img) =>
-              this.projectService.uploadImage(p.id, img.file!)
-            )
-          ).pipe(toArray());
+    let uploaded = new Map<ProjectImageValue, number>();
+    let refusedAtLimit: number | null = null;
 
     this.projectService
       .updateProject(p.id, dto)
       .pipe(
-        mergeMap(() => upload$),
-        mergeMap((uploadResults: ProjectImageDto[]) => {
-          uploadedIds = uploadResults.map((r) => r.id);
+        // Deletes go first: the API counts a project's images against the cap, so a project
+        // at the cap that swaps one image for another must lose the old one before the new
+        // one can be added. Each delete is forgotten as soon as it succeeds, so if a later
+        // step fails, Save again does not send it a second time (the API would answer 404).
+        mergeMap(() =>
+          idsToDelete.length === 0
+            ? of(null)
+            : forkJoin(
+                idsToDelete.map((id) =>
+                  this.projectService.deleteImage(p.id, id).pipe(
+                    tap(() => {
+                      this.imageIdsToDelete = this.imageIdsToDelete.filter(
+                        (pending) => pending !== id
+                      );
+                    })
+                  )
+                )
+              )
+        ),
+        mergeMap(() => this.uploadNewImages(p.id, newImages)),
+        mergeMap((outcome: UploadOutcome) => {
+          uploaded = outcome.uploaded;
+          refusedAtLimit = outcome.refusedAtLimit;
 
           let defaultId: number | null = defaultImage?.id ?? null;
-          if (!defaultId) {
-            const newDefaultIdx = newImages.findIndex((img) => img.isDefault);
-            if (newDefaultIdx >= 0)
-              defaultId = uploadedIds[newDefaultIdx] ?? null;
+          if (!defaultId && defaultImage) {
+            defaultId = uploaded.get(defaultImage) ?? null;
           }
           const defaultChanged =
             defaultId !== null && defaultId !== this.defaultImageIdOnLoad;
@@ -482,23 +600,14 @@ export class ProjectDetailComponent implements OnInit {
             ? this.projectService.setDefaultImage(p.id, defaultId)
             : of(null);
         }),
-        mergeMap(() =>
-          idsToDelete.length === 0
-            ? of(null)
-            : forkJoin(
-                idsToDelete.map((id) =>
-                  this.projectService.deleteImage(p.id, id)
-                )
-              )
-        ),
         mergeMap(() => {
           const existingOrdered = existingImages
             .filter((img) => !idsToDelete.includes(img.id!))
             .map((img) => ({ id: img.id!, displayOrder: img.displayOrder }));
 
           const newOrdered = newImages
-            .map((img, i) => ({
-              id: uploadedIds[i],
+            .map((img) => ({
+              id: uploaded.get(img),
               displayOrder: img.displayOrder,
             }))
             .filter((x) => x.id !== undefined) as {
@@ -533,12 +642,89 @@ export class ProjectDetailComponent implements OnInit {
             deletedImageCount: idsToDelete.length,
             reordered: snapshot.length > 1,
           });
+          if (refusedAtLimit !== null) {
+            this.onUploadRefusedAtLimit(refusedAtLimit);
+          }
         },
         error: (err: unknown) => {
           this.isSaving.set(false);
           this.saveErrorMessage.set(readSaveError(err));
         },
       });
+  }
+
+  /**
+   * Uploads staged images one at a time, in order. A refusal for the per-project image cap
+   * stops the run (every later upload would be refused too) and is reported in the outcome
+   * rather than as an error, so the project and the images that fit are still saved. Any
+   * other failure fails the save as before.
+   */
+  private uploadNewImages(
+    projectId: string,
+    staged: ProjectImageValue[]
+  ): Observable<UploadOutcome> {
+    const uploaded = new Map<ProjectImageValue, number>();
+    let refusedAtLimit: number | null = null;
+    if (staged.length === 0) return of({ uploaded, refusedAtLimit });
+
+    return concat(
+      ...staged.map((img) =>
+        defer(() =>
+          refusedAtLimit !== null
+            ? EMPTY
+            : this.projectService.uploadImage(projectId, img.file!).pipe(
+                tap((dto: ProjectImageDto) => {
+                  uploaded.set(img, dto.id);
+                  this.recordUploadedImage(img, dto.id);
+                }),
+                catchError((err: unknown) => {
+                  const limit = readImageLimitRefusal(err);
+                  if (limit === null) return throwError(() => err);
+                  refusedAtLimit = limit;
+                  return EMPTY;
+                })
+              )
+        )
+      )
+    ).pipe(
+      toArray(),
+      map(() => ({ uploaded, refusedAtLimit }))
+    );
+  }
+
+  /**
+   * A staged image takes its id as soon as it is uploaded, as print photos do, so when a later
+   * step fails, Save again treats it as an existing image instead of uploading it again.
+   */
+  private recordUploadedImage(staged: ProjectImageValue, id: number): void {
+    this.images.update((imgs) =>
+      imgs.map((img) =>
+        img === staged ? { ...img, id, file: undefined } : img
+      )
+    );
+  }
+
+  /** The API held the project to a lower cap than the page showed, most likely after a plan change. */
+  private onUploadRefusedAtLimit(limit: number): void {
+    this.subscriptionService.loadSubscription();
+    this.showImageLimitReached(limit);
+  }
+
+  /** The notice the print page gives at the image cap. */
+  private showImageLimitReached(limit: number): void {
+    if (this.subscriptionService.isPro()) {
+      this.toastr.warning(`Maximum ${limit} images allowed`, 'Limit Reached');
+      return;
+    }
+    const message = `Free accounts allow ${limit} images per project.`;
+    this.toastr.info(
+      this.canPurchasePro ? `${message} Upgrade to Pro for more.` : message,
+      'Image Limit Reached'
+    );
+    this.loggingService.logEvent('ProjectDetail_ImageLimitUpgradePrompt', {
+      currentCount: this.images().length,
+      maxImages: limit,
+    });
   }
 
   onAddImageClicked(): void {
@@ -548,18 +734,33 @@ export class ProjectDetailComponent implements OnInit {
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
-    const file = input.files[0];
-    const url = URL.createObjectURL(file);
-    const newImage: ProjectImageValue = {
-      file,
-      url,
-      resolvedUrl: this.sanitizer.bypassSecurityTrustUrl(url),
-      isDefault: this.images().length === 0,
-      displayOrder: this.images().length,
-    };
-    this.images.update((imgs) => [...imgs, newImage]);
+    const files = Array.from(input.files);
     input.value = '';
-    this.loggingService.logEvent('ProjectDetail_ImageUploaded');
+
+    // A project already past the cap (from before it, or a lapsed Pro plan) has no room.
+    const room = Math.max(0, this.maxImages() - this.images().length);
+    const accepted = files.slice(0, room);
+    if (accepted.length < files.length) {
+      this.showImageLimitReached(this.maxImages());
+    }
+    if (accepted.length === 0) return;
+
+    this.images.update((imgs) => [
+      ...imgs,
+      ...accepted.map((file, i): ProjectImageValue => {
+        const url = URL.createObjectURL(file);
+        return {
+          file,
+          url,
+          resolvedUrl: this.sanitizer.bypassSecurityTrustUrl(url),
+          isDefault: imgs.length === 0 && i === 0,
+          displayOrder: imgs.length + i,
+        };
+      }),
+    ]);
+    this.loggingService.logEvent('ProjectDetail_ImageUploaded', {
+      count: accepted.length,
+    });
   }
 
   onImageSelected(image: { id?: number; url?: string }): void {
@@ -644,7 +845,7 @@ export class ProjectDetailComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete Project',
-        body: `Are you sure you want to delete <strong>${p.name}</strong>? This cannot be undone.`,
+        body: `Are you sure you want to delete <strong>${escapeHtml(p.name ?? '')}</strong>? This cannot be undone.`,
         yesText: 'Delete Project',
         yesColor: 'warn',
         noText: 'Cancel',

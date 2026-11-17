@@ -153,6 +153,11 @@
 
 .grouped-mobile-card-view {
   display: flex;
+
+  // Cards on a phone or tablet, the table from 960px.
+  @media (min-width: 960px) {
+    display: none;
+  }
   flex-direction: column;
   gap: 16px;
   padding: 8px;
@@ -448,4 +453,10 @@ table.refreshing tr[mat-row] {
   z-index: 1;
   block-size: 3px;
   margin-block-end: -3px;
+}
+
+.grouped-table {
+  @media (max-width: 959.98px) {
+    display: none;
+  }
 }

@@ -1,8 +1,13 @@
+import type { Mock, MockedObject } from 'vitest';
+import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  provideHttpClient,
+  withXhr,
+} from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
-import { ADSENSE_TOKEN } from 'ng2-adsense';
 import { ProjectDetailComponent } from './project-detail.component';
 import {
   ProjectService,
@@ -15,11 +20,22 @@ import {
   PrintSummary,
   PrintStatus,
 } from 'src/app/core/services/print.service';
+import { AdEligibilityService } from '../../shared/ad/ad-eligibility.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { ActivatedRoute } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
+import { Title } from '@angular/platform-browser';
+import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import { ToastrService } from 'ngx-toastr';
+import { SubscriptionService } from 'src/app/core/services/subscription.service';
+import { CAN_PURCHASE_PRO } from 'src/app/core/pricing/pro-purchase';
+import {
+  SeoLookup,
+  SeoMetadata,
+  SeoService,
+} from 'src/app/core/services/seo.service';
 
 const mockProject: ProjectDetailDto = {
   id: 'abc-123',
@@ -39,50 +55,61 @@ const mockProject: ProjectDetailDto = {
   finishDateOverride: null,
 };
 
+function toastrStub() {
+  return {
+    success: vi.fn().mockName('ToastrService.success'),
+    error: vi.fn().mockName('ToastrService.error'),
+    warning: vi.fn().mockName('ToastrService.warning'),
+    info: vi.fn().mockName('ToastrService.info'),
+  };
+}
+
 describe('ProjectDetailComponent', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
   let component: ProjectDetailComponent;
-  let mockProjectService: jasmine.SpyObj<ProjectService>;
-  let mockPrintService: jasmine.SpyObj<PrintService>;
-  let currentUserSubject: BehaviorSubject<any>;
+  let mockProjectService: MockedObject<ProjectService>;
+  let mockPrintService: MockedObject<PrintService>;
+  let currentUser: WritableSignal<any>;
 
   beforeEach(async () => {
-    mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      [
-        'getProjectById',
-        'deleteProject',
-        'updateProject',
-        'uploadImage',
-        'deleteImage',
-        'reorderImages',
-        'setDefaultImage',
-      ]
-    );
-    mockProjectService.getProjectById.and.returnValue(of(mockProject));
+    mockProjectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+      deleteProject: vi.fn().mockName('ProjectService.deleteProject'),
+      updateProject: vi.fn().mockName('ProjectService.updateProject'),
+      uploadImage: vi.fn().mockName('ProjectService.uploadImage'),
+      deleteImage: vi.fn().mockName('ProjectService.deleteImage'),
+      reorderImages: vi.fn().mockName('ProjectService.reorderImages'),
+      setDefaultImage: vi.fn().mockName('ProjectService.setDefaultImage'),
+    } as unknown as MockedObject<ProjectService>;
+    mockProjectService.getProjectById.mockReturnValue(of(mockProject));
 
-    mockPrintService = jasmine.createSpyObj('PrintService', [
-      'getPrintSummaries',
-      'deletePrint',
-      'updatePrintStatus',
-    ]);
-    mockPrintService.getPrintSummaries.and.returnValue(
+    mockPrintService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      deletePrint: vi.fn().mockName('PrintService.deletePrint'),
+      updatePrintStatus: vi.fn().mockName('PrintService.updatePrintStatus'),
+    } as unknown as MockedObject<PrintService>;
+    mockPrintService.getPrintSummaries.mockReturnValue(
       of({
         items: [],
         paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
       })
     );
-    mockPrintService.deletePrint.and.returnValue(of(null));
-    mockPrintService.updatePrintStatus.and.returnValue(of(null));
+    mockPrintService.deletePrint.mockReturnValue(of(null));
+    mockPrintService.updatePrintStatus.mockReturnValue(of(null));
 
-    currentUserSubject = new BehaviorSubject({ id: 1 });
-    const mockAuthService = { userProfile$: currentUserSubject.asObservable() };
+    currentUser = signal({ id: 1 });
+    const mockAuthService = { userProfile: currentUser };
 
     await TestBed.configureTestingModule({
       imports: [ProjectDetailComponent, NoopAnimationsModule],
       providers: [
         { provide: ProjectService, useValue: mockProjectService },
         { provide: PrintService, useValue: mockPrintService },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         { provide: AuthService, useValue: mockAuthService },
         {
           provide: ActivatedRoute,
@@ -90,14 +117,13 @@ describe('ProjectDetailComponent', () => {
         },
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
-        {
-          provide: ADSENSE_TOKEN,
-          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
-        },
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
+        { provide: ToastrService, useValue: toastrStub() },
       ],
     }).compileComponents();
 
@@ -128,7 +154,7 @@ describe('ProjectDetailComponent', () => {
   });
 
   it('should not show edit button for non-owner', async () => {
-    currentUserSubject.next({ id: 99 });
+    currentUser.set({ id: 99 });
     await fixture.whenStable();
     fixture.detectChanges();
     const editButton = fixture.nativeElement.querySelector(
@@ -159,15 +185,15 @@ describe('ProjectDetailComponent', () => {
   });
 
   it('should call updateProject and re-fetch project on save', async () => {
-    mockProjectService.updateProject.and.returnValue(of(mockProject));
-    mockProjectService.uploadImage = jasmine
-      .createSpy()
-      .and.returnValue(
+    mockProjectService.updateProject.mockReturnValue(of(mockProject));
+    mockProjectService.uploadImage = vi
+      .fn()
+      .mockReturnValue(
         of({ id: 10, isDefault: false, displayOrder: 0 } as any)
       );
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
-    mockProjectService.setDefaultImage.and.returnValue(of(void 0));
-    mockProjectService.deleteImage.and.returnValue(of(void 0));
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
+    mockProjectService.setDefaultImage.mockReturnValue(of(void 0));
+    mockProjectService.deleteImage.mockReturnValue(of(void 0));
 
     await fixture.whenStable();
     fixture.detectChanges();
@@ -187,7 +213,7 @@ describe('ProjectDetailComponent', () => {
 
     expect(mockProjectService.updateProject).toHaveBeenCalledWith(
       'abc-123',
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'Updated Name',
         status: ProjectStatus.InProgress,
       })
@@ -205,9 +231,7 @@ describe('ProjectDetailComponent', () => {
       afterClosed: () => of(true),
       componentInstance: {},
     } as any;
-    // Spy directly on the component's injected dialog instance — SharedModule provides
-    // the real MatDialog via MatDialogModule, which shadows the root-injector mock.
-    spyOn((component as any).dialog, 'open').and.returnValue(mockDialogRef);
+    (TestBed.inject(MatDialog).open as Mock).mockReturnValue(mockDialogRef);
 
     const print: PrintSummary = {
       id: 7,
@@ -229,6 +253,59 @@ describe('ProjectDetailComponent', () => {
     await fixture.whenStable();
 
     expect(mockPrintService.deletePrint).toHaveBeenCalledWith(7);
+  });
+
+  describe('the model source link', () => {
+    const sourceLink = async (url: string) => {
+      await fixture.whenStable();
+      component.project.set({ ...mockProject, url });
+      fixture.detectChanges();
+      return Array.from(
+        (fixture.nativeElement as HTMLElement).querySelectorAll('a')
+      ).find((a) => a.textContent!.includes('View model source'));
+    };
+
+    it('links a scheme-less URL to that site, not to a path under /projects', async () => {
+      const link = await sourceLink('printables.com/model/12345');
+
+      expect(link!.getAttribute('href')).toBe(
+        'https://printables.com/model/12345'
+      );
+      expect(link!.rel).toContain('noreferrer');
+    });
+
+    it('does not link a URL with another scheme', async () => {
+      expect(await sourceLink('data:text/html,<h1>hi</h1>')).toBeUndefined();
+    });
+  });
+
+  describe('confirm dialogs', () => {
+    const body = () =>
+      (TestBed.inject(MatDialog).open as Mock).mock.lastCall![1].data
+        .body as string;
+
+    beforeEach(async () => {
+      await fixture.whenStable();
+      (TestBed.inject(MatDialog).open as Mock).mockReturnValue({
+        afterClosed: () => of(false),
+      });
+    });
+
+    it('escapes the print title', () => {
+      component.onPrintDeleted({ id: 7, title: 'Spool <A> rack' } as never);
+
+      expect(body()).toContain('"Spool &lt;A&gt; rack"');
+    });
+
+    it('escapes the project name', () => {
+      component.project.set({ ...mockProject, name: '<a href="x">y</a>' });
+
+      component.onDeleteProject();
+
+      expect(body()).toContain(
+        '<strong>&lt;a href=&quot;x&quot;&gt;y&lt;/a&gt;</strong>'
+      );
+    });
   });
 
   it('should call PrintService.updatePrintStatus when onPrintStatusChanged is called', async () => {
@@ -263,6 +340,50 @@ describe('ProjectDetailComponent', () => {
     expect(sidebarAd).toBeTruthy();
   });
 
+  // 3d-print-log-api#294: a project's resin total is in mL.
+  describe('material used', () => {
+    const stat = () =>
+      (
+        fixture.nativeElement.querySelector(
+          '[data-cy="project-material-used"]'
+        ) as HTMLElement
+      ).textContent!.trim();
+
+    it('shows grams alone for a filament-only project', () => {
+      component.project.set({ ...mockProject, totalFilamentVolumeMl: 0 });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('250g');
+      expect(fixture.nativeElement.textContent).toContain('Filament Used');
+    });
+
+    it('shows grams alone against an API without the mL total', () => {
+      component.project.set({ ...mockProject });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('250g');
+    });
+
+    it('shows both for a project with filament and resin', () => {
+      component.project.set({ ...mockProject, totalFilamentVolumeMl: 20 });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('250g · 20.0 mL');
+      expect(fixture.nativeElement.textContent).toContain('Material Used');
+    });
+
+    it('shows mL alone for a resin project with no grams', () => {
+      component.project.set({
+        ...mockProject,
+        totalFilamentWeightMg: 0,
+        totalFilamentVolumeMl: 72.75,
+      });
+      fixture.detectChanges();
+
+      expect(stat()).toBe('72.8 mL');
+    });
+  });
+
   describe('project dates', () => {
     const baseFormValue = {
       name: 'Test Voron Build',
@@ -276,15 +397,15 @@ describe('ProjectDetailComponent', () => {
 
     beforeEach(async () => {
       // onStatusChange pipes the result, so a spy with no return value throws on undefined.
-      mockProjectService.updateProject.and.returnValue(of(mockProject));
-      mockProjectService.uploadImage = jasmine
-        .createSpy()
-        .and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(of(mockProject));
+      mockProjectService.uploadImage = vi
+        .fn()
+        .mockReturnValue(
           of({ id: 10, isDefault: false, displayOrder: 0 } as any)
         );
-      mockProjectService.reorderImages.and.returnValue(of(void 0));
-      mockProjectService.setDefaultImage.and.returnValue(of(void 0));
-      mockProjectService.deleteImage.and.returnValue(of(void 0));
+      mockProjectService.reorderImages.mockReturnValue(of(void 0));
+      mockProjectService.setDefaultImage.mockReturnValue(of(void 0));
+      mockProjectService.deleteImage.mockReturnValue(of(void 0));
       await fixture.whenStable();
       fixture.detectChanges();
     });
@@ -303,7 +424,7 @@ describe('ProjectDetailComponent', () => {
 
       component.onStatusChange(ProjectStatus.Complete);
 
-      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      const dto = vi.mocked(mockProjectService.updateProject).mock.lastCall[1];
       expect(dto.startDateOverride).toBe('2026-02-01');
       expect(dto.finishDateOverride).toBe('2026-03-01');
     });
@@ -317,7 +438,7 @@ describe('ProjectDetailComponent', () => {
 
       component.onStatusChange(ProjectStatus.Complete);
 
-      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      const dto = vi.mocked(mockProjectService.updateProject).mock.lastCall[1];
       expect(dto.startDateOverride).toBeNull();
       expect(dto.finishDateOverride).toBeNull();
     });
@@ -332,7 +453,7 @@ describe('ProjectDetailComponent', () => {
         finishDateOverride: null,
       });
 
-      const dto = mockProjectService.updateProject.calls.mostRecent().args[1];
+      const dto = vi.mocked(mockProjectService.updateProject).mock.lastCall[1];
       expect(dto.startDateOverride).toBe('2026-02-01');
       expect(dto.finishDateOverride).toBeNull();
     });
@@ -345,7 +466,7 @@ describe('ProjectDetailComponent', () => {
     it('shows the API message when a save is rejected as an inverted range', async () => {
       const message =
         "A project's finish date cannot be before its start date.";
-      mockProjectService.updateProject.and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(
         throwError(
           () =>
             new HttpErrorResponse({
@@ -366,9 +487,9 @@ describe('ProjectDetailComponent', () => {
       fixture.detectChanges();
 
       expect(component.saveErrorMessage()).toBe(message);
-      expect(component.isSaving()).toBeFalse();
+      expect(component.isSaving()).toBe(false);
       // Stays open so the user can correct the dates rather than re-entering the whole form.
-      expect(component.isEditing()).toBeTrue();
+      expect(component.isEditing()).toBe(true);
 
       const el = fixture.nativeElement.querySelector(
         '[data-cy="project-save-error"]'
@@ -377,7 +498,7 @@ describe('ProjectDetailComponent', () => {
     });
 
     it('falls back to generic copy for a non-400 save failure', async () => {
-      mockProjectService.updateProject.and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 500 }))
       );
 
@@ -393,7 +514,7 @@ describe('ProjectDetailComponent', () => {
     });
 
     it('clears a previous save error when the next save starts', async () => {
-      mockProjectService.updateProject.and.returnValue(
+      mockProjectService.updateProject.mockReturnValue(
         throwError(() => new HttpErrorResponse({ status: 400, error: 'nope' }))
       );
       component.project.set(mockProject);
@@ -402,7 +523,7 @@ describe('ProjectDetailComponent', () => {
       await fixture.whenStable();
       expect(component.saveErrorMessage()).toBe('nope');
 
-      mockProjectService.updateProject.and.returnValue(of(mockProject));
+      mockProjectService.updateProject.mockReturnValue(of(mockProject));
       component.onSave(baseFormValue);
       await fixture.whenStable();
 
@@ -457,44 +578,41 @@ describe('ProjectDetailComponent', () => {
 describe('ProjectDetailComponent — create mode (id === "new")', () => {
   let fixture: ComponentFixture<ProjectDetailComponent>;
   let component: ProjectDetailComponent;
-  let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let mockProjectService: MockedObject<ProjectService>;
 
   beforeEach(async () => {
-    mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      [
-        'getProjectById',
-        'createProject',
-        'deleteProject',
-        'updateProject',
-        'uploadImage',
-        'deleteImage',
-        'reorderImages',
-        'setDefaultImage',
-      ]
-    );
-    mockProjectService.createProject.and.returnValue(
+    mockProjectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+      createProject: vi.fn().mockName('ProjectService.createProject'),
+      deleteProject: vi.fn().mockName('ProjectService.deleteProject'),
+      updateProject: vi.fn().mockName('ProjectService.updateProject'),
+      uploadImage: vi.fn().mockName('ProjectService.uploadImage'),
+      deleteImage: vi.fn().mockName('ProjectService.deleteImage'),
+      reorderImages: vi.fn().mockName('ProjectService.reorderImages'),
+      setDefaultImage: vi.fn().mockName('ProjectService.setDefaultImage'),
+    } as unknown as MockedObject<ProjectService>;
+    mockProjectService.createProject.mockReturnValue(
       of({ ...mockProject, id: 'new-guid-123' })
     );
-    mockProjectService.getProjectById.and.returnValue(
+    mockProjectService.getProjectById.mockReturnValue(
       of({ ...mockProject, id: 'new-guid-123' })
     );
 
-    const mockPrintService = jasmine.createSpyObj('PrintService', [
-      'getPrintSummaries',
-      'deletePrint',
-      'updatePrintStatus',
-    ]);
-    mockPrintService.getPrintSummaries.and.returnValue(
+    const mockPrintService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      deletePrint: vi.fn().mockName('PrintService.deletePrint'),
+      updatePrintStatus: vi.fn().mockName('PrintService.updatePrintStatus'),
+    };
+    mockPrintService.getPrintSummaries.mockReturnValue(
       of({
         items: [],
         paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
       })
     );
 
-    const currentUserSubject = new BehaviorSubject({ id: 1 });
+    const currentUser = signal({ id: 1 });
     const mockAuthService = {
-      userProfile$: currentUserSubject.asObservable(),
+      userProfile: currentUser,
     };
 
     await TestBed.configureTestingModule({
@@ -502,6 +620,11 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       providers: [
         { provide: ProjectService, useValue: mockProjectService },
         { provide: PrintService, useValue: mockPrintService },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         { provide: AuthService, useValue: mockAuthService },
         {
           provide: ActivatedRoute,
@@ -509,18 +632,19 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
         },
         {
           provide: MatDialog,
-          useValue: jasmine.createSpyObj('MatDialog', ['open']),
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
         },
         {
           provide: Router,
-          useValue: jasmine.createSpyObj('Router', ['navigate']),
+          useValue: {
+            navigate: vi.fn().mockName('Router.navigate'),
+          },
         },
-        {
-          provide: ADSENSE_TOKEN,
-          useValue: { adClient: 'ca-pub-0', adSlot: 0 },
-        },
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
+        { provide: ToastrService, useValue: toastrStub() },
       ],
     }).compileComponents();
 
@@ -552,13 +676,13 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
   });
 
   it('should navigate to /prints when onCancelEdit is called in create mode', () => {
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    const router = TestBed.inject(Router) as MockedObject<Router>;
     component.onCancelEdit();
     expect(router.navigate).toHaveBeenCalledWith(['/prints']);
   });
 
   it('should call createProject with form values on save', async () => {
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
 
     component.onSave({
       name: 'My New Project',
@@ -573,7 +697,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
     await fixture.whenStable();
 
     expect(mockProjectService.createProject).toHaveBeenCalledWith(
-      jasmine.objectContaining({
+      expect.objectContaining({
         name: 'My New Project',
         status: ProjectStatus.InProgress,
         viewStatus: ProjectViewStatus.Private,
@@ -586,7 +710,7 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
   it('forwards non-null date overrides from the create form', async () => {
     // Asserting only the null case would stay green even if both create-payload
     // assignments were deleted, since an absent key reads as undefined either way.
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
 
     component.onSave({
       name: 'Pinned Project',
@@ -600,14 +724,14 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
 
     await fixture.whenStable();
 
-    const dto = mockProjectService.createProject.calls.mostRecent().args[0];
+    const dto = vi.mocked(mockProjectService.createProject).mock.lastCall[0];
     expect(dto.startDateOverride).toBe('2026-02-01');
     expect(dto.finishDateOverride).toBe('2026-03-01');
   });
 
   it('should exit edit mode, set the created project, and update the URL after successful creation', async () => {
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
-    mockProjectService.reorderImages.and.returnValue(of(void 0));
+    const router = TestBed.inject(Router) as MockedObject<Router>;
+    mockProjectService.reorderImages.mockReturnValue(of(void 0));
 
     component.onSave({
       name: 'My New Project',
@@ -629,5 +753,594 @@ describe('ProjectDetailComponent — create mode (id === "new")', () => {
       ['/projects', 'new-guid-123'],
       { replaceUrl: true }
     );
+  });
+});
+
+describe('ProjectDetailComponent — metadata from /seo', () => {
+  let fixture: ComponentFixture<ProjectDetailComponent>;
+  let metaTags: MockedObject<MetaTagService>;
+  let seoService: MockedObject<SeoService>;
+  let title: MockedObject<Title>;
+
+  const projectSeo: SeoMetadata = {
+    type: 'project',
+    title: 'Voron 2.4 | 3D Print Log',
+    description: 'A printer, printed',
+    canonicalUrl: 'https://www.3dprintlog.com/projects/abc-123',
+    image: null,
+    author: null,
+    publishedAt: null,
+    updatedAt: null,
+    facts: [],
+  };
+
+  const create = async (
+    seo: () => ReturnType<SeoService['forProject']>,
+    id = 'abc-123'
+  ) => {
+    const projectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+    };
+    projectService.getProjectById.mockReturnValue(of(mockProject));
+    const printService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+    };
+    printService.getPrintSummaries.mockReturnValue(
+      of({
+        items: [],
+        paging: { totalCount: 0, currentPage: 1, pageSize: 100, totalPages: 0 },
+      })
+    );
+    metaTags = {
+      applySeoMetadata: vi.fn().mockName('MetaTagService.applySeoMetadata'),
+      preventIndexing: vi.fn().mockName('MetaTagService.preventIndexing'),
+      restoreShellRobots: vi.fn().mockName('MetaTagService.restoreShellRobots'),
+    } as unknown as MockedObject<MetaTagService>;
+    seoService = {
+      forProject: vi.fn().mockName('SeoService.forProject'),
+    } as unknown as MockedObject<SeoService>;
+    seoService.forProject.mockImplementation(seo);
+    title = {
+      setTitle: vi.fn().mockName('Title.setTitle'),
+      getTitle: vi.fn().mockName('Title.getTitle'),
+    } as unknown as MockedObject<Title>;
+
+    await TestBed.configureTestingModule({
+      imports: [ProjectDetailComponent, NoopAnimationsModule],
+      providers: [
+        { provide: ProjectService, useValue: projectService },
+        { provide: PrintService, useValue: printService },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
+        { provide: AuthService, useValue: { userProfile: signal(null) } },
+        { provide: MetaTagService, useValue: metaTags },
+        { provide: SeoService, useValue: seoService },
+        { provide: Title, useValue: title },
+        { provide: ActivatedRoute, useValue: { snapshot: { params: { id } } } },
+        {
+          provide: MatDialog,
+          useValue: {
+            open: vi.fn().mockName('MatDialog.open'),
+          },
+        },
+        {
+          provide: Router,
+          useValue: {
+            navigate: vi.fn().mockName('Router.navigate'),
+          },
+        },
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        { provide: ToastrService, useValue: toastrStub() },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectDetailComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('asks the API for the project on the route', async () => {
+    await create(() => of<SeoLookup>({ kind: 'unavailable' }));
+    expect(seoService.forProject).toHaveBeenCalledWith('abc-123');
+  });
+
+  it('applies the /seo answer for a public project', async () => {
+    await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
+    expect(metaTags.applySeoMetadata).toHaveBeenCalledWith(projectSeo);
+  });
+
+  // The project's own title is set when it loads; the /seo answer must still win, whichever
+  // arrives first.
+  it('applies /seo after the project title when /seo answers first', async () => {
+    await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
+    expect(title.setTitle).toHaveBeenCalledWith(
+      'Test Voron Build | 3D Print Log'
+    );
+    expect(
+      Math.min(...vi.mocked(title.setTitle).mock.invocationCallOrder)
+    ).toBeLessThan(
+      Math.min(...vi.mocked(metaTags.applySeoMetadata).mock.invocationCallOrder)
+    );
+    expect(
+      vi.mocked(metaTags.applySeoMetadata).mock.calls.length
+    ).toBeGreaterThan(0);
+  });
+
+  it('keeps the client-side title and marks the page noindex for a project that is not public', async () => {
+    await create(() => of<SeoLookup>({ kind: 'not-public' }));
+    expect(metaTags.preventIndexing).toHaveBeenCalled();
+    expect(metaTags.applySeoMetadata).not.toHaveBeenCalled();
+    expect(title.setTitle).toHaveBeenCalledWith(
+      'Test Voron Build | 3D Print Log'
+    );
+  });
+
+  it('keeps the client-side title, without noindex, when /seo is unavailable', async () => {
+    await create(() => of<SeoLookup>({ kind: 'unavailable' }));
+    expect(metaTags.preventIndexing).not.toHaveBeenCalled();
+    expect(metaTags.applySeoMetadata).not.toHaveBeenCalled();
+    expect(title.setTitle).toHaveBeenCalledWith(
+      'Test Voron Build | 3D Print Log'
+    );
+  });
+
+  it('does not ask for metadata while creating a project', async () => {
+    await create(() => of<SeoLookup>({ kind: 'unavailable' }), 'new');
+    expect(seoService.forProject).not.toHaveBeenCalled();
+  });
+
+  it("restores the shell's robots tags when the page is left", async () => {
+    await create(() => of<SeoLookup>({ kind: 'ok', seo: projectSeo }));
+    metaTags.restoreShellRobots.mockClear();
+    fixture.destroy();
+    expect(metaTags.restoreShellRobots).toHaveBeenCalled();
+  });
+});
+
+/**
+ * Project images share the per-entity cap prints and printers have: 5 on Free, 20 on Pro.
+ * The page enforces it as the print page does (the add control goes away at the cap, a
+ * selection past it is trimmed with a toast), and an API that refuses an upload anyway
+ * (another tab, a lapsed Pro plan) still leaves a saved project, not a failed save.
+ */
+describe('ProjectDetailComponent — image limit', () => {
+  let fixture: ComponentFixture<ProjectDetailComponent>;
+  let component: ProjectDetailComponent;
+  let projectService: MockedObject<ProjectService>;
+  let toastr: ReturnType<typeof toastrStub>;
+  let subscription: {
+    isPro: WritableSignal<boolean>;
+    maxImages: WritableSignal<number>;
+    loadSubscription: Mock;
+  };
+
+  const formValue = {
+    name: 'Test Voron Build',
+    reference: '',
+    description: '',
+    url: '',
+    viewStatus: ProjectViewStatus.Private,
+    startDateOverride: null,
+    finishDateOverride: null,
+  };
+
+  const imagesOf = (count: number) =>
+    Array.from({ length: count }, (_, i) => ({
+      id: 100 + i,
+      isDefault: i === 0,
+      displayOrder: i,
+    }));
+
+  const pngFile = (name: string) =>
+    new File(['png'], name, { type: 'image/png' });
+
+  const selectFiles = (files: File[]) =>
+    component.onFileSelected({
+      target: { files, value: 'C:\\fakepath\\x.png' },
+    } as unknown as Event);
+
+  const limitRefusal = (max: number) =>
+    throwError(
+      () =>
+        new HttpErrorResponse({
+          status: 400,
+          error: `Maximum of ${max} images per project allowed`,
+        })
+    );
+
+  const create = async (
+    opts: {
+      imageCount?: number;
+      isPro?: boolean;
+      maxImages?: number;
+      canPurchasePro?: boolean;
+      id?: string;
+    } = {}
+  ) => {
+    const project = { ...mockProject, images: imagesOf(opts.imageCount ?? 0) };
+    projectService = {
+      getProjectById: vi.fn().mockName('ProjectService.getProjectById'),
+      createProject: vi.fn().mockName('ProjectService.createProject'),
+      updateProject: vi.fn().mockName('ProjectService.updateProject'),
+      uploadImage: vi.fn().mockName('ProjectService.uploadImage'),
+      deleteImage: vi.fn().mockName('ProjectService.deleteImage'),
+      reorderImages: vi.fn().mockName('ProjectService.reorderImages'),
+      setDefaultImage: vi.fn().mockName('ProjectService.setDefaultImage'),
+    } as unknown as MockedObject<ProjectService>;
+    projectService.getProjectById.mockReturnValue(of(project));
+    projectService.createProject.mockReturnValue(
+      of({ ...mockProject, id: 'new-guid-123' })
+    );
+    projectService.updateProject.mockReturnValue(of(project));
+    projectService.reorderImages.mockReturnValue(of(void 0));
+    projectService.setDefaultImage.mockReturnValue(of(void 0));
+    projectService.deleteImage.mockReturnValue(of(void 0));
+
+    toastr = toastrStub();
+    subscription = {
+      isPro: signal(opts.isPro ?? false),
+      maxImages: signal(opts.maxImages ?? 5),
+      loadSubscription: vi
+        .fn()
+        .mockName('SubscriptionService.loadSubscription'),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [ProjectDetailComponent, NoopAnimationsModule],
+      providers: [
+        { provide: ProjectService, useValue: projectService },
+        {
+          provide: PrintService,
+          useValue: {
+            getPrintSummaries: vi.fn().mockReturnValue(
+              of({
+                items: [],
+                paging: {
+                  totalCount: 0,
+                  currentPage: 1,
+                  pageSize: 100,
+                  totalPages: 0,
+                },
+              })
+            ),
+          },
+        },
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
+        { provide: AuthService, useValue: { userProfile: signal({ id: 1 }) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { params: { id: opts.id ?? 'abc-123' } } },
+        },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        { provide: Router, useValue: { navigate: vi.fn() } },
+        { provide: ToastrService, useValue: toastr },
+        { provide: SubscriptionService, useValue: subscription },
+        { provide: CAN_PURCHASE_PRO, useValue: opts.canPurchasePro ?? true },
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(ProjectDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  const startEditing = () => {
+    component.onEditClick();
+    fixture.detectChanges();
+  };
+
+  const el = (): HTMLElement => fixture.nativeElement;
+  const thumbnails = () => el().querySelectorAll('li.thumbnail').length;
+  const addButton = () => el().querySelector('.add-button');
+  const limitMessage = () =>
+    el().querySelector('.limit-message')?.textContent?.trim() ?? null;
+
+  describe('the add control', () => {
+    it('is replaced by the limit message once a Free project has 5 images', async () => {
+      await create({ imageCount: 5 });
+      startEditing();
+
+      expect(thumbnails()).toBe(5);
+      expect(addButton()).toBeNull();
+      expect(limitMessage()).toBe('Maximum 5 images reached');
+    });
+
+    it('stays for a Pro project with 5 images, up to the Pro cap', async () => {
+      await create({ imageCount: 5, isPro: true, maxImages: 20 });
+      startEditing();
+
+      expect(addButton()).not.toBeNull();
+      expect(limitMessage()).toBeNull();
+    });
+
+    it('is replaced at 20 images for Pro', async () => {
+      await create({ imageCount: 20, isPro: true, maxImages: 20 });
+      startEditing();
+
+      expect(addButton()).toBeNull();
+      expect(limitMessage()).toBe('Maximum 20 images reached');
+    });
+  });
+
+  describe('a project already over the cap', () => {
+    it('still shows every image when viewing', async () => {
+      await create({ imageCount: 12 });
+
+      const carousel = el().querySelector('app-image-carousel');
+      expect(carousel).not.toBeNull();
+      expect(component.carouselImages().length).toBe(12);
+    });
+
+    it('lists every image when editing, without an add control', async () => {
+      await create({ imageCount: 12 });
+      startEditing();
+
+      expect(thumbnails()).toBe(12);
+      expect(el().querySelectorAll('.delete-btn').length).toBe(12);
+      expect(addButton()).toBeNull();
+      expect(limitMessage()).toBe('Maximum 5 images reached');
+    });
+
+    it('offers the add control again once deleted below the cap', async () => {
+      await create({ imageCount: 7 });
+      startEditing();
+
+      for (let i = 0; i < 3; i++) {
+        (el().querySelector('.delete-btn') as HTMLButtonElement).click();
+        fixture.detectChanges();
+      }
+
+      expect(thumbnails()).toBe(4);
+      expect(addButton()).not.toBeNull();
+    });
+  });
+
+  describe('selecting files', () => {
+    it('refuses a file at the cap with the upgrade prompt for Free', async () => {
+      await create({ imageCount: 5 });
+      startEditing();
+
+      selectFiles([pngFile('a.png')]);
+      fixture.detectChanges();
+
+      expect(thumbnails()).toBe(5);
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project. Upgrade to Pro for more.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('leaves out the upgrade sentence where Pro cannot be bought', async () => {
+      await create({ imageCount: 5, canPurchasePro: false });
+      startEditing();
+
+      selectFiles([pngFile('a.png')]);
+
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('refuses a file at the cap with a plain warning for Pro', async () => {
+      await create({ imageCount: 20, isPro: true, maxImages: 20 });
+      startEditing();
+
+      selectFiles([pngFile('a.png')]);
+
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Maximum 20 images allowed',
+        'Limit Reached'
+      );
+      expect(toastr.info).not.toHaveBeenCalled();
+    });
+
+    it('stages several selected files at once', async () => {
+      await create({ imageCount: 1 });
+      startEditing();
+
+      selectFiles([pngFile('a.png'), pngFile('b.png')]);
+      fixture.detectChanges();
+
+      expect(thumbnails()).toBe(3);
+      expect(toastr.info).not.toHaveBeenCalled();
+    });
+
+    it('stages only the files that fit and says why the rest were left out', async () => {
+      await create({ imageCount: 3 });
+      startEditing();
+
+      selectFiles([pngFile('a.png'), pngFile('b.png'), pngFile('c.png')]);
+      fixture.detectChanges();
+
+      expect(thumbnails()).toBe(5);
+      expect(component.images().map((i) => i.file?.name)).toEqual([
+        undefined,
+        undefined,
+        undefined,
+        'a.png',
+        'b.png',
+      ]);
+      expect(limitMessage()).toBe('Maximum 5 images reached');
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project. Upgrade to Pro for more.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('accepts more than one file in the picker', async () => {
+      await create({ imageCount: 1 });
+      startEditing();
+
+      const input = el().querySelector(
+        'input[type="file"]'
+      ) as HTMLInputElement;
+      expect(input.multiple).toBe(true);
+    });
+  });
+
+  describe('saving', () => {
+    it('deletes removed images before uploading new ones, so a full project can swap images', async () => {
+      await create({ imageCount: 5 });
+      startEditing();
+      const calls: string[] = [];
+      projectService.deleteImage.mockImplementation(() => {
+        calls.push('delete');
+        return of(void 0);
+      });
+      projectService.uploadImage.mockImplementation(() => {
+        calls.push('upload');
+        return of({ id: 500, isDefault: false, displayOrder: 5 });
+      });
+
+      component.onImageDeleted({ id: 104 });
+      selectFiles([pngFile('a.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(calls).toEqual(['delete', 'upload']);
+    });
+
+    it('keeps the images that fit when the API refuses one past its cap', async () => {
+      await create({ imageCount: 2, isPro: true, maxImages: 20 });
+      startEditing();
+      projectService.uploadImage
+        .mockReturnValueOnce(of({ id: 200, isDefault: false, displayOrder: 2 }))
+        .mockReturnValueOnce(limitRefusal(3))
+        .mockReturnValue(of({ id: 999, isDefault: false, displayOrder: 9 }));
+
+      selectFiles([pngFile('a.png'), pngFile('b.png'), pngFile('c.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      // Stops at the refusal: every later upload would be refused too.
+      expect(projectService.uploadImage).toHaveBeenCalledTimes(2);
+      expect(projectService.reorderImages).toHaveBeenCalledWith(
+        'abc-123',
+        [100, 101, 200]
+      );
+      expect(component.isEditing()).toBe(false);
+      expect(component.saveErrorMessage()).toBe('');
+      expect(el().querySelector('[data-cy="project-save-error"]')).toBeNull();
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Maximum 3 images allowed',
+        'Limit Reached'
+      );
+      // The plan the page thought it had was out of date.
+      expect(subscription.loadSubscription).toHaveBeenCalled();
+    });
+
+    it('shows the Free upgrade prompt when the API refuses a Free upload', async () => {
+      await create({ imageCount: 4 });
+      startEditing();
+      projectService.uploadImage.mockReturnValue(limitRefusal(5));
+
+      selectFiles([pngFile('a.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(component.isEditing()).toBe(false);
+      expect(toastr.info).toHaveBeenCalledWith(
+        'Free accounts allow 5 images per project. Upgrade to Pro for more.',
+        'Image Limit Reached'
+      );
+    });
+
+    it('still reports any other refused upload as a failed save', async () => {
+      await create({ imageCount: 0 });
+      startEditing();
+      projectService.uploadImage.mockReturnValue(
+        throwError(
+          () =>
+            new HttpErrorResponse({
+              status: 400,
+              error: 'Image must be under 10MB.',
+            })
+        )
+      );
+
+      selectFiles([pngFile('a.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(component.isEditing()).toBe(true);
+      expect(component.saveErrorMessage()).toBe('Image must be under 10MB.');
+    });
+
+    it('retries a failed save without deleting or uploading anything twice', async () => {
+      await create({ imageCount: 3 });
+      startEditing();
+      projectService.uploadImage
+        .mockReturnValueOnce(of({ id: 300, isDefault: false, displayOrder: 2 }))
+        .mockReturnValueOnce(
+          throwError(() => new HttpErrorResponse({ status: 500 }))
+        )
+        .mockReturnValueOnce(
+          of({ id: 301, isDefault: false, displayOrder: 3 })
+        );
+
+      component.onImageDeleted({ id: 102 });
+      selectFiles([pngFile('a.png'), pngFile('b.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(component.isEditing()).toBe(true);
+      expect(component.saveErrorMessage()).not.toBe('');
+
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(projectService.deleteImage).toHaveBeenCalledTimes(1);
+      expect(projectService.uploadImage).toHaveBeenCalledTimes(3);
+      expect(
+        vi.mocked(projectService.uploadImage).mock.calls.map((c) => c[1].name)
+      ).toEqual(['a.png', 'b.png', 'b.png']);
+      expect(projectService.reorderImages).toHaveBeenLastCalledWith(
+        'abc-123',
+        [100, 101, 300, 301]
+      );
+      expect(component.isEditing()).toBe(false);
+    });
+
+    it('creates the project with the images that fit when the API refuses the rest', async () => {
+      await create({ id: 'new', isPro: true, maxImages: 20 });
+      projectService.getProjectById.mockReturnValue(
+        of({ ...mockProject, id: 'new-guid-123' })
+      );
+      projectService.uploadImage
+        .mockReturnValueOnce(of({ id: 300, isDefault: true, displayOrder: 0 }))
+        .mockReturnValueOnce(limitRefusal(1));
+      const router = TestBed.inject(Router) as MockedObject<Router>;
+
+      selectFiles([pngFile('a.png'), pngFile('b.png')]);
+      component.onSave(formValue);
+      await fixture.whenStable();
+
+      expect(projectService.reorderImages).toHaveBeenCalledWith(
+        'new-guid-123',
+        [300]
+      );
+      expect(router.navigate).toHaveBeenCalledWith(
+        ['/projects', 'new-guid-123'],
+        { replaceUrl: true }
+      );
+      expect(toastr.warning).toHaveBeenCalledWith(
+        'Maximum 1 images allowed',
+        'Limit Reached'
+      );
+    });
   });
 });

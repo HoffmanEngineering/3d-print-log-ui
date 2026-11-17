@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 
@@ -6,6 +6,7 @@ import { EmptyStateComponent } from './empty-state.component';
 
 @Component({
   imports: [EmptyStateComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<app-empty-state
     [icon]="icon"
     [heading]="heading"
@@ -96,6 +97,6 @@ describe('EmptyStateComponent', () => {
       By.directive(EmptyStateComponent)
     ).nativeElement as HTMLElement;
 
-    expect(emptyState.hasAttribute('role')).toBeFalse();
+    expect(emptyState.hasAttribute('role')).toBe(false);
   });
 });

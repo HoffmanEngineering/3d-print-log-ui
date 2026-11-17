@@ -13,7 +13,7 @@ export { DocStepsComponent } from './doc-steps.component';
 export { DocVideoComponent } from './doc-video.component';
 
 /**
- * The primitives a doc page may use, as one import for DocumentationModule.
+ * The primitives a doc page may use, as one import (see DOCS_PAGE_IMPORTS).
  *
  * The selector prefix is `doc`, not the app-wide `app` — these are the only
  * elements a non-Angular author writes by hand, in src/content/docs/*.md, and

@@ -6,6 +6,7 @@ import {
   OnInit,
   PLATFORM_ID,
 } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
 import { LoadingBarModule } from '@ngx-loading-bar/core';
@@ -45,6 +46,7 @@ export class AppComponent implements OnInit {
    * Often the AppComponent is used to force services to load on startup.
    */
   private auth = inject(AuthService);
+  private readonly userProfile$ = toObservable(this.auth.userProfile);
   private googleAnalytics = inject(GoogleAnalyticsService);
   private loggingService = inject(LoggingService);
   private releaseNotesService = inject(VersionReleaseNoteDialogService);
@@ -70,7 +72,7 @@ export class AppComponent implements OnInit {
     this.emailClicks.start();
     this.auth.localAuthSetup();
 
-    this.auth.userProfile$.subscribe((user) => {
+    this.userProfile$.subscribe((user) => {
       if (user) {
         this.releaseNotesService.checkLastLoggedInVersion();
         this.registerForPush();

@@ -139,7 +139,12 @@ describe('BarChartComponent', () => {
 
   it('emits the datum and series on segment activation for click-through', () => {
     const el = render(900);
-    let emitted: { label: string; seriesKey: string | null } | undefined;
+    let emitted:
+      | {
+          label: string;
+          seriesKey: string | null;
+        }
+      | undefined;
     fixture.componentInstance.barSelect.subscribe((e) => (emitted = e));
 
     (el.querySelector('rect.bar-chart__segment') as SVGElement).dispatchEvent(
@@ -256,7 +261,7 @@ describe('BarChartComponent', () => {
       const labels = Array.from(
         el.querySelectorAll('.bar-chart__value-label')
       ).map((label) => label.textContent?.trim());
-      expect(labels.some((label) => label?.startsWith('-'))).toBeTrue();
+      expect(labels.some((label) => label?.startsWith('-'))).toBe(true);
     });
 
     it('draws no baseline when nothing is negative', () => {
@@ -305,7 +310,7 @@ describe('BarChartComponent', () => {
         const el = renderSigned([1000, -1000]);
         const adj = segmentsOf('Adj');
 
-        expect(adj.every((segment) => segment.clipped)).toBeTrue();
+        expect(adj.every((segment) => segment.clipped)).toBe(true);
         expect(el.querySelectorAll('.bar-chart__break').length).toBe(2);
         expect(adj[0].tooltip).toContain('1000');
         expect(adj[1].tooltip).toContain('-1000');
@@ -322,7 +327,7 @@ describe('BarChartComponent', () => {
       it('leaves a bar within reach unclipped', () => {
         const el = renderSigned([8, 0]);
 
-        expect(segmentsOf('Adj')[0].clipped).toBeFalse();
+        expect(segmentsOf('Adj')[0].clipped).toBe(false);
         expect(el.querySelector('.bar-chart__break')).toBeNull();
       });
 
@@ -330,7 +335,7 @@ describe('BarChartComponent', () => {
         fixture.componentRef.setInput('signedLimitFloor', 50);
         renderSigned([40, 0]);
 
-        expect(segmentsOf('Adj')[0].clipped).toBeFalse();
+        expect(segmentsOf('Adj')[0].clipped).toBe(false);
       });
 
       it('does not clip at all when there is no stack to compare with', () => {
@@ -347,9 +352,9 @@ describe('BarChartComponent', () => {
         fixture.componentRef.setInput('orientation', 'vertical');
         fixture.detectChanges();
 
-        expect(
-          segmentsOf('Adj').some((segment) => segment.clipped)
-        ).toBeFalse();
+        expect(segmentsOf('Adj').some((segment) => segment.clipped)).toBe(
+          false
+        );
       });
     });
 
@@ -374,8 +379,8 @@ describe('BarChartComponent', () => {
       el.querySelector<SVGRectElement>(
         '.bar-chart__bucket-hitbox'
       )!.dispatchEvent(new MouseEvent('mouseenter'));
-      const error = spyOn(console, 'error');
-      const warn = spyOn(console, 'warn');
+      const error = vi.spyOn(console, 'error').mockReturnValue(undefined);
+      const warn = vi.spyOn(console, 'warn').mockReturnValue(undefined);
       fixture.detectChanges();
       // A second hover re-renders the same lines, which is when keys are reconciled.
       el.querySelector<SVGRectElement>(
@@ -383,7 +388,10 @@ describe('BarChartComponent', () => {
       )!.dispatchEvent(new MouseEvent('mouseenter'));
       fixture.detectChanges();
       // Angular reports duplicate @for track keys (NG0955) on the console rather than throwing.
-      const logged = [...error.calls.allArgs(), ...warn.calls.allArgs()]
+      const logged = [
+        ...vi.mocked(error).mock.calls,
+        ...vi.mocked(warn).mock.calls,
+      ]
         .flat()
         .join(' ');
       expect(logged).not.toMatch(/NG0955|duplicate/i);
@@ -393,7 +401,7 @@ describe('BarChartComponent', () => {
     });
 
     it('warns in dev mode when a signed series is given to a horizontal chart', () => {
-      const warn = spyOn(console, 'warn');
+      const warn = vi.spyOn(console, 'warn').mockReturnValue(undefined);
       fixture.componentRef.setInput('data', data);
       fixture.componentRef.setInput('series', withSigned);
       fixture.componentRef.setInput('width', 900);
@@ -402,7 +410,7 @@ describe('BarChartComponent', () => {
       fixture.detectChanges();
 
       expect(warn).toHaveBeenCalledWith(
-        jasmine.stringMatching(/signed series.*vertical/i)
+        expect.stringMatching(/signed series.*vertical/i)
       );
     });
   });

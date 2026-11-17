@@ -1,4 +1,5 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { of } from 'rxjs';
 import { PrintService } from 'src/app/core/services/print.service';
@@ -8,17 +9,19 @@ describe('PrintImageComponent', () => {
   let component: PrintImageComponent;
   let fixture: ComponentFixture<PrintImageComponent>;
 
-  beforeEach(waitForAsync(() => {
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      { getPrintImage: of('') }
-    );
+  beforeEach(async () => {
+    const mockPrintService = {
+      getPrintImage: vi
+        .fn()
+        .mockName('PrintService.getPrintImage')
+        .mockReturnValue(of('')),
+    };
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [PrintImageComponent],
       providers: [{ provide: PrintService, useValue: mockPrintService }],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(PrintImageComponent);
@@ -33,8 +36,8 @@ describe('PrintImageComponent', () => {
   it('fetches the image when none is bound and reports it to the parent', () => {
     const printService = TestBed.inject(
       PrintService
-    ) as jasmine.SpyObj<PrintService>;
-    printService.getPrintImage.and.returnValue(of('data:image/png;base64,AA'));
+    ) as MockedObject<PrintService>;
+    printService.getPrintImage.mockReturnValue(of('data:image/png;base64,AA'));
     const f = TestBed.createComponent(PrintImageComponent);
     f.componentRef.setInput('printId', 3);
     f.componentRef.setInput('imageId', 9);
@@ -47,6 +50,42 @@ describe('PrintImageComponent', () => {
     expect(reported).toEqual(['data:image/png;base64,AA']);
     const img = f.nativeElement.querySelector('img') as HTMLImageElement;
     expect(img.getAttribute('src')).toBe('data:image/png;base64,AA');
+  });
+
+  // List views pass the DTO's thumbnail path; an API older than #281 sends none, and the
+  // component then asks for the full image exactly as before.
+  it('asks for the thumbnail when one is bound', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as MockedObject<PrintService>;
+    printService.getPrintImage.mockReturnValue(of('data:image/webp;base64,AA'));
+    const f = TestBed.createComponent(PrintImageComponent);
+    f.componentRef.setInput('printId', 3);
+    f.componentRef.setInput('imageId', 9);
+    f.componentRef.setInput('thumbnailUrl', '/api/Prints/3/image/9/thumbnail');
+
+    f.detectChanges();
+
+    expect(printService.getPrintImage).toHaveBeenCalledWith(
+      3,
+      9,
+      '/api/Prints/3/image/9/thumbnail'
+    );
+  });
+
+  it('asks for the full image when the thumbnail is null', () => {
+    const printService = TestBed.inject(
+      PrintService
+    ) as MockedObject<PrintService>;
+    printService.getPrintImage.mockClear();
+    const f = TestBed.createComponent(PrintImageComponent);
+    f.componentRef.setInput('printId', 3);
+    f.componentRef.setInput('imageId', 9);
+    f.componentRef.setInput('thumbnailUrl', null);
+
+    f.detectChanges();
+
+    expect(printService.getPrintImage).toHaveBeenCalledWith(3, 9);
   });
 
   describe('with an image bound', () => {

@@ -60,9 +60,21 @@ export class SubscriptionService {
     () => this._subscription()?.usedFileStorageBytes ?? 0
   );
 
+  private readonly _loaded = signal(false);
+  /**
+   * True once /me has answered, successfully or not. Until then {@link isPro} is a guess
+   * (false), so anything that must not show to a Pro user, such as an ad, waits on this.
+   */
+  readonly loaded = this._loaded.asReadonly();
+
   loadSubscription(): void {
-    this.http.get<SubscriptionDto>(`${this.baseApiUrl}/me`).subscribe((dto) => {
-      this._subscription.set(dto);
+    this.http.get<SubscriptionDto>(`${this.baseApiUrl}/me`).subscribe({
+      next: (dto) => {
+        this._subscription.set(dto);
+        this._loaded.set(true);
+      },
+      // A failed lookup keeps the free defaults, as it always has.
+      error: () => this._loaded.set(true),
     });
   }
 

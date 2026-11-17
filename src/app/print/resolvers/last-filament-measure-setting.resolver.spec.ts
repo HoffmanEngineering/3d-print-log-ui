@@ -11,20 +11,21 @@ describe('lastFilamentMeasureSettingResolver', () => {
   it('resolves the last measure type picked for each material kind', async () => {
     const settingFor = (type: UserSettingType) =>
       ({ value: UserSettingType[type] }) as UserSetting;
-    const settings = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['getCurrentUsersSettingByType']
-    );
-    settings.getCurrentUsersSettingByType.and.callFake(async (type) =>
+    const settings = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+    };
+    settings.getCurrentUsersSettingByType.mockImplementation(async (type) =>
       settingFor(type)
     );
     TestBed.configureTestingModule({
       providers: [{ provide: UserSettingService, useValue: settings }],
     });
 
-    await expectAsync(
+    await expect(
       resolveValue(lastFilamentMeasureSettingResolver)
-    ).toBeResolvedTo({
+    ).resolves.toEqual({
       filament: settingFor(
         UserSettingType.Prints_LastSelectedFilamentMeasureType
       ),

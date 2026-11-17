@@ -1,13 +1,68 @@
+.page {
+  display: flex;
+  justify-content: center;
+}
+
+.pricing {
+  padding: 16px;
+  flex: 1 1 900px;
+  min-width: 900px;
+  max-width: 900px;
+
+  @media (max-width: 959.98px) {
+    flex: 1 1 100%;
+    min-width: auto;
+    max-width: 100%;
+  }
+}
+
+.pricing-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+
+  // The gap spaces the heading and the subtitle.
+  > h1,
+  > .subtitle {
+    margin-bottom: 0;
+  }
+}
+
+// Side by side; stacked on a phone, where each card is 300px tall.
+.plans {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  max-height: 100%;
+
+  @media (max-width: 599.98px) {
+    flex-direction: column;
+    max-height: none;
+    max-width: 100%;
+  }
+}
+
 .subtitle {
   color: var(--app-text-secondary);
   font-size: 1.1em;
-  margin-bottom: 16px;
 }
 
 .plan-card {
   display: flex;
   flex-direction: column;
   text-align: center;
+  flex: 1 1 300px;
+  min-width: 300px;
+  max-width: 300px;
+
+  @media (max-width: 599.98px) {
+    min-width: auto;
+    max-width: none;
+    min-height: 300px;
+    max-height: 300px;
+  }
 
   &.recommended {
     border: 2px solid #c2158b;

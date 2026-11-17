@@ -11,8 +11,18 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { Metric, MoneyMetric } from 'src/app/analytics/models/analytics.models';
 import { formatCoverageNote } from './coverage-note';
 import { formatDurationShort, formatMoney } from './format-metric';
+import {
+  formatMilliliters,
+  withMilliliters,
+} from 'src/app/shared/utils/filament-display.utils';
 
-export type StatFormat = 'number' | 'percent' | 'grams' | 'duration' | 'money';
+export type StatFormat =
+  | 'number'
+  | 'percent'
+  | 'grams'
+  | 'milliliters'
+  | 'duration'
+  | 'money';
 
 @Component({
   selector: 'app-stat-tile',
@@ -26,6 +36,11 @@ export class StatTileComponent {
   readonly metric = input<Metric | MoneyMetric | null>(null);
   readonly format = input<StatFormat>('number');
   readonly loading = input(false);
+  /**
+   * Resin in mL shown beside a `grams` value (3d-print-log-api#294), as "34.0 kg · 20.0 mL".
+   * Nothing is shown for 0 or null. The delta stays the grams'.
+   */
+  readonly volumeMl = input<number | null>(null);
 
   readonly display = computed(() => {
     const value = this.metric()?.value ?? null;
@@ -57,9 +72,15 @@ export class StatTileComponent {
       case 'percent':
         return `${value.toFixed(1)}%`;
       case 'grams':
-        return value >= 1000
-          ? `${(value / 1000).toFixed(1)} kg`
-          : `${Math.round(value)} g`;
+        return withMilliliters(
+          value >= 1000
+            ? `${(value / 1000).toFixed(1)} kg`
+            : `${Math.round(value)} g`,
+          value,
+          this.volumeMl()
+        );
+      case 'milliliters':
+        return formatMilliliters(value);
       case 'duration':
         return formatDurationShort(value);
       case 'money':

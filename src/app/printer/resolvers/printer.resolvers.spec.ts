@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import {
@@ -13,14 +14,16 @@ import { printerDetailResolver } from './printer-detail.resolver';
 import { printerListResolver } from './printer-list.resolver';
 
 describe('printer resolvers', () => {
-  let printerService: jasmine.SpyObj<PrinterService>;
+  let printerService: MockedObject<PrinterService>;
 
   beforeEach(() => {
     localStorage.removeItem('printer_list_page_size');
-    printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'getPrinterDetail',
-      'getCurrentUserPrinterSummaries',
-    ]);
+    printerService = {
+      getPrinterDetail: vi.fn().mockName('PrinterService.getPrinterDetail'),
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    } as unknown as MockedObject<PrinterService>;
     TestBed.configureTestingModule({
       providers: [{ provide: PrinterService, useValue: printerService }],
     });
@@ -31,15 +34,16 @@ describe('printer resolvers', () => {
   describe('printerDetailResolver', () => {
     it('resolves the printer named by the id param', async () => {
       const printer = { id: 3 } as PrinterDetail;
-      printerService.getPrinterDetail.and.returnValue(of(printer));
+      printerService.getPrinterDetail.mockReturnValue(of(printer));
 
-      await expectAsync(
+      await expect(
         resolveValue(
           printerDetailResolver,
           routeSnapshot({ params: { id: '3' } })
         )
-      ).toBeResolvedTo(printer);
-      expect(printerService.getPrinterDetail).toHaveBeenCalledOnceWith(3);
+      ).resolves.toEqual(printer);
+      expect(printerService.getPrinterDetail).toHaveBeenCalledTimes(1);
+      expect(printerService.getPrinterDetail).toHaveBeenCalledWith(3);
     });
 
     it('returns null when the id is not a number', () => {
@@ -59,7 +63,11 @@ describe('printer resolvers', () => {
 
       expect(
         printerService.getCurrentUserPrinterSummaries
-      ).toHaveBeenCalledOnceWith(1, 10);
+      ).toHaveBeenCalledTimes(1);
+
+      expect(
+        printerService.getCurrentUserPrinterSummaries
+      ).toHaveBeenCalledWith(1, 10);
     });
 
     it('uses the page size saved by the list', () => {
@@ -69,7 +77,11 @@ describe('printer resolvers', () => {
 
       expect(
         printerService.getCurrentUserPrinterSummaries
-      ).toHaveBeenCalledOnceWith(1, 50);
+      ).toHaveBeenCalledTimes(1);
+
+      expect(
+        printerService.getCurrentUserPrinterSummaries
+      ).toHaveBeenCalledWith(1, 50);
     });
   });
 });

@@ -1,7 +1,9 @@
+import type { MockedObject } from 'vitest';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { Location } from '@angular/common';
 import {
   ActivatedRoute,
@@ -13,12 +15,21 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import currency from 'currency.js';
 import { ToastrService } from 'ngx-toastr';
-import { AdsenseModule } from 'ng2-adsense';
 import { ViewPrintDetailComponent } from './view-print-detail.component';
 import { PrintDetailSummaryComponent } from './print-detail-summary/print-detail-summary.component';
-import { PrintService, PrintStatus } from 'src/app/core/services/print.service';
+import {
+  PrintService,
+  PrintStatus,
+  PrintViewStatus,
+} from 'src/app/core/services/print.service';
+import { AdEligibilityService } from '../../shared/ad/ad-eligibility.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
+import {
+  SeoLookup,
+  SeoMetadata,
+  SeoService,
+} from 'src/app/core/services/seo.service';
 import {
   UserSetting,
   UserSettingService,
@@ -40,14 +51,15 @@ import {
 describe('ViewPrintDetailComponent', () => {
   let fixture: ComponentFixture<ViewPrintDetailComponent>;
   let component: ViewPrintDetailComponent;
-  let metaService: jasmine.SpyObj<MetaTagService>;
-  let printServiceSpy: jasmine.SpyObj<PrintService>;
-  let loaderSpy: jasmine.SpyObj<PrintDetailLoaderService>;
-  let userSettingServiceSpy: jasmine.SpyObj<UserSettingService>;
+  let metaService: MockedObject<MetaTagService>;
+  let printServiceSpy: MockedObject<PrintService>;
+  let loaderSpy: MockedObject<PrintDetailLoaderService>;
+  let userSettingServiceSpy: MockedObject<UserSettingService>;
+  let seoServiceSpy: MockedObject<SeoService>;
 
   const OWNER_ID = 7;
 
-  let pushPromptSpy: jasmine.SpyObj<PushPermissionPromptService>;
+  let pushPromptSpy: MockedObject<PushPermissionPromptService>;
   let nextPromptResult: PushPromptResult;
 
   const basePrint = {
@@ -72,8 +84,7 @@ describe('ViewPrintDetailComponent', () => {
   /**
    * The skeleton is deferred, so "still loading" is no longer observable the
    * instant the component is created — that is the whole point of the change.
-   * These waits are real time rather than `tick()` because `setup` awaits
-   * `compileComponents`, which cannot run inside `fakeAsync`.
+   * These waits are real time: this file does not fake timers.
    */
   const waitPastSkeletonDelay = async (): Promise<void> => {
     await new Promise((resolve) =>
@@ -103,6 +114,8 @@ describe('ViewPrintDetailComponent', () => {
     /** Overrides the default "resolve immediately with `print`" loader. */
     load?: (printId: number) => Observable<PrintDetailWithUser>;
     settings?: (type: UserSettingType) => Promise<UserSetting | null>;
+    /** The /seo answer per print id. Defaults to `unavailable` (an API without /seo). */
+    seo?: (printId: number) => Observable<SeoLookup>;
   }
 
   const setup = async (options: SetupOptions): Promise<void> => {
@@ -114,6 +127,7 @@ describe('ViewPrintDetailComponent', () => {
       load = () =>
         of({ print, user: print ? ({ id: OWNER_ID } as any) : null }),
       settings = () => Promise.resolve(null),
+      seo = () => of<SeoLookup>({ kind: 'unavailable' }),
     } = options;
 
     TestBed.resetTestingModule();
@@ -121,54 +135,73 @@ describe('ViewPrintDetailComponent', () => {
     // calculatePrintCost is required for the same reason as in the rail's spec:
     // the real FilamentUsageSummaryComponent renders inside the rail and calls
     // it per row on the owner path.
-    const printService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'addPrintComment',
-      'calculateElectricityCost',
-      'calculateTotalPrintCost',
-      'calculatePrintCost',
-    ]);
-    printService.calculatePrintCost.and.returnValue({
+    const printService = {
+      addPrintComment: vi.fn().mockName('PrintService.addPrintComment'),
+      calculateElectricityCost: vi
+        .fn()
+        .mockName('PrintService.calculateElectricityCost'),
+      calculateTotalPrintCost: vi
+        .fn()
+        .mockName('PrintService.calculateTotalPrintCost'),
+      calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+      // A private print's hero image is fetched through the service, with the token.
+      getPrintImage: vi
+        .fn()
+        .mockName('PrintService.getPrintImage')
+        .mockReturnValue(of('')),
+    } as unknown as MockedObject<PrintService>;
+    printService.calculatePrintCost.mockReturnValue({
       valid: true,
       price: currency(0.42),
       formattedPrice: '$0.42',
       symbol: '$',
       usesDefaultPrice: false,
     });
-    printService.calculateTotalPrintCost.and.returnValue({
+    printService.calculateTotalPrintCost.mockReturnValue({
       prices: [],
       total: { valid: false, message: 'Cannot calculate total' },
     });
-    printService.calculateElectricityCost.and.returnValue({
+    printService.calculateElectricityCost.mockReturnValue({
       valid: false,
       message: 'No rate configured',
     });
     printServiceSpy = printService;
-    metaService = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setTitle',
-      'setSocialMediaTags',
-    ]);
-    userSettingServiceSpy = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['getCurrentUsersSettingByType']
+    metaService = {
+      setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+      setSocialMediaTags: vi.fn().mockName('MetaTagService.setSocialMediaTags'),
+      applySeoMetadata: vi.fn().mockName('MetaTagService.applySeoMetadata'),
+      preventIndexing: vi.fn().mockName('MetaTagService.preventIndexing'),
+      restoreShellRobots: vi.fn().mockName('MetaTagService.restoreShellRobots'),
+    } as unknown as MockedObject<MetaTagService>;
+    seoServiceSpy = {
+      forPrint: vi.fn().mockName('SeoService.forPrint'),
+    } as unknown as MockedObject<SeoService>;
+    seoServiceSpy.forPrint.mockImplementation(seo);
+    userSettingServiceSpy = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+    } as unknown as MockedObject<UserSettingService>;
+    userSettingServiceSpy.getCurrentUsersSettingByType.mockImplementation(
+      settings
     );
-    userSettingServiceSpy.getCurrentUsersSettingByType.and.callFake(settings);
 
-    loaderSpy = jasmine.createSpyObj<PrintDetailLoaderService>(
-      'PrintDetailLoaderService',
-      ['load']
-    );
-    loaderSpy.load.and.callFake(load);
+    loaderSpy = {
+      load: vi.fn().mockName('PrintDetailLoaderService.load'),
+    } as unknown as MockedObject<PrintDetailLoaderService>;
+    loaderSpy.load.mockImplementation(load);
 
-    pushPromptSpy = jasmine.createSpyObj<PushPermissionPromptService>(
-      'PushPermissionPromptService',
-      ['promptInContext']
-    );
+    pushPromptSpy = {
+      promptInContext: vi
+        .fn()
+        .mockName('PushPermissionPromptService.promptInContext'),
+    } as unknown as MockedObject<PushPermissionPromptService>;
     // Only a default: a test that set its own outcome before calling setup keeps it.
     nextPromptResult ??= { permission: 'default', outcome: 'shown' };
-    // callFake over resolveTo: setup() recreates this spy, so a test that configured a
+    // mockImplementation over mockResolvedValue: setup() recreates this mock, so a test that configured a
     // result beforehand would have it silently discarded. Reading a mutable value keeps the
     // test's choice in force.
-    pushPromptSpy.promptInContext.and.callFake(() =>
+    pushPromptSpy.promptInContext.mockImplementation(() =>
       Promise.resolve(nextPromptResult)
     );
 
@@ -177,14 +210,9 @@ describe('ViewPrintDetailComponent', () => {
       // pulled in through ViewPrintDetailComponent's own imports, so the schema
       // would suppress nothing while hiding genuine template typos. The HTTP
       // providers exist because app-file-attachment-section fetches on init.
-      imports: [
-        ViewPrintDetailComponent,
-        RouterTestingModule,
-        // app-ad and app-sidebar-ad render for real and need the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
+      imports: [ViewPrintDetailComponent, RouterTestingModule],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: PrintService, useValue: printService },
         { provide: PrintDetailLoaderService, useValue: loaderSpy },
@@ -193,17 +221,23 @@ describe('ViewPrintDetailComponent', () => {
         // and injects ToastrService, which needs its own ToastConfig token.
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj<ToastrService>('ToastrService', [
-            'success',
-            'error',
-          ]),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
         { provide: MetaTagService, useValue: metaService },
+        { provide: SeoService, useValue: seoServiceSpy },
         { provide: UserSettingService, useValue: userSettingServiceSpy },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         {
           provide: AuthService,
           useValue: {
-            userProfile$: of(viewerId === null ? null : { id: viewerId }),
+            userProfile: signal(viewerId === null ? null : { id: viewerId }),
           },
         },
         {
@@ -214,7 +248,7 @@ describe('ViewPrintDetailComponent', () => {
     }).compileComponents();
 
     if (arrivedInApp) {
-      spyOn(TestBed.inject(Router), 'getCurrentNavigation').and.returnValue({
+      vi.spyOn(TestBed.inject(Router), 'getCurrentNavigation').mockReturnValue({
         previousNavigation: { id: 1 },
       } as any);
     }
@@ -443,7 +477,7 @@ describe('ViewPrintDetailComponent', () => {
   });
 
   it('does not throw when the print is null', async () => {
-    await expectAsync(setup({ viewerId: null, print: null })).toBeResolved();
+    await expect(setup({ viewerId: null, print: null })).resolves.not.toThrow();
   });
 
   it('makes the page container programmatically focusable', async () => {
@@ -463,9 +497,9 @@ describe('ViewPrintDetailComponent', () => {
   it('navigates to an in-app fallback when the visitor deep-linked', async () => {
     await setup({ viewerId: null });
     const router = TestBed.inject(Router);
-    const navigate = spyOn(router, 'navigate');
+    const navigate = vi.spyOn(router, 'navigate').mockReturnValue(undefined);
     const location = TestBed.inject(Location);
-    const back = spyOn(location, 'back');
+    const back = vi.spyOn(location, 'back').mockReturnValue(undefined);
 
     // getCurrentNavigation() is null in this harness, matching a deep link.
     component.handleClose();
@@ -476,15 +510,21 @@ describe('ViewPrintDetailComponent', () => {
 
   it('sends the owner to the print list when they deep-linked', async () => {
     await setup({ viewerId: OWNER_ID });
-    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(undefined);
     component.handleClose();
     expect(navigate).toHaveBeenCalledWith(['/prints']);
   });
 
   it('goes back when the visitor arrived via in-app navigation', async () => {
     await setup({ viewerId: null, arrivedInApp: true });
-    const back = spyOn(TestBed.inject(Location), 'back');
-    const navigate = spyOn(TestBed.inject(Router), 'navigate');
+    const back = vi
+      .spyOn(TestBed.inject(Location), 'back')
+      .mockReturnValue(undefined);
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(undefined);
 
     component.handleClose();
 
@@ -565,18 +605,146 @@ describe('ViewPrintDetailComponent', () => {
       },
     });
 
-    const imageUrl = metaService.setSocialMediaTags.calls.mostRecent().args[3];
+    const imageUrl = vi.mocked(metaService.setSocialMediaTags).mock.lastCall[3];
     expect(imageUrl).toContain('/image/2');
+  });
+
+  it('describes the client-side fallback as an article', async () => {
+    await setup({ viewerId: null });
+    const options = vi.mocked(metaService.setSocialMediaTags).mock.lastCall[4];
+    expect(options?.type).toBe('article');
+  });
+
+  describe('metadata from /seo', () => {
+    const seoFor = (id: number): SeoMetadata => ({
+      type: 'print',
+      title: `Print ${id} | 3D Print Log`,
+      description: 'From the API',
+      canonicalUrl: `https://www.3dprintlog.com/prints/${id}`,
+      image: null,
+      author: null,
+      publishedAt: null,
+      updatedAt: null,
+      facts: [],
+    });
+
+    it('asks the API for the print on the route', async () => {
+      await setup({ viewerId: null });
+      expect(seoServiceSpy.forPrint).toHaveBeenCalledWith(1);
+    });
+
+    it('applies the /seo answer for a public print instead of the client-side tags', async () => {
+      await setup({
+        viewerId: null,
+        seo: (id) => of<SeoLookup>({ kind: 'ok', seo: seoFor(id) }),
+      });
+      expect(metaService.applySeoMetadata).toHaveBeenCalledWith(seoFor(1));
+      expect(metaService.setSocialMediaTags).not.toHaveBeenCalled();
+      expect(metaService.preventIndexing).not.toHaveBeenCalled();
+    });
+
+    // The /seo answer usually lands after the print: the client-side tags go up first, then
+    // the API's replace them, and a later print emission must not put the client's back.
+    it('replaces the client-side tags when /seo answers after the print', async () => {
+      const seo$ = new Subject<SeoLookup>();
+      await setup({ viewerId: null, seo: () => seo$ });
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+
+      metaService.setSocialMediaTags.mockClear();
+      seo$.next({ kind: 'ok', seo: seoFor(1) });
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(metaService.applySeoMetadata).toHaveBeenCalledWith(seoFor(1));
+      expect(metaService.setSocialMediaTags).not.toHaveBeenCalled();
+    });
+
+    it('does not hold the page back while /seo is pending', async () => {
+      await setup({ viewerId: null, seo: () => new Subject<SeoLookup>() });
+      expect(component.print()).toEqual(basePrint);
+      expect(metaService.setTitle).toHaveBeenCalledWith(
+        'Test Print - 3D Print Log'
+      );
+    });
+
+    // An owner viewing their own private print: the API's 404 means "not public".
+    it('keeps the client-side tags and marks the page noindex on a not-public 404', async () => {
+      await setup({
+        viewerId: OWNER_ID,
+        seo: () => of<SeoLookup>({ kind: 'not-public' }),
+      });
+      expect(metaService.preventIndexing).toHaveBeenCalled();
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+      expect(metaService.applySeoMetadata).not.toHaveBeenCalled();
+    });
+
+    it('falls back to the client-side tags, without noindex, when /seo is unavailable', async () => {
+      await setup({
+        viewerId: null,
+        seo: () => of<SeoLookup>({ kind: 'unavailable' }),
+      });
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+      expect(metaService.applySeoMetadata).not.toHaveBeenCalled();
+      expect(metaService.preventIndexing).not.toHaveBeenCalled();
+    });
+
+    it('follows the route to the next print', async () => {
+      const params$ = new BehaviorSubject<ParamMap>(paramMapFor(1));
+      await setup({
+        viewerId: null,
+        paramMap$: params$,
+        load: (printId) =>
+          of({ print: { ...basePrint, id: printId }, user: null }),
+        seo: (id) =>
+          of<SeoLookup>(
+            id === 1 ? { kind: 'ok', seo: seoFor(1) } : { kind: 'not-public' }
+          ),
+      });
+      expect(metaService.applySeoMetadata).toHaveBeenCalledWith(seoFor(1));
+
+      params$.next(paramMapFor(2));
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(seoServiceSpy.forPrint).toHaveBeenCalledWith(2);
+      expect(metaService.preventIndexing).toHaveBeenCalled();
+      expect(metaService.setSocialMediaTags).toHaveBeenCalled();
+    });
+
+    // Leaving a public page for an app page must not leave that page indexable.
+    it("restores the shell's robots tags when the page is left", async () => {
+      await setup({
+        viewerId: null,
+        seo: (id) => of<SeoLookup>({ kind: 'ok', seo: seoFor(id) }),
+      });
+      metaService.restoreShellRobots.mockClear();
+      fixture.destroy();
+      expect(metaService.restoreShellRobots).toHaveBeenCalled();
+    });
   });
 
   // This component is OnPush and the POST response lands in its own tick with
   // nothing marked dirty, so mutating the fetched array did not repaint.
+  // The comment is posted by the real PrintCommentsComponent rendered here, so
+  // this also checks the child's `commentAdded` output is wired to the list.
   it('renders a comment that arrives after the initial render', async () => {
     const posted = new Subject<any>();
     await setup({ viewerId: OWNER_ID });
-    printServiceSpy.addPrintComment.and.returnValue(posted.asObservable());
+    printServiceSpy.addPrintComment.mockReturnValue(posted.asObservable());
 
-    component.addComment('Nice print');
+    const root = fixture.nativeElement as HTMLElement;
+    const box = root.querySelector(
+      '#add-comment-textarea'
+    ) as HTMLTextAreaElement;
+    box.value = 'Nice print';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (root.querySelector('#btn-add-print-comment') as HTMLButtonElement).click();
+
+    expect(printServiceSpy.addPrintComment).toHaveBeenCalledWith(
+      basePrint.id,
+      'Nice print'
+    );
     posted.next({
       id: 99,
       body: 'Nice print',
@@ -603,6 +771,60 @@ describe('ViewPrintDetailComponent', () => {
       },
     });
     expect(component.printImages().map((i) => i.id)).toEqual([1, 2, 3]);
+  });
+
+  // The thumbnail strip prefers thumbnailUrl; the carousel keeps the full image.
+  it('gives the strip absolute thumbnail URLs when the API reports them', async () => {
+    await setup({
+      viewerId: null,
+      print: {
+        ...basePrint,
+        images: [
+          {
+            id: 1,
+            isDefault: true,
+            displayOrder: 0,
+            thumbnailUrl: '/api/Prints/1/image/1/thumbnail',
+          },
+          { id: 2, isDefault: false, displayOrder: 1 },
+        ],
+      },
+    });
+    const [withThumb, withoutThumb] = component.printImages();
+    expect(withThumb.url).toMatch(/\/api\/Prints\/1\/image\/1$/);
+    expect(withThumb.thumbnailUrl).toMatch(
+      /^https?:\/\/.+\/api\/Prints\/1\/image\/1\/thumbnail$/
+    );
+    // An older API: no thumbnail, so the strip uses the full image as before.
+    expect(withoutThumb.thumbnailUrl).toBeUndefined();
+  });
+
+  // A private print's image is served only with the owner's token, which an <img src>
+  // never sends: the hero gets no direct URL and fetches the image itself.
+  it('gives the hero no direct image URL for a private print', async () => {
+    await setup({
+      viewerId: OWNER_ID,
+      print: {
+        ...basePrint,
+        viewStatus: PrintViewStatus.Private,
+        images: [{ id: 1, isDefault: true, displayOrder: 0 }],
+      },
+    });
+    expect(component.printImages()[0].url).toBeUndefined();
+  });
+
+  it('keeps the direct image URL for a public print', async () => {
+    await setup({
+      viewerId: null,
+      print: {
+        ...basePrint,
+        viewStatus: PrintViewStatus.Public,
+        images: [{ id: 1, isDefault: true, displayOrder: 0 }],
+      },
+    });
+    expect(component.printImages()[0].url).toMatch(
+      /\/api\/Prints\/1\/image\/1$/
+    );
   });
 
   // These four settings used to be route resolvers. The component now loads

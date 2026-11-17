@@ -8,11 +8,6 @@ import {
   MatCardContent,
 } from '@angular/material/card';
 import { RouterLink } from '@angular/router';
-import {
-  DefaultLayoutDirective,
-  DefaultLayoutAlignDirective,
-  DefaultLayoutGapDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { PrintImageComponent } from '../print-image/print-image.component';
 import { LocaleDatePipe } from '../pipes/locale-date.pipe';
 
@@ -40,9 +35,6 @@ export interface PrintSummaryCardPrint {
     RouterLink,
     MatCardSubtitle,
     MatCardContent,
-    DefaultLayoutDirective,
-    DefaultLayoutAlignDirective,
-    DefaultLayoutGapDirective,
     PrintImageComponent,
     LocaleDatePipe,
   ],

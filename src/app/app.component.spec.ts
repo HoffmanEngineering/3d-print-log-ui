@@ -1,8 +1,9 @@
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AppComponent } from './app.component';
 import { ThemeService } from './core/services/theme.service';
-import { AuthService } from './core/services/auth.service';
+import { AuthService, UserProfileInfo } from './core/services/auth.service';
 import { GoogleAnalyticsService } from './core/services/google-analytics.service';
 import { LoggingService } from './core/services/logging.service';
 import { VersionReleaseNoteDialogService } from './core/services/version-release-note-dialog.service';
@@ -10,59 +11,64 @@ import { AdsenseLoaderService } from './core/services/adsense-loader.service';
 import { PushRegistrationService } from './core/services/push-registration.service';
 import { NativeBridgeService } from './core/services/native-bridge.service';
 import { of } from 'rxjs';
-import { NO_ERRORS_SCHEMA, signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal, WritableSignal } from '@angular/core';
 
 describe('AppComponent (ThemeService)', () => {
-  let mockAuthService: jasmine.SpyObj<AuthService>;
-  let mockGoogleAnalyticsService: jasmine.SpyObj<GoogleAnalyticsService>;
-  let mockLoggingService: jasmine.SpyObj<LoggingService>;
-  let mockReleaseNotesService: jasmine.SpyObj<VersionReleaseNoteDialogService>;
-  let mockThemeService: jasmine.SpyObj<ThemeService>;
-  let mockPushRegistration: jasmine.SpyObj<PushRegistrationService>;
-  let mockNativeBridge: jasmine.SpyObj<NativeBridgeService>;
+  let mockAuthService: MockedObject<AuthService>;
+  let userProfile: WritableSignal<UserProfileInfo | null>;
+  let mockGoogleAnalyticsService: MockedObject<GoogleAnalyticsService>;
+  let mockLoggingService: MockedObject<LoggingService>;
+  let mockReleaseNotesService: MockedObject<VersionReleaseNoteDialogService>;
+  let mockThemeService: MockedObject<ThemeService>;
+  let mockPushRegistration: MockedObject<PushRegistrationService>;
+  let mockNativeBridge: MockedObject<NativeBridgeService>;
 
-  beforeEach(waitForAsync(() => {
-    mockAuthService = jasmine.createSpyObj<AuthService>('AuthService', [
-      'localAuthSetup',
-      'getTokenSilently$',
-    ]);
-    mockAuthService.userProfile$ = of(null);
-    mockAuthService.getTokenSilently$.and.returnValue(of('bearer-abc'));
+  beforeEach(async () => {
+    userProfile = signal<UserProfileInfo | null>(null);
+    mockAuthService = {
+      localAuthSetup: vi.fn().mockName('AuthService.localAuthSetup'),
+      getTokenSilently$: vi.fn().mockName('AuthService.getTokenSilently$'),
+      userProfile,
+    } as unknown as MockedObject<AuthService>;
+    mockAuthService.getTokenSilently$.mockReturnValue(of('bearer-abc'));
 
-    mockPushRegistration = jasmine.createSpyObj<PushRegistrationService>(
-      'PushRegistrationService',
-      ['onAuthenticated', 'onLogout', 'handlePendingTap']
-    );
-    mockNativeBridge = jasmine.createSpyObj<NativeBridgeService>(
-      'NativeBridgeService',
-      ['onPendingTap']
-    );
-    mockNativeBridge.onPendingTap.and.returnValue(true);
-    mockPushRegistration.onAuthenticated.and.resolveTo(undefined);
-    mockPushRegistration.onLogout.and.resolveTo(undefined);
-    mockPushRegistration.handlePendingTap.and.resolveTo(undefined);
+    mockPushRegistration = {
+      onAuthenticated: vi
+        .fn()
+        .mockName('PushRegistrationService.onAuthenticated'),
+      onLogout: vi.fn().mockName('PushRegistrationService.onLogout'),
+      handlePendingTap: vi
+        .fn()
+        .mockName('PushRegistrationService.handlePendingTap'),
+    } as unknown as MockedObject<PushRegistrationService>;
+    mockNativeBridge = {
+      onPendingTap: vi.fn().mockName('NativeBridgeService.onPendingTap'),
+    } as unknown as MockedObject<NativeBridgeService>;
+    mockNativeBridge.onPendingTap.mockReturnValue(true);
+    mockPushRegistration.onAuthenticated.mockResolvedValue(undefined);
+    mockPushRegistration.onLogout.mockResolvedValue(undefined);
+    mockPushRegistration.handlePendingTap.mockResolvedValue(undefined);
 
-    mockGoogleAnalyticsService = {} as jasmine.SpyObj<GoogleAnalyticsService>;
+    mockGoogleAnalyticsService = {} as MockedObject<GoogleAnalyticsService>;
 
-    mockLoggingService = {} as jasmine.SpyObj<LoggingService>;
+    mockLoggingService = {} as MockedObject<LoggingService>;
 
-    mockReleaseNotesService =
-      jasmine.createSpyObj<VersionReleaseNoteDialogService>(
-        'VersionReleaseNoteDialogService',
-        ['checkLastLoggedInVersion']
-      );
+    mockReleaseNotesService = {
+      checkLastLoggedInVersion: vi
+        .fn()
+        .mockName('VersionReleaseNoteDialogService.checkLastLoggedInVersion'),
+    } as unknown as MockedObject<VersionReleaseNoteDialogService>;
 
-    mockThemeService = jasmine.createSpyObj<ThemeService>('ThemeService', [
-      'initialize',
-    ]);
+    mockThemeService = {
+      initialize: vi.fn().mockName('ThemeService.initialize'),
+    } as unknown as MockedObject<ThemeService>;
     (mockThemeService as any).isDark = signal(false);
 
-    const mockAdsenseLoader = jasmine.createSpyObj<AdsenseLoaderService>(
-      'AdsenseLoaderService',
-      ['load']
-    );
+    const mockAdsenseLoader = {
+      load: vi.fn().mockName('AdsenseLoaderService.load'),
+    };
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [RouterTestingModule, AppComponent],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
@@ -87,7 +93,7 @@ describe('AppComponent (ThemeService)', () => {
         set: { imports: [], schemas: [NO_ERRORS_SCHEMA] },
       })
       .compileComponents();
-  }));
+  });
 
   // #254: signed-in users see the notifier notice wherever they land, not only on a printer page.
   it('mounts the notifier notice in the shell', () => {
@@ -107,7 +113,9 @@ describe('AppComponent (ThemeService)', () => {
     await fixture.whenStable();
     const bar = (fixture.nativeElement as HTMLElement).querySelector(
       'ngx-loading-bar'
-    ) as HTMLElement & { color: string };
+    ) as HTMLElement & {
+      color: string;
+    };
     expect(bar.color).toBe('#3f51b5');
 
     (mockThemeService.isDark as ReturnType<typeof signal<boolean>>).set(true);
@@ -132,7 +140,7 @@ describe('AppComponent (ThemeService)', () => {
     });
 
     it('registers with a bearer once a profile is emitted', () => {
-      mockAuthService.userProfile$ = of({ id: 1 } as never);
+      userProfile.set({ id: 1 } as UserProfileInfo);
 
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();
@@ -168,8 +176,8 @@ describe('AppComponent (ThemeService)', () => {
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();
 
-      const listener = mockNativeBridge.onPendingTap.calls.mostRecent()
-        .args[0] as () => void;
+      const listener = vi.mocked(mockNativeBridge.onPendingTap).mock
+        .lastCall[0] as () => void;
       listener();
 
       expect(mockPushRegistration.handlePendingTap).toHaveBeenCalled();
@@ -181,8 +189,8 @@ describe('AppComponent (ThemeService)', () => {
      * and every later warm-start tap is signalled into an empty listener list.
      */
     it('retries installing the tap listener when the bridge was not ready', () => {
-      mockNativeBridge.onPendingTap.and.returnValue(false);
-      mockAuthService.userProfile$ = of({ id: 1 } as never);
+      mockNativeBridge.onPendingTap.mockReturnValue(false);
+      userProfile.set({ id: 1 } as UserProfileInfo);
 
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();
@@ -191,8 +199,8 @@ describe('AppComponent (ThemeService)', () => {
     });
 
     it('does not reinstall the tap listener once one is installed', () => {
-      mockNativeBridge.onPendingTap.and.returnValue(true);
-      mockAuthService.userProfile$ = of({ id: 1 } as never);
+      mockNativeBridge.onPendingTap.mockReturnValue(true);
+      userProfile.set({ id: 1 } as UserProfileInfo);
 
       const fixture = TestBed.createComponent(AppComponent);
       fixture.detectChanges();

@@ -33,8 +33,8 @@ HTML version: https://www.3dprintlog.com/
 
 ## Pricing
 
-- **Free:** unlimited prints, printers, and materials, with up to 5 images per print. No credit card required.
-- **[Pro](https://www.3dprintlog.com/docs/pro-subscription.md):** $2.99 per month or $29.99 per year. Removes ads, allows up to 20 images per print, and adds file attachments (G-code, STL, and 3MF).
+- **Free:** unlimited prints, printers, and materials, with up to 5 images per print, printer, material or project. No credit card required.
+- **[Pro](https://www.3dprintlog.com/docs/pro-subscription.md):** $2.99 per month or $29.99 per year. Removes ads, allows up to 20 images per print, printer, material or project, and adds file attachments (G-code, STL, and 3MF).
 
 ## Get started
 

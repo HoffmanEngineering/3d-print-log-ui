@@ -1,3 +1,27 @@
 mat-form-field {
   width: 100% !important;
 }
+
+.column {
+  display: flex;
+  flex-direction: column;
+}
+
+.filters-section,
+.no-prints {
+  flex: 1 1 0;
+}
+
+.grow {
+  flex: 1 1 100%;
+  max-height: 100%;
+}
+
+.filters {
+  display: flex;
+  gap: 5px;
+}
+
+.filter {
+  flex: 1 1 0%;
+}

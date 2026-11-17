@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { InvalidUserComponent } from './invalid-user.component';
 
@@ -6,11 +6,11 @@ describe('InvalidUserComponent', () => {
   let component: InvalidUserComponent;
   let fixture: ComponentFixture<InvalidUserComponent>;
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [InvalidUserComponent],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(InvalidUserComponent);

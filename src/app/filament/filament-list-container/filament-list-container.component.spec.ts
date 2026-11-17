@@ -1,11 +1,21 @@
+import type { Mock } from 'vitest';
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient, withXhr } from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatDialog } from '@angular/material/dialog';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { EMPTY } from 'rxjs';
-import { FilamentService } from 'src/app/core/services/filament.service';
+import { EMPTY, of } from 'rxjs';
+import {
+  FilamentService,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import { TagReaderService } from 'src/app/core/services/tag-reader.service';
 import { FilamentListContainerComponent } from './filament-list-container.component';
@@ -24,6 +34,11 @@ describe('FilamentListContainerComponent (isolated)', () => {
     // Construct with minimal stubs — only testing pure methods
     TestBed.configureTestingModule({
       providers: [
+        // Built outside a view, so there is none to mark: a no-op stands in.
+        {
+          provide: ChangeDetectorRef,
+          useValue: { markForCheck: () => undefined },
+        },
         { provide: ActivatedRoute, useValue: {} },
         { provide: FilamentService, useValue: null },
         { provide: Title, useValue: null },
@@ -44,13 +59,13 @@ describe('FilamentListContainerComponent (isolated)', () => {
     it('opens the filter panel when closed', () => {
       component.isFilterPanelOpen = false;
       component.toggleFilterPanel();
-      expect(component.isFilterPanelOpen).toBeTrue();
+      expect(component.isFilterPanelOpen).toBe(true);
     });
 
     it('closes the filter panel when open', () => {
       component.isFilterPanelOpen = true;
       component.toggleFilterPanel();
-      expect(component.isFilterPanelOpen).toBeFalse();
+      expect(component.isFilterPanelOpen).toBe(false);
     });
   });
 
@@ -124,21 +139,21 @@ describe('FilamentListContainerComponent (isolated)', () => {
       component.filterByStorageLocation = 'Box 2';
 
       // Stub updateFilter so it doesn't throw (router is null)
-      spyOn(component, 'updateFilter');
+      vi.spyOn(component, 'updateFilter').mockReturnValue(undefined);
 
       component.resetFilters();
 
       expect(component.searchText).toBe('');
-      expect(component.showFavoritesOnly).toBeFalse();
-      expect(component.showLoadedFilamentOnly).toBeFalse();
-      expect(component.includeInactive).toBeFalse();
+      expect(component.showFavoritesOnly).toBe(false);
+      expect(component.showLoadedFilamentOnly).toBe(false);
+      expect(component.includeInactive).toBe(false);
       expect(component.filterByMaterialCategory).toBe('');
       expect(component.filterByStorageLocation).toBe('');
       expect(component.currentPage()).toBe(1);
     });
 
     it('calls updateFilter after resetting', () => {
-      spyOn(component, 'updateFilter');
+      vi.spyOn(component, 'updateFilter').mockReturnValue(undefined);
       component.resetFilters();
       expect(component.updateFilter).toHaveBeenCalled();
     });
@@ -146,12 +161,89 @@ describe('FilamentListContainerComponent (isolated)', () => {
 
   describe('navigateToFilament', () => {
     it('navigates to the filament detail route', () => {
-      spyOn(routerStub, 'navigate');
+      vi.spyOn(routerStub, 'navigate').mockReturnValue(undefined);
       component.navigateToFilament('abc-123');
       expect(routerStub.navigate).toHaveBeenCalledWith(
         ['abc-123'],
-        jasmine.objectContaining({ relativeTo: jasmine.anything() })
+        expect.objectContaining({ relativeTo: expect.anything() })
       );
     });
+  });
+});
+
+describe('FilamentListContainerComponent actions', () => {
+  let component: FilamentListContainerComponent;
+  let dialog: { open: Mock };
+
+  beforeEach(() => {
+    dialog = { open: vi.fn().mockName('MatDialog.open') };
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        {
+          provide: ChangeDetectorRef,
+          useValue: { markForCheck: () => undefined },
+        },
+        { provide: ActivatedRoute, useValue: {} },
+        { provide: Title, useValue: null },
+        {
+          provide: Router,
+          useValue: { events: EMPTY, navigate: () => Promise.resolve(true) },
+        },
+        { provide: MatDialog, useValue: dialog },
+        {
+          provide: ToastrService,
+          useValue: { success: vi.fn(), error: vi.fn() },
+        },
+        { provide: MatBottomSheet, useValue: null },
+        {
+          provide: LoggingService,
+          useValue: { logEvent: vi.fn(), logException: vi.fn() },
+        },
+        { provide: TagReaderService, useValue: { available: () => false } },
+      ],
+    });
+    component = TestBed.runInInjectionContext(
+      () => new FilamentListContainerComponent()
+    );
+    vi.spyOn(component, 'updateFilter').mockResolvedValue(undefined);
+  });
+
+  it('escapes the material name in the delete confirmation', () => {
+    dialog.open.mockReturnValue({ afterClosed: () => of(false) });
+
+    component.deleteFilament({
+      id: 'spool-x',
+      displayName: 'Spool <A> rack',
+    } as FilamentSummary);
+
+    expect(dialog.open.mock.lastCall![1].data.body).toContain(
+      '"Spool &lt;A&gt; rack"'
+    );
+  });
+
+  // Wires the real FilamentService: the bug was in which remaining amount it used.
+  it('marks a spool empty from its current remaining amount, not the list row', () => {
+    const http = TestBed.inject(HttpTestingController);
+
+    // The row was loaded at 1000 g; a 20 g print has been logged since.
+    component.markAsEmpty({
+      id: 'spool-x',
+      filamentRemaining: 1_000_000,
+    } as FilamentSummary);
+
+    http
+      .expectOne((r) => r.method === 'GET')
+      .flush({
+        id: 'spool-x',
+        filamentRemaining: 980_000,
+        filamentAdjustments: [],
+        isActive: true,
+      });
+
+    const put = http.expectOne((r) => r.method === 'PUT');
+    expect(put.request.body.filamentAdjustments.at(-1).amountMg).toBe(-980_000);
+    expect(put.request.body.isActive).toBe(false);
   });
 });

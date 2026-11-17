@@ -1,58 +1,370 @@
-@if (connections().length) {
+@if (connections().length || offerSetup()) {
   <section class="connections" aria-labelledby="connections-heading">
     <h2 id="connections-heading">Connections</h2>
-    <ul>
-      @for (c of connections(); track c.instanceId) {
-        <li class="connection" data-testid="connection-row">
-          <div class="identity">
-            <span class="name">{{ c.displayName }}</span>
-            <span class="meta">
-              {{ kindLabel(c.kind) }}
-              @if (c.agentVersion) {
-                · <span class="version">version {{ c.agentVersion }}</span>
+    @if (connections().length) {
+      <ul>
+        @for (c of connections(); track c.instanceId) {
+          <li class="connection" data-testid="connection-row">
+            <div class="identity">
+              <span class="name">{{ c.displayName }}</span>
+              <span class="meta">
+                {{ kindLabel(c.kind) }}
+                @if (c.agentVersion) {
+                  · <span class="version">version {{ c.agentVersion }}</span>
+                }
+                @if (c.bridgeId) {
+                  · via
+                  <a
+                    routerLink="/printers/bridges"
+                    data-testid="connection-bridge"
+                    >{{ bridgeName(c.bridgeId) }}</a
+                  >
+                }
+              </span>
+              @if (software(c); as parts) {
+                @if (parts.length) {
+                  <span class="meta" data-testid="connection-software">
+                    @for (part of parts; track $index) {
+                      @if (!$first) {
+                        ·
+                      }
+                      <span class="version">{{ part }}</span>
+                    }
+                  </span>
+                }
               }
-            </span>
-            @if (c.updateAvailable && c.latestAgentVersion) {
-              <a
-                class="update"
-                data-testid="connection-update"
-                routerLink="/docs/printlog-bridge"
-                fragment="update"
-                >printlog-bridge {{ c.latestAgentVersion }} is available</a
+              @if (c.updateAvailable && c.latestAgentVersion) {
+                <a
+                  class="update"
+                  data-testid="connection-update"
+                  routerLink="/docs/printlog-bridge"
+                  fragment="update"
+                  >printlog-bridge {{ c.latestAgentVersion }} is available</a
+                >
+              }
+              @if (c.bridgeId && canMove()) {
+                <a
+                  class="update"
+                  data-testid="connection-move"
+                  routerLink="/printers/bridges"
+                  [queryParams]="{ move: printerId() }"
+                  >Move to another bridge</a
+                >
+              }
+            </div>
+            <div class="state">
+              <span
+                class="status"
+                [class.stale]="c.status === ConnectionStatus.Stale"
+                data-testid="connection-status"
+                >{{
+                  c.status === ConnectionStatus.Stale ? 'Stale' : 'Online'
+                }}</span
               >
+              <span class="meta" data-testid="connection-last-seen">
+                Last seen
+                <time [attr.datetime]="c.lastSeenAt.toISOString()">{{
+                  c.lastSeenAt | localeDate: 'datetime'
+                }}</time>
+              </span>
+            </div>
+            <button
+              mat-icon-button
+              type="button"
+              data-testid="connection-delete"
+              [attr.aria-label]="'Remove connection ' + c.displayName"
+              (click)="confirmDelete(c)"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </li>
+        }
+      </ul>
+      <p class="hint">
+        A connection is stale after 15 minutes without hearing from it. Removing
+        one keeps the prints it logged.
+      </p>
+    } @else {
+      <p class="hint intro">
+        Log this printer's prints automatically with printlog-bridge, a small
+        program that runs on the printer or on another computer on your network.
+      </p>
+      <p class="hint">
+        Already running a bridge? Connect this printer from
+        <a routerLink="/printers/bridges" data-testid="bridge-setup-bridges"
+          >Bridges</a
+        >, where it lists the printers it found on your network.
+      </p>
+      @if (!setupOpen()) {
+        <button
+          mat-stroked-button
+          type="button"
+          data-testid="bridge-setup-open"
+          (click)="openSetup()"
+        >
+          <mat-icon>link</mat-icon>
+          Connect this printer
+        </button>
+      } @else {
+        <div class="setup" data-testid="bridge-setup">
+          <p class="label" id="bridge-setup-kind-label">
+            What kind of printer is it?
+          </p>
+          <div
+            class="kinds"
+            role="group"
+            aria-labelledby="bridge-setup-kind-label"
+          >
+            @for (s of setups(); track s.kind) {
+              <button
+                mat-stroked-button
+                type="button"
+                class="kind"
+                [class.selected]="setupKind() === s.kind"
+                [attr.aria-pressed]="setupKind() === s.kind"
+                [attr.data-testid]="'bridge-setup-kind-' + s.kind"
+                (click)="pickKind(s.kind)"
+              >
+                {{ s.label }}
+              </button>
             }
           </div>
-          <div class="state">
-            <span
-              class="status"
-              [class.stale]="c.status === ConnectionStatus.Stale"
-              data-testid="connection-status"
-              >{{
-                c.status === ConnectionStatus.Stale ? 'Stale' : 'Online'
-              }}</span
+
+          @switch (setupKind()) {
+            @case ('bambu') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network.
+                </li>
+                <li>
+                  On the printer, turn on <strong>LAN Only Mode</strong>, then
+                  <strong>Developer Mode</strong>, and note the
+                  <strong>access code</strong> on that page. Bambu Handy and
+                  cloud printing stop working; Bambu Studio keeps working in LAN
+                  mode.
+                </li>
+                <li>
+                  Find the printer's <strong>serial</strong> with
+                  <code>printlog-bridge discover</code>, in Bambu Studio's
+                  device list or on its sticker, and give the printer a fixed IP
+                  address.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address, serial and access code, then restart the bridge and
+                  run <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+            }
+            @case ('prusalink') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network. The printer doesn't need Klipper.
+                </li>
+                <li>
+                  On the printer, open
+                  <strong>Settings &gt; Network &gt; PrusaLink</strong>, turn
+                  PrusaLink on, and note the <strong>password</strong> shown
+                  there.
+                </li>
+                <li>Give the printer a fixed IP address in your router.</li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address and password, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+            }
+            @case ('octoprint') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or another computer on OctoPrint's
+                  network.
+                </li>
+                <li>
+                  In OctoPrint, open
+                  <strong>Settings &gt; Application Keys</strong> and make an
+                  <strong>API key</strong> for the bridge.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with the address you
+                  open OctoPrint at and the key, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+              <p class="hint">
+                Using the OctoPrint webhook today?
+                <a routerLink="/docs/switch-from-octoprint-webhook"
+                  >Switch from the webhook</a
+                >
+                once the bridge logs a print.
+              </p>
+            }
+            @case ('sdcp') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network.
+                </li>
+                <li>
+                  Find the printer's IP address in its network settings, or with
+                  <code>printlog-bridge discover</code>, and give it a fixed one
+                  in your router. There is no password: SDCP has none.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+            }
+            @case ('duet') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the board's network.
+                  It works with the board on its own or with a Raspberry Pi
+                  (SBC).
+                </li>
+                <li>
+                  Use the address you open Duet Web Control at, and give the
+                  board a fixed IP address in your router.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your board's
+                  address. Add the <strong>password</strong> only when
+                  <code>config.g</code> sets one with <code>M551</code>. Then
+                  restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+            }
+            @case ('flashforge') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network. It watches the Adventurer 5M, 5M Pro and AD5X.
+                </li>
+                <li>
+                  On the printer, open <strong>Settings &gt; Network</strong>,
+                  turn on <strong>LAN-only mode</strong>, and note the
+                  <strong>check code</strong> it shows. Give the printer a fixed
+                  IP address in your router.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address and check code, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>. The bridge asks the
+                  printer for its serial; add <code>serial = …</code> only if
+                  <code>doctor</code> asks for it.
+                </li>
+              </ol>
+              <p class="hint">
+                Running Klipper Mod, Forge-X or ZMOD? Pick Klipper / Moonraker
+                instead: it measures the filament.
+              </p>
+            }
+            @case ('anycubic') {
+              <ol class="steps">
+                <li>
+                  Run printlog-bridge
+                  <a routerLink="/docs/printlog-bridge-docker">in Docker</a>
+                  on a NAS, home server or Raspberry Pi on the printer's
+                  network. It watches the Kobra S1, the Kobra 3 and the Photon
+                  P1 Max.
+                </li>
+                <li>
+                  On the printer's screen, turn on <strong>LAN mode</strong>,
+                  and give the printer a fixed IP address in your router. There
+                  is no password: the printer hands the bridge its own login.
+                </li>
+                <li>
+                  Add this section to the bridge's config, with your printer's
+                  address, then restart the bridge and run
+                  <code>printlog-bridge doctor</code>.
+                </li>
+              </ol>
+              <p class="hint">
+                A Photon takes one LAN client at a time: close Photon Workshop's
+                printer page while the bridge runs.
+              </p>
+            }
+            @default {
+              <ol class="steps">
+                <li>
+                  <a routerLink="/docs/printlog-bridge-install"
+                    >Install it on the printer</a
+                  >. When the installer asks for the printer's number, enter
+                  <strong>{{ printerId() }}</strong
+                  >.
+                </li>
+                <li>
+                  Or
+                  <a routerLink="/docs/printlog-bridge-docker"
+                    >run it in Docker</a
+                  >
+                  on another computer, with a section like this one in its
+                  config, using the printer's Moonraker address.
+                </li>
+              </ol>
+            }
+          }
+
+          <pre
+            data-testid="bridge-setup-config"
+          ><code>{{ setupSnippet() }}</code></pre>
+          <div class="actions">
+            <button
+              mat-stroked-button
+              type="button"
+              data-testid="bridge-setup-copy"
+              (click)="copySetup()"
             >
-            <span class="meta" data-testid="connection-last-seen">
-              Last seen
-              <time [attr.datetime]="c.lastSeenAt.toISOString()">{{
-                c.lastSeenAt | localeDate: 'datetime'
-              }}</time>
-            </span>
+              <mat-icon>content_copy</mat-icon>
+              Copy
+            </button>
+            <a
+              mat-button
+              data-testid="bridge-setup-guide"
+              [routerLink]="setupGuide()"
+              >Read the setup guide</a
+            >
           </div>
-          <button
-            mat-icon-button
-            type="button"
-            data-testid="connection-delete"
-            [attr.aria-label]="'Remove connection ' + c.displayName"
-            (click)="confirmDelete(c)"
-          >
-            <mat-icon>delete</mat-icon>
-          </button>
-        </li>
+          @if (setupSecret(); as secret) {
+            <p class="hint">
+              Keep the config where nothing serves it, not in
+              {{ secret.folder }}: it holds the {{ secret.name }}. This adapter
+              is new and {{ secret.checked }}.
+            </p>
+          } @else if (setupKind() === 'sdcp') {
+            <p class="hint">
+              This adapter is new and hasn't been checked on a real printer yet.
+            </p>
+          } @else if (setupKind() === 'anycubic') {
+            <p class="hint">
+              This adapter is new: it has been checked on an idle Kobra S1, not
+              yet through a print.
+            </p>
+          }
+          <p class="hint">
+            Once the bridge runs, it shows up here. It also needs a
+            <a routerLink="/api-keys">personal API key</a> to sign in.
+          </p>
+        </div>
       }
-    </ul>
-    <p class="hint">
-      A connection is stale after 15 minutes without hearing from it. Removing
-      one keeps the prints it logged.
-    </p>
+    }
   </section>
 }

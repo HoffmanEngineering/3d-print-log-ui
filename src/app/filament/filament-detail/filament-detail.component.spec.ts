@@ -1,4 +1,4 @@
-import { AdsenseModule } from 'ng2-adsense';
+import type { Mock, MockedObject } from 'vitest';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -10,10 +10,15 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import {
+  ActivatedRoute,
+  Router,
+  convertToParamMap,
+  Routes,
+} from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -32,6 +37,7 @@ import { PrintService } from 'src/app/core/services/print.service';
 import { FilamentSourceMeasurement } from 'src/app/core/services/filament.service';
 
 import { FilamentDetailComponent } from './filament-detail.component';
+import { MaterialNamePipe } from 'src/app/shared/pipes/material-name.pipe';
 import type { Material } from 'src/app/core/services/material.service';
 import type { CatalogMatch, TagReading } from 'src/app/core/types/tag-reading';
 import { By } from '@angular/platform-browser';
@@ -41,22 +47,26 @@ import { FilamentPrintsPanelComponent } from './filament-prints-panel/filament-p
 import { FilamentRemainingCardComponent } from './filament-remaining-card/filament-remaining-card.component';
 import { FilamentTagUidsComponent } from './filament-tag-uids/filament-tag-uids.component';
 
+// These specs navigate (a link click, a save), and a route the TestBed doesn't know
+// fails with an unhandled 'Cannot match any routes', which fails the run.
+const ANYWHERE: Routes = [{ path: '**', children: [] }];
+
 /**
  * The detail component builds its images-panel target from the service, so a spy without
- * `imageTarget` throws on the first render. createSpyObj's object form only spies the keys
+ * `imageTarget` throws on the first render. A mock has only the methods
  * it is given, hence the explicit assignment.
  */
-function stubImageTarget(service: jasmine.SpyObj<FilamentService>): void {
-  service.imageTarget = jasmine
-    .createSpy('imageTarget')
-    .and.callFake((id: string | null) => ({
+function stubImageTarget(service: object): void {
+  (service as { imageTarget: unknown }).imageTarget = vi
+    .fn()
+    .mockImplementation((id: string | null) => ({
       id,
-      gateway: jasmine.createSpyObj('EntityImageGateway', [
-        'upload',
-        'delete',
-        'reorder',
-        'setDefault',
-      ]),
+      gateway: {
+        upload: vi.fn().mockName('EntityImageGateway.upload'),
+        delete: vi.fn().mockName('EntityImageGateway.delete'),
+        reorder: vi.fn().mockName('EntityImageGateway.reorder'),
+        setDefault: vi.fn().mockName('EntityImageGateway.setDefault'),
+      },
     }));
 }
 
@@ -65,37 +75,50 @@ describe('FilamentDetailComponent', () => {
   let fixture: ComponentFixture<FilamentDetailComponent>;
 
   beforeEach(async () => {
-    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      {
-        getFilamentBrands: of({ brands: [] }),
-        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
-        getFilamentStorageLocations: of({ storageLocations: [] }),
-        addFilament: of({} as FilamentDetail),
-        updateFilament: of({} as FilamentDetail),
-      }
-    );
+    const mockFilamentService = {
+      getFilamentBrands: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBrands')
+        .mockReturnValue(of({ brands: [] })),
+      getFilamentPurchaseLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentPurchaseLocations')
+        .mockReturnValue(of({ purchaseLocations: [] })),
+      getFilamentStorageLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentStorageLocations')
+        .mockReturnValue(of({ storageLocations: [] })),
+      addFilament: vi
+        .fn()
+        .mockName('FilamentService.addFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+      updateFilament: vi
+        .fn()
+        .mockName('FilamentService.updateFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+    } as unknown as MockedObject<FilamentService>;
     stubImageTarget(mockFilamentService);
 
-    const mockToastrservice = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['success', 'warning']
-    );
+    const mockToastrservice = {
+      success: vi.fn().mockName('ToastrService.success'),
+      warning: vi.fn().mockName('ToastrService.warning'),
+    };
 
-    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['updateUserSetting']
-    );
+    const mockUserSettingService = {
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
+    };
 
-    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-      'logEvent',
-    ]);
+    const mockLogger = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-        RouterTestingModule,
+        RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
         MatInputModule,
@@ -151,8 +174,8 @@ describe('FilamentDetailComponent', () => {
       const saved = new Subject<FilamentDetail>();
       const filaments = TestBed.inject(
         FilamentService
-      ) as jasmine.SpyObj<FilamentService>;
-      filaments.addFilament.and.returnValue(saved);
+      ) as MockedObject<FilamentService>;
+      filaments.addFilament.mockReturnValue(saved);
       component.filamentForm.get('id')!.setValue(null);
       component.filamentForm.get('displayName')!.setValue('Blue PLA');
       component.filamentForm.get('materialType')!.setValue('PLA');
@@ -163,20 +186,20 @@ describe('FilamentDetailComponent', () => {
 
       component.onSubmit();
       fixture.detectChanges();
-      expect(button('Submit')!.disabled).withContext('saving').toBeTrue();
+      expect(button('Submit')!.disabled, 'saving').toBe(true);
 
       saved.error(new HttpErrorResponse({ status: 500 }));
       fixture.detectChanges();
 
-      expect(button('Submit')!.disabled).toBeFalse();
+      expect(button('Submit')!.disabled).toBe(false);
     });
 
-    it('drops "Save as Default" once the default price is saved', () => {
-      const saved = new Subject<unknown>();
+    it('drops "Save as Default" once the default price is saved', async () => {
+      let save!: (setting: unknown) => void;
       const settings = TestBed.inject(UserSettingService);
-      settings.addUserSetting = jasmine
-        .createSpy('addUserSetting')
-        .and.returnValue(saved);
+      settings.addOrUpdateSetting = vi
+        .fn()
+        .mockReturnValue(new Promise((resolve) => (save = resolve)));
       // The resolver answers null when no default is stored.
       component.defaultFilamentPriceSetting.set(null);
 
@@ -189,7 +212,8 @@ describe('FilamentDetailComponent', () => {
       button('Save as Default Filament Price')!.click();
       fixture.detectChanges();
 
-      saved.next({ id: 3, value: '24.99' });
+      save({ id: 3, value: '24.99' });
+      await Promise.resolve();
       fixture.detectChanges();
 
       expect(button('Save as Default Filament Price')).toBeUndefined();
@@ -197,16 +221,16 @@ describe('FilamentDetailComponent', () => {
   });
 
   it('asks before the page unloads only while the form is dirty', () => {
-    expect(dispatchBeforeUnload().defaultPrevented).toBeFalse();
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(false);
 
     component.filamentForm.markAsDirty();
-    expect(dispatchBeforeUnload().defaultPrevented).toBeTrue();
+    expect(dispatchBeforeUnload().defaultPrevented).toBe(true);
   });
 
   describe('staged image save flow', () => {
-    let imagesPanelStub: jasmine.SpyObj<EntityImagesPanelComponent>;
-    let filamentService: jasmine.SpyObj<FilamentService>;
-    let toastr: jasmine.SpyObj<ToastrService>;
+    let imagesPanelStub: MockedObject<EntityImagesPanelComponent>;
+    let filamentService: MockedObject<FilamentService>;
+    let toastr: MockedObject<ToastrService>;
     let router: Router;
 
     const setUpNewFilamentForm = () => {
@@ -219,53 +243,60 @@ describe('FilamentDetailComponent', () => {
     };
 
     beforeEach(() => {
-      imagesPanelStub = jasmine.createSpyObj<EntityImagesPanelComponent>(
-        'EntityImagesPanelComponent',
-        ['uploadStagedImages', 'retryFailedUploads'],
-        { hasStagedImages: jasmine.createSpy().and.returnValue(false) as never }
-      );
+      imagesPanelStub = {
+        uploadStagedImages: vi
+          .fn()
+          .mockName('EntityImagesPanelComponent.uploadStagedImages'),
+        retryFailedUploads: vi
+          .fn()
+          .mockName('EntityImagesPanelComponent.retryFailedUploads'),
+        hasStagedImages: vi.fn().mockReturnValue(false) as never,
+      } as unknown as MockedObject<EntityImagesPanelComponent>;
       // The real panel is a view child of a 1000-line template; swapping the
       // query out is far cheaper than driving the DOM to stage a file.
-      (component as unknown as { imagesPanel: () => unknown }).imagesPanel =
-        () => imagesPanelStub;
+      (
+        component as unknown as {
+          imagesPanel: () => unknown;
+        }
+      ).imagesPanel = () => imagesPanelStub;
 
       filamentService = TestBed.inject(
         FilamentService
-      ) as jasmine.SpyObj<FilamentService>;
-      filamentService.addFilament.and.returnValue(
+      ) as MockedObject<FilamentService>;
+      filamentService.addFilament.mockReturnValue(
         of({ id: 'new-filament-id' } as FilamentDetail)
       );
 
-      toastr = TestBed.inject(ToastrService) as jasmine.SpyObj<ToastrService>;
+      toastr = TestBed.inject(ToastrService) as MockedObject<ToastrService>;
 
       router = TestBed.inject(Router);
-      spyOn(router, 'navigateByUrl').and.resolveTo(true);
-      spyOn(router, 'navigate').and.resolveTo(true);
+      vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+      vi.spyOn(router, 'navigate').mockResolvedValue(true);
     });
 
     const stagedImages = (staged: boolean) =>
-      (
-        imagesPanelStub.hasStagedImages as unknown as jasmine.Spy
-      ).and.returnValue(staged);
+      (imagesPanelStub.hasStagedImages as unknown as Mock).mockReturnValue(
+        staged
+      );
 
     it('blocks navigation when images are staged but unsaved', () => {
       component.filamentForm.markAsPristine();
       stagedImages(true);
 
-      expect(component.canDeactivate()).toBeFalse();
+      expect(component.canDeactivate()).toBe(false);
     });
 
     it('allows navigation when the form is clean and nothing is staged', () => {
       component.filamentForm.markAsPristine();
       stagedImages(false);
 
-      expect(component.canDeactivate()).toBeTrue();
+      expect(component.canDeactivate()).toBe(true);
     });
 
     it('uploads staged images after creating a new filament, then navigates', async () => {
       setUpNewFilamentForm();
       stagedImages(true);
-      imagesPanelStub.uploadStagedImages.and.returnValue(
+      imagesPanelStub.uploadStagedImages.mockReturnValue(
         of({
           transientFailures: [],
           permanentFailures: [],
@@ -285,7 +316,7 @@ describe('FilamentDetailComponent', () => {
     it('writes the new id into the form so a retry does not create a second material', async () => {
       setUpNewFilamentForm();
       stagedImages(true);
-      imagesPanelStub.uploadStagedImages.and.returnValue(
+      imagesPanelStub.uploadStagedImages.mockReturnValue(
         of({
           transientFailures: [new File(['x'], 'spool.png')],
           permanentFailures: [],
@@ -299,7 +330,7 @@ describe('FilamentDetailComponent', () => {
       // Without this the form ID stays null and the next submit POSTs another
       // material.
       expect(component.filamentForm.get('id')!.value).toBe('new-filament-id');
-      expect(component.saving()).toBeFalse();
+      expect(component.saving()).toBe(false);
       expect(router.navigateByUrl).not.toHaveBeenCalled();
       expect(toastr.warning).toHaveBeenCalled();
     });
@@ -313,7 +344,7 @@ describe('FilamentDetailComponent', () => {
       setUpNewFilamentForm();
       stagedImages(true);
       // Never emits: the upload is still in flight for the whole test.
-      imagesPanelStub.uploadStagedImages.and.returnValue(new Subject());
+      imagesPanelStub.uploadStagedImages.mockReturnValue(new Subject());
 
       component.onSubmit();
 
@@ -324,7 +355,7 @@ describe('FilamentDetailComponent', () => {
     it('leaves the guard alone for its own post-save URL rewrite', async () => {
       setUpNewFilamentForm();
       stagedImages(true);
-      imagesPanelStub.uploadStagedImages.and.returnValue(
+      imagesPanelStub.uploadStagedImages.mockReturnValue(
         of({
           transientFailures: [new File(['x'], 'spool.png')],
           permanentFailures: [],
@@ -333,7 +364,7 @@ describe('FilamentDetailComponent', () => {
       );
 
       let guardAnswer: boolean | null = null;
-      (router.navigate as jasmine.Spy).and.callFake(() => {
+      (router.navigate as Mock).mockImplementation(() => {
         // The guard runs during the navigation, with photos still staged for
         // the retry. It must not prompt for a navigation the page started.
         guardAnswer = component.canDeactivate() as boolean;
@@ -347,9 +378,9 @@ describe('FilamentDetailComponent', () => {
         ['/filament', 'new-filament-id'],
         { replaceUrl: true }
       );
-      expect(guardAnswer).toBeTrue();
+      expect(guardAnswer).toBe(true);
       // Restored afterwards, or the rest of the page's life skips the check.
-      expect(component.canDeactivate()).toBeFalse();
+      expect(component.canDeactivate()).toBe(false);
     });
   });
 
@@ -396,7 +427,7 @@ describe('FilamentDetailComponent', () => {
 describe('FilamentDetailComponent - spool weight calculator', () => {
   let calcComponent: FilamentDetailComponent;
   let calcFixture: ComponentFixture<FilamentDetailComponent>;
-  let mockDialog: jasmine.SpyObj<MatDialog>;
+  let mockDialog: MockedObject<MatDialog>;
 
   const baseFilament = {
     id: 'filament-1',
@@ -412,35 +443,50 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
   };
 
   async function setup(filamentOverrides: Record<string, unknown>) {
-    mockDialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
+    mockDialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
 
-    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      {
-        getFilamentBrands: of({ brands: [] }),
-        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
-        getFilamentStorageLocations: of({ storageLocations: [] }),
-        addFilament: of({} as FilamentDetail),
-        updateFilament: of({} as FilamentDetail),
-      }
-    );
+    const mockFilamentService = {
+      getFilamentBrands: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBrands')
+        .mockReturnValue(of({ brands: [] })),
+      getFilamentPurchaseLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentPurchaseLocations')
+        .mockReturnValue(of({ purchaseLocations: [] })),
+      getFilamentStorageLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentStorageLocations')
+        .mockReturnValue(of({ storageLocations: [] })),
+      addFilament: vi
+        .fn()
+        .mockName('FilamentService.addFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+      updateFilament: vi
+        .fn()
+        .mockName('FilamentService.updateFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+    } as unknown as MockedObject<FilamentService>;
     stubImageTarget(mockFilamentService);
-    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-    ]);
-    const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['updateUserSetting']
-    );
-    const mockLog = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-      'logEvent',
-    ]);
+    const mockToastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+    };
+    const mockUserSettings = {
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
+    };
+    const mockLog = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-        RouterTestingModule,
+        RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
         MatInputModule,
@@ -483,12 +529,12 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 
   it('shows the calculator when saved, remaining known, and spool weight resolvable', async () => {
     await setup({});
-    expect(calcComponent.canShowSpoolCalculator).toBeTrue();
+    expect(calcComponent.canShowSpoolCalculator).toBe(true);
   });
 
   it('hides the calculator when filamentRemaining is null', async () => {
     await setup({ filamentRemaining: null });
-    expect(calcComponent.canShowSpoolCalculator).toBeFalse();
+    expect(calcComponent.canShowSpoolCalculator).toBe(false);
   });
 
   it('hides the calculator when spool weight cannot be resolved', async () => {
@@ -497,7 +543,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
       initialTotalWeightMg: 1000000,
       initialNominalWeightMg: 1000000,
     });
-    expect(calcComponent.canShowSpoolCalculator).toBeFalse();
+    expect(calcComponent.canShowSpoolCalculator).toBe(false);
   });
 
   it('renders the calculator button disabled while the form is dirty', async () => {
@@ -508,7 +554,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
     const button: HTMLButtonElement | null =
       calcFixture.nativeElement.querySelector('#spool-calc-button');
     expect(button).not.toBeNull();
-    expect(button!.disabled).toBeTrue();
+    expect(button!.disabled).toBe(true);
   });
 
   it('exposes a save-first tooltip when dirty and a help tooltip when pristine', async () => {
@@ -530,7 +576,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 
   it('appends a fully-formed weight adjustment row, logs, and marks the form dirty on confirm', async () => {
     await setup({});
-    mockDialog.open.and.returnValue({
+    mockDialog.open.mockReturnValue({
       afterClosed: () =>
         of({
           adjustmentG: -200,
@@ -554,9 +600,9 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
     expect(added.get('volumeMl')!.value).toBeNull();
     expect(added.get('filamentId')!.value).toBe('filament-1');
     expect(added.get('notes')!.value).toBe('measured note');
-    expect(calcComponent.filamentForm.dirty).toBeTrue();
+    expect(calcComponent.filamentForm.dirty).toBe(true);
 
-    const logSpy = TestBed.inject(LoggingService).logEvent as jasmine.Spy;
+    const logSpy = TestBed.inject(LoggingService).logEvent as Mock;
     expect(logSpy).toHaveBeenCalledWith(
       'SpoolWeightCalculator_AdjustmentAdded',
       {
@@ -568,7 +614,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 
   it('does nothing when the dialog is cancelled', async () => {
     await setup({});
-    mockDialog.open.and.returnValue({
+    mockDialog.open.mockReturnValue({
       afterClosed: () => of(undefined),
     } as MatDialogRef<unknown>);
 
@@ -583,7 +629,7 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 
     calcComponent.printQrLabel();
 
-    const data = mockDialog.open.calls.mostRecent().args[1]
+    const data = vi.mocked(mockDialog.open).mock.lastCall[1]
       ?.data as QrLabelDialogData;
     expect(data.filaments[0].spoolNumber).toBe(7);
   });
@@ -592,8 +638,8 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 describe('FilamentDetailComponent - value serialization', () => {
   let serComponent: FilamentDetailComponent;
   let serFixture: ComponentFixture<FilamentDetailComponent>;
-  let mockFilamentSvc: jasmine.SpyObj<FilamentService>;
-  let mockToastr: jasmine.SpyObj<ToastrService>;
+  let mockFilamentSvc: MockedObject<FilamentService>;
+  let mockToastr: MockedObject<ToastrService>;
 
   const baseFilament = {
     id: 'filament-1',
@@ -610,31 +656,47 @@ describe('FilamentDetailComponent - value serialization', () => {
   async function setupSerialization(
     filamentOverrides: Record<string, unknown>
   ) {
-    mockFilamentSvc = jasmine.createSpyObj<FilamentService>('FilamentService', {
-      getFilamentBrands: of({ brands: [] }),
-      getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
-      getFilamentStorageLocations: of({ storageLocations: [] }),
-      addFilament: of({} as never),
-      updateFilament: of({} as never),
-    });
+    mockFilamentSvc = {
+      getFilamentBrands: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBrands')
+        .mockReturnValue(of({ brands: [] })),
+      getFilamentPurchaseLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentPurchaseLocations')
+        .mockReturnValue(of({ purchaseLocations: [] })),
+      getFilamentStorageLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentStorageLocations')
+        .mockReturnValue(of({ storageLocations: [] })),
+      addFilament: vi
+        .fn()
+        .mockName('FilamentService.addFilament')
+        .mockReturnValue(of({} as never)),
+      updateFilament: vi
+        .fn()
+        .mockName('FilamentService.updateFilament')
+        .mockReturnValue(of({} as never)),
+    } as unknown as MockedObject<FilamentService>;
     stubImageTarget(mockFilamentSvc);
-    mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['updateUserSetting']
-    );
-    const mockLog = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-      'logEvent',
-    ]);
+    mockToastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    const mockUserSettings = {
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
+    };
+    const mockLog = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-        RouterTestingModule,
+        RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
         MatInputModule,
@@ -676,8 +738,8 @@ describe('FilamentDetailComponent - value serialization', () => {
 
   // Returns the FilamentDetail passed to updateFilament on the most recent save.
   function savedFilament(): any {
-    const spy = mockFilamentSvc.updateFilament as jasmine.Spy;
-    return spy.calls.mostRecent().args[0];
+    const spy = mockFilamentSvc.updateFilament as Mock;
+    return vi.mocked(spy).mock.lastCall[0];
   }
 
   it('drops a new untouched adjustment row', async () => {
@@ -850,7 +912,7 @@ describe('FilamentDetailComponent - value serialization', () => {
 
       serComponent.onSubmit();
 
-      expect('tagUids' in savedFilament()).toBeFalse();
+      expect('tagUids' in savedFilament()).toBe(false);
     });
 
     // The page stays on a material whose photos failed to upload, so the next
@@ -883,7 +945,7 @@ describe('FilamentDetailComponent - value serialization', () => {
 
     it('names the spool that already holds a tag when the save conflicts', async () => {
       await setupSerialization({ tagUids: [] });
-      mockFilamentSvc.updateFilament.and.returnValue(
+      mockFilamentSvc.updateFilament.mockReturnValue(
         throwError(() => conflict())
       );
       serComponent.filamentForm.get('tagUids')!.setValue(['04A23F11']);
@@ -891,7 +953,7 @@ describe('FilamentDetailComponent - value serialization', () => {
       serComponent.onSubmit();
       serFixture.detectChanges();
 
-      expect(serComponent.saving()).toBeFalse();
+      expect(serComponent.saving()).toBe(false);
       const message = (serFixture.nativeElement as HTMLElement).querySelector(
         '[data-testid="tag-uid-conflict"]'
       );
@@ -904,7 +966,7 @@ describe('FilamentDetailComponent - value serialization', () => {
 
     it('clears the conflict once the tags change', async () => {
       await setupSerialization({ tagUids: [] });
-      mockFilamentSvc.updateFilament.and.returnValue(
+      mockFilamentSvc.updateFilament.mockReturnValue(
         throwError(() => conflict())
       );
       serComponent.filamentForm.get('tagUids')!.setValue(['04A23F11']);
@@ -944,41 +1006,54 @@ describe('FilamentDetailComponent - usage panels', () => {
   };
 
   async function setup(filamentOverrides: Record<string, unknown> = {}) {
-    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      {
-        getFilamentBrands: of({ brands: [] }),
-        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
-        getFilamentStorageLocations: of({ storageLocations: [] }),
-        addFilament: of({} as FilamentDetail),
-        updateFilament: of({} as FilamentDetail),
-      }
-    );
+    const mockFilamentService = {
+      getFilamentBrands: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBrands')
+        .mockReturnValue(of({ brands: [] })),
+      getFilamentPurchaseLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentPurchaseLocations')
+        .mockReturnValue(of({ purchaseLocations: [] })),
+      getFilamentStorageLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentStorageLocations')
+        .mockReturnValue(of({ storageLocations: [] })),
+      addFilament: vi
+        .fn()
+        .mockName('FilamentService.addFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+      updateFilament: vi
+        .fn()
+        .mockName('FilamentService.updateFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+    } as unknown as MockedObject<FilamentService>;
     stubImageTarget(mockFilamentService);
-    const mockToastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-    ]);
-    const mockUserSettings = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['updateUserSetting']
-    );
-    const mockLog = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-      'logEvent',
-    ]);
-    const mockPrintService = jasmine.createSpyObj<PrintService>(
-      'PrintService',
-      ['getPrintSummaries', 'getPrintImage']
-    );
-    mockPrintService.getPrintSummaries.and.returnValue(
+    const mockToastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+    };
+    const mockUserSettings = {
+      addOrUpdateSetting: vi
+        .fn()
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
+    };
+    const mockLog = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
+    const mockPrintService = {
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      getPrintImage: vi.fn().mockName('PrintService.getPrintImage'),
+    };
+    mockPrintService.getPrintSummaries.mockReturnValue(
       of({ items: [], paging: { totalCount: 0 } } as never)
     );
-    mockPrintService.getPrintImage.and.returnValue(of(''));
+    mockPrintService.getPrintImage.mockReturnValue(of(''));
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-        RouterTestingModule,
+        RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
         MatInputModule,
@@ -1046,7 +1121,7 @@ describe('FilamentDetailComponent - usage panels', () => {
   it('does not mark the form dirty when the cards render', async () => {
     await setup();
     // A false dirty state would trip pendingChangesGuard and block navigation.
-    expect(usageComponent.filamentForm.dirty).toBeFalse();
+    expect(usageComponent.filamentForm.dirty).toBe(false);
   });
 
   it('projects the server value while the form is untouched', async () => {
@@ -1090,7 +1165,7 @@ describe('FilamentDetailComponent - usage panels', () => {
  */
 describe('FilamentDetailComponent scanned tag', () => {
   let fixture: ComponentFixture<FilamentDetailComponent>;
-  let service: jasmine.SpyObj<FilamentService>;
+  let service: MockedObject<FilamentService>;
 
   afterEach(() => history.replaceState(null, ''));
 
@@ -1109,23 +1184,34 @@ describe('FilamentDetailComponent scanned tag', () => {
           },
       ''
     );
-    const mockFilamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      {
-        getFilamentBrands: of({ brands: [] }),
-        getFilamentPurchaseLocations: of({ purchaseLocations: [] }),
-        getFilamentStorageLocations: of({ storageLocations: [] }),
-        addFilament: of({} as FilamentDetail),
-        updateFilament: of({} as FilamentDetail),
-      }
-    );
+    const mockFilamentService = {
+      getFilamentBrands: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBrands')
+        .mockReturnValue(of({ brands: [] })),
+      getFilamentPurchaseLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentPurchaseLocations')
+        .mockReturnValue(of({ purchaseLocations: [] })),
+      getFilamentStorageLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentStorageLocations')
+        .mockReturnValue(of({ storageLocations: [] })),
+      addFilament: vi
+        .fn()
+        .mockName('FilamentService.addFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+      updateFilament: vi
+        .fn()
+        .mockName('FilamentService.updateFilament')
+        .mockReturnValue(of({} as FilamentDetail)),
+    } as unknown as MockedObject<FilamentService>;
     stubImageTarget(mockFilamentService);
     service = mockFilamentService;
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-        RouterTestingModule,
+        RouterTestingModule.withRoutes(ANYWHERE),
         MatNativeDateModule,
         FilamentDetailComponent,
       ],
@@ -1133,20 +1219,25 @@ describe('FilamentDetailComponent scanned tag', () => {
         { provide: FilamentService, useValue: mockFilamentService },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj('ToastrService', ['success']),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+          },
         },
         {
           provide: UserSettingService,
-          useValue: jasmine.createSpyObj('UserSettingService', [
-            'updateUserSetting',
-          ]),
+          useValue: {
+            addOrUpdateSetting: vi
+              .fn()
+              .mockName('UserSettingService.addOrUpdateSetting')
+              .mockReturnValue(new Promise(() => {})),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', [
-            'logException',
-            'logEvent',
-          ]),
+          useValue: {
+            logException: vi.fn().mockName('LoggingService.logException'),
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
         { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
         {
@@ -1179,7 +1270,7 @@ describe('FilamentDetailComponent scanned tag', () => {
     await setup('04:a2:3f:11');
 
     expect(tagUids()).toEqual(['04A23F11']);
-    expect(fixture.componentInstance.filamentForm.dirty).toBeTrue();
+    expect(fixture.componentInstance.filamentForm.dirty).toBe(true);
   });
 
   it('ignores a malformed tag', async () => {
@@ -1320,7 +1411,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.addFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.addFilament).mock.lastCall[0];
       expect(sent.brand).toBe('Other brand');
       expect(sent.colors).toEqual(['112233']);
       expect(sent.tagUids).toEqual(['805BEC3E']);
@@ -1338,7 +1429,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.addFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.addFilament).mock.lastCall[0];
       expect(sent.tagReadings).toEqual([
         { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
       ]);
@@ -1358,7 +1449,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.addFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.addFilament).mock.lastCall[0];
       expect(sent.spoolWeightMg).toBe(200000);
       expect(sent.tagReadings).toEqual([
         { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
@@ -1380,7 +1471,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.addFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.addFilament).mock.lastCall[0];
       expect(sent.catalogEntryId).toBeUndefined();
     });
 
@@ -1426,7 +1517,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
         fixture.componentInstance.onSubmit();
 
-        const sent = service.addFilament.calls.mostRecent().args[0];
+        const sent = vi.mocked(service.addFilament).mock.lastCall[0];
         expect(sent.materialType).toBe('PLA (Polylactic Acid)');
         expect(sent.catalogEntryId).toBe('cat-1');
       });
@@ -1457,7 +1548,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.addFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.addFilament).mock.lastCall[0];
       expect(sent.tagReadings).toBeUndefined();
       expect(sent.catalogEntryId).toBeUndefined();
     });
@@ -1481,8 +1572,12 @@ describe('FilamentDetailComponent scanned tag', () => {
     const tagList = () =>
       fixture.debugElement.query(By.directive(FilamentTagUidsComponent))
         .componentInstance as FilamentTagUidsComponent;
-    const scanned = (...readings: { uid: string; reading: TagReading }[]) =>
-      tagList().readingsChange.emit(readings);
+    const scanned = (
+      ...readings: {
+        uid: string;
+        reading: TagReading;
+      }[]
+    ) => tagList().readingsChange.emit(readings);
     const control = (name: string) =>
       fixture.componentInstance.filamentForm.get(name)!;
 
@@ -1496,7 +1591,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.updateFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.updateFilament).mock.lastCall[0];
       expect(sent.tagReadings).toEqual([
         { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
       ]);
@@ -1510,7 +1605,7 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.updateFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.updateFilament).mock.lastCall[0];
       expect(sent.tagReadings).toBeUndefined();
     });
 
@@ -1528,11 +1623,142 @@ describe('FilamentDetailComponent scanned tag', () => {
 
       fixture.componentInstance.onSubmit();
 
-      const sent = service.addFilament.calls.mostRecent().args[0];
+      const sent = vi.mocked(service.addFilament).mock.lastCall[0];
       expect(sent.tagReadings).toEqual([
         { uid: '805BEC3E', reading: SNAPMAKER_805BEC3E },
         { uid: '04A23F11', reading: PETG },
       ]);
     });
+  });
+});
+
+describe('FilamentDetailComponent - autocomplete options', () => {
+  let component: FilamentDetailComponent;
+  let routeData: BehaviorSubject<Record<string, unknown>>;
+
+  const pla: Material = {
+    id: 'm-pla',
+    acronym: 'PLA',
+    name: 'Polylactic Acid',
+    materialCategoryNickname: 'filament',
+    densityGramPerCubicCm: 1.24,
+  };
+  const petg: Material = {
+    id: 'm-petg',
+    acronym: 'PETG',
+    name: 'Polyethylene Terephthalate Glycol',
+    materialCategoryNickname: 'filament',
+    densityGramPerCubicCm: 1.27,
+  };
+
+  function dataFor(materials: Material[]) {
+    return {
+      filament: { id: 'filament-1', colors: [], filamentAdjustments: [] },
+      materials,
+      materialCategories: [],
+    };
+  }
+
+  async function setup() {
+    const filamentSvc = {
+      getFilamentBrands: vi
+        .fn()
+        .mockName('FilamentService.getFilamentBrands')
+        .mockReturnValue(of({ brands: ['Prusament', 'Polymaker'] })),
+      getFilamentPurchaseLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentPurchaseLocations')
+        .mockReturnValue(of({ purchaseLocations: ['Amazon'] })),
+      getFilamentStorageLocations: vi
+        .fn()
+        .mockName('FilamentService.getFilamentStorageLocations')
+        .mockReturnValue(
+          of({
+            storageLocations: ['Shelf A', 'Dry box'],
+          })
+        ),
+    };
+    stubImageTarget(filamentSvc);
+    routeData = new BehaviorSubject<Record<string, unknown>>(
+      dataFor([pla, petg])
+    );
+
+    await TestBed.configureTestingModule({
+      imports: [
+        RouterTestingModule.withRoutes(ANYWHERE),
+        MatNativeDateModule,
+        FilamentDetailComponent,
+      ],
+      providers: [
+        { provide: FilamentService, useValue: filamentSvc },
+        {
+          provide: ToastrService,
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+          },
+        },
+        {
+          provide: UserSettingService,
+          useValue: {
+            x: vi.fn().mockName('UserSettingService.x'),
+          },
+        },
+        {
+          provide: LoggingService,
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+            logException: vi.fn().mockName('LoggingService.logException'),
+          },
+        },
+        { provide: MAT_DATE_LOCALE, useValue: 'en-US' },
+        { provide: ActivatedRoute, useValue: { data: routeData } },
+      ],
+    }).compileComponents();
+
+    const fixture = TestBed.createComponent(FilamentDetailComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  }
+
+  it('offers every option at first, then those matching what is typed', async () => {
+    await setup();
+
+    expect(component.filteredFilamentBrands()).toEqual([
+      'Polymaker',
+      'Prusament',
+    ]);
+    expect(component.filteredMaterials().map((m) => m.id)).toEqual([
+      'm-pla',
+      'm-petg',
+    ]);
+
+    component.filamentForm.get('brand')!.setValue('prus');
+    component.filamentForm.get('storageLocation')!.setValue('dry');
+    component.filamentForm.get('materialType')!.setValue('petg');
+
+    expect(component.filteredFilamentBrands()).toEqual(['Prusament']);
+    expect(component.filteredFilamentStorageLocations()).toEqual(['Dry box']);
+    expect(component.filteredMaterials().map((m) => m.id)).toEqual(['m-petg']);
+  });
+
+  it("fills in a picked material type's density", async () => {
+    await setup();
+
+    component.filamentForm
+      .get('materialType')!
+      .setValue(new MaterialNamePipe().transform(petg));
+
+    expect(
+      component.filamentForm.get('materialDensityGramPerCubicCm')!.value
+    ).toBe(1.27);
+  });
+
+  it('starts over with the new materials when the route data changes', async () => {
+    await setup();
+    component.filamentForm.get('materialType')!.setValue('petg');
+
+    routeData.next(dataFor([pla]));
+
+    expect(component.filteredMaterials().map((m) => m.id)).toEqual(['m-pla']);
   });
 });

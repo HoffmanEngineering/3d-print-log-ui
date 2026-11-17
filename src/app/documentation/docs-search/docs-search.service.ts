@@ -25,8 +25,8 @@ const MAX_RESULTS = 12;
  * overwhelming majority of docs visitors never search — putting either in the
  * eager bundle would undo the bundle-splitting work this app already did.
  *
- * Not provided in root: it belongs to DocumentationModule, so the class itself
- * is in the lazy docs chunk rather than the main one.
+ * Not provided in root: the /docs route provides it (documentation.routes.ts),
+ * so the class itself is in the lazy docs chunk rather than the main one.
  */
 @Injectable()
 export class DocsSearchService {

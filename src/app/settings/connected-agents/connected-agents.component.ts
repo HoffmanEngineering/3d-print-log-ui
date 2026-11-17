@@ -14,11 +14,14 @@ import {
   ConnectedAgentsService,
 } from '../../core/services/connected-agents.service';
 import { LoggingService } from '../../core/services/logging.service';
+import { PairedDevicesComponent } from './paired-devices/paired-devices.component';
 
 type LoadStatus = 'loading' | 'ready' | 'error';
 
 /**
- * Lists the user's connected AI agents and lets them disconnect all of them.
+ * Lists the user's connected AI agents and lets them disconnect all of them, then the devices
+ * paired with the account (`PairedDevicesComponent`), which are a separate list with their own
+ * per-device revoke.
  *
  * The MCP integration uses a single shared OAuth client, so revocation is per user
  * (not per AI product/device). The UI therefore offers a single "Disconnect all"
@@ -28,7 +31,12 @@ type LoadStatus = 'loading' | 'ready' | 'error';
   selector: 'app-connected-agents',
   templateUrl: './connected-agents.component.html',
   styleUrl: './connected-agents.component.scss',
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    PairedDevicesComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConnectedAgentsComponent implements OnInit {

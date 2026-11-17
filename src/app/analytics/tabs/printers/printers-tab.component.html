@@ -32,6 +32,7 @@
     <app-printer-comparison
       [rows]="data()?.printers ?? []"
       [currency]="data()?.currency ?? null"
+      [resinPrinterIds]="resinPrinterIds()"
       [layout]="comparisonLayout()"
       (printerSelect)="onPrinterSelect($event)"
     />

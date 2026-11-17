@@ -1,0 +1,68 @@
+// The theme is Material 2: colors come from the --app-* tokens and --mat-divider-color.
+
+:host {
+  display: block;
+}
+
+// Set apart from the AI assistants list above it.
+h3 {
+  margin-top: 24px;
+}
+
+.intro {
+  color: var(--app-text-secondary);
+}
+
+.device-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.device-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 8px 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--mat-divider-color);
+  }
+}
+
+.device-icon {
+  flex: none;
+  color: var(--app-text-secondary);
+}
+
+.identity {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.name {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  font-size: 0.875rem;
+  color: var(--app-text-secondary);
+}
+
+time[title] {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+  cursor: help;
+}
+
+button {
+  flex: none;
+}

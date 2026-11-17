@@ -1,5 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { RedirectCommand, Router, UrlTree } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { UserDetailDto, UserService } from 'src/app/core/services/user.service';
 import {
@@ -10,16 +11,23 @@ import {
 import { userDetailResolver } from './user-detail.resolver';
 
 describe('userDetailResolver', () => {
-  let userService: jasmine.SpyObj<UserService>;
-  let router: jasmine.SpyObj<Router>;
+  let userService: MockedObject<UserService>;
+  let router: MockedObject<Router>;
 
   const routeFor = (id: string) => routeSnapshot({ params: { id } });
 
   beforeEach(() => {
-    userService = jasmine.createSpyObj<UserService>('UserService', [
-      'getUserDetail',
-    ]);
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    userService = {
+      getUserDetail: vi.fn().mockName('UserService.getUserDetail'),
+    } as unknown as MockedObject<UserService>;
+    router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+      createUrlTree: vi.fn().mockName('Router.createUrlTree'),
+    } as unknown as MockedObject<Router>;
+    router.createUrlTree.mockImplementation(
+      (commands: unknown[]) =>
+        ({ toString: () => commands.join('/') }) as unknown as UrlTree
+    );
     TestBed.configureTestingModule({
       providers: [
         { provide: UserService, useValue: userService },
@@ -30,31 +38,55 @@ describe('userDetailResolver', () => {
 
   it('resolves the user named by the id param', async () => {
     const user = { id: 12 } as UserDetailDto;
-    userService.getUserDetail.and.returnValue(of(user));
+    userService.getUserDetail.mockReturnValue(of(user));
 
-    await expectAsync(
+    await expect(
       resolveValue(userDetailResolver, routeFor('12'))
-    ).toBeResolvedTo(user);
-    expect(userService.getUserDetail).toHaveBeenCalledOnceWith(12);
+    ).resolves.toEqual(user);
+    expect(userService.getUserDetail).toHaveBeenCalledTimes(1);
+    expect(userService.getUserDetail).toHaveBeenCalledWith(12);
   });
 
   it('sends the visitor to the not-found page when the user cannot be loaded', () => {
-    userService.getUserDetail.and.returnValue(
+    userService.getUserDetail.mockReturnValue(
       throwError(() => ({ status: 404 }))
     );
-    const emitted = jasmine.createSpy('next');
-    const completed = jasmine.createSpy('complete');
+    const emitted = vi.fn();
+    const completed = vi.fn();
 
     (
       runResolver(userDetailResolver, routeFor('12')) as Observable<unknown>
     ).subscribe({ next: emitted, complete: completed });
 
-    expect(router.navigate).toHaveBeenCalledOnceWith(['/users', 'not-found']);
+    expect(router.navigate).toHaveBeenCalledTimes(1);
+
+    expect(router.navigate).toHaveBeenCalledWith(['/users', 'not-found']);
     expect(emitted).not.toHaveBeenCalled();
     expect(completed).toHaveBeenCalled();
   });
 
-  it('returns null when the id is not a number', () => {
-    expect(runResolver(userDetailResolver, routeFor('abc'))).toBeNull();
+  // The profile dereferences the user unconditionally, so a null resolve crashed it ("Cannot
+  // read properties of null (reading 'coverPicture')"). Send the visitor to not-found instead.
+  it.each(['abc', '1.5', 'undefined'])(
+    'redirects to the not-found page when the id is %s',
+    (id) => {
+      const result = runResolver(userDetailResolver, routeFor(id));
+
+      expect(result).toBeInstanceOf(RedirectCommand);
+      expect(router.createUrlTree).toHaveBeenCalledWith([
+        '/users',
+        'not-found',
+      ]);
+      expect(userService.getUserDetail).not.toHaveBeenCalled();
+    }
+  );
+
+  it('redirects to the not-found page when the user comes back empty', async () => {
+    userService.getUserDetail.mockReturnValue(of(null as never));
+
+    await expect(
+      resolveValue(userDetailResolver, routeFor('12'))
+    ).resolves.toBeInstanceOf(RedirectCommand);
+    expect(router.createUrlTree).toHaveBeenCalledWith(['/users', 'not-found']);
   });
 });

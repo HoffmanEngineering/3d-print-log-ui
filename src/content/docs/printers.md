@@ -6,7 +6,7 @@ navLabel: Printers
 group: features
 order: 40
 mode: how-to
-updated: 2026-10-15
+updated: 2026-10-30
 related: [prints]
 ---
 
@@ -126,6 +126,22 @@ every slot in order (T0, T1, T2 and so on, or the names the printer reports).
 Saving a new print doesn't change a multi-slot printer's slots. The slots
 already say what is loaded.
 
+#### Material Usage marked "Other" {#other_rows}
+
+When a connection such as the 3D Print Log bridge logs a print but doesn't know
+which roll is in a slot, that slot's Material Usage row shows as **Other**, with
+its estimate and a note on the color and material the printer reported there.
+Either way of fixing it links the row:
+
+- **Load the roll in that slot** while the print is still printing. The newest
+  print that is still printing on that printer takes it for its **Other** row
+  on that slot. Finished prints are never changed.
+- **Pick the roll on the print.** Edit the print, pick the roll for the
+  **Other** row, and save. On a printer with more than one slot, the roll is
+  then loaded in the slot that row came from, when the print is still printing
+  or is the printer's latest print. Editing an older print doesn't change
+  what's loaded now.
+
 ---
 
 ### Connections {#connections}
@@ -134,13 +150,23 @@ A connection is a program on your printer, such as the 3D Print Log bridge,
 that logs your prints automatically. A printer's **Edit Page** lists its
 connections, with:
 
-- **Name and type**, such as "Klipper (Moonraker)", and the version it runs.
+- **Name and type**, such as "Klipper (Moonraker)", "Bambu Lab (LAN)" or
+  "PrusaLink", and the version it runs.
+- **The printer's software**, as the connection last reported it: the firmware
+  (such as Klipper or Prusa-Firmware-Buddy) and the software on the printer's
+  host (such as Moonraker or PrusaLink), with their versions.
 - **Status** — **Online** while the connection checks in, or **Stale** after
   15 minutes without hearing from it. If it stays stale, check that the
   printer and the program are running and online.
 - **Last seen** — when it last checked in.
 - **A newer version**, when one is out: "printlog-bridge 0.2.0 is available",
   linking to [how to update it](/docs/printlog-bridge#update).
+
+A filament printer with no connections shows **Connect this printer**
+instead. Pick the kind of printer (Klipper / Moonraker, Bambu Lab, Prusa
+with PrusaLink, OctoPrint, Elegoo Centauri Carbon, Duet, FlashForge, or Anycubic) to see the steps and a config section for
+[printlog-bridge](/docs/printlog-bridge) with the printer's number filled in,
+ready to copy.
 
 To remove a connection, click its <mat-icon inline="true">delete</mat-icon>
 button and confirm. The prints it already logged are kept. Only the link to the

@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -36,8 +36,25 @@ jobs:
       - name: Lint
         run: npm run lint:brief
 
-      - name: Test
-        run: npm run test:ci
+      # The unit tests run in Playwright's Chromium (Vitest browser mode), which npm ci
+      # does not download.
+      - name: Install the unit tests' browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Test, with coverage
+        run: npm run test:coverage
+
+      # The totals go on the run's summary page; the HTML report, file by file and
+      # line by line (templates included), is downloadable from the run.
+      - name: Coverage summary
+        run: node scripts/coverage-summary.mjs
+
+      - name: Upload the coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/print-log-ui/
+          retention-days: 14
 
       - name: Script unit tests (sitemap, security headers)
         run: npm run test:scripts
@@ -78,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Wrangler, Miniflare and Vitest 5 need Node 22; the app's jobs stay on 20.
+      # Wrangler, Miniflare and Vitest 5 need Node 22, as does the app (Angular 22).
       - name: Setup Node
         uses: actions/setup-node@v7
         with:

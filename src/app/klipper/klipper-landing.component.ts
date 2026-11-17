@@ -11,7 +11,6 @@ import { siteUrl, ogImage } from '../slicer/slicer-configs';
 import { BRIDGE_REPO_URL, KLIPPER_LANDING } from './klipper-landing-content';
 
 @Component({
-  // standalone is the Angular 21 default; per repo convention do NOT set `standalone: true`.
   selector: 'app-klipper-landing',
   imports: [RouterLink],
   templateUrl: './klipper-landing.component.html',

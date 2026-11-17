@@ -3,13 +3,13 @@ import {
   Component,
   DestroyRef,
   ElementRef,
-  OnChanges,
   OnInit,
-  SimpleChanges,
+  effect,
   input,
   viewChildren,
   inject,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -23,11 +23,6 @@ import {
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
 import { toSortHeaderIds } from '../../core/utils/sort-header-ids';
-import {
-  DefaultLayoutDirective,
-  DefaultFlexDirective,
-  DefaultLayoutGapDirective,
-} from '@ngbracket/ngx-layout/flex';
 import { MatFormField, MatLabel } from '@angular/material/form-field';
 import { MatInput } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
@@ -42,9 +37,6 @@ import { MatCard } from '@angular/material/card';
   styleUrls: ['./user-prints.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    DefaultLayoutDirective,
-    DefaultFlexDirective,
-    DefaultLayoutGapDirective,
     MatFormField,
     MatLabel,
     MatInput,
@@ -56,7 +48,7 @@ import { MatCard } from '@angular/material/card';
     MatCard,
   ],
 })
-export class UserPrintsComponent implements OnChanges, OnInit {
+export class UserPrintsComponent implements OnInit {
   private readonly printService = inject(PrintService);
   private readonly router = inject(Router);
   private readonly activatedRoute = inject(ActivatedRoute);
@@ -85,6 +77,8 @@ export class UserPrintsComponent implements OnChanges, OnInit {
   public debouncedUpdateFilter;
 
   readonly showLoadMore = signal(true);
+  /** The search the list was last requested with. */
+  private loadedSearch = '';
   printListSubscription: Subscription;
 
   constructor() {
@@ -96,38 +90,54 @@ export class UserPrintsComponent implements OnChanges, OnInit {
         relativeTo: this.activatedRoute,
       });
     }, 400);
+
+    // A new user resets the filters. The first run keeps them: searchText may
+    // already hold the ?searchText from ngOnInit, which this effect can run
+    // either side of.
+    let firstUser = true;
+    effect(() => {
+      this.userId();
+      untracked(() => {
+        if (!firstUser) {
+          this.searchText.set('');
+          this.filterByStatus.set(null);
+        }
+        firstUser = false;
+        this.applyFilter();
+      });
+    });
   }
 
   ngOnInit() {
     this.activatedRoute.queryParamMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
-        if (params.has('searchText')) {
-          this.searchText.set(params.get('searchText'));
-          this.clearPrints();
-          this.pageNumber = 1;
-          this.updateFilter();
+        // Clearing the box removes the param, so its absence is a change too.
+        const search = params.get('searchText') ?? '';
+        if (search !== this.loadedSearch) {
+          this.searchText.set(search);
+          this.applyFilter();
         }
       });
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes.userId) {
-      this.searchText.set('');
-      this.filterByStatus.set(null);
-      this.clearPrints();
-      this.updateFilter();
-    }
   }
 
   public clearPrints() {
     this.prints.set([]);
   }
+
+  /** Starts the list over from the first page, for a new filter or user. */
+  public applyFilter(): Promise<void> {
+    this.pageNumber = 1;
+    this.clearPrints();
+    return this.updateFilter();
+  }
+
   public async updateFilter(): Promise<void> {
     return new Promise((resolve) => {
       if (this.printListSubscription) {
         this.printListSubscription.unsubscribe();
       }
+      this.loadedSearch = this.searchText();
       this.printListSubscription = this.printService
         .getPrintSummaries(
           this.pageNumber,

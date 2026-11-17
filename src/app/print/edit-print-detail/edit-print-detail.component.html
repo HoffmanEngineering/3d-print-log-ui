@@ -1,10 +1,5 @@
-<div
-  fxLayout="row"
-  fxLayoutAlign="center start"
-  fxLayoutGap="24px"
-  data-cy="capture-print-form"
->
-  <mat-card appearance="outlined" fxFlex="800px" fxFlex.lt-md="100%">
+<div class="page" data-cy="capture-print-form">
+  <mat-card class="print-card" appearance="outlined">
     @if (onboardingMode() && printForm.get('id').value === null) {
       <div class="onboarding-strip">
         <span>Getting started · Log your first print</span>
@@ -12,18 +7,16 @@
       </div>
     }
     <form
+      class="print-form"
       [formGroup]="printForm"
       (ngSubmit)="onSubmit()"
       autocomplete="off"
-      fxLayout="column"
-      fxLayoutAlign="start center"
-      fxLayoutGap="10px"
     >
-      <mat-card-title fxFlex="grow"
+      <mat-card-title class="grow"
         >{{ this.printForm.get('id').value !== null ? 'Edit' : 'Add' }} 3D
         Print</mat-card-title
       >
-      <div fxFlex="grow">
+      <div class="grow">
         <input
           #imgFileInput
           style="display: none"
@@ -80,9 +73,9 @@
             (indexChange)="onCarouselIndexChange($event)"
           >
             @if (selectedImage && selectedImage.value) {
-              <div fxFlex class="card-img-top main-image">
+              <div class="card-img-top main-image image-slot">
                 <app-print-image
-                  fxFlex
+                  class="image"
                   [printId]="printForm.get('id').value"
                   [imageId]="selectedImage.value.id"
                   [imageData]="selectedImage.value.url"
@@ -95,8 +88,8 @@
         </div>
         <app-image-thumbnail-strip
           [images]="cachedImagesForStrip"
-          [selectedId]="selectedImage?.value?.id"
-          [selectedUrl]="selectedImage?.value?.url"
+          [selectedId]="$safeNavigationMigration(selectedImage?.value?.id)"
+          [selectedUrl]="$safeNavigationMigration(selectedImage?.value?.url)"
           [editable]="true"
           [maxImages]="maxImages()"
           (imageSelected)="onThumbnailSelected($event)"
@@ -106,13 +99,8 @@
           (addClicked)="(useCaptureInput ? cameraInput : imgFileInput).click()"
         />
       </div>
-      <mat-card-content
-        fxFlex="grow"
-        fxFlexFill
-        fxLayout="column"
-        fxLayoutAlign="space-evenly center"
-      >
-        <mat-form-field fxFlex="grow" fxFlexFill>
+      <mat-card-content class="print-fields">
+        <mat-form-field class="field">
           <mat-label> Title</mat-label>
           <input
             id="edit-print-title"
@@ -133,14 +121,14 @@
           }
         </mat-form-field>
         @if (printers.length === 0) {
-          <div class="add-first-printer" fxFlex="grow" fxFlexFill>
+          <div class="add-first-printer field">
             <span>Add the printer you printed this on</span>
             <button type="button" mat-stroked-button (click)="openAddPrinter()">
               Add printer
             </button>
           </div>
         } @else {
-          <mat-form-field fxFlex="grow" fxFlexFill>
+          <mat-form-field class="field">
             <mat-label> Printer</mat-label>
             <mat-select
               formControlName="printerId"
@@ -169,10 +157,8 @@
         }
         @if (detectedPrinterHint(); as detected) {
           <div
-            class="detected-printer-hint"
+            class="detected-printer-hint field"
             data-testid="detected-printer-hint"
-            fxFlex="grow"
-            fxFlexFill
           >
             <span>Detected: {{ detected.make }} {{ detected.model }}</span>
             <button
@@ -185,20 +171,14 @@
           </div>
         }
         <app-project-selector
-          fxFlex="grow"
-          fxFlexFill
+          class="field"
           [initialProjectId]="printDetail?.projectId ?? null"
           [initialProjectName]="printDetail?.projectName ?? null"
           (projectSelected)="onProjectSelected($event)"
         />
-        <div fxFlex="grow" fxFlexFill>
-          <div
-            class="input-row desktop-margin-offset"
-            fxLayout="row"
-            fxLayoutGap="10px"
-            fxLayout.lt-md="column"
-          >
-            <mat-form-field fxFlex="60" fxFlex.lt-md="100">
+        <div class="field inline-row">
+          <div class="input-row desktop-margin-offset date-row">
+            <mat-form-field class="start-date">
               <mat-label>Start Date</mat-label>
               <input
                 matInput
@@ -218,7 +198,7 @@
               ></mat-datepicker-toggle>
               <mat-datepicker #startDatePicker></mat-datepicker>
             </mat-form-field>
-            <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+            <mat-form-field class="start-time">
               <mat-label>Start Time</mat-label>
               <input
                 matInput
@@ -231,7 +211,7 @@
             </mat-form-field>
           </div>
           <button
-            fxFlex
+            class="share"
             style="margin-top: 0px; height: 56px"
             mat-stroked-button
             type="button"
@@ -241,7 +221,7 @@
             Now
           </button>
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label> Thing URL</mat-label>
           <input
             id="edit-print-url"
@@ -251,18 +231,8 @@
             maxlength="1000"
           />
         </mat-form-field>
-        <div
-          style="margin: 10 0 10"
-          fxFlex="grow"
-          fxFlexFill
-          fxLayout.lt-md="column"
-          fxLayout="row"
-        >
-          <mat-form-field
-            style="margin: 0px 5px 0px 0px"
-            fxFlex="30%"
-            fxFlex.lt-md="100%"
-          >
+        <div class="field time-row">
+          <mat-form-field class="print-time" style="margin: 0px 5px 0px 0px">
             <mat-label> Estimated Print Time</mat-label>
             <input
               id="edit-print-estimated-print-time"
@@ -273,9 +243,9 @@
               (change)="getEstimatedCompletedDate()"
             />
           </mat-form-field>
-          <div style="margin: 0" fxFlex="70%" fxFlex.lt-md="100%">
-            <div fxLayout="row" fxLayoutGap="5px" fxLayout.lt-md="column">
-              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+          <div class="completion" style="margin: 0">
+            <div class="completion-row">
+              <mat-form-field class="completion-field">
                 <mat-label>Est. Completion Date</mat-label>
                 <input
                   matInput
@@ -292,7 +262,7 @@
                 ></mat-datepicker-toggle>
                 <mat-datepicker #estimatedDatePicker></mat-datepicker>
               </mat-form-field>
-              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+              <mat-form-field class="completion-field">
                 <mat-label>Est. Completion Time</mat-label>
                 <input
                   matInput
@@ -306,23 +276,13 @@
                 />
               </mat-form-field>
               <!-- Empty space to align with the "Now" button in the actual completion section -->
-              <div fxFlex="20" fxFlex.lt-md="100"></div>
+              <div class="completion-now"></div>
             </div>
           </div>
         </div>
         <!-- Actual -->
-        <div
-          style="margin: 10 0 10"
-          fxFlex="grow"
-          fxFlexFill
-          fxLayout.lt-md="column"
-          fxLayout="row"
-        >
-          <mat-form-field
-            style="margin: 0px 5px 0px 0px"
-            fxFlex="30%"
-            fxFlex.lt-md="100%"
-          >
+        <div class="field time-row">
+          <mat-form-field class="print-time" style="margin: 0px 5px 0px 0px">
             <mat-label> Actual Print Time</mat-label>
             <input
               id="edit-print-actual-print-time"
@@ -333,9 +293,9 @@
               (change)="getActualCompletedDate()"
             />
           </mat-form-field>
-          <div fxFlex="70%" fxFlex.lt-md="100%">
-            <div fxLayout="row" fxLayoutGap="5px" fxLayout.lt-md="column">
-              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+          <div class="completion">
+            <div class="completion-row">
+              <mat-form-field class="completion-field">
                 <mat-label>Completion Date</mat-label>
                 <input
                   matInput
@@ -352,7 +312,7 @@
                 ></mat-datepicker-toggle>
                 <mat-datepicker #actualDatePicker></mat-datepicker>
               </mat-form-field>
-              <mat-form-field fxFlex="40" fxFlex.lt-md="100">
+              <mat-form-field class="completion-field">
                 <mat-label>Completion Time</mat-label>
                 <input
                   matInput
@@ -366,9 +326,8 @@
                 />
               </mat-form-field>
               <button
-                fxFlex="20"
-                fxFlex.lt-md="100"
-                style="margin-top: 10px; height: 56px"
+                class="completion-now"
+                style="height: 56px"
                 mat-stroked-button
                 type="button"
                 (click)="setActualCompletedDateToNow()"
@@ -381,11 +340,7 @@
         </div>
         @if (getElectricityPreview(); as preview) {
           @if (preview.valid) {
-            <div
-              fxFlex="grow"
-              fxFlexFill
-              style="font-size: 0.9em; color: #666; margin-bottom: 4px"
-            >
+            <div class="field" style="font-size: 0.9em; color: #666">
               Electricity cost:
               {{
                 (isEstimatedElectricityPreview() ? '~' : '') +
@@ -393,11 +348,7 @@
               }}
             </div>
           } @else if ($any(preview).message) {
-            <div
-              fxFlex="grow"
-              fxFlexFill
-              style="font-size: 0.9em; color: #888; margin-bottom: 4px"
-            >
+            <div class="field" style="font-size: 0.9em; color: #888">
               <mat-icon
                 inline
                 style="
@@ -414,7 +365,7 @@
           }
         }
         <!-- Material Usage -->
-        <div fxFlex="grow" fxFlexFill>
+        <div class="field">
           <h2>
             {{ materialCategoryNameForSelectedPrinter | titlecase }} Usage:
           </h2>
@@ -448,7 +399,7 @@
                       <mat-icon>drag_indicator</mat-icon>
                     </div>
                     <div class="filament-info-column">
-                      <div fxFlex>
+                      <div class="info-line">
                         @if (printFilament.get('filament').value; as filament) {
                           <div
                             class="filament-color-cell"
@@ -464,14 +415,16 @@
                           <div class="filament-color-cell"></div>
                         }
                       </div>
-                      <div fxFlex class="filament-section filament-name">
+                      <div class="filament-section filament-name info-line">
                         @if (
                           hasRealSpool(printFilament.get('filament').value)
                         ) {
                           <a
                             [href]="
                               '/materials/' +
-                              printFilament.get('filament').value?.id
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value?.id
+                              )
                             "
                             target="_blank"
                             rel="noopener noreferrer"
@@ -488,11 +441,11 @@
                       @if (
                         printFilament.get('filament').value?.colorName !== ''
                       ) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section info-line">
                           {{ printFilament.get('filament').value?.colorName }}
                         </div>
                       }
-                      <div fxFlex class="filament-section">
+                      <div class="filament-section info-line">
                         {{ printFilament.get('filament').value?.materialType }}
                       </div>
                       <!-- An untracked spool (no starting weight) has null
@@ -500,10 +453,12 @@
                            and leave out length and volume. "Other" is not a
                            spool at all, so it gets no remaining line. -->
                       @if (hasRealSpool(printFilament.get('filament').value)) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section info-line">
                           {{
-                            printFilament.get('filament').value
-                              ?.filamentRemaining
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentRemaining
+                            )
                               | remaining
                                 : { divisor: 1000, unit: ' (g) remaining' }
                           }}
@@ -511,40 +466,48 @@
                       }
                       @if (
                         isRemainingTracked(
-                          printFilament.get('filament').value
-                            ?.filamentLengthRemainingInM
-                        )
-                      ) {
-                        <div fxFlex class="filament-section">
-                          {{
+                          $safeNavigationMigration(
                             printFilament.get('filament').value
                               ?.filamentLengthRemainingInM
-                              | remaining: { unit: ' (m) remaining' }
+                          )
+                        )
+                      ) {
+                        <div class="filament-section info-line">
+                          {{
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentLengthRemainingInM
+                            ) | remaining: { unit: ' (m) remaining' }
                           }}
                         </div>
                       }
                       @if (
                         isRemainingTracked(
-                          printFilament.get('filament').value
-                            ?.filamentVolumeRemainingInMl
-                        )
-                      ) {
-                        <div fxFlex class="filament-section">
-                          {{
+                          $safeNavigationMigration(
                             printFilament.get('filament').value
                               ?.filamentVolumeRemainingInMl
-                              | remaining: { unit: ' (ml) remaining' }
+                          )
+                        )
+                      ) {
+                        <div class="filament-section info-line">
+                          {{
+                            $safeNavigationMigration(
+                              printFilament.get('filament').value
+                                ?.filamentVolumeRemainingInMl
+                            ) | remaining: { unit: ' (mL) remaining' }
                           }}
                         </div>
                       }
                       @if (
                         printFilament.get('filament').value !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue !== null &&
+                        $safeNavigationMigration(
+                          printFilament.get('filament').value
+                            ?.purchasePriceValue
+                        ) !== null &&
                         printFilament.get('filament').value
                           ?.purchasePriceValue !== ''
                       ) {
-                        <div fxFlex class="filament-section">
+                        <div class="filament-section info-line">
                           Price: {{ preferredCurrency?.symbol
                           }}{{
                             printFilament.get('filament').value
@@ -554,13 +517,16 @@
                       }
                       @if (
                         printFilament.get('filament').value !== null &&
-                        printFilament.get('filament').value
-                          ?.purchasePriceValue === null &&
-                        defaultFilamentPriceSetting?.value !== null
+                        $safeNavigationMigration(
+                          printFilament.get('filament').value
+                            ?.purchasePriceValue
+                        ) === null &&
+                        $safeNavigationMigration(
+                          defaultFilamentPriceSetting?.value
+                        ) !== null
                       ) {
                         <div
-                          fxFlex
-                          class="filament-section"
+                          class="filament-section info-line"
                           matTooltip="* using default filament price of {{
                             preferredCurrency?.symbol
                           }}{{ defaultFilamentPriceSetting?.value }}"
@@ -582,7 +548,9 @@
                         >
                           <mat-icon>swap_horiz</mat-icon>
                           {{
-                            printFilament.get('filament')?.value !== null
+                            $safeNavigationMigration(
+                              printFilament.get('filament')?.value
+                            ) !== null
                               ? 'Change'
                               : 'Select'
                           }}
@@ -712,7 +680,7 @@
                           printFilament.get('estimatedSource').value ===
                           printFilamentSourceMeasurementTypes.Length
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="length-field">
                             <mat-label>
                               Estimated
                               {{
@@ -756,7 +724,7 @@
                                 materialCategoryNameForSelectedPrinter
                                   | titlecase
                               }}
-                              Used (ml)</mat-label
+                              Used (mL)</mat-label
                             >
                             <input
                               id="edit-print-estimated-filement-used-ml-{{
@@ -868,7 +836,7 @@
                           printFilament.get('source').value ===
                           printFilamentSourceMeasurementTypes.Length
                         ) {
-                          <mat-form-field fxFlex="grow">
+                          <mat-form-field class="length-field">
                             <mat-label>
                               Actual
                               {{
@@ -910,7 +878,7 @@
                                 materialCategoryNameForSelectedPrinter
                                   | titlecase
                               }}
-                              Used (ml)</mat-label
+                              Used (mL)</mat-label
                             >
                             <input
                               id="edit-print-actual-filament-used-ml-{{
@@ -966,6 +934,15 @@
                           </mat-select>
                         </mat-form-field>
                       </div>
+                      @if (showsEstimateHint($any(printFilament))) {
+                        <span
+                          class="preferred-unit-hint"
+                          data-testid="usage-estimate-hint"
+                          >This amount is the slicer's estimate, logged by
+                          printlog-bridge. Enter what you weighed or measured to
+                          replace it.</span
+                        >
+                      }
                       @if (
                         getPreferredUnitSecondaryDisplay(
                           $any(printFilament),
@@ -995,21 +972,19 @@
                       </mat-form-field>
                       @if (printFilament.get('filament').value !== null) {
                         <div
-                          gdColumns="max-content auto"
-                          gdRows="2"
-                          gdGap="10px"
+                          class="cost-grid"
                           style="padding-inline: 10px; padding-bottom: 5px"
                         >
-                          <div gdColumn="1" gdRow="1">Estimated Cost:</div>
+                          <div>Estimated Cost:</div>
                           <div
-                            gdColumn="2"
-                            gdRow="1"
                             matTooltip="* using default filament price of {{
                               defaultFilamentPriceSetting?.value
                             }}"
                             [matTooltipDisabled]="
-                              printFilament.get('filament').value
-                                ?.purchasePriceValue !== null
+                              $safeNavigationMigration(
+                                printFilament.get('filament').value
+                                  ?.purchasePriceValue
+                              ) !== null
                             "
                             [class.price-error]="
                               getEstimatedPrice($any(printFilament)).includes(
@@ -1039,21 +1014,21 @@
                             printFilament.get('amountG').value !== 0 ||
                             printFilament.get('lengthInM').value !== 0
                           ) {
-                            <div gdColumn="1" gdRow="2">Actual Cost:</div>
+                            <div>Actual Cost:</div>
                           }
                           @if (
                             printFilament.get('amountG').value !== 0 ||
                             printFilament.get('lengthInM').value !== 0
                           ) {
                             <div
-                              gdColumn="2"
-                              gdRow="2"
                               matTooltip="* using default filament price of {{
                                 preferredCurrency?.symbol
                               }}{{ defaultFilamentPriceSetting?.value }}"
                               [matTooltipDisabled]="
-                                printFilament.get('filament').value
-                                  ?.purchasePriceValue !== null
+                                $safeNavigationMigration(
+                                  printFilament.get('filament').value
+                                    ?.purchasePriceValue
+                                ) !== null
                               "
                               [class.price-error]="
                                 getActualPrice($any(printFilament)).includes(
@@ -1089,7 +1064,7 @@
             </div>
           }
         </div>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label> Notes</mat-label>
           <textarea
             id="edit-print-notes"
@@ -1108,7 +1083,7 @@
             >
           }
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label> File Name</mat-label>
           <input
             id="edit-print-file-name"
@@ -1118,7 +1093,7 @@
             maxlength="1000"
           />
         </mat-form-field>
-        <mat-form-field fxFlex="grow" fxFlexFill>
+        <mat-form-field class="field">
           <mat-label> Status</mat-label>
           <mat-select formControlName="status" id="edit-print-status">
             <mat-option [value]="printStatusTypes.Pending">Pending</mat-option>
@@ -1135,8 +1110,8 @@
             <mat-option [value]="printStatusTypes.Failed">Failed</mat-option>
           </mat-select>
         </mat-form-field>
-        <div style="margin: 10 0 10" fxFlex="grow" fxFlexFill>
-          <mat-form-field style="margin: 0" fxFlex>
+        <div class="field inline-row">
+          <mat-form-field class="share" style="margin: 0">
             <mat-label> Sharing To:</mat-label>
             <mat-select
               formControlName="viewStatus"
@@ -1161,7 +1136,7 @@
                 defaultPrintViewStatusSetting().value.toString())
           ) {
             <button
-              fxFlex
+              class="share"
               style="margin-left: 10px; height: 72%"
               mat-stroked-button
               type="button"
@@ -1176,8 +1151,7 @@
           }
         </div>
         <mat-checkbox
-          fxFlex="grow"
-          fxFlexFill
+          class="field"
           formControlName="allowComments"
           id="edit-allow-comments"
           >Allow Comments</mat-checkbox
@@ -1185,7 +1159,7 @@
         <!-- File Attachments Section -->
         @if (printForm.get('id')?.value) {
           <app-file-attachment-section
-            [printId]="printForm.get('id')?.value"
+            [printId]="$safeNavigationMigration(printForm.get('id')?.value)"
             [editable]="true"
             [isOwner]="true"
             [allowFileDownloads]="
@@ -1205,14 +1179,9 @@
           </p>
         }
       </mat-card-content>
-      <mat-card-actions
-        class="sticky-actions"
-        fxLayout
-        fxLayoutAlign="space-between center"
-        fxLayoutGap="15px"
-      >
+      <mat-card-actions class="sticky-actions actions">
         @if (printForm.get('id').value) {
-          <div fxFlex="grow" fxFlexFill>
+          <div class="action">
             <button
               id="edit-print-copy-btn"
               mat-stroked-button
@@ -1230,13 +1199,12 @@
           </div>
         }
         <div
-          fxFlex="grow"
-          fxFlexFill
-          [fxFlexOffset]="printForm.get('id').value ? '80px' : ''"
+          class="action inline-row"
+          [class.after-copy]="printForm.get('id').value"
         >
           <button
+            class="share"
             id="edit-print-submit-btn"
-            fxFlex
             mat-raised-button
             type="submit"
             [disabled]="saving()"
@@ -1246,10 +1214,10 @@
             Submit
           </button>
         </div>
-        <div fxFlex="grow" fxFlexFill>
+        <div class="action inline-row">
           <button
+            class="share"
             id="edit-print-cancel-btn"
-            fxFlex
             mat-raised-button
             type="button"
             (click)="handleClose()"
@@ -1262,7 +1230,7 @@
     </form>
     <app-ad></app-ad>
   </mat-card>
-  <div fxHide fxShow.gt-md fxFlex="300px" class="ad-sidebar">
+  <div class="ad-sidebar ad-column">
     <app-sidebar-ad></app-sidebar-ad>
   </div>
 </div>

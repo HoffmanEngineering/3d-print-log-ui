@@ -21,6 +21,7 @@ import {
 import { CsvExport, downloadCsv } from 'src/app/shared/charts/chart-export';
 import { ChartFrameComponent } from 'src/app/shared/charts/chart-frame.component';
 import { StatTileComponent } from 'src/app/shared/charts/stat-tile.component';
+import { AnalyticsFilterOptionsService } from '../../filters/analytics-filter-options.service';
 import { AnalyticsFilterStore } from '../../filters/analytics-filter.store';
 import { PrintersResponse } from '../../models/analytics.models';
 import { AnalyticsService } from '../../services/analytics.service';
@@ -48,6 +49,7 @@ export class PrintersTabComponent implements OnDestroy {
   private readonly analytics = inject(AnalyticsService);
   private readonly store = inject(AnalyticsFilterStore);
   private readonly router = inject(Router);
+  private readonly filterOptions = inject(AnalyticsFilterOptionsService);
   private readonly host = inject(ElementRef<HTMLElement>);
 
   private readonly tab = createTabData<PrintersResponse>(
@@ -58,6 +60,9 @@ export class PrintersTabComponent implements OnDestroy {
 
   readonly data = this.tab.data;
   readonly state = this.tab.state;
+
+  /** Resin printers show their material in mL only (3d-print-log-api#294). */
+  readonly resinPrinterIds = this.filterOptions.resinPrinterIds;
 
   /**
    * Measured from the host, not the window: the side nav collapsing changes the available
@@ -155,6 +160,9 @@ export class PrintersTabComponent implements OnDestroy {
       'Maintenance cost',
       'Utilization (%)',
       'Cost per print hour',
+      // 3d-print-log-api#294: after every existing column, so a sheet reading them by
+      // position keeps working.
+      'Filament (mL)',
     ],
     rows: (this.data()?.printers ?? []).map((row) => [
       row.name,
@@ -167,6 +175,7 @@ export class PrintersTabComponent implements OnDestroy {
       row.maintenanceCost,
       row.utilizationPercent,
       row.costPerPrintHour,
+      row.materialMl ?? 0,
     ]),
   }));
 

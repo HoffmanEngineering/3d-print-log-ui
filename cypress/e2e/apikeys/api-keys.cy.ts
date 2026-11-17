@@ -81,6 +81,12 @@ describe('API Keys', () => {
     describedRow(description).within(() => {
       cy.findByRole('button', { name: /delete api key/i }).click();
     });
+    // Deleting asks first (#440): the request goes out only once it is confirmed.
+    cy.contains('.mat-mdc-dialog-container', 'Delete API key?')
+      .should('exist')
+      .within(() => {
+        cy.findByRole('button', { name: /^delete$/i }).click();
+      });
     cy.wait('@deleteKey');
 
     cy.contains('[data-cy-filament-row]', description).should('not.exist');

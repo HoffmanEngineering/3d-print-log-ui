@@ -1,35 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NO_ERRORS_SCHEMA, signal, computed } from '@angular/core';
-import { AdsenseModule } from 'ng2-adsense';
+import { signal, WritableSignal } from '@angular/core';
 import { AdComponent } from './ad.component';
-import { SubscriptionService } from '../../core/services/subscription.service';
-import { IS_CORDOVA_IOS } from '../../core/utils/platform';
+import { AdEligibilityService } from './ad-eligibility.service';
+import { AdsenseLoaderService } from '../../core/services/adsense-loader.service';
+import { AD_SLOTS } from './ad-slots';
 
 describe('AdComponent', () => {
   let component: AdComponent;
   let fixture: ComponentFixture<AdComponent>;
-  let isProSignal: ReturnType<typeof signal<boolean>>;
+  let canShowAds: WritableSignal<boolean>;
+
+  const aside = () =>
+    fixture.nativeElement.querySelector('aside[aria-label="Advertisement"]');
 
   beforeEach(async () => {
-    isProSignal = signal(false);
-
-    const mockSubscriptionService = {
-      isPro: computed(() => isProSignal()),
-    };
+    canShowAds = signal(true);
 
     await TestBed.configureTestingModule({
-      imports: [
-        AdComponent,
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
+      imports: [AdComponent],
       providers: [
-        { provide: SubscriptionService, useValue: mockSubscriptionService },
+        { provide: AdEligibilityService, useValue: { canShowAds } },
+        // Never ready: these specs check what renders, not what is pushed.
+        { provide: AdsenseLoaderService, useValue: { ready: signal(false) } },
       ],
     }).compileComponents();
-  });
 
-  beforeEach(() => {
     fixture = TestBed.createComponent(AdComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
@@ -47,59 +42,32 @@ describe('AdComponent', () => {
     expect(component.fullWidthResponsive()).toBe(true);
   });
 
-  it('should pass adSlot to ng-adsense', () => {
-    fixture.componentRef.setInput('adSlot', 123456789);
-    fixture.detectChanges();
-    const adsense = fixture.nativeElement.querySelector('ng-adsense');
-    expect(adsense).toBeTruthy();
-    expect(component.adSlot()).toBe(123456789);
+  it('uses the default display slot when no adSlot is set', () => {
+    const ins = fixture.nativeElement.querySelector('ins.adsbygoogle');
+    expect(ins.getAttribute('data-ad-slot')).toBe(String(AD_SLOTS.DEFAULT));
+    expect(ins.getAttribute('data-full-width-responsive')).toBe('true');
   });
 
-  it('should pass fullWidthResponsive=false when set', () => {
+  it('passes adSlot and fullWidthResponsive to the slot', () => {
+    fixture.componentRef.setInput('adSlot', 123456789);
     fixture.componentRef.setInput('fullWidthResponsive', false);
     fixture.detectChanges();
-    expect(component.fullWidthResponsive()).toBe(false);
+
+    const ins = fixture.nativeElement.querySelector('ins.adsbygoogle');
+    expect(ins.getAttribute('data-ad-slot')).toBe('123456789');
+    expect(ins.getAttribute('data-full-width-responsive')).toBe('false');
   });
 
-  it('should render an aside with aria-label Advertisement when not Pro', () => {
-    const aside = fixture.nativeElement.querySelector(
-      'aside[aria-label="Advertisement"]'
-    );
-    expect(aside).toBeTruthy();
+  it('should render an aside with aria-label Advertisement when ads are allowed', () => {
+    expect(aside()).toBeTruthy();
   });
 
-  it('renders no ad in the iOS app, even for a free user', () => {
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      imports: [
-        AdComponent,
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-      providers: [
-        {
-          provide: SubscriptionService,
-          useValue: { isPro: computed(() => false) },
-        },
-        { provide: IS_CORDOVA_IOS, useValue: true },
-      ],
-    });
-    const iosFixture = TestBed.createComponent(AdComponent);
-    iosFixture.detectChanges();
-
-    expect(
-      iosFixture.nativeElement.querySelector(
-        'aside[aria-label="Advertisement"]'
-      )
-    ).toBeNull();
-  });
-
-  it('should not render the ad aside when user is Pro', () => {
-    isProSignal.set(true);
+  // Pro, the iOS app, and a subscription that has not loaded yet all land here.
+  it('renders nothing when ads are not allowed', () => {
+    canShowAds.set(false);
     fixture.detectChanges();
-    const aside = fixture.nativeElement.querySelector(
-      'aside[aria-label="Advertisement"]'
-    );
-    expect(aside).toBeNull();
+
+    expect(aside()).toBeNull();
+    expect(fixture.nativeElement.querySelector('ins')).toBeNull();
   });
 });

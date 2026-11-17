@@ -1,15 +1,23 @@
 import type { MockedObject } from 'vitest';
 import { ViewportScroller } from '@angular/common';
-import { ApplicationRef, Component } from '@angular/core';
+import {
+  ApplicationRef,
+  Component,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, RouterOutlet } from '@angular/router';
 
 import { provideAppRouter } from '../../app.routes';
 
-@Component({ template: '' })
+@Component({ changeDetection: ChangeDetectionStrategy.Eager, template: '' })
 class PageComponent {}
 
-@Component({ imports: [RouterOutlet], template: '<router-outlet />' })
+@Component({
+  imports: [RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '<router-outlet />',
+})
 class RootComponent {}
 
 /**

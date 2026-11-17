@@ -80,6 +80,12 @@ export class ImageResizerService {
         return;
       }
 
+      // A file the browser cannot decode (a TIFF, a HEIC in Chrome, a truncated JPEG) passes
+      // the type check but never loads; without these the promise never settled.
+      const unreadable = () =>
+        no(new Error(`The image ${file.name} could not be read`));
+      reader.onerror = unreadable;
+      image.onerror = unreadable;
       reader.onload = (readerEvent: any) => {
         image.onload = () => ok(resize());
         image.src = readerEvent.target.result;

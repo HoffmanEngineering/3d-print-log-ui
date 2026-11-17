@@ -3,7 +3,6 @@ import { TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { Subject } from 'rxjs';
 import {
@@ -66,11 +65,7 @@ describe('FilamentListContainerComponent (rendered)', () => {
     filamentService.getCurrentUserFilamentSummaries.mockReturnValue(listed);
 
     TestBed.configureTestingModule({
-      imports: [
-        NoopAnimationsModule,
-        // The template renders app-ad for real, which needs the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
+      imports: [NoopAnimationsModule],
       providers: [
         provideRouter([
           {

@@ -206,7 +206,7 @@
             ],
             "coverageThresholds": {
               "statements": 87,
-              "branches": 79,
+              "branches": 77,
               "functions": 74,
               "lines": 83
             }

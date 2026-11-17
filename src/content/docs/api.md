@@ -6,7 +6,7 @@ navLabel: REST API & Authentication
 group: integrations
 order: 70
 mode: reference
-updated: 2026-10-13
+updated: 2026-11-12
 related: [mcp, klipper, octoprint-webhook]
 ---
 
@@ -55,7 +55,7 @@ Requests to public data, such as a public print, need no credentials at all.
 Create and delete keys on the [Personal API Keys](/api-keys) page. A key doesn't expire, so treat it like a password: anyone holding it can read and change your data.
 
 - **Prefer the header.** The `api_key` query parameter exists for clients that can't set headers, such as some printer firmware. A key in a URL ends up in logs and browser history.
-- **Revoke a key by deleting it.** Deleting it on the Personal API Keys page stops it working immediately. Use one key per device or script, so you can revoke one without breaking the others.
+- **Revoke a key by deleting it.** On the Personal API Keys page, click the key's delete button and confirm. The key stops working immediately, and a deleted key can't be restored. Use one key per device or script, so you can revoke one without breaking the others.
 - **A few endpoints refuse API keys.** Registering a phone for push notifications and reading your account's email address need a signed-in session (an OAuth token). The [API reference](#reference) marks them.
 - **An invalid key is rejected with `401` and the text `Invalid API Key`.** Repeated invalid keys from the same address are throttled with `429 Too Many Requests` and a `Retry-After` header.
 

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { SubscriptionSuccessComponent } from './subscription-success.component';
@@ -13,7 +13,7 @@ describe('SubscriptionSuccessComponent', () => {
     await TestBed.configureTestingModule({
       imports: [RouterTestingModule, SubscriptionSuccessComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {
           provide: LoggingService,

@@ -79,10 +79,6 @@ describe('SettingsComponent', () => {
         .mockName('UserService.deactivateCurrentUser'),
     };
     const mockUserSettingService = {
-      updateUserSetting: vi
-        .fn()
-        .mockName('UserSettingService.updateUserSetting'),
-      addUserSetting: vi.fn().mockName('UserSettingService.addUserSetting'),
       getCurrentUsersSettingByType: vi
         .fn()
         .mockName('UserSettingService.getCurrentUsersSettingByType'),
@@ -92,6 +88,10 @@ describe('SettingsComponent', () => {
     };
     mockUserSettingService.getCurrentUsersSettingByType.mockReturnValue(
       Promise.resolve(null)
+    );
+    // A write that never answers unless a test says otherwise.
+    mockUserSettingService.addOrUpdateSetting.mockReturnValue(
+      new Promise(() => {})
     );
     const mockPrintService = {
       exportAllPrintsAsCsv: vi
@@ -461,12 +461,14 @@ describe('SettingsComponent', () => {
     const button = (label: string) =>
       buttons().find((b) => b.textContent!.trim() === label);
 
-    it('drops the Save button once the setting is saved', () => {
-      const saved = new Subject<UserSetting>();
+    it('drops the Save button once the setting is saved', async () => {
+      let save!: (setting: UserSetting) => void;
       const settings = TestBed.inject(
         UserSettingService
       ) as MockedObject<UserSettingService>;
-      settings.addUserSetting.mockReturnValue(saved);
+      settings.addOrUpdateSetting.mockReturnValue(
+        new Promise<UserSetting>((resolve) => (save = resolve))
+      );
       fixture.detectChanges();
 
       const diameter = (
@@ -478,7 +480,12 @@ describe('SettingsComponent', () => {
       button('Save Default Filament Diameter')!.click();
       fixture.detectChanges();
 
-      saved.next({ id: 9, value: '1.75' } as UserSetting);
+      expect(settings.addOrUpdateSetting).toHaveBeenCalledWith(
+        UserSettingType.Filaments_DefaultDiameterMm,
+        '1.75'
+      );
+      save({ id: 9, value: '1.75' } as UserSetting);
+      await Promise.resolve();
       fixture.detectChanges();
 
       expect(button('Save Default Filament Diameter')).toBeUndefined();

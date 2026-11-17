@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DocStepComponent } from './doc-step.component';
@@ -6,6 +6,7 @@ import { DocStepsComponent } from './doc-steps.component';
 
 @Component({
   imports: [DocStepsComponent, DocStepComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <doc-steps>
       <doc-step heading="Install the plugin">

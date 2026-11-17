@@ -1,6 +1,11 @@
 import type { Mock, MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, input, output } from '@angular/core';
+import {
+  Component,
+  input,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -32,7 +37,11 @@ import {
 } from '../quick-add-printer/quick-add-printer.component';
 import { WelcomeComponent } from './welcome.component';
 
-@Component({ selector: 'app-quick-add-printer', template: '' })
+@Component({
+  selector: 'app-quick-add-printer',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '',
+})
 class StubQuickAddPrinterComponent {
   readonly source = input.required<QuickAddSource>();
   readonly showEmailNotice = input(false);
@@ -44,6 +53,7 @@ class StubQuickAddPrinterComponent {
 
 @Component({
   selector: 'app-quick-add-material',
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: '<ng-content select="[quickAddSecondary]" />',
 })
 class StubQuickAddMaterialComponent {

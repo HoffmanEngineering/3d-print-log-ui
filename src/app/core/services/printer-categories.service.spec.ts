@@ -5,6 +5,7 @@ import { MaterialCategoryService } from './material-categories.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('MaterialCategory', () => {
@@ -14,7 +15,7 @@ describe('MaterialCategory', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

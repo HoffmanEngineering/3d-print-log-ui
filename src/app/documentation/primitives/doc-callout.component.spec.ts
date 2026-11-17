@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DocCalloutComponent, DocCalloutKind } from './doc-callout.component';
 
 @Component({
   imports: [DocCalloutComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <doc-callout [kind]="kind" [heading]="heading">
       <p>Body prose.</p>

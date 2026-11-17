@@ -5,6 +5,7 @@ import {
   NO_ERRORS_SCHEMA,
   signal,
   WritableSignal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -18,7 +19,11 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { NavbarComponent } from './navbar.component';
 
 /** The real bell loads notifications and achievements; the navbar only places it. */
-@Component({ selector: 'app-notification-bell', template: '' })
+@Component({
+  selector: 'app-notification-bell',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '',
+})
 class NotificationBellStubComponent {}
 
 describe('NavbarComponent', () => {

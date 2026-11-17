@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DOC_CAPTURE_MAP } from './doc-captures.token';
@@ -6,6 +6,7 @@ import { DocFigureComponent } from './doc-figure.component';
 
 @Component({
   imports: [DocFigureComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <doc-figure
       src="./assets/docs/print-screen.png"
@@ -77,6 +78,7 @@ describe('DocFigureComponent', () => {
 
 @Component({
   imports: [DocFigureComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: ` <doc-figure [name]="name" alt="The print list"></doc-figure> `,
 })
 class NamedHostComponent {

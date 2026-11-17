@@ -27,7 +27,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Wrangler, Miniflare and Vitest 5 need Node 22; the app's jobs stay on 20.
+      # Wrangler, Miniflare and Vitest 5 need Node 22, as does the app (Angular 22).
       - name: Setup Node
         uses: actions/setup-node@v7
         with:

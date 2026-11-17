@@ -1,6 +1,6 @@
 import type { MockedObject } from 'vitest';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -8,7 +8,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 
@@ -152,12 +151,10 @@ describe('PrinterDetailComponent', () => {
         PrinterConnectionsComponent,
         PrinterSlotsComponent,
         PrinterSpoolmanComponent,
-        // The template renders app-ad for real, which needs the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         PrinterDetailComponent,
       ],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: PrinterService, useValue: printerService },
         { provide: PrinterCatalogService, useValue: catalog },

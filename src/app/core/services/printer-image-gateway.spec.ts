@@ -1,5 +1,5 @@
 import type { MockedObject } from 'vitest';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -35,7 +35,7 @@ describe('PrinterService image gateway', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: PrinterThumbnailStore, useValue: store },
       ],

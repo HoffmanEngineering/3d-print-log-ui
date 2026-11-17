@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { DOC_CAPTURE_MAP } from './doc-captures.token';
@@ -22,6 +22,7 @@ const CAPTURES = {
 
 @Component({
   imports: [DocFigureComponent, DocMarkerComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <doc-figure name="print-list" alt="The print list">
       <doc-marker x="7" y="9.7" label="Title"></doc-marker>
@@ -35,6 +36,7 @@ class AnnotatedHostComponent {
 
 @Component({
   imports: [DocFigureComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `<doc-figure name="print-list" alt="The print list"></doc-figure>`,
 })
 class PlainHostComponent {}
@@ -130,6 +132,7 @@ describe('DocMarkerComponent', () => {
   imports: [DocFigureComponent, DocMarkerComponent],
   // A container far wider than the image, which is what makes the frame's
   // `fit-content` observable: a plain block frame would fill this width.
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <div style="width: 800px">
       <doc-figure name="narrow" alt="A narrow figure">

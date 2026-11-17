@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { SubscriptionService, SubscriptionDto } from './subscription.service';
 import { environment } from 'src/environments/environment';
 import { CAN_PURCHASE_PRO } from '../pricing/pro-purchase';
@@ -15,7 +15,7 @@ describe('SubscriptionService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(SubscriptionService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -102,6 +102,28 @@ describe('SubscriptionService', () => {
       expect(service.status()).toBe('active');
       expect(service.plan()).toBe('pro_monthly');
     });
+
+    // Ads wait on this, so a Pro user never sees one pushed and then removed.
+    it('reports loaded only once /me has answered', () => {
+      expect(service.loaded()).toBe(false);
+
+      service.loadSubscription();
+      const req = httpMock.expectOne(`${baseUrl}/me`);
+      expect(service.loaded()).toBe(false);
+
+      req.flush({ isPro: false } as SubscriptionDto);
+      expect(service.loaded()).toBe(true);
+    });
+
+    it('reports loaded after a failed /me, keeping the free defaults', () => {
+      service.loadSubscription();
+      httpMock
+        .expectOne(`${baseUrl}/me`)
+        .flush('boom', { status: 500, statusText: 'Server Error' });
+
+      expect(service.loaded()).toBe(true);
+      expect(service.isPro()).toBe(false);
+    });
   });
 
   describe('createCheckoutSession', () => {
@@ -137,7 +159,7 @@ describe('SubscriptionService in the iOS app', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: CAN_PURCHASE_PRO, useValue: false },
       ],

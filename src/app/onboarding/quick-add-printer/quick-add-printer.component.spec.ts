@@ -3,6 +3,7 @@ import {
   HttpErrorResponse,
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -1373,7 +1374,7 @@ describe('QuickAddPrinterComponent with the real catalog service', () => {
     TestBed.configureTestingModule({
       imports: [QuickAddPrinterComponent, NoopAnimationsModule],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
         { provide: PrinterService, useValue: {} },
         { provide: LoggingService, useValue: { logEvent: () => undefined } },

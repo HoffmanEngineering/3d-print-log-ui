@@ -3,7 +3,7 @@
   <mat-form-field>
     <mat-label> Sharing To:</mat-label>
     <mat-select
-      [ngModel]="print()?.viewStatus"
+      [ngModel]="$safeNavigationMigration(print()?.viewStatus)"
       (ngModelChange)="updatePrint($event)"
     >
       <mat-option [value]="printViewStatusTypes.Public"

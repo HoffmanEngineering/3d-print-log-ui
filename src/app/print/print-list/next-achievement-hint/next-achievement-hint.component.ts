@@ -51,7 +51,9 @@ interface Hint {
           [category]="h.family.category"
           [tier]="h.hint.tier"
           [oneTime]="h.family.tiers.length === 1"
-          [numeral]="h.family.tiers[h.hint.tier - 1]?.threshold"
+          [numeral]="
+            $safeNavigationMigration(h.family.tiers[h.hint.tier - 1]?.threshold)
+          "
           [locked]="true"
           [label]="h.family.title"
           size="md"

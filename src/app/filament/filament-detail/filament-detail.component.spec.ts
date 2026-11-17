@@ -1,5 +1,4 @@
 import type { Mock, MockedObject } from 'vitest';
-import { AdsenseModule } from 'ng2-adsense';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -106,9 +105,10 @@ describe('FilamentDetailComponent', () => {
     };
 
     const mockUserSettingService = {
-      updateUserSetting: vi
+      addOrUpdateSetting: vi
         .fn()
-        .mockName('UserSettingService.updateUserSetting'),
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
     };
 
     const mockLogger = {
@@ -118,7 +118,6 @@ describe('FilamentDetailComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -195,10 +194,12 @@ describe('FilamentDetailComponent', () => {
       expect(button('Submit')!.disabled).toBe(false);
     });
 
-    it('drops "Save as Default" once the default price is saved', () => {
-      const saved = new Subject<unknown>();
+    it('drops "Save as Default" once the default price is saved', async () => {
+      let save!: (setting: unknown) => void;
       const settings = TestBed.inject(UserSettingService);
-      settings.addUserSetting = vi.fn().mockReturnValue(saved);
+      settings.addOrUpdateSetting = vi
+        .fn()
+        .mockReturnValue(new Promise((resolve) => (save = resolve)));
       // The resolver answers null when no default is stored.
       component.defaultFilamentPriceSetting.set(null);
 
@@ -211,7 +212,8 @@ describe('FilamentDetailComponent', () => {
       button('Save as Default Filament Price')!.click();
       fixture.detectChanges();
 
-      saved.next({ id: 3, value: '24.99' });
+      save({ id: 3, value: '24.99' });
+      await Promise.resolve();
       fixture.detectChanges();
 
       expect(button('Save as Default Filament Price')).toBeUndefined();
@@ -472,9 +474,10 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
       success: vi.fn().mockName('ToastrService.success'),
     };
     const mockUserSettings = {
-      updateUserSetting: vi
+      addOrUpdateSetting: vi
         .fn()
-        .mockName('UserSettingService.updateUserSetting'),
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
     };
     const mockLog = {
       logException: vi.fn().mockName('LoggingService.logException'),
@@ -483,7 +486,6 @@ describe('FilamentDetailComponent - spool weight calculator', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -682,9 +684,10 @@ describe('FilamentDetailComponent - value serialization', () => {
       error: vi.fn().mockName('ToastrService.error'),
     } as unknown as MockedObject<ToastrService>;
     const mockUserSettings = {
-      updateUserSetting: vi
+      addOrUpdateSetting: vi
         .fn()
-        .mockName('UserSettingService.updateUserSetting'),
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
     };
     const mockLog = {
       logException: vi.fn().mockName('LoggingService.logException'),
@@ -693,7 +696,6 @@ describe('FilamentDetailComponent - value serialization', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -1031,9 +1033,10 @@ describe('FilamentDetailComponent - usage panels', () => {
       success: vi.fn().mockName('ToastrService.success'),
     };
     const mockUserSettings = {
-      updateUserSetting: vi
+      addOrUpdateSetting: vi
         .fn()
-        .mockName('UserSettingService.updateUserSetting'),
+        .mockName('UserSettingService.addOrUpdateSetting')
+        .mockReturnValue(new Promise(() => {})),
     };
     const mockLog = {
       logException: vi.fn().mockName('LoggingService.logException'),
@@ -1050,7 +1053,6 @@ describe('FilamentDetailComponent - usage panels', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         FormsModule,
         ReactiveFormsModule,
@@ -1209,7 +1211,6 @@ describe('FilamentDetailComponent scanned tag', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         MatNativeDateModule,
         FilamentDetailComponent,
@@ -1225,9 +1226,10 @@ describe('FilamentDetailComponent scanned tag', () => {
         {
           provide: UserSettingService,
           useValue: {
-            updateUserSetting: vi
+            addOrUpdateSetting: vi
               .fn()
-              .mockName('UserSettingService.updateUserSetting'),
+              .mockName('UserSettingService.addOrUpdateSetting')
+              .mockReturnValue(new Promise(() => {})),
           },
         },
         {
@@ -1683,7 +1685,6 @@ describe('FilamentDetailComponent - autocomplete options', () => {
 
     await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         RouterTestingModule.withRoutes(ANYWHERE),
         MatNativeDateModule,
         FilamentDetailComponent,

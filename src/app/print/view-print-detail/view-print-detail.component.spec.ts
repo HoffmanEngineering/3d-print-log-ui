@@ -3,7 +3,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { Location } from '@angular/common';
 import {
   ActivatedRoute,
@@ -15,10 +15,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { BehaviorSubject, Observable, Subject, of } from 'rxjs';
 import currency from 'currency.js';
 import { ToastrService } from 'ngx-toastr';
-import { AdsenseModule } from 'ng2-adsense';
 import { ViewPrintDetailComponent } from './view-print-detail.component';
 import { PrintDetailSummaryComponent } from './print-detail-summary/print-detail-summary.component';
-import { PrintService, PrintStatus } from 'src/app/core/services/print.service';
+import {
+  PrintService,
+  PrintStatus,
+  PrintViewStatus,
+} from 'src/app/core/services/print.service';
+import { AdEligibilityService } from '../../shared/ad/ad-eligibility.service';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { MetaTagService } from 'src/app/core/services/meta-tag.service';
 import {
@@ -140,6 +144,11 @@ describe('ViewPrintDetailComponent', () => {
         .fn()
         .mockName('PrintService.calculateTotalPrintCost'),
       calculatePrintCost: vi.fn().mockName('PrintService.calculatePrintCost'),
+      // A private print's hero image is fetched through the service, with the token.
+      getPrintImage: vi
+        .fn()
+        .mockName('PrintService.getPrintImage')
+        .mockReturnValue(of('')),
     } as unknown as MockedObject<PrintService>;
     printService.calculatePrintCost.mockReturnValue({
       valid: true,
@@ -201,14 +210,9 @@ describe('ViewPrintDetailComponent', () => {
       // pulled in through ViewPrintDetailComponent's own imports, so the schema
       // would suppress nothing while hiding genuine template typos. The HTTP
       // providers exist because app-file-attachment-section fetches on init.
-      imports: [
-        ViewPrintDetailComponent,
-        RouterTestingModule,
-        // app-ad and app-sidebar-ad render for real and need the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
-      ],
+      imports: [ViewPrintDetailComponent, RouterTestingModule],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: PrintService, useValue: printService },
         { provide: PrintDetailLoaderService, useValue: loaderSpy },
@@ -225,6 +229,11 @@ describe('ViewPrintDetailComponent', () => {
         { provide: MetaTagService, useValue: metaService },
         { provide: SeoService, useValue: seoServiceSpy },
         { provide: UserSettingService, useValue: userSettingServiceSpy },
+        // The AuthService stub has no isLoggedIn; ads are AdComponent's concern.
+        {
+          provide: AdEligibilityService,
+          useValue: { canShowAds: signal(false) },
+        },
         {
           provide: AuthService,
           useValue: {
@@ -716,12 +725,26 @@ describe('ViewPrintDetailComponent', () => {
 
   // This component is OnPush and the POST response lands in its own tick with
   // nothing marked dirty, so mutating the fetched array did not repaint.
+  // The comment is posted by the real PrintCommentsComponent rendered here, so
+  // this also checks the child's `commentAdded` output is wired to the list.
   it('renders a comment that arrives after the initial render', async () => {
     const posted = new Subject<any>();
     await setup({ viewerId: OWNER_ID });
     printServiceSpy.addPrintComment.mockReturnValue(posted.asObservable());
 
-    component.addComment('Nice print');
+    const root = fixture.nativeElement as HTMLElement;
+    const box = root.querySelector(
+      '#add-comment-textarea'
+    ) as HTMLTextAreaElement;
+    box.value = 'Nice print';
+    box.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    (root.querySelector('#btn-add-print-comment') as HTMLButtonElement).click();
+
+    expect(printServiceSpy.addPrintComment).toHaveBeenCalledWith(
+      basePrint.id,
+      'Nice print'
+    );
     posted.next({
       id: 99,
       body: 'Nice print',
@@ -774,6 +797,34 @@ describe('ViewPrintDetailComponent', () => {
     );
     // An older API: no thumbnail, so the strip uses the full image as before.
     expect(withoutThumb.thumbnailUrl).toBeUndefined();
+  });
+
+  // A private print's image is served only with the owner's token, which an <img src>
+  // never sends: the hero gets no direct URL and fetches the image itself.
+  it('gives the hero no direct image URL for a private print', async () => {
+    await setup({
+      viewerId: OWNER_ID,
+      print: {
+        ...basePrint,
+        viewStatus: PrintViewStatus.Private,
+        images: [{ id: 1, isDefault: true, displayOrder: 0 }],
+      },
+    });
+    expect(component.printImages()[0].url).toBeUndefined();
+  });
+
+  it('keeps the direct image URL for a public print', async () => {
+    await setup({
+      viewerId: null,
+      print: {
+        ...basePrint,
+        viewStatus: PrintViewStatus.Public,
+        images: [{ id: 1, isDefault: true, displayOrder: 0 }],
+      },
+    });
+    expect(component.printImages()[0].url).toMatch(
+      /\/api\/Prints\/1\/image\/1$/
+    );
   });
 
   // These four settings used to be route resolvers. The component now loads

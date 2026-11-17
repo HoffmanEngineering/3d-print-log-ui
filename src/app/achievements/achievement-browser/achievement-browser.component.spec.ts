@@ -1,6 +1,6 @@
 import type { Mock, MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
-import { Component, signal } from '@angular/core';
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { BehaviorSubject, map, Subject } from 'rxjs';
@@ -12,6 +12,7 @@ import { AchievementBrowserComponent } from './achievement-browser.component';
 
 @Component({
   imports: [AchievementBrowserComponent],
+  changeDetection: ChangeDetectionStrategy.Eager,
   template: `
     <app-achievement-browser
       [catalog]="catalog"

@@ -53,6 +53,14 @@ describe('GcodeViewerModalComponent', () => {
     fixture.detectChanges();
   });
 
+  const viewerWindow = () => component.iframe()!.nativeElement.contentWindow!;
+
+  /** A message as the viewer posts it: from the iframe's window. */
+  const fromViewer = ({ data }: { data: unknown }) =>
+    component.onMessage(
+      new MessageEvent('message', { data, source: viewerWindow() })
+    );
+
   it('should create and log the open', () => {
     expect(component).toBeTruthy();
     expect(logging.logEvent).toHaveBeenCalledWith('GcodeViewerModal_Opened', {
@@ -62,9 +70,9 @@ describe('GcodeViewerModalComponent', () => {
 
   it('derives overall progress and the active step from the two phases', () => {
     expect(component.step()).toBe('reading');
-    component.onMessage({ data: { type: 'SET_LOAD_PROGRESS', progress: 50 } });
+    fromViewer({ data: { type: 'SET_LOAD_PROGRESS', progress: 50 } });
     expect(component.overallProgress()).toBe(25);
-    component.onMessage({
+    fromViewer({
       data: { type: 'SET_ANALYZE_PROGRESS', progress: 50 },
     });
     expect(component.step()).toBe('analyzing');
@@ -72,18 +80,69 @@ describe('GcodeViewerModalComponent', () => {
     expect(component.overallProgress()).toBe(75);
   });
 
-  it('listens for viewer progress messages posted to the window', () => {
-    window.dispatchEvent(
-      new MessageEvent('message', {
-        data: { type: 'SET_LOAD_PROGRESS', progress: 50 },
-      })
-    );
+  it('listens for progress the viewer iframe posts to its parent', async () => {
+    const received = new Promise<void>((resolve) => {
+      const listener = (e: MessageEvent) => {
+        if (e.data?.type === 'SET_LOAD_PROGRESS') {
+          window.removeEventListener('message', listener);
+          resolve();
+        }
+      };
+      window.addEventListener('message', listener);
+    });
+
+    // What adapter.js does, run inside the iframe so the event's source is the
+    // iframe's window, as it is in the app.
+    const doc = component.iframe()!.nativeElement.contentDocument!;
+    const script = doc.createElement('script');
+    script.textContent =
+      "window.parent.postMessage({ type: 'SET_LOAD_PROGRESS', progress: 50 });";
+    // The body may not be parsed yet while the viewer's scripts load.
+    doc.documentElement.appendChild(script);
+    await received;
 
     expect(component.overallProgress()).toBe(25);
   });
 
+  describe('a message from another window', () => {
+    const dispatch = (data: unknown) =>
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: 'https://ads.example',
+          source: window,
+          data,
+        })
+      );
+
+    it('is ignored, so it cannot close the dialog with its own values', () => {
+      dispatch({
+        type: 'MODEL_INFO',
+        data: { printTime: 99999, totalFilament: 123456 },
+      });
+      dispatch({ type: 'SET_LOAD_PROGRESS', progress: 50 });
+
+      expect(dialogRef.close).not.toHaveBeenCalled();
+      expect(component.overallProgress()).toBe(0);
+    });
+
+    it('is ignored when it has no source', () => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          data: { type: 'SET_LOAD_PROGRESS', progress: 50 },
+        })
+      );
+
+      expect(component.overallProgress()).toBe(0);
+    });
+  });
+
+  it('tolerates a message whose data is not an object', async () => {
+    await expect(fromViewer({ data: null })).resolves.toBeUndefined();
+    await expect(fromViewer({ data: 'hello' })).resolves.toBeUndefined();
+  });
+
   it('maps MODEL_INFO into a print with one usage row per extruder', () => {
-    component.onMessage({
+    fromViewer({
       data: {
         type: 'MODEL_INFO',
         data: {
@@ -120,7 +179,7 @@ Estimated time is a floor — actual time is typically 15–40% longer.
   });
 
   it('falls back to a single row when only totalFilament is known', () => {
-    component.onMessage({
+    fromViewer({
       data: {
         type: 'MODEL_INFO',
         data: {
@@ -157,7 +216,7 @@ Estimated time is a floor — actual time is typically 15–40% longer.
   });
 
   it('advances the active step', () => {
-    component.onMessage({
+    fromViewer({
       data: { type: 'SET_ANALYZE_PROGRESS', progress: 10 },
     });
     fixture.detectChanges();

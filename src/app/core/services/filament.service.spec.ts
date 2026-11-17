@@ -8,6 +8,7 @@ import { FilamentService } from './filament.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import { environment } from 'src/environments/environment.unittest';
 
@@ -19,7 +20,7 @@ describe('FilamentServiceService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -84,6 +85,42 @@ describe('FilamentServiceService', () => {
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({});
     req.flush(null);
+  });
+
+  describe('markEmpty', () => {
+    const markEmpty = (filamentRemaining: number | null) => {
+      service.markEmpty('f1', 'Marked empty').subscribe();
+      httpMock
+        .expectOne((r) => r.method === 'GET')
+        .flush({
+          id: 'f1',
+          filamentRemaining,
+          filamentAdjustments: [{ id: 'a1', amountMg: -5 }],
+          isActive: true,
+        });
+      const put = httpMock.expectOne((r) => r.method === 'PUT');
+      put.flush({});
+      return put.request.body;
+    };
+
+    it('adjusts by the remaining amount the API reports and deactivates', () => {
+      const body = markEmpty(980_000);
+
+      expect(body.filamentAdjustments.length).toBe(2);
+      expect(body.filamentAdjustments[1]).toEqual(
+        expect.objectContaining({ amountMg: -980_000, notes: 'Marked empty' })
+      );
+      expect(body.isActive).toBe(false);
+    });
+
+    it('adds no adjustment to a spool already at zero, or untracked', () => {
+      for (const remaining of [0, null]) {
+        const body = markEmpty(remaining);
+
+        expect(body.filamentAdjustments.length).toBe(1);
+        expect(body.isActive).toBe(false);
+      }
+    });
   });
 
   describe('tags', () => {

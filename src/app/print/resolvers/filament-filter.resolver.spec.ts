@@ -1,7 +1,8 @@
 import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, firstValueFrom, of, throwError } from 'rxjs';
 import {
   ColorPatternType,
   FilamentDetail,
@@ -116,5 +117,38 @@ describe('filamentFilterResolver', () => {
       expect(items[0].id).toBe('abc');
       expect(items[1].id).toBe('def');
     });
+  });
+
+  // A bookmarked /prints?filterByFilamentId=... can outlive the spool. A
+  // rejected resolver cancels the navigation, so the list would never open.
+  it('drops a filament the API no longer has instead of failing', async () => {
+    mockFilamentService.getFilamentDetail.mockImplementation((id: string) =>
+      id === 'abc'
+        ? of(mockDetail)
+        : throwError(() => new HttpErrorResponse({ status: 404 }))
+    );
+
+    const items = await firstValueFrom(
+      runResolver(
+        filamentFilterResolver,
+        makeRoute(['abc', 'gone'])
+      ) as Observable<FilamentSummary[]>
+    );
+
+    expect(items.map((f) => f.id)).toEqual(['abc']);
+  });
+
+  it('drops a filament the user may not see', async () => {
+    mockFilamentService.getFilamentDetail.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 403 }))
+    );
+
+    const items = await firstValueFrom(
+      runResolver(filamentFilterResolver, makeRoute(['theirs'])) as Observable<
+        FilamentSummary[]
+      >
+    );
+
+    expect(items).toEqual([]);
   });
 });

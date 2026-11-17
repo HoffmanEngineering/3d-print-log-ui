@@ -8,6 +8,7 @@ import { PrinterDetail, PrinterService } from './printer.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
@@ -20,7 +21,7 @@ describe('PrinterService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

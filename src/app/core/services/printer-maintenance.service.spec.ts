@@ -5,6 +5,7 @@ import { PrinterMaintenanceService } from './printer-maintenance.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 
 describe('PrinterMaintenanceService', () => {
@@ -14,7 +15,7 @@ describe('PrinterMaintenanceService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });

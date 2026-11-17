@@ -159,6 +159,22 @@ describe('ProjectSelectorComponent', () => {
     expect(clearButton).not.toBeNull();
   });
 
+  it('makes the clear button a plain button, so it never submits the form around it', async () => {
+    // The print editor hosts this selector inside its <form>; a default (submit) button
+    // there saved the print and left the page when the user only meant to clear the field.
+    vi.useFakeTimers();
+    fixture.componentRef.setInput('initialProjectId', 'abc');
+    fixture.componentRef.setInput('initialProjectName', 'Voron Build');
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(250);
+    fixture.detectChanges();
+
+    const clearButton: HTMLButtonElement = fixture.nativeElement.querySelector(
+      'button[aria-label="Clear"]'
+    );
+    expect(clearButton.type).toBe('button');
+  });
+
   it('should fetch project by id and initialize when only initialProjectId is provided', async () => {
     vi.useFakeTimers();
     fixture.componentRef.setInput('initialProjectId', 'abc');

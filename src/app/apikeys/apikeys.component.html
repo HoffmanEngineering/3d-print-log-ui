@@ -42,6 +42,7 @@
                 mat-raised-button
                 type="button"
                 color="primary"
+                [disabled]="creating()"
                 (click)="addNewKey()"
               >
                 Submit
@@ -120,7 +121,7 @@
             <td mat-cell *matCellDef="let key">
               <button
                 type="button"
-                (click)="deleteKey(key.id)"
+                (click)="deleteKey(key)"
                 aria-label="Delete API Key"
                 mat-raised-button
                 color="warn"

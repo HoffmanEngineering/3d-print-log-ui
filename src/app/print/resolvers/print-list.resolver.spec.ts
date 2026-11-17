@@ -48,6 +48,19 @@ describe('printListResolver', () => {
     });
   });
 
+  // Close on a print goes Back to the list URL, and a fresh list shows whatever
+  // page this resolver loads.
+  it('loads the page number and page size from the URL', () => {
+    runResolver(
+      printListResolver,
+      routeWith({ pageNumber: '3', pageSize: '25' })
+    );
+
+    const args = vi.mocked(printService.getPrintSummaries).mock.lastCall;
+    expect(+args[0]).toBe(3);
+    expect(+args[1]).toBe(25);
+  });
+
   it('passes no range when only one end is present', () => {
     runResolver(
       printListResolver,

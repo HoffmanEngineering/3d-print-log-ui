@@ -358,25 +358,14 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultPrintViewStatus(newViewStatus: PrintViewStatus) {
-    if (this.defaultPrintViewStatusSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultPrintViewStatusSettingOnLoad().id,
-          newViewStatus.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultPrintViewStatusSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Prints_DefaultPrintViewStatus,
-          newViewStatus.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultPrintViewStatusSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Prints_DefaultPrintViewStatus,
+        newViewStatus.toString()
+      )
+      .then((setting) => {
+        this.defaultPrintViewStatusSettingOnLoad.set(setting);
+      });
   }
 
   cancelDefaultPrintViewStatus() {
@@ -388,38 +377,19 @@ export class SettingsComponent implements OnInit {
   }
 
   savePreferredCurrency(newCurrency: string) {
-    if (this.preferredCurrencyNameSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.preferredCurrencyNameSettingOnLoad().id,
-          newCurrency.toString()
-        )
-        .subscribe((setting) => {
-          this.preferredCurrencyNameSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Currency_Name, newCurrency.toString())
-        .subscribe((setting) => {
-          this.preferredCurrencyNameSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(UserSettingType.Currency_Name, newCurrency.toString())
+      .then((setting) => {
+        this.preferredCurrencyNameSettingOnLoad.set(setting);
+      });
 
     const symbol = this.currencies()[newCurrency].symbol;
 
-    if (this.preferredCurrencySymbolSettingOnLoad) {
-      this.userSettingService
-        .updateUserSetting(this.preferredCurrencySymbolSettingOnLoad.id, symbol)
-        .subscribe((setting) => {
-          this.preferredCurrencySymbolSettingOnLoad = setting;
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Currency_Symbol, symbol)
-        .subscribe((setting) => {
-          this.preferredCurrencySymbolSettingOnLoad = setting;
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(UserSettingType.Currency_Symbol, symbol)
+      .then((setting) => {
+        this.preferredCurrencySymbolSettingOnLoad = setting;
+      });
   }
 
   cancelPreferredCurrency() {
@@ -431,25 +401,14 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultFilamentDiameterMm(newDiameterMm: number) {
-    if (this.defaultFilamentDiameterMmSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultFilamentDiameterMmSettingOnLoad().id,
-          newDiameterMm.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Filaments_DefaultDiameterMm,
-          newDiameterMm.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Filaments_DefaultDiameterMm,
+        newDiameterMm.toString()
+      )
+      .then((setting) => {
+        this.defaultFilamentDiameterMmSettingOnLoad.set(setting);
+      });
   }
 
   cancelDefaultFilamentDiameterMm() {
@@ -461,25 +420,14 @@ export class SettingsComponent implements OnInit {
   }
 
   saveDefaultFilamentPrice(newPrice: string) {
-    if (this.defaultFilamentPriceSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultFilamentPriceSettingOnLoad().id,
-          newPrice.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentPriceSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Filaments_DefaultPrice,
-          newPrice.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentPriceSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Filaments_DefaultPrice,
+        newPrice.toString()
+      )
+      .then((setting) => {
+        this.defaultFilamentPriceSettingOnLoad.set(setting);
+      });
   }
 
   cancelDefaultFilamentPrice() {
@@ -491,33 +439,18 @@ export class SettingsComponent implements OnInit {
   }
 
   savePreferredFilamentDisplayUnit(newUnit: PrintFilamentSourceMeasurement) {
-    if (this.preferredFilamentDisplayUnitSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.preferredFilamentDisplayUnitSettingOnLoad().id,
-          newUnit.toString()
-        )
-        .subscribe((setting) => {
-          this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
-          this.loggingService.logEvent(
-            'Settings_PreferredFilamentDisplayUnitChanged',
-            { unit: newUnit }
-          );
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Prints_PreferredFilamentDisplayUnit,
-          newUnit.toString()
-        )
-        .subscribe((setting) => {
-          this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
-          this.loggingService.logEvent(
-            'Settings_PreferredFilamentDisplayUnitChanged',
-            { unit: newUnit }
-          );
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Prints_PreferredFilamentDisplayUnit,
+        newUnit.toString()
+      )
+      .then((setting) => {
+        this.preferredFilamentDisplayUnitSettingOnLoad.set(setting);
+        this.loggingService.logEvent(
+          'Settings_PreferredFilamentDisplayUnitChanged',
+          { unit: newUnit }
+        );
+      });
   }
 
   cancelPreferredFilamentDisplayUnit() {
@@ -531,43 +464,24 @@ export class SettingsComponent implements OnInit {
 
   saveDefaultElectricityKwhRate(newRate: string) {
     const rateStr = newRate?.toString();
-    if (this.defaultElectricityKwhRateSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultElectricityKwhRateSettingOnLoad().id,
-          rateStr
-        )
-        .subscribe((setting) => {
-          this.defaultElectricityKwhRateSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Electricity_KwhRate, rateStr)
-        .subscribe((setting) => {
-          this.defaultElectricityKwhRateSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(UserSettingType.Electricity_KwhRate, rateStr)
+      .then((setting) => {
+        this.defaultElectricityKwhRateSettingOnLoad.set(setting);
+      });
     this.loggingService.logEvent('Settings_ElectricityKwhRateChanged');
   }
 
   saveDefaultElectricityWattage(newWattage: string) {
     const wattageStr = newWattage?.toString();
-    if (this.defaultElectricityWattageSettingOnLoad()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultElectricityWattageSettingOnLoad().id,
-          wattageStr
-        )
-        .subscribe((setting) => {
-          this.defaultElectricityWattageSettingOnLoad.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(UserSettingType.Electricity_DefaultWattageW, wattageStr)
-        .subscribe((setting) => {
-          this.defaultElectricityWattageSettingOnLoad.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Electricity_DefaultWattageW,
+        wattageStr
+      )
+      .then((setting) => {
+        this.defaultElectricityWattageSettingOnLoad.set(setting);
+      });
     this.loggingService.logEvent('Settings_ElectricityDefaultWattageChanged');
   }
 

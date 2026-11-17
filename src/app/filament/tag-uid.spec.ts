@@ -16,16 +16,16 @@ describe('normalizeTagUid', () => {
   });
 
   it('rejects an empty value', () => {
-    expect(normalizeTagUid('  :: ').ok).toBeFalse();
+    expect(normalizeTagUid('  :: ').ok).toBe(false);
   });
 
   it('rejects non-hex characters', () => {
     const result = normalizeTagUid('04:G2:3F:11');
-    expect(result.ok).toBeFalse();
+    expect(result.ok).toBe(false);
   });
 
   it('rejects a 0x prefix rather than guessing at it', () => {
-    expect(normalizeTagUid('0x04A23F11').ok).toBeFalse();
+    expect(normalizeTagUid('0x04A23F11').ok).toBe(false);
   });
 
   it('rejects an odd number of hex digits', () => {
@@ -37,8 +37,8 @@ describe('normalizeTagUid', () => {
   });
 
   it('accepts 64 hex digits and rejects 66', () => {
-    expect(normalizeTagUid('AB'.repeat(32)).ok).toBeTrue();
-    expect(normalizeTagUid('AB'.repeat(33)).ok).toBeFalse();
+    expect(normalizeTagUid('AB'.repeat(32)).ok).toBe(true);
+    expect(normalizeTagUid('AB'.repeat(33)).ok).toBe(false);
   });
 
   it('matches the API cap of 16 tags per spool', () => {

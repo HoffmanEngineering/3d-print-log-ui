@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterModule } from '@angular/router';
 import { DOCUMENT } from '@angular/common';
@@ -7,13 +8,13 @@ import { MetaTagService } from '../core/services/meta-tag.service';
 
 describe('KlipperLandingComponent', () => {
   let fixture: ComponentFixture<KlipperLandingComponent>;
-  let meta: jasmine.SpyObj<MetaTagService>;
+  let meta: MockedObject<MetaTagService>;
   let element: HTMLElement;
 
   beforeEach(async () => {
-    meta = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setSeoTags',
-    ]);
+    meta = {
+      setSeoTags: vi.fn().mockName('MetaTagService.setSeoTags'),
+    } as unknown as MockedObject<MetaTagService>;
     await TestBed.configureTestingModule({
       imports: [KlipperLandingComponent, RouterModule.forRoot([])],
       providers: [{ provide: MetaTagService, useValue: meta }],
@@ -43,11 +44,12 @@ describe('KlipperLandingComponent', () => {
   });
 
   it('sets the canonical, title, description and social image', () => {
-    expect(meta.setSeoTags).toHaveBeenCalledOnceWith({
+    expect(meta.setSeoTags).toHaveBeenCalledTimes(1);
+    expect(meta.setSeoTags).toHaveBeenCalledWith({
       url: 'https://www.3dprintlog.com/klipper',
       title: KLIPPER_LANDING.title,
       description: KLIPPER_LANDING.metaDescription,
-      imageUrl: jasmine.stringMatching(/^https:\/\/www\.3dprintlog\.com\//),
+      imageUrl: expect.stringMatching(/^https:\/\/www\.3dprintlog\.com\//),
     });
     expect(KLIPPER_LANDING.title).toMatch(/Klipper/);
     // Search engines truncate past roughly 160 characters.

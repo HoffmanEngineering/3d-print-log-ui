@@ -28,20 +28,20 @@ describe('bridge-grouping', () => {
 
   describe('onNetwork', () => {
     it('is true for an IPv4 address inside one of the CIDRs', () => {
-      expect(onNetwork('192.168.2.61', ['192.168.2.0/24'])).toBeTrue();
-      expect(
-        onNetwork('10.0.5.9', ['192.168.1.0/24', '10.0.0.0/16'])
-      ).toBeTrue();
-      expect(onNetwork('10.0.5.9', ['10.0.5.9/32'])).toBeTrue();
+      expect(onNetwork('192.168.2.61', ['192.168.2.0/24'])).toBe(true);
+      expect(onNetwork('10.0.5.9', ['192.168.1.0/24', '10.0.0.0/16'])).toBe(
+        true
+      );
+      expect(onNetwork('10.0.5.9', ['10.0.5.9/32'])).toBe(true);
     });
 
     it('is false outside, for host names, IPv6 and bad CIDRs', () => {
-      expect(onNetwork('192.168.1.61', ['192.168.2.0/24'])).toBeFalse();
-      expect(onNetwork('mk4.local', ['192.168.2.0/24'])).toBeFalse();
-      expect(onNetwork('fd00::5', ['fd00::/64'])).toBeFalse();
-      expect(onNetwork('192.168.2.61', ['192.168.2.0/40'])).toBeFalse();
-      expect(onNetwork('192.168.2.61', null)).toBeFalse();
-      expect(onNetwork('300.1.1.1', ['0.0.0.0/0'])).toBeFalse();
+      expect(onNetwork('192.168.1.61', ['192.168.2.0/24'])).toBe(false);
+      expect(onNetwork('mk4.local', ['192.168.2.0/24'])).toBe(false);
+      expect(onNetwork('fd00::5', ['fd00::/64'])).toBe(false);
+      expect(onNetwork('192.168.2.61', ['192.168.2.0/40'])).toBe(false);
+      expect(onNetwork('192.168.2.61', null)).toBe(false);
+      expect(onNetwork('300.1.1.1', ['0.0.0.0/0'])).toBe(false);
     });
   });
 
@@ -100,7 +100,7 @@ describe('bridge-grouping', () => {
         }),
       ]);
       // 192.168.1.60 is on Garage's network only: the network wins over recency.
-      expect(result.get(42)!.alsoFoundBy.has(1)).toBeTrue();
+      expect(result.get(42)!.alsoFoundBy.has(1)).toBe(true);
 
       const neither = crossBridge([
         snap(garage, {
@@ -122,7 +122,7 @@ describe('bridge-grouping', () => {
           ],
         }),
       ]);
-      expect(neither.get(9)!.alsoFoundBy.has(2)).toBeTrue();
+      expect(neither.get(9)!.alsoFoundBy.has(2)).toBe(true);
     });
 
     it('prefers an online bridge over a stale one', () => {
@@ -133,7 +133,7 @@ describe('bridge-grouping', () => {
         ),
         snap(attic, { discovered: [discovered({ id: 2 })] }),
       ]);
-      expect(result.get(9)!.alsoFoundBy.has(2)).toBeTrue();
+      expect(result.get(9)!.alsoFoundBy.has(2)).toBe(true);
     });
 
     it('leaves it under the bridge already watching it, and offers the others on its row', () => {
@@ -161,7 +161,7 @@ describe('bridge-grouping', () => {
       expect(sightings.map((s) => [s.bridgeId, s.printer.id])).toEqual([
         [9, 2],
       ]);
-      expect(sightings[0].onOwnNetwork).toBeTrue();
+      expect(sightings[0].onOwnNetwork).toBe(true);
     });
 
     it('counts an app entry without a discovery row, and a config-file printer, as watching', () => {
@@ -169,7 +169,7 @@ describe('bridge-grouping', () => {
         snap(garage, { printers: [bridgePrinter({ id: 7 })] }),
         snap(attic, { discovered: [discovered({ id: 2 })] }),
       ]);
-      expect(byEntry.get(9)!.listedElsewhere.get(2)?.watched).toBeTrue();
+      expect(byEntry.get(9)!.listedElsewhere.get(2)?.watched).toBe(true);
 
       const byFile = crossBridge([
         snap(garage, {
@@ -179,7 +179,7 @@ describe('bridge-grouping', () => {
         }),
         snap(attic, { discovered: [discovered({ id: 2 })] }),
       ]);
-      expect(byFile.get(9)!.listedElsewhere.get(2)?.watched).toBeTrue();
+      expect(byFile.get(9)!.listedElsewhere.get(2)?.watched).toBe(true);
     });
 
     it('keeps printers known only by address on every bridge that found them', () => {
@@ -287,7 +287,7 @@ describe('bridge-grouping', () => {
         now
       );
       expect(notice).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           printerId: 5,
           printerName: null,
           watcherName: null,

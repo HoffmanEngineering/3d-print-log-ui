@@ -432,6 +432,25 @@ export class FilamentService {
   }
 
   /**
+   * Marks a spool empty and inactive. The adjustment zeroes the remaining amount the API
+   * reports now, not a list row's, which a print logged since the list loaded makes stale
+   * (and would leave the spool below zero).
+   */
+  markEmpty(filamentId: string, note: string): Observable<FilamentDetail> {
+    return this.addAdjustment(
+      filamentId,
+      (filament) => {
+        const remaining = filament.filamentRemaining;
+        return typeof remaining === 'number' && remaining !== 0
+          ? -remaining
+          : null;
+      },
+      note,
+      false
+    );
+  }
+
+  /**
    * Add an adjustment to a filament. Optionally set the isActive flag.
    */
   addAdjustmentAmount(
@@ -440,22 +459,39 @@ export class FilamentService {
     note: string,
     isActive?: boolean
   ): Observable<FilamentDetail> {
+    return this.addAdjustment(
+      filamentId,
+      () => adjustmentValue,
+      note,
+      isActive
+    );
+  }
+
+  /** `amountFor` reads the fetched detail; null adds no adjustment. */
+  private addAdjustment(
+    filamentId: string,
+    amountFor: (filament: FilamentDetail) => number | null,
+    note: string,
+    isActive?: boolean
+  ): Observable<FilamentDetail> {
     return this.getFilamentDetail(filamentId).pipe(
       map((filament) => {
-        // Add an adjustment:
-        const newAdjustment: FilamentAdjustment = {
-          amountMg: adjustmentValue,
-          source: FilamentAdjustmentSourceMeasurement.Weight,
-          lengthInM: null,
-          volumeMl: null,
-          filamentId: filamentId,
-          id: EMPTY_GUID,
-          notes: note,
-        };
-        filament.filamentAdjustments = [
-          ...filament.filamentAdjustments,
-          newAdjustment,
-        ];
+        const amountMg = amountFor(filament);
+        if (amountMg !== null) {
+          const newAdjustment: FilamentAdjustment = {
+            amountMg,
+            source: FilamentAdjustmentSourceMeasurement.Weight,
+            lengthInM: null,
+            volumeMl: null,
+            filamentId: filamentId,
+            id: EMPTY_GUID,
+            notes: note,
+          };
+          filament.filamentAdjustments = [
+            ...filament.filamentAdjustments,
+            newAdjustment,
+          ];
+        }
 
         // Optionally allow an adjustment to mark the filament as inactive.
         if (isActive !== undefined) {

@@ -6,6 +6,7 @@ import {
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import {
   BulkPrintResult,
@@ -23,7 +24,7 @@ describe('PrintService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -92,8 +93,8 @@ describe('PrintService', () => {
         candidate.url.endsWith('/api/Prints/summary')
       );
 
-      expect(request.request.params.has('fromDate')).toBeFalse();
-      expect(request.request.params.has('toDate')).toBeFalse();
+      expect(request.request.params.has('fromDate')).toBe(false);
+      expect(request.request.params.has('toDate')).toBe(false);
       request.flush(emptyPage);
     });
   });
@@ -107,7 +108,7 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('');
     });
 
@@ -119,7 +120,7 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('');
     });
 
@@ -131,7 +132,7 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('(Electricity rate not set)');
     });
 
@@ -143,7 +144,7 @@ describe('PrintService', () => {
         defaultWattageW: null,
         currencySymbol: '$',
       });
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect((result as any).message).toBe('(Printer wattage not set)');
     });
 
@@ -156,10 +157,10 @@ describe('PrintService', () => {
         defaultWattageW: null,
         currencySymbol: '$',
       });
-      expect(result.valid).toBeTrue();
+      expect(result.valid).toBe(true);
       if (result.valid) {
         expect(result.cost.value).toBeCloseTo(0.03, 4);
-        expect(result.usesDefaultWattage).toBeFalse();
+        expect(result.usesDefaultWattage).toBe(false);
         expect(result.wattageW).toBe(200);
         expect(result.printTimeHours).toBeCloseTo(1, 4);
       }
@@ -174,10 +175,10 @@ describe('PrintService', () => {
         defaultWattageW: '150',
         currencySymbol: '$',
       });
-      expect(result.valid).toBeTrue();
+      expect(result.valid).toBe(true);
       if (result.valid) {
         expect(result.cost.value).toBeCloseTo(0.06, 4);
-        expect(result.usesDefaultWattage).toBeTrue();
+        expect(result.usesDefaultWattage).toBe(true);
         expect(result.wattageW).toBe(150);
       }
     });
@@ -289,7 +290,7 @@ describe('PrintService', () => {
       service.addPrint(base).subscribe();
 
       const request = httpMock.expectOne((r) => r.method === 'POST');
-      expect('curaSettingId' in request.request.body).toBeFalse();
+      expect('curaSettingId' in request.request.body).toBe(false);
       request.flush({ id: 1 });
     });
   });

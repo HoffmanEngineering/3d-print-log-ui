@@ -1,24 +1,34 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { NGX_LOADING_BAR_IGNORED } from '@ngx-loading-bar/http-client';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import {
   computed,
   DestroyRef,
   inject,
   Injectable,
+  PLATFORM_ID,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   concat,
   EMPTY,
+  fromEvent,
   interval,
   last,
+  merge,
   Observable,
   of,
-  Subject,
   Subscription,
 } from 'rxjs';
-import { catchError, map, startWith, switchMap, tap } from 'rxjs/operators';
+import {
+  catchError,
+  filter,
+  map,
+  startWith,
+  switchMap,
+  tap,
+} from 'rxjs/operators';
 import { environment } from 'src/environments/environment';
 import { PagedList } from '../types/paging';
 import {
@@ -101,12 +111,19 @@ export function getTimeAgo(date: Date, short: boolean = false): string {
 })
 export class NotificationService {
   private readonly baseApiUrl = `${environment.printLogApiUrl}/api/notifications`;
-  private readonly POLLING_INTERVAL_MS = 30000;
+  /**
+   * 60 s, not 30: the count only drives the bell badge and the achievement celebration, and a
+   * visible tab also refreshes the moment it is shown, so the longer gap costs little while
+   * halving the load this poll puts on the database.
+   */
+  private readonly POLLING_INTERVAL_MS = 60000;
   /** The API's MaxNotificationIds for PUT api/notifications/read. */
   private readonly MARK_READ_CHUNK = 100;
 
   private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
+  private document = inject(DOCUMENT);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly _unreadCount = signal<number>(0);
   public readonly unreadCount = this._unreadCount.asReadonly();
@@ -126,21 +143,35 @@ export class NotificationService {
   public readonly pollTick = this._pollTick.asReadonly();
 
   private polling: Subscription | null = null;
-  private refreshTrigger$ = new Subject<void>();
 
   /**
-   * Start polling for unread count every 30 seconds.
-   * Should be called when the user logs in.
+   * Poll the unread count every 60 seconds while the tab is visible and the browser is online.
+   * A hidden tab does not poll; showing it again (or coming back online) refreshes at once and
+   * restarts the interval. Called when the user signs in; stopPolling() ends it on sign-out.
    */
   startPolling(): void {
-    if (this.polling) {
+    if (this.polling || !this.isBrowser) {
       return;
     }
 
-    this.polling = this.refreshTrigger$
+    const view = this.document.defaultView;
+    const reevaluate$ = merge(
+      fromEvent(this.document, 'visibilitychange'),
+      view ? fromEvent(view, 'online') : EMPTY
+    );
+
+    this.polling = reevaluate$
       .pipe(
         startWith(undefined),
-        switchMap(() => interval(this.POLLING_INTERVAL_MS).pipe(startWith(0))),
+        map(() => this.document.visibilityState === 'visible'),
+        // Hidden: switch to nothing, so no timer runs and no request is made.
+        switchMap((visible) =>
+          visible
+            ? interval(this.POLLING_INTERVAL_MS).pipe(startWith(0))
+            : EMPTY
+        ),
+        // Offline: skip the tick. A request now would only fail with status 0.
+        filter(() => this.isOnline()),
         // Errors are absorbed per request: one failed poll must not end the stream, or
         // achievements earned elsewhere (slicer, printer host, another tab) would never be
         // noticed for the rest of the session.
@@ -303,6 +334,12 @@ export class NotificationService {
     this.polling = null;
     this._unreadCount.set(0);
     this._unreadAchievementCount.set(0);
+  }
+
+  private isOnline(): boolean {
+    const nav = this.document.defaultView?.navigator;
+    // Treat "unknown" as online: only a definite false skips a poll.
+    return nav?.onLine !== false;
   }
 
   private applyCounts(response: UnreadCountResponse): void {

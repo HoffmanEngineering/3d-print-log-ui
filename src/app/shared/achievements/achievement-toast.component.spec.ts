@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
@@ -19,14 +20,16 @@ function item(id: string, key: string, tier = 1): CelebrationItem {
 
 describe('AchievementToastComponent', () => {
   let fixture: ComponentFixture<AchievementToastComponent>;
-  let router: jasmine.SpyObj<Router>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let router: MockedObject<Router>;
+  let logging: MockedObject<LoggingService>;
 
   beforeEach(async () => {
-    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+    } as unknown as MockedObject<Router>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     await TestBed.configureTestingModule({
       imports: [AchievementToastComponent],
       providers: [
@@ -67,7 +70,7 @@ describe('AchievementToastComponent', () => {
     });
     expect(logging.logEvent).toHaveBeenCalledWith(
       'AchievementCelebration_Clicked',
-      jasmine.objectContaining({ key: 'first-print', variant: 'card' })
+      expect.objectContaining({ key: 'first-print', variant: 'card' })
     );
   });
 
@@ -117,7 +120,7 @@ describe('AchievementToastComponent', () => {
   });
 
   it('closes itself after 6 seconds unless hovered', () => {
-    jasmine.clock().install();
+    vi.useFakeTimers();
     try {
       fixture.componentRef.setInput('items', [item('a', 'first-print')]);
       let closed = 0;
@@ -126,14 +129,14 @@ describe('AchievementToastComponent', () => {
 
       const el = fixture.nativeElement as HTMLElement;
       el.querySelector('.toast')!.dispatchEvent(new Event('mouseenter'));
-      jasmine.clock().tick(7000);
+      vi.advanceTimersByTime(7000);
       expect(closed).toBe(0);
 
       el.querySelector('.toast')!.dispatchEvent(new Event('mouseleave'));
-      jasmine.clock().tick(6001);
+      vi.advanceTimersByTime(6001);
       expect(closed).toBe(1);
     } finally {
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
     }
   });
 });

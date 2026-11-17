@@ -1,17 +1,36 @@
-import { AdsenseModule } from 'ng2-adsense';
+import type { MockInstance, MockedObject } from 'vitest';
 import { MediaMatcher } from '@angular/cdk/layout';
-import { Component, NO_ERRORS_SCHEMA, output } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import {
+  Component,
+  NO_ERRORS_SCHEMA,
+  output,
+  ChangeDetectionStrategy,
+} from '@angular/core';
+import { Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatSortModule } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { By, Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import {
+  ActivatedRoute,
+  Navigation,
+  ParamMap,
+  Params,
+  Router,
+  convertToParamMap,
+} from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ToastrService } from 'ngx-toastr';
-import { Subject, of, throwError } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
+import {
+  FilamentDetail,
+  FilamentService,
+  FilamentSummary,
+} from 'src/app/core/services/filament.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
 import {
   PrintFilamentSourceMeasurement,
@@ -27,6 +46,7 @@ import {
 } from 'src/app/print/testing/resin-print-fixtures';
 import { UserSettingService } from 'src/app/core/services/user-setting.service';
 import { PagedList } from 'src/app/core/types/paging';
+import { SortDirection } from 'src/app/core/types/sort-request';
 import { DurationPipe } from 'src/app/shared/pipes/duration.pipe';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
 import { PrinterService } from 'src/app/core/services/printer.service';
@@ -42,7 +62,11 @@ import {
 import { PrintListHintSlotComponent } from './print-list-hint-slot/print-list-hint-slot.component';
 import { PrintEmptyStateComponent } from './print-empty-state/print-empty-state.component';
 
-@Component({ selector: 'app-print-list-hint-slot', template: '' })
+@Component({
+  selector: 'app-print-list-hint-slot',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '',
+})
 class StubHintSlotComponent {
   readonly checklistActive = output<boolean>();
   readonly printerAdded = output<void>();
@@ -55,11 +79,11 @@ const printerCount = (totalCount: number) =>
 describe('PrintListComponent', () => {
   let component: PrintListComponent;
   let fixture: ComponentFixture<PrintListComponent>;
-  let mockPrintService: jasmine.SpyObj<PrintService>;
+  let mockPrintService: MockedObject<PrintService>;
 
   /**
    * The list renders either the table or the card view, never both, so the
-   * width has to be stated rather than inherited from whatever size the Karma
+   * width has to be stated rather than inherited from whatever size the test
    * iframe happens to be. Only the handset query is faked; the other media
    * queries the component asks about still go to the real browser.
    */
@@ -75,7 +99,7 @@ describe('PrintListComponent', () => {
     );
   };
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     isHandsetViewport = false;
     handsetListeners = [];
 
@@ -104,16 +128,17 @@ describe('PrintListComponent', () => {
       },
     } as MediaMatcher;
 
-    const mockLogger = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logException',
-      'logEvent',
-    ]);
+    const mockLogger = {
+      logException: vi.fn().mockName('LoggingService.logException'),
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    };
 
-    const mockPrinterService = jasmine.createSpyObj<PrinterService>(
-      'PrinterService',
-      ['getCurrentUserPrinterSummaries']
-    );
-    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+    const mockPrinterService = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    };
+    mockPrinterService.getCurrentUserPrinterSummaries.mockReturnValue(
       printerCount(1)
     );
 
@@ -137,33 +162,37 @@ describe('PrintListComponent', () => {
       snapshot: {},
     };
 
-    const mockTitleService = jasmine.createSpyObj<Title>('Title', ['setTitle']);
+    const mockTitleService = {
+      setTitle: vi.fn().mockName('Title.setTitle'),
+    };
 
-    const mockToastrService = jasmine.createSpyObj<ToastrService>(
-      'ToastrService',
-      ['success', 'error', 'info', 'remove']
-    );
+    const mockToastrService = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+      info: vi.fn().mockName('ToastrService.info'),
+      remove: vi.fn().mockName('ToastrService.remove'),
+    };
 
-    mockPrintService = jasmine.createSpyObj<PrintService>('PrintService', [
-      'deletePrint',
-      'getPrintSummaries',
-      'updatePrintStatus',
-    ]);
-    mockPrintService.getPrintSummaries.and.returnValue(
+    mockPrintService = {
+      deletePrint: vi.fn().mockName('PrintService.deletePrint'),
+      getPrintSummaries: vi.fn().mockName('PrintService.getPrintSummaries'),
+      updatePrintStatus: vi.fn().mockName('PrintService.updatePrintStatus'),
+    } as unknown as MockedObject<PrintService>;
+    mockPrintService.getPrintSummaries.mockReturnValue(
       of(mockPrintPagedResult)
     );
 
-    const mockUserSettingService = jasmine.createSpyObj<UserSettingService>(
-      'UserSettingService',
-      ['getCurrentUsersSettingByType']
-    );
-    mockUserSettingService.getCurrentUsersSettingByType.and.returnValue(
+    const mockUserSettingService = {
+      getCurrentUsersSettingByType: vi
+        .fn()
+        .mockName('UserSettingService.getCurrentUsersSettingByType'),
+    };
+    mockUserSettingService.getCurrentUsersSettingByType.mockReturnValue(
       Promise.resolve(null)
     );
 
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         DurationPipe,
         LocaleDatePipe,
         RouterTestingModule,
@@ -184,6 +213,14 @@ describe('PrintListComponent', () => {
         { provide: ToastrService, useValue: mockToastrService },
         { provide: PrintService, useValue: mockPrintService },
         { provide: UserSettingService, useValue: mockUserSettingService },
+        {
+          provide: FilamentService,
+          useValue: {
+            getFilamentDetail: vi
+              .fn()
+              .mockName('FilamentService.getFilamentDetail'),
+          },
+        },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     })
@@ -192,7 +229,7 @@ describe('PrintListComponent', () => {
         add: { imports: [StubHintSlotComponent] },
       })
       .compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     // The saved table layout outlives a spec otherwise, so a test that picks
@@ -373,9 +410,9 @@ describe('PrintListComponent', () => {
 
       component.sortData({ active: headerId, direction: 'asc' });
 
-      expect(component.sortColumn as PrintSummarySortColumn)
-        .withContext(headerId)
-        .toBe(PrintSummarySortColumn.StartDate);
+      expect(component.sortColumn as PrintSummarySortColumn, headerId).toBe(
+        PrintSummarySortColumn.StartDate
+      );
     });
   });
 
@@ -457,7 +494,7 @@ describe('PrintListComponent', () => {
 
     const fileInput = fixture.debugElement.query(By.css('input[type="file"]'))
       .nativeElement as HTMLInputElement;
-    const clickSpy = spyOn(fileInput, 'click');
+    const clickSpy = vi.spyOn(fileInput, 'click').mockReturnValue(undefined);
 
     // Act
     const importButton = fixture.debugElement.query(
@@ -547,15 +584,15 @@ describe('PrintListComponent', () => {
   const withNoPrinters = () => {
     const mockPrinterService = TestBed.inject(
       PrinterService
-    ) as jasmine.SpyObj<PrinterService>;
-    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+    ) as MockedObject<PrinterService>;
+    mockPrinterService.getCurrentUserPrinterSummaries.mockReturnValue(
       printerCount(0)
     );
 
     const mockToastrService = TestBed.inject(
       ToastrService
-    ) as jasmine.SpyObj<ToastrService>;
-    mockToastrService.info.and.returnValue({
+    ) as MockedObject<ToastrService>;
+    mockToastrService.info.mockReturnValue({
       onTap: of(),
       message: '',
       onAction: of(),
@@ -595,7 +632,7 @@ describe('PrintListComponent', () => {
     expect(mockToastrService.info).toHaveBeenCalledWith(
       'Click here to add a new 3D Printer before logging prints.',
       'No Active Printers',
-      jasmine.any(Object)
+      expect.any(Object)
     );
     expect(component.printerRedirectToast).not.toBeNull();
   });
@@ -610,7 +647,7 @@ describe('PrintListComponent', () => {
     // Assert
     expect(component.printerRedirectToast).toBeNull();
     expect(mockToastrService.remove).not.toHaveBeenCalledWith(
-      jasmine.anything()
+      expect.anything()
     );
 
     const emptyState = fixture.debugElement.query(
@@ -635,7 +672,7 @@ describe('PrintListComponent', () => {
     it('refetches the flat page so the current filters are applied', async () => {
       fixture.detectChanges();
       component.viewMode = 'grouped';
-      mockPrintService.getPrintSummaries.calls.reset();
+      mockPrintService.getPrintSummaries.mockClear();
 
       component.viewMode = 'list';
       // The setter does not hand back updateFilter's promise, so let the real
@@ -647,7 +684,7 @@ describe('PrintListComponent', () => {
 
     it('does not fetch the flat page when switching INTO the grouped view', async () => {
       fixture.detectChanges();
-      mockPrintService.getPrintSummaries.calls.reset();
+      mockPrintService.getPrintSummaries.mockClear();
 
       component.viewMode = 'grouped';
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -669,8 +706,8 @@ describe('PrintListComponent', () => {
         )
       );
 
-      expect(component.isBusy()).toBeFalse();
-      expect(component.isLoading()).toBeFalse();
+      expect(component.isBusy()).toBe(false);
+      expect(component.isLoading()).toBe(false);
     });
   });
 
@@ -693,8 +730,8 @@ describe('PrintListComponent', () => {
     // Arrange
     const mockPrinterService = TestBed.inject(
       PrinterService
-    ) as jasmine.SpyObj<PrinterService>;
-    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+    ) as MockedObject<PrinterService>;
+    mockPrinterService.getCurrentUserPrinterSummaries.mockReturnValue(
       throwError(() => new Error('printer lookup failed'))
     );
 
@@ -702,7 +739,7 @@ describe('PrintListComponent', () => {
     fixture.detectChanges();
 
     // Assert - a failed lookup must not leave the page blank
-    expect(component.hasPrinters()).toBeTrue();
+    expect(component.hasPrinters()).toBe(true);
     expect(
       fixture.debugElement.query(By.css('[data-cy="empty-state-add-print"]'))
     ).toBeTruthy();
@@ -743,31 +780,31 @@ describe('PrintListComponent', () => {
   it('should keep the filter panel open when resetFilters is called', () => {
     // Arrange
     fixture.detectChanges();
-    component.isFilterPanelOpen = true;
+    component.isFilterPanelOpen.set(true);
 
     // Act
     component.resetFilters();
 
     // Assert
-    expect(component.isFilterPanelOpen).toBeTrue();
+    expect(component.isFilterPanelOpen()).toBe(true);
   });
 
   it('should redirect to printers/new when the Printer Redirect toast is tapped.', () => {
     // Arrange
     const router = TestBed.inject(Router);
-    const routerSpy = spyOn(router, 'navigate');
+    const routerSpy = vi.spyOn(router, 'navigate').mockReturnValue(undefined);
 
     const mockPrinterService = TestBed.inject(
       PrinterService
-    ) as jasmine.SpyObj<PrinterService>;
-    mockPrinterService.getCurrentUserPrinterSummaries.and.returnValue(
+    ) as MockedObject<PrinterService>;
+    mockPrinterService.getCurrentUserPrinterSummaries.mockReturnValue(
       printerCount(0)
     );
 
     const mockToastrService = TestBed.inject(
       ToastrService
-    ) as jasmine.SpyObj<ToastrService>;
-    mockToastrService.info.and.returnValue({
+    ) as MockedObject<ToastrService>;
+    mockToastrService.info.mockReturnValue({
       onTap: of(true),
     } as any);
 
@@ -786,7 +823,7 @@ describe('PrintListComponent', () => {
   it('should look up printers with a one-row page', () => {
     const mockPrinterService = TestBed.inject(
       PrinterService
-    ) as jasmine.SpyObj<PrinterService>;
+    ) as MockedObject<PrinterService>;
 
     fixture.detectChanges();
 
@@ -806,14 +843,14 @@ describe('PrintListComponent', () => {
       // The slot answers before the printer lookup lands.
       const lookup = new Subject<never>();
       (
-        TestBed.inject(PrinterService) as jasmine.SpyObj<PrinterService>
-      ).getCurrentUserPrinterSummaries.and.returnValue(lookup);
+        TestBed.inject(PrinterService) as MockedObject<PrinterService>
+      ).getCurrentUserPrinterSummaries.mockReturnValue(lookup);
       fixture.detectChanges();
 
       hintSlot().checklistActive.emit(true);
       lookup.next({ items: [], paging: { totalCount: 0 } } as never);
 
-      expect(component.onboardingActive()).toBeTrue();
+      expect(component.onboardingActive()).toBe(true);
       expect(mockToastrService.info).not.toHaveBeenCalled();
       expect(component.printerRedirectToast).toBeNull();
     });
@@ -844,7 +881,7 @@ describe('PrintListComponent', () => {
       hintSlot().printerAdded.emit();
       fixture.detectChanges();
 
-      expect(component.hasPrinters()).toBeTrue();
+      expect(component.hasPrinters()).toBe(true);
       expect(
         fixture.debugElement.query(
           By.css('[data-cy="empty-state-add-printer"]')
@@ -909,7 +946,7 @@ describe('PrintListComponent', () => {
 
     it('should keep the selection when the result set changes', () => {
       fixture.detectChanges();
-      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
         Promise.resolve(true)
       );
       component.bulkActions.toggleSelection(selectablePrint);
@@ -918,39 +955,53 @@ describe('PrintListComponent', () => {
       // selection outlives them, so a batch can span more than one page.
       component.updateFilter();
 
-      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBe(true);
     });
 
     it('should keep the selection when refreshing after a bulk action', () => {
       fixture.detectChanges();
-      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
         Promise.resolve(true)
       );
       component.bulkActions.toggleSelection(selectablePrint);
 
       component.onBulkActionCompleted();
 
-      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBe(true);
+    });
+
+    it('escapes the print title in the delete confirmation', () => {
+      fixture.detectChanges();
+      const open = vi.spyOn(component.dialog, 'open').mockReturnValue({
+        componentInstance: {},
+        afterClosed: () => of(false),
+      } as MatDialogRef<unknown>);
+
+      component.deletePrint({ ...selectablePrint, title: 'Spool <A> rack' });
+
+      expect(
+        (open.mock.lastCall![1] as { data: { body: string } }).data.body
+      ).toContain('"Spool &lt;A&gt; rack"');
     });
 
     it('should drop a print from the selection when it is deleted on its own', () => {
       fixture.detectChanges();
-      spyOn(TestBed.inject(Router), 'navigate').and.returnValue(
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
         Promise.resolve(true)
       );
-      spyOn(component.dialog, 'open').and.returnValue({
+      vi.spyOn(component.dialog, 'open').mockReturnValue({
         componentInstance: {},
         afterClosed: () => of(true),
       } as MatDialogRef<unknown>);
       const printService = TestBed.inject(
         PrintService
-      ) as jasmine.SpyObj<PrintService>;
-      printService.deletePrint.and.returnValue(of({} as PrintSummary));
+      ) as MockedObject<PrintService>;
+      printService.deletePrint.mockReturnValue(of({} as PrintSummary));
       component.bulkActions.toggleSelection(selectablePrint);
 
       component.deletePrint(selectablePrint);
 
-      expect(component.bulkActions.isSelected(selectablePrint.id)).toBeFalse();
+      expect(component.bulkActions.isSelected(selectablePrint.id)).toBe(false);
     });
 
     describe('row checkbox click handling', () => {
@@ -977,7 +1028,7 @@ describe('PrintListComponent', () => {
         const input = fixture.nativeElement.querySelector(
           `[data-cy-select-print="${selectablePrint.id}"] input[type="checkbox"]`
         ) as HTMLInputElement | null;
-        expect(input).withContext('row checkbox input').not.toBeNull();
+        expect(input, 'row checkbox input').not.toBeNull();
         return input as HTMLInputElement;
       };
 
@@ -993,13 +1044,12 @@ describe('PrintListComponent', () => {
 
         input.click();
 
-        expect(component.bulkActions.isSelected(selectablePrint.id)).toBeTrue();
-        expect(defaultPreventedAtCell)
-          .withContext(
-            'preventDefault runs the canceled-activation steps, which restore ' +
-              'input.checked to false after Angular has already written true'
-          )
-          .toBeFalse();
+        expect(component.bulkActions.isSelected(selectablePrint.id)).toBe(true);
+        expect(
+          defaultPreventedAtCell,
+          'preventDefault runs the canceled-activation steps, which restore ' +
+            'input.checked to false after Angular has already written true'
+        ).toBe(false);
       });
 
       it('should not let a checkbox click reach the row, which would navigate', () => {
@@ -1012,7 +1062,7 @@ describe('PrintListComponent', () => {
 
         input.click();
 
-        expect(reachedTable).toBeFalse();
+        expect(reachedTable).toBe(false);
       });
     });
   });
@@ -1020,9 +1070,9 @@ describe('PrintListComponent', () => {
   it('should navigate to /projects/new when navigateToNewProject is called', () => {
     fixture.detectChanges();
     const router = TestBed.inject(Router);
-    const navigateSpy = spyOn(router, 'navigate').and.returnValue(
-      Promise.resolve(true)
-    );
+    const navigateSpy = vi
+      .spyOn(router, 'navigate')
+      .mockReturnValue(Promise.resolve(true));
     component.navigateToNewProject();
     expect(navigateSpy).toHaveBeenCalledWith(['/projects', 'new']);
   });
@@ -1050,15 +1100,15 @@ describe('PrintListComponent', () => {
     /** A refetch that has gone out but not come back. */
     const pendingRefetch = (): Subject<PagedList<PrintSummary>> => {
       const pending = new Subject<PagedList<PrintSummary>>();
-      mockPrintService.getPrintSummaries.and.returnValue(
+      mockPrintService.getPrintSummaries.mockReturnValue(
         pending.asObservable() as any
       );
       component.updateFilter();
       return pending;
     };
 
-    // Real time rather than tick(): updateFilter awaits router.navigate, which
-    // does not settle inside fakeAsync here.
+    // Real time rather than fake timers: updateFilter awaits router.navigate, which
+    // does not settle under fake timers here.
     const waitPastSkeletonDelay = async (): Promise<void> => {
       await new Promise((resolve) =>
         setTimeout(resolve, DEFERRED_SKELETON_DELAY_MS + 30)
@@ -1086,8 +1136,8 @@ describe('PrintListComponent', () => {
       component.updateFilter();
       await waitPastSkeletonDelay();
 
-      expect(component.showRefreshing()).toBeFalse();
-      expect(component.showSkeleton()).toBeFalse();
+      expect(component.showRefreshing()).toBe(false);
+      expect(component.showSkeleton()).toBe(false);
       expect(fixture.debugElement.query(By.css('mat-progress-bar'))).toBeNull();
     });
 
@@ -1101,7 +1151,7 @@ describe('PrintListComponent', () => {
       const pending = pendingRefetch();
       await waitPastSkeletonDelay();
 
-      expect(component.showRefreshing()).toBeTrue();
+      expect(component.showRefreshing()).toBe(true);
       expect(
         fixture.debugElement.queryAll(By.css('app-print-list-skeleton')).length
       ).toBe(0);
@@ -1164,7 +1214,7 @@ describe('PrintListComponent', () => {
 
       const pending = pendingRefetch();
       await waitPastSkeletonDelay();
-      expect(component.showRefreshing()).toBeTrue();
+      expect(component.showRefreshing()).toBe(true);
 
       // The refetch comes back with nothing.
       pending.next({
@@ -1181,15 +1231,15 @@ describe('PrintListComponent', () => {
       pending.complete();
       fixture.detectChanges();
 
-      expect(component.isLoading()).toBeFalse();
-      expect(component.isBusy()).toBeTrue();
+      expect(component.isLoading()).toBe(false);
+      expect(component.isBusy()).toBe(true);
       expect(
         fixture.debugElement.query(By.css('app-print-empty-state'))
       ).toBeNull();
 
       await waitPastSkeletonDwell();
 
-      expect(component.isBusy()).toBeFalse();
+      expect(component.isBusy()).toBe(false);
       expect(
         fixture.debugElement.query(By.css('app-print-empty-state'))
       ).toBeTruthy();
@@ -1235,7 +1285,7 @@ describe('PrintListComponent', () => {
       fixture.detectChanges();
       rowsOnScreen();
       const updated = new Subject<void>();
-      mockPrintService.updatePrintStatus.and.returnValue(updated as never);
+      mockPrintService.updatePrintStatus.mockReturnValue(updated as never);
 
       component.changeStatus(1, PrintStatus.Failed);
       updated.next();
@@ -1282,5 +1332,453 @@ describe('PrintListComponent', () => {
     expect(
       fixture.debugElement.query(By.css('td app-printer-avatar'))
     ).toBeTruthy();
+  });
+
+  describe('a page past the end', () => {
+    const summary = (id: number) =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2021-05-27'),
+        printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+        filamentUsage: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    beforeEach(() => {
+      vi.spyOn(TestBed.inject(Router), 'navigate').mockReturnValue(
+        Promise.resolve(true)
+      );
+    });
+
+    // 11 prints at 10 per page: deleting the one on page 2 refetches page 2,
+    // and the API answers with no items but a total that still has a page 1.
+    it('steps back to the last page that has prints and fetches it', async () => {
+      TestBed.inject(ActivatedRoute).data = of({
+        printList: {
+          items: [summary(11)],
+          paging: {
+            currentPage: 2,
+            pageSize: 10,
+            totalCount: 11,
+            totalPages: 2,
+          },
+        } as PagedList<PrintSummary>,
+        printers: [],
+        filaments: [],
+      });
+      mockPrintService.getPrintSummaries.mockImplementation(
+        (pageNumber: number) =>
+          of({
+            items:
+              pageNumber === 1
+                ? Array.from({ length: 10 }, (_, i) => summary(i + 1))
+                : [],
+            paging: {
+              currentPage: pageNumber,
+              pageSize: 10,
+              totalCount: 10,
+              totalPages: 1,
+            },
+          } as PagedList<PrintSummary>)
+      );
+      fixture.detectChanges();
+
+      await component.updateFilter();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const pages = mockPrintService.getPrintSummaries.mock.calls.map(
+        (call) => call[0]
+      );
+      expect(pages).toEqual([2, 1]);
+      expect(component.currentPage()).toBe(1);
+      const navigate = vi.mocked(TestBed.inject(Router).navigate);
+      expect(navigate.mock.calls[0][1]?.replaceUrl).toBeFalsy();
+      expect(navigate.mock.lastCall?.[1]?.replaceUrl).toBe(true);
+      expect((fixture.nativeElement as HTMLElement).textContent).toContain(
+        'Print 10'
+      );
+    });
+
+    it('does not keep refetching when page 1 is empty too', async () => {
+      mockPrintService.getPrintSummaries.mockReturnValue(
+        of({
+          items: [],
+          paging: {
+            currentPage: 1,
+            pageSize: 10,
+            totalCount: 3,
+            totalPages: 1,
+          },
+        } as PagedList<PrintSummary>)
+      );
+      fixture.detectChanges();
+
+      await component.updateFilter();
+      await fixture.whenStable();
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('browser history', () => {
+    const summary = (id: number) =>
+      ({
+        id,
+        title: `Print ${id}`,
+        status: PrintStatus.Success,
+        startDate: new Date('2021-05-27'),
+        printer: { id: 1, name: 'Printer Name', make: 'Test', model: 'Test' },
+        filamentUsage: [],
+        commentCount: 0,
+      }) as unknown as PrintSummary;
+
+    const filament = (id: string, displayName: string) =>
+      ({ id, displayName }) as FilamentSummary;
+
+    let queryParams$: BehaviorSubject<ParamMap>;
+    let navigation: Navigation | null;
+    let navigate: MockInstance<Router['navigate']>;
+    let filamentService: MockedObject<FilamentService>;
+
+    /** Back or Forward to an entry with these query params. */
+    const traverseTo = async (params: Params) => {
+      navigation = { trigger: 'popstate', extras: {} } as Navigation;
+      queryParams$.next(convertToParamMap(params));
+      navigation = null;
+      // Not whenStable(): some of these specs fake the timers it waits on.
+      await Promise.resolve();
+      fixture.detectChanges();
+    };
+
+    const startWith = (params: Params, filaments: FilamentSummary[] = []) => {
+      queryParams$.next(convertToParamMap(params));
+      Object.assign(TestBed.inject(ActivatedRoute), {
+        data: of({
+          printList: {
+            items: [summary(100)],
+            paging: {
+              currentPage: +(params.pageNumber ?? 1),
+              pageSize: +(params.pageSize ?? 10),
+              totalCount: 500,
+              totalPages: 50,
+            },
+          } as PagedList<PrintSummary>,
+          printers: [],
+          filaments,
+        }),
+      });
+      fixture.detectChanges();
+    };
+
+    const lastNavigationExtras = () => navigate.mock.lastCall?.[1];
+
+    beforeEach(() => {
+      queryParams$ = new BehaviorSubject(convertToParamMap({}));
+      navigation = null;
+      Object.assign(TestBed.inject(ActivatedRoute), {
+        queryParamMap: queryParams$,
+      });
+
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'currentNavigation').mockImplementation(
+        () => navigation
+      );
+      navigate = vi
+        .spyOn(router, 'navigate')
+        .mockReturnValue(Promise.resolve(true));
+
+      filamentService = TestBed.inject(
+        FilamentService
+      ) as MockedObject<FilamentService>;
+
+      // The API echoes the page asked for, with one row named after the page.
+      mockPrintService.getPrintSummaries.mockImplementation(
+        (pageNumber: number, pageSize: number) =>
+          of({
+            items: [summary(pageNumber)],
+            paging: {
+              currentPage: pageNumber,
+              pageSize,
+              totalCount: 500,
+              totalPages: Math.ceil(500 / pageSize),
+            },
+          } as PagedList<PrintSummary>)
+      );
+    });
+
+    afterEach(() => {
+      localStorage.removeItem('print_list_page_size');
+    });
+
+    it('pushes a history entry for a filter, sort or page change', () => {
+      startWith({});
+
+      component.sortData({ active: '1', direction: 'asc' });
+      expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+
+      component.pageChange({ pageIndex: 2, pageSize: 25, length: 500 });
+      expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+
+      component.resetFilters();
+      expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+    });
+
+    it('restores every filter, the sort and the page on Back, and fetches that list', async () => {
+      startWith({
+        searchText: 'benchy',
+        filterByStatus: `${PrintStatus.Failed}`,
+        filterByPrinterId: ['4'],
+        sortDirection: `${SortDirection.Asc}`,
+        sortColumn: `${PrintSummarySortColumn.Title}`,
+        pageNumber: '3',
+        pageSize: '25',
+      });
+      expect(component.filterByStatus()).toBe(PrintStatus.Failed);
+
+      await traverseTo({ searchText: 'ben', pageNumber: '2', pageSize: '50' });
+
+      expect(component.searchText).toBe('ben');
+      expect(component.filterByStatus()).toBeNull();
+      expect(component.filterByPrinterIds()).toEqual([]);
+      expect(component.filterByFilamentIds()).toEqual([]);
+      expect(component.sortDirection).toBe(SortDirection.Desc);
+      expect(component.sortColumn).toBe(PrintSummarySortColumn.StartDate);
+      expect(component.currentPage()).toBe(2);
+      expect(component.pageSize()).toBe(50);
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall).toEqual([
+        2,
+        50,
+        'ben',
+        null,
+        [],
+        [],
+        SortDirection.Desc,
+        PrintSummarySortColumn.StartDate,
+        undefined,
+      ]);
+      // Restoring is not a new change: the URL is already right.
+      expect(navigate).not.toHaveBeenCalled();
+
+      const text = (fixture.nativeElement as HTMLElement).textContent;
+      expect(text).toContain('Print 2');
+      expect(text).not.toContain('Print 100');
+    });
+
+    it('restores a status, printers and the sort that the newer entry had cleared', async () => {
+      startWith({});
+
+      await traverseTo({
+        filterByStatus: `${PrintStatus.Pending}`,
+        filterByPrinterId: ['1', '2'],
+        sortDirection: `${SortDirection.Asc}`,
+        sortColumn: `${PrintSummarySortColumn.Title}`,
+      });
+
+      expect(component.filterByStatus()).toBe(PrintStatus.Pending);
+      expect(component.filterByPrinterIds()).toEqual([1, 2]);
+      expect(component.sortDirection).toBe(SortDirection.Asc);
+      expect(component.sortColumn).toBe(PrintSummarySortColumn.Title);
+      // No page in the URL is page 1, at the size already showing.
+      expect(component.currentPage()).toBe(1);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall).toEqual([
+        1,
+        10,
+        '',
+        PrintStatus.Pending,
+        [1, 2],
+        [],
+        SortDirection.Asc,
+        PrintSummarySortColumn.Title,
+        undefined,
+      ]);
+    });
+
+    it('drops a search that is still waiting on its debounce', async () => {
+      vi.useFakeTimers();
+      startWith({});
+
+      component.searchText = 'typed after';
+      component.debouncedUpdateFilter();
+      await traverseTo({ searchText: 'older' });
+      await vi.advanceTimersByTimeAsync(400);
+
+      expect(component.searchText).toBe('older');
+      expect(navigate).not.toHaveBeenCalled();
+    });
+
+    it('does not fetch twice for a navigation it started itself', async () => {
+      startWith({});
+      navigate.mockImplementation((_commands, extras) => {
+        navigation = { trigger: 'imperative', extras } as Navigation;
+        queryParams$.next(convertToParamMap(extras?.queryParams ?? {}));
+        navigation = null;
+        return Promise.resolve(true);
+      });
+
+      component.filterByStatus.set(PrintStatus.Failed);
+      await component.updateFilter();
+
+      expect(mockPrintService.getPrintSummaries).toHaveBeenCalledTimes(1);
+    });
+
+    // Close on a print uses location.back(), which builds the list afresh on a
+    // popstate navigation. The resolver has already fetched that page.
+    it('does not refetch what the resolver loaded when it is created by Back', () => {
+      navigation = { trigger: 'popstate', extras: {} } as Navigation;
+      startWith({
+        searchText: 'benchy',
+        filterByStatus: `${PrintStatus.Failed}`,
+        pageNumber: '3',
+        pageSize: '25',
+      });
+      navigation = null;
+
+      expect(mockPrintService.getPrintSummaries).not.toHaveBeenCalled();
+      expect(component.searchText).toBe('benchy');
+      expect(component.filterByStatus()).toBe(PrintStatus.Failed);
+      expect(component.currentPage()).toBe(3);
+      expect(component.pageSize()).toBe(25);
+    });
+
+    it('restores filament chips from filaments it has already loaded', async () => {
+      const pla = filament('f1', 'Red PLA');
+      startWith({ filterByFilamentId: ['f1'] }, [pla]);
+
+      component.removeFilamentFilter(pla);
+      await traverseTo({ filterByFilamentId: ['f1'] });
+
+      expect(component.filterByFilamentIds()).toEqual(['f1']);
+      expect(component.filterByFilaments()).toEqual([pla]);
+      expect(filamentService.getFilamentDetail).not.toHaveBeenCalled();
+    });
+
+    it('looks up a restored filament it has not loaded yet', async () => {
+      filamentService.getFilamentDetail.mockReturnValue(
+        of({ id: 'f9', displayName: 'Galaxy Black' } as FilamentDetail)
+      );
+      startWith({});
+
+      await traverseTo({ filterByFilamentId: ['f9'] });
+
+      expect(filamentService.getFilamentDetail).toHaveBeenCalledWith('f9');
+      expect(component.filterByFilaments().map((f) => f.displayName)).toEqual([
+        'Galaxy Black',
+      ]);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([
+        'f9',
+      ]);
+    });
+
+    it('drops a restored filament filter whose filament is gone, replacing the entry', async () => {
+      filamentService.getFilamentDetail.mockReturnValue(
+        throwError(() => new HttpErrorResponse({ status: 404 }))
+      );
+      startWith({});
+
+      await traverseTo({ filterByFilamentId: ['gone'] });
+      await fixture.whenStable();
+
+      expect(component.filterByFilamentIds()).toEqual([]);
+      expect(lastNavigationExtras()?.queryParams?.filterByFilamentId).toEqual(
+        []
+      );
+      expect(lastNavigationExtras()?.replaceUrl).toBe(true);
+      expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([]);
+    });
+
+    describe('search typing', () => {
+      let entryState: unknown;
+
+      beforeEach(() => {
+        vi.useFakeTimers();
+        entryState = null;
+        vi.spyOn(TestBed.inject(Location), 'getState').mockImplementation(
+          () => entryState
+        );
+        // Each navigation leaves its state on the entry it creates or replaces.
+        navigate.mockImplementation((_commands, extras) => {
+          entryState = extras?.state ?? null;
+          return Promise.resolve(true);
+        });
+      });
+
+      const typeAndPause = async (text: string) => {
+        component.searchText = text;
+        component.debouncedUpdateFilter();
+        await vi.advanceTimersByTimeAsync(400);
+      };
+
+      it('pushes the first search after a different kind of change', async () => {
+        startWith({});
+
+        await typeAndPause('ben');
+
+        expect(navigate).toHaveBeenCalledTimes(1);
+        expect(lastNavigationExtras()?.replaceUrl).toBeFalsy();
+      });
+
+      it('replaces the entry an earlier search created', async () => {
+        startWith({});
+
+        await typeAndPause('ben');
+        await typeAndPause('benchy');
+
+        expect(navigate).toHaveBeenCalledTimes(2);
+        expect(navigate.mock.calls[0][1]?.replaceUrl).toBeFalsy();
+        expect(navigate.mock.calls[1][1]?.replaceUrl).toBe(true);
+        expect(navigate.mock.calls[1][1]?.queryParams?.searchText).toBe(
+          'benchy'
+        );
+      });
+
+      it('pushes a search that follows a filter change', async () => {
+        startWith({});
+
+        await typeAndPause('ben');
+        component.sortData({ active: '1', direction: 'asc' });
+        await vi.advanceTimersByTimeAsync(0);
+        await typeAndPause('benchy');
+
+        expect(navigate).toHaveBeenCalledTimes(3);
+        expect(navigate.mock.calls[1][1]?.replaceUrl).toBeFalsy();
+        expect(navigate.mock.calls[2][1]?.replaceUrl).toBeFalsy();
+      });
+    });
+  });
+
+  // filamentFilterResolver leaves out a filament the API no longer has, so the
+  // filter on it has no chip to remove; drop it and fetch without it.
+  it('drops a filament filter whose filament could not be found', async () => {
+    const navigate = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockReturnValue(Promise.resolve(true));
+    Object.assign(TestBed.inject(ActivatedRoute), {
+      queryParamMap: of(convertToParamMap({ filterByFilamentId: ['gone'] })),
+    });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.filterByFilamentIds()).toEqual([]);
+    expect(
+      navigate.mock.lastCall?.[1]?.queryParams?.filterByFilamentId
+    ).toEqual([]);
+    // An automatic correction, not a user's choice: Back must not land on the
+    // broken URL and bounce forward again.
+    expect(navigate.mock.lastCall?.[1]?.replaceUrl).toBe(true);
+    expect(mockPrintService.getPrintSummaries.mock.lastCall?.[5]).toEqual([]);
+  });
+
+  it('falls back to the default columns when the saved layout is not JSON', () => {
+    localStorage.setItem('print_table_displayed_columns', '{not json');
+
+    expect(() => fixture.detectChanges()).not.toThrow();
+    expect(component.displayedColumns()).toContain('title');
+    localStorage.removeItem('print_table_displayed_columns');
   });
 });

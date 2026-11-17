@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BridgeKeyPinsService } from 'src/app/core/services/bridge-key-pins.service';
 import { LoggingService } from 'src/app/core/services/logging.service';
@@ -6,18 +7,18 @@ import { BridgeKeyChangedComponent } from './bridge-key-changed.component';
 
 describe('BridgeKeyChangedComponent', () => {
   let fixture: ComponentFixture<BridgeKeyChangedComponent>;
-  let pins: jasmine.SpyObj<BridgeKeyPinsService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let pins: MockedObject<BridgeKeyPinsService>;
+  let logging: MockedObject<LoggingService>;
 
   beforeEach(async () => {
-    pins = jasmine.createSpyObj<BridgeKeyPinsService>('BridgeKeyPinsService', [
-      'pin',
-      'pinned',
-    ]);
-    pins.pinned.and.returnValue(TEST_BRIDGE_KEY.fingerprint);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    pins = {
+      pin: vi.fn().mockName('BridgeKeyPinsService.pin'),
+      pinned: vi.fn().mockName('BridgeKeyPinsService.pinned'),
+    } as unknown as MockedObject<BridgeKeyPinsService>;
+    pins.pinned.mockReturnValue(TEST_BRIDGE_KEY.fingerprint);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
     await TestBed.configureTestingModule({
       imports: [BridgeKeyChangedComponent],
       providers: [
@@ -50,7 +51,8 @@ describe('BridgeKeyChangedComponent', () => {
     (
       el().querySelector('[data-testid="key-changed-accept"]') as HTMLElement
     ).click();
-    expect(pins.pin).toHaveBeenCalledOnceWith(42, OTHER_BRIDGE_KEY.fingerprint);
+    expect(pins.pin).toHaveBeenCalledTimes(1);
+    expect(pins.pin).toHaveBeenCalledWith(42, OTHER_BRIDGE_KEY.fingerprint);
     expect(logging.logEvent).toHaveBeenCalledWith('Bridges_KeyAccepted', {
       context: 'card',
     });

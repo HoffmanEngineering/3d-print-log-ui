@@ -14,7 +14,7 @@ describe('resolvePresetRange', () => {
 
     // Start of today through start of tomorrow, never 23:59:59.999.
     expect(new Date(toDate!).getTime() - new Date(fromDate!).getTime()).toBe(
-      86_400_000
+      86400000
     );
   });
 
@@ -28,8 +28,7 @@ describe('resolvePresetRange', () => {
   it('spans 30 days for last30', () => {
     const { fromDate, toDate } = resolvePresetRange('last30', now, null, null);
     const days =
-      (new Date(toDate!).getTime() - new Date(fromDate!).getTime()) /
-      86_400_000;
+      (new Date(toDate!).getTime() - new Date(fromDate!).getTime()) / 86400000;
     expect(days).toBe(30);
   });
 
@@ -42,8 +41,7 @@ describe('resolvePresetRange', () => {
     );
 
     const days =
-      (new Date(toDate!).getTime() - new Date(fromDate!).getTime()) /
-      86_400_000;
+      (new Date(toDate!).getTime() - new Date(fromDate!).getTime()) / 86400000;
     expect(days).toBe(3); // 1st, 2nd and 3rd inclusive
   });
 });
@@ -72,12 +70,12 @@ describe('AnalyticsFilterStore', () => {
   });
 
   it('writes filter state to the URL', () => {
-    const spy = spyOn(router, 'navigate').and.resolveTo(true);
+    const spy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     store.setPrinterIds([3, 1]);
 
     expect(spy).toHaveBeenCalled();
-    const params = spy.calls.mostRecent().args[1]!.queryParams as Record<
+    const params = vi.mocked(spy).mock.lastCall[1]!.queryParams as Record<
       string,
       unknown
     >;
@@ -95,7 +93,7 @@ describe('AnalyticsFilterStore', () => {
     expect(store.preset()).toBe('last7');
     expect(store.printerIds()).toEqual([2, 5]);
     expect(store.statuses()).toEqual([PrintStatus.Failed]);
-    expect(store.comparePrevious()).toBeTrue();
+    expect(store.comparePrevious()).toBe(true);
   });
 
   it('ignores malformed URL values rather than throwing', () => {
@@ -105,8 +103,28 @@ describe('AnalyticsFilterStore', () => {
     expect(store.printerIds()).toEqual([7]);
   });
 
+  it('drops material and project ids that are not GUIDs, and statuses that do not exist', () => {
+    // The API answers a malformed GUID or an unknown status with a 400, which turned a stale or
+    // hand-edited link into an error page instead of an unfiltered one.
+    const guid = '3f2504e0-4f89-11d3-9a0c-0305e82c3301';
+    const upper = 'A1B2C3D4-E5F6-4A7B-8C9D-0E1F2A3B4C5D';
+
+    store.initFromUrl({
+      filamentIds: `${guid},not-a-guid,123`,
+      projectIds: `{${guid}},${upper},${guid}x`,
+      statuses: `${PrintStatus.Success},0,7,99,-1,${PrintStatus.PartialSuccess}`,
+    });
+
+    expect(store.filamentIds()).toEqual([guid]);
+    expect(store.projectIds()).toEqual([upper]);
+    expect(store.statuses()).toEqual([
+      PrintStatus.Success,
+      PrintStatus.PartialSuccess,
+    ]);
+  });
+
   it('counts active filters for the mobile chip badge, excluding the date range', () => {
-    spyOn(router, 'navigate').and.resolveTo(true);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     store.setPrinterIds([1]);
     store.setStatuses([PrintStatus.Success, PrintStatus.Failed]);
@@ -115,7 +133,7 @@ describe('AnalyticsFilterStore', () => {
   });
 
   it('clearAll resets every filter but keeps the date preset', () => {
-    spyOn(router, 'navigate').and.resolveTo(true);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     store.setPrinterIds([1]);
     store.setPreset('last7');

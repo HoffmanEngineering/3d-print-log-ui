@@ -1,3 +1,4 @@
+import type { Mock } from 'vitest';
 import { Overlay } from '@angular/cdk/overlay';
 import { signal, WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
@@ -26,9 +27,9 @@ describe('LazyCelebrationPresenter', () => {
   let dialog: {
     openDialogs: unknown[];
     afterAllClosed: Subject<void>;
-    open: jasmine.Spy;
+    open: Mock;
   };
-  let overlayCreate: jasmine.Spy;
+  let overlayCreate: Mock;
   let toastClosed: Subject<void>;
   let router: {
     currentNavigation: WritableSignal<Navigation | null>;
@@ -39,20 +40,29 @@ describe('LazyCelebrationPresenter', () => {
     for (let i = 0; i < 20; i++) await Promise.resolve();
   };
 
+  /**
+   * Waits for `done`, up to a second. The toast's component is a lazily imported
+   * chunk, which the test build loads with a real fetch, so it lands after a
+   * macrotask rather than after a fixed number of microtasks.
+   */
+  const until = async (done: () => boolean) => {
+    for (let i = 0; i < 100 && !done(); i++) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  };
+
   beforeEach(() => {
     dialog = {
       openDialogs: [],
       afterAllClosed: new Subject<void>(),
-      open: jasmine
-        .createSpy('open')
-        .and.returnValue({ afterClosed: () => of(undefined) }),
+      open: vi.fn().mockReturnValue({ afterClosed: () => of(undefined) }),
     };
     toastClosed = new Subject<void>();
     router = {
       currentNavigation: signal<Navigation | null>(null),
       events: new Subject<Event>(),
     };
-    overlayCreate = jasmine.createSpy('create').and.returnValue({
+    overlayCreate = vi.fn().mockReturnValue({
       attach: () => ({
         setInput: () => undefined,
         instance: { closed: toastClosed },
@@ -99,7 +109,7 @@ describe('LazyCelebrationPresenter', () => {
 
     dialog.openDialogs = [];
     dialog.afterAllClosed.next();
-    await flush();
+    await until(() => vi.mocked(overlayCreate).mock.calls.length > 0);
     expect(overlayCreate).toHaveBeenCalledTimes(1);
 
     toastClosed.next();
@@ -142,10 +152,7 @@ describe('LazyCelebrationPresenter', () => {
   it('does not wait for navigation before a toast', async () => {
     router.currentNavigation.set({} as Navigation);
     const shown = presenter.toast([ITEM], { quiet: false });
-    // The first import() of the toast component can take longer than a run of microtasks.
-    for (let i = 0; i < 100 && overlayCreate.calls.count() === 0; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 10));
-    }
+    await until(() => vi.mocked(overlayCreate).mock.calls.length > 0);
     expect(overlayCreate).toHaveBeenCalledTimes(1);
 
     toastClosed.next();

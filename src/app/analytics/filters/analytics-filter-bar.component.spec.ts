@@ -1,6 +1,9 @@
+import type { MockedObject } from 'vitest';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatDateRangeInput } from '@angular/material/datepicker';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
@@ -12,28 +15,30 @@ import { AnalyticsFilterStore } from './analytics-filter.store';
 describe('AnalyticsFilterBarComponent', () => {
   let fixture: ComponentFixture<AnalyticsFilterBarComponent>;
   let store: AnalyticsFilterStore;
-  let bottomSheet: jasmine.SpyObj<MatBottomSheet>;
+  let bottomSheet: MockedObject<MatBottomSheet>;
 
   beforeEach(async () => {
-    bottomSheet = jasmine.createSpyObj<MatBottomSheet>('MatBottomSheet', [
-      'open',
-    ]);
+    bottomSheet = {
+      open: vi.fn().mockName('MatBottomSheet.open'),
+    } as unknown as MockedObject<MatBottomSheet>;
 
-    const printerService = jasmine.createSpyObj<PrinterService>(
-      'PrinterService',
-      ['getCurrentUserPrinterSummaries']
-    );
-    printerService.getCurrentUserPrinterSummaries.and.returnValue(
+    const printerService = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    };
+    printerService.getCurrentUserPrinterSummaries.mockReturnValue(
       of({
         items: [{ id: 1, name: 'Ender', make: 'Creality', model: '3' }],
       } as never)
     );
 
-    const filamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getCurrentUserFilamentSummaries']
-    );
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+    const filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+    };
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(
       of({
         items: [
           {
@@ -160,7 +165,7 @@ describe('AnalyticsFilterBarComponent', () => {
     const days =
       (new Date(filter.toDate!).getTime() -
         new Date(filter.fromDate!).getTime()) /
-      86_400_000;
+      86400000;
     expect(days).toBe(3);
   });
 
@@ -187,6 +192,37 @@ describe('AnalyticsFilterBarComponent', () => {
     expect(store.customTo()).toEqual(new Date(2026, 2, 12));
   });
 
+  it('caps both ends of the custom range at today', () => {
+    store.setPreset('custom');
+    fixture.detectChanges();
+
+    const rangeInput = fixture.debugElement.query(
+      By.directive(MatDateRangeInput)
+    ).componentInstance as MatDateRangeInput<Date>;
+    const max = rangeInput.max!;
+    const today = new Date();
+
+    expect(max.getFullYear()).toBe(today.getFullYear());
+    expect(max.getMonth()).toBe(today.getMonth());
+    expect(max.getDate()).toBe(today.getDate());
+  });
+
+  it('does not apply a range that starts in the future (the API would see it reversed)', () => {
+    // The API clamps toDate to now, so a future start ends up after the end and is a 400.
+    store.setPreset('custom');
+    fixture.detectChanges();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const later = new Date(tomorrow);
+    later.setDate(later.getDate() + 5);
+
+    fixture.componentInstance.onCustomStart(tomorrow);
+    fixture.componentInstance.onCustomEnd(later);
+
+    expect(store.customFrom()).toBeNull();
+    expect(store.customTo()).toBeNull();
+  });
+
   it('does not apply a half-specified range', () => {
     store.setPreset('custom');
     fixture.detectChanges();
@@ -207,29 +243,31 @@ describe('AnalyticsFilterBarComponent', () => {
     ).click();
     fixture.detectChanges();
 
-    expect(store.comparePrevious()).toBeTrue();
+    expect(store.comparePrevious()).toBe(true);
   });
 
   it('opens the bottom sheet instead of inline controls on a phone', async () => {
     TestBed.resetTestingModule();
 
-    const printerService = jasmine.createSpyObj<PrinterService>(
-      'PrinterService',
-      ['getCurrentUserPrinterSummaries']
-    );
-    printerService.getCurrentUserPrinterSummaries.and.returnValue(
+    const printerService = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    };
+    printerService.getCurrentUserPrinterSummaries.mockReturnValue(
       of({ items: [] } as never)
     );
-    const filamentService = jasmine.createSpyObj<FilamentService>(
-      'FilamentService',
-      ['getCurrentUserFilamentSummaries']
-    );
-    filamentService.getCurrentUserFilamentSummaries.and.returnValue(
+    const filamentService = {
+      getCurrentUserFilamentSummaries: vi
+        .fn()
+        .mockName('FilamentService.getCurrentUserFilamentSummaries'),
+    };
+    filamentService.getCurrentUserFilamentSummaries.mockReturnValue(
       of({ items: [] } as never)
     );
-    const phoneSheet = jasmine.createSpyObj<MatBottomSheet>('MatBottomSheet', [
-      'open',
-    ]);
+    const phoneSheet = {
+      open: vi.fn().mockName('MatBottomSheet.open'),
+    };
 
     await TestBed.configureTestingModule({
       imports: [AnalyticsFilterBarComponent, NoopAnimationsModule],
@@ -262,9 +300,10 @@ describe('AnalyticsFilterBarComponent', () => {
     // Must pass a viewContainerRef. The sheet renders in the CDK overlay, outside this
     // component's injector tree, and needs it to resolve the shell-provided filter store.
     // Asserting only that open() was called let a sheet that could never construct pass.
-    const config = phoneSheet.open.calls.mostRecent().args[1];
-    expect(config?.viewContainerRef)
-      .withContext('sheet cannot resolve AnalyticsFilterStore without it')
-      .toBeTruthy();
+    const config = vi.mocked(phoneSheet.open).mock.lastCall[1];
+    expect(
+      config?.viewContainerRef,
+      'sheet cannot resolve AnalyticsFilterStore without it'
+    ).toBeTruthy();
   });
 });

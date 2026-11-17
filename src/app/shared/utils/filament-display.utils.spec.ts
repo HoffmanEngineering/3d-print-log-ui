@@ -61,7 +61,7 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('12.3g');
-      expect(result.isEstimated).toBeTrue();
+      expect(result.isEstimated).toBe(true);
     });
 
     it('stays marked when shown as recorded or converted', () => {
@@ -70,15 +70,15 @@ describe('getFilamentPreferredDisplay', () => {
           fu,
           PrintFilamentSourceMeasurement.AsRecorded
         )!.isEstimated
-      ).toBeTrue();
+      ).toBe(true);
       expect(
         getFilamentPreferredDisplay(fu, PrintFilamentSourceMeasurement.Volume)!
           .isEstimated
-      ).toBeTrue();
+      ).toBe(true);
       expect(
         getActualPreferredDisplay(fu, PrintFilamentSourceMeasurement.Weight)!
           .isEstimated
-      ).toBeTrue();
+      ).toBe(true);
     });
 
     it('leaves a measured figure unmarked', () => {
@@ -88,7 +88,7 @@ describe('getFilamentPreferredDisplay', () => {
           measured,
           PrintFilamentSourceMeasurement.Weight
         )!.isEstimated
-      ).toBeFalse();
+      ).toBe(false);
     });
   });
 
@@ -103,8 +103,8 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('25.3g');
-      expect(result.isEstimated).toBeFalse();
-      expect(result.isFallback).toBeFalse();
+      expect(result.isEstimated).toBe(false);
+      expect(result.isFallback).toBe(false);
       expect(result.fallbackTooltip).toBeNull();
     });
 
@@ -118,7 +118,7 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Length
       )!;
       expect(result.displayString).toBe('5.2m');
-      expect(result.isEstimated).toBeFalse();
+      expect(result.isEstimated).toBe(false);
     });
 
     it('returns volume when preferred=Volume and volumeMl is set', () => {
@@ -146,8 +146,8 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('10.5g');
-      expect(result.isEstimated).toBeTrue();
-      expect(result.isFallback).toBeFalse();
+      expect(result.isEstimated).toBe(true);
+      expect(result.isFallback).toBe(false);
     });
   });
 
@@ -164,8 +164,8 @@ describe('getFilamentPreferredDisplay', () => {
         fu,
         PrintFilamentSourceMeasurement.Weight
       )!;
-      expect(result.isFallback).toBeFalse();
-      expect(result.isEstimated).toBeFalse();
+      expect(result.isFallback).toBe(false);
+      expect(result.isEstimated).toBe(false);
       // 10m of 1.75mm PLA at 1.24 g/cm³ ≈ 29.8g = 29800mg
       const weightG = parseFloat(result.displayString);
       expect(weightG).toBeGreaterThan(29);
@@ -182,8 +182,8 @@ describe('getFilamentPreferredDisplay', () => {
         fu,
         PrintFilamentSourceMeasurement.Weight
       )!;
-      expect(result.isFallback).toBeFalse();
-      expect(result.isEstimated).toBeTrue();
+      expect(result.isFallback).toBe(false);
+      expect(result.isEstimated).toBe(true);
     });
   });
 
@@ -200,8 +200,8 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('5.2m');
-      expect(result.isFallback).toBeTrue();
-      expect(result.isEstimated).toBeFalse();
+      expect(result.isFallback).toBe(true);
+      expect(result.isEstimated).toBe(false);
       expect(result.fallbackTooltip).toBe(
         'Weight unavailable — showing source unit (length)'
       );
@@ -223,7 +223,7 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('5.2m');
-      expect(result.isFallback).toBeTrue();
+      expect(result.isFallback).toBe(true);
       expect(result.fallbackTooltip).toBe(
         'Cannot convert to weight — set filament diameter'
       );
@@ -243,8 +243,8 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('3.1m');
-      expect(result.isFallback).toBeTrue();
-      expect(result.isEstimated).toBeTrue();
+      expect(result.isFallback).toBe(true);
+      expect(result.isEstimated).toBe(true);
     });
   });
 
@@ -360,8 +360,8 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('25.0g');
-      expect(result.isFallback).toBeFalse();
-      expect(result.isEstimated).toBeFalse();
+      expect(result.isFallback).toBe(false);
+      expect(result.isEstimated).toBe(false);
     });
 
     it('converts actual source to preferred unit', () => {
@@ -374,7 +374,7 @@ describe('getFilamentPreferredDisplay', () => {
         fu,
         PrintFilamentSourceMeasurement.Weight
       )!;
-      expect(result.isFallback).toBeFalse();
+      expect(result.isFallback).toBe(false);
       expect(parseFloat(result.displayString)).toBeGreaterThan(29);
     });
 
@@ -388,7 +388,7 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('5.0m');
-      expect(result.isFallback).toBeTrue();
+      expect(result.isFallback).toBe(true);
     });
 
     it('returns null when no actual data', () => {
@@ -413,8 +413,8 @@ describe('getFilamentPreferredDisplay', () => {
         PrintFilamentSourceMeasurement.Weight
       )!;
       expect(result.displayString).toBe('15.0g');
-      expect(result.isEstimated).toBeTrue();
-      expect(result.isFallback).toBeFalse();
+      expect(result.isEstimated).toBe(true);
+      expect(result.isFallback).toBe(false);
     });
 
     it('converts estimated source to preferred unit', () => {
@@ -427,8 +427,8 @@ describe('getFilamentPreferredDisplay', () => {
         fu,
         PrintFilamentSourceMeasurement.Weight
       )!;
-      expect(result.isEstimated).toBeTrue();
-      expect(result.isFallback).toBeFalse();
+      expect(result.isEstimated).toBe(true);
+      expect(result.isFallback).toBe(false);
     });
 
     it('returns null when no estimated data', () => {
@@ -465,8 +465,8 @@ describe('volume-sourced (resin) usage', () => {
         it(`shows the actual in mL, marked estimated, for preferred unit ${unit}`, () => {
           const result = getFilamentPreferredDisplay(fu, unit)!;
           expect(result.displayString).toBe('42.5mL');
-          expect(result.isEstimated).toBeTrue();
-          expect(result.isFallback).toBeFalse();
+          expect(result.isEstimated).toBe(true);
+          expect(result.isFallback).toBe(false);
           expect(result.fallbackTooltip).toBeNull();
         });
 
@@ -476,7 +476,7 @@ describe('volume-sourced (resin) usage', () => {
           );
           const estimate = getEstimatedPreferredDisplay(fu, unit)!;
           expect(estimate.displayString).toBe('40.0mL');
-          expect(estimate.isFallback).toBeFalse();
+          expect(estimate.isFallback).toBe(false);
         });
       }
     });
@@ -489,8 +489,8 @@ describe('volume-sourced (resin) usage', () => {
         unit
       )!;
       expect(result.displayString).toBe('40.0mL');
-      expect(result.isEstimated).toBeTrue();
-      expect(result.isFallback).toBeFalse();
+      expect(result.isEstimated).toBe(true);
+      expect(result.isFallback).toBe(false);
     }
   });
 
@@ -508,13 +508,13 @@ describe('volume-sourced (resin) usage', () => {
 
 describe('isVolumeUsage', () => {
   it('is true for a resin row, linked or not, actual or estimate-only', () => {
-    expect(isVolumeUsage(resinUsageRow())).toBeTrue();
-    expect(isVolumeUsage(unlinkedResinUsageRow())).toBeTrue();
-    expect(isVolumeUsage(estimateOnlyResinUsageRow())).toBeTrue();
+    expect(isVolumeUsage(resinUsageRow())).toBe(true);
+    expect(isVolumeUsage(unlinkedResinUsageRow())).toBe(true);
+    expect(isVolumeUsage(estimateOnlyResinUsageRow())).toBe(true);
   });
 
   it('is false for a filament row', () => {
-    expect(isVolumeUsage(makeFu({ amountMg: 1000 }))).toBeFalse();
+    expect(isVolumeUsage(makeFu({ amountMg: 1000 }))).toBe(false);
   });
 });
 

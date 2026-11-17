@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -6,23 +7,31 @@ import { NativeBridgeService } from './native-bridge.service';
 import { NotificationService } from './notification.service';
 
 describe('PushRegistrationService', () => {
-  let bridge: jasmine.SpyObj<NativeBridgeService>;
-  let notifications: jasmine.SpyObj<NotificationService>;
-  let router: jasmine.SpyObj<Router>;
+  let bridge: MockedObject<NativeBridgeService>;
+  let notifications: MockedObject<NotificationService>;
+  let router: MockedObject<Router>;
   let service: PushRegistrationService;
 
   beforeEach(() => {
-    bridge = jasmine.createSpyObj('NativeBridgeService', [
-      'isAvailable',
-      'registerForPush',
-      'unregisterForPush',
-      'consumePendingTap',
-    ]);
-    bridge.consumePendingTap.and.resolveTo(null);
-    notifications = jasmine.createSpyObj('NotificationService', ['markAsRead']);
-    notifications.markAsRead.and.returnValue(of(undefined));
-    router = jasmine.createSpyObj('Router', ['navigate']);
-    router.navigate.and.resolveTo(true);
+    bridge = {
+      isAvailable: vi.fn().mockName('NativeBridgeService.isAvailable'),
+      registerForPush: vi.fn().mockName('NativeBridgeService.registerForPush'),
+      unregisterForPush: vi
+        .fn()
+        .mockName('NativeBridgeService.unregisterForPush'),
+      consumePendingTap: vi
+        .fn()
+        .mockName('NativeBridgeService.consumePendingTap'),
+    } as unknown as MockedObject<NativeBridgeService>;
+    bridge.consumePendingTap.mockResolvedValue(null);
+    notifications = {
+      markAsRead: vi.fn().mockName('NotificationService.markAsRead'),
+    } as unknown as MockedObject<NotificationService>;
+    notifications.markAsRead.mockReturnValue(of(undefined));
+    router = {
+      navigate: vi.fn().mockName('Router.navigate'),
+    } as unknown as MockedObject<Router>;
+    router.navigate.mockResolvedValue(true);
 
     TestBed.configureTestingModule({
       providers: [
@@ -35,38 +44,38 @@ describe('PushRegistrationService', () => {
   });
 
   it('does nothing when the native bridge is absent', async () => {
-    bridge.isAvailable.and.returnValue(false);
+    bridge.isAvailable.mockReturnValue(false);
     await service.onAuthenticated('bearer-abc');
     expect(bridge.registerForPush).not.toHaveBeenCalled();
   });
 
   it('registers once authenticated', async () => {
-    bridge.isAvailable.and.returnValue(true);
-    bridge.registerForPush.and.resolveTo(true);
+    bridge.isAvailable.mockReturnValue(true);
+    bridge.registerForPush.mockResolvedValue(true);
     await service.onAuthenticated('bearer-abc');
     expect(bridge.registerForPush).toHaveBeenCalledWith('bearer-abc');
   });
 
   it('does not re-register for the same bearer token', async () => {
-    bridge.isAvailable.and.returnValue(true);
-    bridge.registerForPush.and.resolveTo(true);
+    bridge.isAvailable.mockReturnValue(true);
+    bridge.registerForPush.mockResolvedValue(true);
     await service.onAuthenticated('bearer-abc');
     await service.onAuthenticated('bearer-abc');
     expect(bridge.registerForPush).toHaveBeenCalledTimes(1);
   });
 
   it('retries on a later authentication event after a failure', async () => {
-    bridge.isAvailable.and.returnValue(true);
-    bridge.registerForPush.and.resolveTo(false);
+    bridge.isAvailable.mockReturnValue(true);
+    bridge.registerForPush.mockResolvedValue(false);
     await service.onAuthenticated('bearer-abc');
-    bridge.registerForPush.and.resolveTo(true);
+    bridge.registerForPush.mockResolvedValue(true);
     await service.onAuthenticated('bearer-abc');
     expect(bridge.registerForPush).toHaveBeenCalledTimes(2);
   });
 
   it('marks a tapped notification read and routes to the print', async () => {
-    bridge.isAvailable.and.returnValue(true);
-    bridge.consumePendingTap.and.resolveTo({
+    bridge.isAvailable.mockReturnValue(true);
+    bridge.consumePendingTap.mockResolvedValue({
       notificationId: 'abc',
       printId: 42,
     });
@@ -78,7 +87,7 @@ describe('PushRegistrationService', () => {
   });
 
   it('does not navigate when there is no pending tap', async () => {
-    bridge.isAvailable.and.returnValue(true);
+    bridge.isAvailable.mockReturnValue(true);
 
     await service.handlePendingTap();
 
@@ -87,9 +96,9 @@ describe('PushRegistrationService', () => {
   });
 
   it('clears registration state on logout so the next login re-registers', async () => {
-    bridge.isAvailable.and.returnValue(true);
-    bridge.registerForPush.and.resolveTo(true);
-    bridge.unregisterForPush.and.resolveTo(true);
+    bridge.isAvailable.mockReturnValue(true);
+    bridge.registerForPush.mockResolvedValue(true);
+    bridge.unregisterForPush.mockResolvedValue(true);
 
     await service.onAuthenticated('bearer-abc');
     await service.onLogout('bearer-abc');
@@ -105,11 +114,11 @@ describe('PushRegistrationService', () => {
    * user to the print they tapped is the whole feature, and must not depend on the API leg.
    */
   it('still navigates when marking the notification read fails', async () => {
-    bridge.consumePendingTap.and.resolveTo({
+    bridge.consumePendingTap.mockResolvedValue({
       notificationId: 'abc',
       printId: 42,
     });
-    notifications.markAsRead.and.returnValue(
+    notifications.markAsRead.mockReturnValue(
       throwError(() => new Error('offline'))
     );
 

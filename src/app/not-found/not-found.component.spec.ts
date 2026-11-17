@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { provideRouter, Router } from '@angular/router';
@@ -7,13 +8,13 @@ import { NotFoundComponent } from './not-found.component';
 
 describe('NotFoundComponent', () => {
   let fixture: ComponentFixture<NotFoundComponent>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let logging: MockedObject<LoggingService>;
   let meta: Meta;
 
   beforeEach(async () => {
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [NotFoundComponent],
@@ -24,7 +25,7 @@ describe('NotFoundComponent', () => {
     }).compileComponents();
 
     const router = TestBed.inject(Router);
-    spyOnProperty(router, 'url', 'get').and.returnValue(
+    vi.spyOn(router, 'url', 'get').mockReturnValue(
       '/prints/1/nope?code=secret#token=abc'
     );
     meta = TestBed.inject(Meta);
@@ -55,7 +56,8 @@ describe('NotFoundComponent', () => {
   });
 
   it('logs the path without its query string or fragment', () => {
-    expect(logging.logEvent).toHaveBeenCalledOnceWith('NotFound_Viewed', {
+    expect(logging.logEvent).toHaveBeenCalledTimes(1);
+    expect(logging.logEvent).toHaveBeenCalledWith('NotFound_Viewed', {
       path: '/prints/1/nope',
     });
   });

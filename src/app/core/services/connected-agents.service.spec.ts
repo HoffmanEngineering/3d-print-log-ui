@@ -1,6 +1,7 @@
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import {
   HttpTestingController,
@@ -22,7 +23,7 @@ describe('ConnectedAgentsService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -38,14 +39,13 @@ describe('ConnectedAgentsService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('getConnectedAgents GETs /api/connected-agents and returns the typed contract', (done) => {
+  it('getConnectedAgents GETs /api/connected-agents and returns the typed contract', async () => {
     const expected: ConnectedAgent[] = [
       { grantId: 'grant-1', clientId: 'client-1', scopes: ['read:printdata'] },
     ];
 
     service.getConnectedAgents().subscribe((agents) => {
       expect(agents).toEqual(expected);
-      done();
     });
 
     const req = httpController.expectOne(`${baseApi}/api/connected-agents`);
@@ -53,10 +53,8 @@ describe('ConnectedAgentsService', () => {
     req.flush(expected);
   });
 
-  it('revoke DELETEs /api/connected-agents/{grantId}', (done) => {
-    service.revoke('grant-1').subscribe(() => {
-      done();
-    });
+  it('revoke DELETEs /api/connected-agents/{grantId}', async () => {
+    service.revoke('grant-1').subscribe(() => {});
 
     const req = httpController.expectOne(
       `${baseApi}/api/connected-agents/grant-1`

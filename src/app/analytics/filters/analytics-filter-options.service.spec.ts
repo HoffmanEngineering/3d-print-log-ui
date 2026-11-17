@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { FilamentService } from 'src/app/core/services/filament.service';
@@ -24,7 +25,7 @@ const printer = (
   }) as unknown as PrinterSummarySimple;
 
 describe('AnalyticsFilterOptionsService', () => {
-  let printerService: jasmine.SpyObj<PrinterService>;
+  let printerService: MockedObject<PrinterService>;
 
   const create = () => {
     TestBed.configureTestingModule({
@@ -42,14 +43,16 @@ describe('AnalyticsFilterOptionsService', () => {
   };
 
   beforeEach(() => {
-    printerService = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'getCurrentUserPrinterSummaries',
-    ]);
+    printerService = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    } as unknown as MockedObject<PrinterService>;
   });
 
   // 3d-print-log-api#294: a resin printer's grams are its resin, so it shows mL only.
   it('lists the printers whose category takes resin', () => {
-    printerService.getCurrentUserPrinterSummaries.and.returnValue(
+    printerService.getCurrentUserPrinterSummaries.mockReturnValue(
       of({
         items: [printer(1, 'filament'), printer(2, 'resin'), printer(3, null)],
       } as never)
@@ -62,7 +65,7 @@ describe('AnalyticsFilterOptionsService', () => {
   });
 
   it('knows no resin printers when the list fails to load', () => {
-    printerService.getCurrentUserPrinterSummaries.and.returnValue(
+    printerService.getCurrentUserPrinterSummaries.mockReturnValue(
       throwError(() => new Error('boom'))
     );
 

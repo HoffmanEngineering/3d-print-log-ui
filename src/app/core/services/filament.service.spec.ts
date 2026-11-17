@@ -8,6 +8,7 @@ import { FilamentService } from './filament.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import { environment } from 'src/environments/environment.unittest';
 
@@ -19,7 +20,7 @@ describe('FilamentServiceService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -42,7 +43,7 @@ describe('FilamentServiceService', () => {
       `${environment.printLogApiUrl}/api/Filaments/abc-123/images`
     );
     expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBeTrue();
+    expect(req.request.body instanceof FormData).toBe(true);
     expect((req.request.body as FormData).get('file')).toEqual(file);
     req.flush({
       id: 1,
@@ -86,6 +87,42 @@ describe('FilamentServiceService', () => {
     req.flush(null);
   });
 
+  describe('markEmpty', () => {
+    const markEmpty = (filamentRemaining: number | null) => {
+      service.markEmpty('f1', 'Marked empty').subscribe();
+      httpMock
+        .expectOne((r) => r.method === 'GET')
+        .flush({
+          id: 'f1',
+          filamentRemaining,
+          filamentAdjustments: [{ id: 'a1', amountMg: -5 }],
+          isActive: true,
+        });
+      const put = httpMock.expectOne((r) => r.method === 'PUT');
+      put.flush({});
+      return put.request.body;
+    };
+
+    it('adjusts by the remaining amount the API reports and deactivates', () => {
+      const body = markEmpty(980_000);
+
+      expect(body.filamentAdjustments.length).toBe(2);
+      expect(body.filamentAdjustments[1]).toEqual(
+        expect.objectContaining({ amountMg: -980_000, notes: 'Marked empty' })
+      );
+      expect(body.isActive).toBe(false);
+    });
+
+    it('adds no adjustment to a spool already at zero, or untracked', () => {
+      for (const remaining of [0, null]) {
+        const body = markEmpty(remaining);
+
+        expect(body.filamentAdjustments.length).toBe(1);
+        expect(body.isActive).toBe(false);
+      }
+    });
+  });
+
   describe('tags', () => {
     const base = () => `${environment.printLogApiUrl}/api/Filaments`;
 
@@ -98,7 +135,7 @@ describe('FilamentServiceService', () => {
         .flush({ id: 'f1', displayName: 'Galaxy Black' });
 
       expect(result).toEqual(
-        jasmine.objectContaining({ id: 'f1', displayName: 'Galaxy Black' })
+        expect.objectContaining({ id: 'f1', displayName: 'Galaxy Black' })
       );
     });
 
@@ -136,7 +173,7 @@ describe('FilamentServiceService', () => {
 
       expect(put.request.method).toBe('PUT');
       expect(put.request.body).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           id: 'f1',
           notes: 'keep',
           tagUids: ['AABB', '04A23F11'],
@@ -179,7 +216,7 @@ describe('FilamentServiceService', () => {
       ]);
       expect(
         put.request.body.tagUids.filter((u: string) => u === '04A23F11')
-      ).toHaveSize(1);
+      ).toHaveLength(1);
       put.flush({});
     });
 
@@ -189,7 +226,7 @@ describe('FilamentServiceService', () => {
       httpMock.expectOne(`${base()}/f1`).flush({ id: 'f1' });
       const put = httpMock.expectOne(`${base()}/f1`);
 
-      expect('tagReadings' in put.request.body).toBeFalse();
+      expect('tagReadings' in put.request.body).toBe(false);
       put.flush({});
     });
 
@@ -217,7 +254,7 @@ describe('FilamentServiceService', () => {
         memory,
       });
       req.flush({ status: 'unknown', suggestions: [] });
-      expect(result).toEqual(jasmine.objectContaining({ status: 'unknown' }));
+      expect(result).toEqual(expect.objectContaining({ status: 'unknown' }));
     });
 
     it('resolveTagRead omits memory when not given', () => {
@@ -226,7 +263,7 @@ describe('FilamentServiceService', () => {
         .subscribe();
 
       const req = httpMock.expectOne(`${base()}/tag-reads`);
-      expect('memory' in req.request.body).toBeFalse();
+      expect('memory' in req.request.body).toBe(false);
       expect(req.request.body).toEqual({ uid: '04A23F11', techs: ['nfca'] });
       req.flush({});
     });
@@ -235,7 +272,7 @@ describe('FilamentServiceService', () => {
       service.resolveTagRead({ uid: '04A23F11', tech: 'nfca' }).subscribe();
 
       const req = httpMock.expectOne(`${base()}/tag-reads`);
-      expect('techs' in req.request.body).toBeFalse();
+      expect('techs' in req.request.body).toBe(false);
       expect(req.request.body).toEqual({ uid: '04A23F11' });
       req.flush({});
     });

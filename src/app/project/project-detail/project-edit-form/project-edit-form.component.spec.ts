@@ -204,9 +204,7 @@ describe('ProjectEditFormComponent', () => {
       const clearButton: HTMLButtonElement = local.nativeElement.querySelector(
         '[data-cy="clear-start-date"]'
       );
-      expect(clearButton)
-        .withContext('clear button should render')
-        .toBeTruthy();
+      expect(clearButton, 'clear button should render').toBeTruthy();
       clearButton.click();
 
       expect(

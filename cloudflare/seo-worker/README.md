@@ -103,7 +103,7 @@ No secrets: the Worker only reads public endpoints.
 ## Local development
 
 Needs Node 22.12+. The package is separate from the Angular app (its own `package.json` and
-lockfile; the app's tsconfig, ESLint, Karma and build ignore `cloudflare/`).
+lockfile; the app's tsconfig, ESLint, unit tests and build ignore `cloudflare/`).
 
 ```bash
 cd cloudflare/seo-worker

@@ -8,6 +8,7 @@ import { PrinterDetail, PrinterService } from './printer.service';
 import {
   provideHttpClient,
   withInterceptorsFromDi,
+  withXhr,
 } from '@angular/common/http';
 import { environment } from 'src/environments/environment';
 
@@ -20,7 +21,7 @@ describe('PrinterService', () => {
     TestBed.configureTestingModule({
       imports: [],
       providers: [
-        provideHttpClient(withInterceptorsFromDi()),
+        provideHttpClient(withXhr(), withInterceptorsFromDi()),
         provideHttpClientTesting(),
       ],
     });
@@ -49,7 +50,7 @@ describe('PrinterService', () => {
     request.flush([{ id: 'pf-1', slot: 2, slotLabel: 'T2', filament: null }]);
 
     expect(loaded).toEqual([
-      jasmine.objectContaining({ slot: 2, slotLabel: 'T2' }),
+      expect.objectContaining({ slot: 2, slotLabel: 'T2' }),
     ]);
   });
 

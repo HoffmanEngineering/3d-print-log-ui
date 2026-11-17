@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -34,10 +35,10 @@ import {
 } from './bridge-move-dialog.component';
 
 describe('BridgeMoveDialogComponent', () => {
-  let service: jasmine.SpyObj<BridgesService>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<BridgeMoveDialogComponent>>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let service: MockedObject<BridgesService>;
+  let dialogRef: MockedObject<MatDialogRef<BridgeMoveDialogComponent>>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
   let fixture: ComponentFixture<BridgeMoveDialogComponent>;
 
   /** The bridge it leaves: its key is the other one, so a seal to it couldn't open below. */
@@ -111,20 +112,22 @@ describe('BridgeMoveDialogComponent', () => {
 
   beforeEach(() => {
     localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
-    service = jasmine.createSpyObj<BridgesService>('BridgesService', [
-      'move',
-      'get',
-    ]);
-    service.move.and.returnValue(of(moved()));
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    service = {
+      move: vi.fn().mockName('BridgesService.move'),
+      get: vi.fn().mockName('BridgesService.get'),
+    } as unknown as MockedObject<BridgesService>;
+    service.move.mockReturnValue(of(moved()));
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<MatDialogRef<BridgeMoveDialogComponent, any>>;
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
   });
 
   afterEach(() => localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY));
@@ -171,7 +174,7 @@ describe('BridgeMoveDialogComponent', () => {
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
-    fail('timed out');
+    throw new Error('timed out');
   }
 
   function el(): HTMLElement {
@@ -225,7 +228,7 @@ describe('BridgeMoveDialogComponent', () => {
     expect(byTestId('move-found')!.textContent).toContain('192.168.2.61');
     expect(logging.logEvent).toHaveBeenCalledWith(
       'BridgeMove_Opened',
-      jasmine.objectContaining({ kind: 'bambu' })
+      expect.objectContaining({ kind: 'bambu' })
     );
   });
 
@@ -240,7 +243,7 @@ describe('BridgeMoveDialogComponent', () => {
 
   it('seals the access code to the new bridge with its id in the AD, and sends it with the move', async () => {
     const answer = new Subject<MovedBridgePrinter>();
-    service.move.and.returnValue(answer);
+    service.move.mockReturnValue(answer);
     await create();
     await keyReady();
     expect(byTestId('move-fingerprint')!.textContent).toContain(
@@ -251,9 +254,9 @@ describe('BridgeMoveDialogComponent', () => {
     moveButton().click();
     // The typed value is gone before the seal finishes.
     expect(input('access_code').value).toBe('');
-    await until(() => service.move.calls.count() === 1);
+    await until(() => vi.mocked(service.move).mock.calls.length === 1);
 
-    const [fromId, entryId, body] = service.move.calls.mostRecent().args;
+    const [fromId, entryId, body] = vi.mocked(service.move).mock.lastCall;
     expect([fromId, entryId]).toEqual([42, 7]);
     expect(body.toBridgeId).toBe(9);
     expect(body.discoveredPrinterId).toBe(118);
@@ -278,7 +281,7 @@ describe('BridgeMoveDialogComponent', () => {
     );
     expect(logging.logEvent).toHaveBeenCalledWith(
       'BridgeMove_Moved',
-      jasmine.objectContaining({ carried: 1, dropped: 0 })
+      expect.objectContaining({ carried: 1, dropped: 0 })
     );
   });
 
@@ -299,12 +302,12 @@ describe('BridgeMoveDialogComponent', () => {
     await create();
     await until(() => !!byTestId('key-changed'));
     expect(input('access_code')).toBeNull();
-    expect(moveButton().disabled).toBeTrue();
+    expect(moveButton().disabled).toBe(true);
 
     // "It matches" pins the served key, and entry opens.
     (byTestId('key-changed-accept') as HTMLButtonElement).click();
     await until(() => !!input('access_code'));
-    expect(moveButton().disabled).toBeFalse();
+    expect(moveButton().disabled).toBe(false);
   });
 
   it("can't carry credentials to a bridge without a key, and says why", async () => {
@@ -312,7 +315,7 @@ describe('BridgeMoveDialogComponent', () => {
     pickTarget(5);
     await until(() => !!byTestId('move-key-unavailable'));
     expect(byTestId('move-key-unavailable')!.textContent).toContain('Old Pi');
-    expect(moveButton().disabled).toBeTrue();
+    expect(moveButton().disabled).toBe(true);
   });
 
   it('moves a printer without credentials to a bridge without a key, keeping its address', async () => {
@@ -328,8 +331,8 @@ describe('BridgeMoveDialogComponent', () => {
     pickTarget(5);
     expect(byTestId('move-address')).not.toBeNull();
     moveButton().click();
-    await until(() => service.move.calls.count() === 1);
-    const body = service.move.calls.mostRecent().args[2];
+    await until(() => vi.mocked(service.move).mock.calls.length === 1);
+    const body = vi.mocked(service.move).mock.lastCall[2];
     expect(body).toEqual({ toBridgeId: 5 });
   });
 
@@ -349,8 +352,8 @@ describe('BridgeMoveDialogComponent', () => {
     form.controls.port.setValue(7126);
     fixture.detectChanges();
     moveButton().click();
-    await until(() => service.move.calls.count() === 1);
-    expect(service.move.calls.mostRecent().args[2]).toEqual({
+    await until(() => vi.mocked(service.move).mock.calls.length === 1);
+    expect(vi.mocked(service.move).mock.lastCall[2]).toEqual({
       toBridgeId: 5,
       host: '10.0.0.50',
       port: 7126,
@@ -370,12 +373,12 @@ describe('BridgeMoveDialogComponent', () => {
         stale: false,
       })),
     });
-    service.move.and.returnValue(
+    service.move.mockReturnValue(
       of(moved({ printer: prusa, droppedSecretFields: ['username'] }))
     );
     await create({ entry: prusa, sightings: [] });
     // Two other bridges and no sighting: nothing is preselected.
-    expect(moveButton().disabled).toBeTrue();
+    expect(moveButton().disabled).toBe(true);
     pickTarget(9);
     await keyReady();
     // The user name is optional: the password is enough.
@@ -390,7 +393,7 @@ describe('BridgeMoveDialogComponent', () => {
 
   it('asks for the fields the API says it needs on secrets_required', async () => {
     const bare = bridgePrinter({ id: 7, secrets: [] });
-    service.move.and.returnValue(
+    service.move.mockReturnValue(
       throwError(() =>
         problem(400, 'secrets_required', { fields: ['access_code'] })
       )
@@ -404,19 +407,20 @@ describe('BridgeMoveDialogComponent', () => {
   });
 
   it("reloads the new bridge once on a key error, and doesn't retry", async () => {
-    service.move.and.returnValue(
+    service.move.mockReturnValue(
       throwError(() =>
         problem(409, 'bridge_key_changed', { keyFingerprint: 'f'.repeat(64) })
       )
     );
-    service.get.and.returnValue(of(attic));
+    service.get.mockReturnValue(of(attic));
     await create();
     await keyReady();
     type('access_code', '12345678');
     moveButton().click();
     await until(() => !!byTestId('move-error'));
     expect(service.move).toHaveBeenCalledTimes(1);
-    expect(service.get).toHaveBeenCalledOnceWith(9);
+    expect(service.get).toHaveBeenCalledTimes(1);
+    expect(service.get).toHaveBeenCalledWith(9);
     expect(byTestId('move-error')!.textContent).toContain('key');
     expect(byTestId('move-error')!.textContent).not.toContain('f'.repeat(16));
     expect(logging.logEvent).toHaveBeenCalledWith('BridgeMove_Failed', {
@@ -425,7 +429,7 @@ describe('BridgeMoveDialogComponent', () => {
   });
 
   it('names the bridge for printer_moved', async () => {
-    service.move.and.returnValue(
+    service.move.mockReturnValue(
       throwError(() => problem(409, 'printer_moved', { bridgeId: 5 }))
     );
     const bare = bridgePrinter({ id: 7, secrets: [] });
@@ -470,8 +474,8 @@ describe('BridgeMoveDialogComponent', () => {
       expect(byTestId('move-found')).toBeNull();
       expect(byTestId('move-address')).not.toBeNull();
       moveButton().click();
-      await until(() => service.move.calls.count() === 1);
-      expect(service.move.calls.mostRecent().args[2]).toEqual({
+      await until(() => vi.mocked(service.move).mock.calls.length === 1);
+      expect(vi.mocked(service.move).mock.lastCall[2]).toEqual({
         toBridgeId: 9,
       });
     });
@@ -504,17 +508,17 @@ describe('BridgeMoveDialogComponent', () => {
       expect(byTestId('move-found')!.textContent).toContain('192.168.2.50');
       expect(byTestId('move-keep')!.textContent).toContain('192.168.1.50');
       choose('move-choice-found');
-      expect(moveButton().disabled).toBeTrue();
+      expect(moveButton().disabled).toBe(true);
       (
         byTestId('move-same-printer')!.querySelector(
           'input'
         ) as HTMLInputElement
       ).click();
       fixture.detectChanges();
-      expect(moveButton().disabled).toBeFalse();
+      expect(moveButton().disabled).toBe(false);
       moveButton().click();
-      await until(() => service.move.calls.count() === 1);
-      expect(service.move.calls.mostRecent().args[2]).toEqual({
+      await until(() => vi.mocked(service.move).mock.calls.length === 1);
+      expect(vi.mocked(service.move).mock.lastCall[2]).toEqual({
         toBridgeId: 9,
         discoveredPrinterId: 301,
       });
@@ -526,8 +530,8 @@ describe('BridgeMoveDialogComponent', () => {
       expect(byTestId('move-found')).not.toBeNull();
       choose('move-choice-keep');
       moveButton().click();
-      await until(() => service.move.calls.count() === 1);
-      expect(service.move.calls.mostRecent().args[2]).toEqual({
+      await until(() => vi.mocked(service.move).mock.calls.length === 1);
+      expect(vi.mocked(service.move).mock.lastCall[2]).toEqual({
         toBridgeId: 9,
       });
     });
@@ -535,10 +539,9 @@ describe('BridgeMoveDialogComponent', () => {
     for (const code of ['invalid_kind', 'discovered_printer_not_found']) {
       it(`falls back to the address fields on ${code}`, async () => {
         const bare = bridgePrinter({ id: 7, secrets: [] });
-        service.move.and.returnValues(
-          throwError(() => problem(400, code)),
-          of(moved())
-        );
+        service.move
+          .mockReturnValueOnce(throwError(() => problem(400, code)))
+          .mockReturnValueOnce(of(moved()));
         await create({ entry: bare });
         moveButton().click();
         await until(() => !!byTestId('move-error'));
@@ -549,8 +552,8 @@ describe('BridgeMoveDialogComponent', () => {
         expect(byTestId('move-found')).toBeNull();
         expect(byTestId('move-address')).not.toBeNull();
         moveButton().click();
-        await until(() => service.move.calls.count() === 2);
-        expect(service.move.calls.mostRecent().args[2]).toEqual({
+        await until(() => vi.mocked(service.move).mock.calls.length === 2);
+        expect(vi.mocked(service.move).mock.lastCall[2]).toEqual({
           toBridgeId: 9,
         });
       });
@@ -558,7 +561,7 @@ describe('BridgeMoveDialogComponent', () => {
 
     it('names the new bridge for discovered_printer_already_connected', async () => {
       const bare = bridgePrinter({ id: 7, secrets: [] });
-      service.move.and.returnValue(
+      service.move.mockReturnValue(
         throwError(() => problem(409, 'discovered_printer_already_connected'))
       );
       await create({ entry: bare });
@@ -569,7 +572,7 @@ describe('BridgeMoveDialogComponent', () => {
   });
 
   it('says the credentials have to be entered again after a failed move', async () => {
-    service.move.and.returnValue(
+    service.move.mockReturnValue(
       throwError(() => problem(409, 'bridge_printer_limit'))
     );
     await create();
@@ -583,7 +586,7 @@ describe('BridgeMoveDialogComponent', () => {
 
   it('locks the target, Cancel and Esc while moving, and names the bridge it moved to afterwards', async () => {
     const answer = new Subject<MovedBridgePrinter>();
-    service.move.and.returnValue(answer);
+    service.move.mockReturnValue(answer);
     const prusa = bridgePrinter({
       id: 11,
       kind: 'prusalink',
@@ -592,17 +595,17 @@ describe('BridgeMoveDialogComponent', () => {
     });
     await create({ entry: prusa });
     moveButton().click();
-    await until(() => service.move.calls.count() === 1);
+    await until(() => vi.mocked(service.move).mock.calls.length === 1);
     expect(fixture.componentInstance.form.controls.toBridgeId.disabled).toBe(
       true
     );
-    expect((byTestId('move-cancel') as HTMLButtonElement).disabled).toBeTrue();
-    expect(dialogRef.disableClose).toBeTrue();
+    expect((byTestId('move-cancel') as HTMLButtonElement).disabled).toBe(true);
+    expect(dialogRef.disableClose).toBe(true);
 
     answer.next(moved({ droppedSecretFields: ['username'] }));
     answer.complete();
     await until(() => !!byTestId('move-dropped'));
-    expect(dialogRef.disableClose).toBeFalse();
+    expect(dialogRef.disableClose).toBe(false);
     expect(el().querySelector('h2')!.textContent).toContain('Attic Pi');
   });
 
@@ -620,16 +623,16 @@ describe('BridgeMoveDialogComponent', () => {
         },
       ],
     });
-    service.move.and.returnValue(
+    service.move.mockReturnValue(
       of(moved({ printer: prusa, droppedSecretFields: ['username'] }))
     );
     await create({ entry: prusa, sightings: [] });
     pickTarget(5);
     await until(() => !!byTestId('move-optional-dropped'));
-    expect(moveButton().disabled).toBeFalse();
+    expect(moveButton().disabled).toBe(false);
     moveButton().click();
     await until(() => !!byTestId('move-dropped'));
-    expect(service.move.calls.mostRecent().args[2]).toEqual({
+    expect(vi.mocked(service.move).mock.lastCall[2]).toEqual({
       toBridgeId: 5,
     });
   });

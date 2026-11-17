@@ -21,9 +21,9 @@ describe('PrintSummaryCardComponent', () => {
         provideRouter([]),
         {
           provide: PrintService,
-          useValue: jasmine.createSpyObj<PrintService>('PrintService', [
-            'getPrintImage',
-          ]),
+          useValue: {
+            getPrintImage: vi.fn().mockName('PrintService.getPrintImage'),
+          },
         },
       ],
     }).compileComponents();

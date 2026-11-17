@@ -1,8 +1,9 @@
+import type { MockedObject } from 'vitest';
 import { signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MatDialog } from '@angular/material/dialog';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Routes } from '@angular/router';
 import { Subject } from 'rxjs';
 import { LoggingService } from '../../core/services/logging.service';
 import { PrinterDetail } from '../../core/services/printer.service';
@@ -10,6 +11,10 @@ import { MyAchievements } from '../../core/types/achievement';
 import { OnboardingService } from '../onboarding.service';
 import { QuickAddPrinterDialogComponent } from '../quick-add-printer/quick-add-printer-dialog.component';
 import { GettingStartedChecklistComponent } from './getting-started-checklist.component';
+
+// These specs navigate (a link click, a save), and a route the TestBed doesn't know
+// fails with an unhandled 'Cannot match any routes', which fails the run.
+const ANYWHERE: Routes = [{ path: '**', children: [] }];
 
 function achievementsWith(earned: string[]): MyAchievements {
   return {
@@ -29,9 +34,9 @@ function achievementsWith(earned: string[]): MyAchievements {
 
 describe('GettingStartedChecklistComponent', () => {
   let fixture: ComponentFixture<GettingStartedChecklistComponent>;
-  let onboarding: jasmine.SpyObj<OnboardingService>;
-  let logging: jasmine.SpyObj<LoggingService>;
-  let dialog: jasmine.SpyObj<MatDialog>;
+  let onboarding: MockedObject<OnboardingService>;
+  let logging: MockedObject<LoggingService>;
+  let dialog: MockedObject<MatDialog>;
   let closed: Subject<PrinterDetail | undefined>;
   let noticeAcknowledged: WritableSignal<boolean>;
   let noticePending: boolean;
@@ -62,28 +67,35 @@ describe('GettingStartedChecklistComponent', () => {
   beforeEach(() => {
     noticeAcknowledged = signal(false);
     noticePending = true;
-    onboarding = jasmine.createSpyObj<OnboardingService>(
-      'OnboardingService',
-      ['dismissChecklist', 'acknowledgeEmailNotice', 'emailNoticePending'],
-      { noticeAcknowledged }
-    );
-    onboarding.dismissChecklist.and.resolveTo();
-    onboarding.acknowledgeEmailNotice.and.callFake(async () => {
+    onboarding = {
+      dismissChecklist: vi.fn().mockName('OnboardingService.dismissChecklist'),
+      acknowledgeEmailNotice: vi
+        .fn()
+        .mockName('OnboardingService.acknowledgeEmailNotice'),
+      emailNoticePending: vi
+        .fn()
+        .mockName('OnboardingService.emailNoticePending'),
+      noticeAcknowledged,
+    } as unknown as MockedObject<OnboardingService>;
+    onboarding.dismissChecklist.mockResolvedValue(undefined);
+    onboarding.acknowledgeEmailNotice.mockImplementation(async () => {
       noticeAcknowledged.set(true);
     });
-    onboarding.emailNoticePending.and.callFake(async () => noticePending);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    onboarding.emailNoticePending.mockImplementation(async () => noticePending);
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
     closed = new Subject();
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialog.open.and.returnValue({ afterClosed: () => closed } as never);
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialog.open.mockReturnValue({ afterClosed: () => closed } as never);
 
     TestBed.configureTestingModule({
       imports: [GettingStartedChecklistComponent],
       providers: [
-        provideRouter([]),
+        provideRouter(ANYWHERE),
         { provide: OnboardingService, useValue: onboarding },
         { provide: LoggingService, useValue: logging },
         { provide: MatDialog, useValue: dialog },
@@ -114,24 +126,24 @@ describe('GettingStartedChecklistComponent', () => {
   it('shows "1 of 2 done" when only first-printer is held', () => {
     const el = render(['first-printer']);
     expect(el.textContent).toContain('1 of 2 done');
-    expect(item('printer').nativeElement.classList.contains('done')).toBeTrue();
+    expect(item('printer').nativeElement.classList.contains('done')).toBe(true);
   });
 
   it('does not count the optional material', () => {
     const el = render(['first-material']);
     expect(el.textContent).toContain('0 of 2 done');
-    expect(
-      item('material').nativeElement.classList.contains('done')
-    ).toBeTrue();
+    expect(item('material').nativeElement.classList.contains('done')).toBe(
+      true
+    );
   });
 
   it('logs GettingStarted_Shown once', () => {
     render([]);
     fixture.detectChanges();
     expect(
-      logging.logEvent.calls
-        .allArgs()
-        .filter(([name]) => name === 'GettingStarted_Shown').length
+      vi
+        .mocked(logging.logEvent)
+        .mock.calls.filter(([name]) => name === 'GettingStarted_Shown').length
     ).toBe(1);
   });
 
@@ -141,7 +153,7 @@ describe('GettingStartedChecklistComponent', () => {
 
     expect(dialog.open).toHaveBeenCalledWith(
       QuickAddPrinterDialogComponent,
-      jasmine.objectContaining({
+      expect.objectContaining({
         data: { source: 'checklist', showEmailNotice: true },
       })
     );
@@ -155,7 +167,7 @@ describe('GettingStartedChecklistComponent', () => {
 
   it('emits printerAdded when the dialog closes with a printer', () => {
     render([]);
-    const added = jasmine.createSpy('printerAdded');
+    const added = vi.fn();
     fixture.componentInstance.printerAdded.subscribe(added);
 
     (item('printer').nativeElement as HTMLButtonElement).click();
@@ -166,7 +178,7 @@ describe('GettingStartedChecklistComponent', () => {
 
   it('does not emit printerAdded when the dialog is canceled', () => {
     render([]);
-    const added = jasmine.createSpy('printerAdded');
+    const added = vi.fn();
     fixture.componentInstance.printerAdded.subscribe(added);
 
     (item('printer').nativeElement as HTMLButtonElement).click();
@@ -188,7 +200,7 @@ describe('GettingStartedChecklistComponent', () => {
 
   it('dismiss writes the setting, logs doneCount and emits dismissed', () => {
     render(['first-printer']);
-    const dismissed = jasmine.createSpy('dismissed');
+    const dismissed = vi.fn();
     fixture.componentInstance.dismissed.subscribe(dismissed);
 
     const button = fixture.debugElement.query(
@@ -265,7 +277,7 @@ describe('GettingStartedChecklistComponent', () => {
 
       expect(dialog.open).toHaveBeenCalledWith(
         QuickAddPrinterDialogComponent,
-        jasmine.objectContaining({
+        expect.objectContaining({
           data: { source: 'checklist', showEmailNotice: false },
         })
       );

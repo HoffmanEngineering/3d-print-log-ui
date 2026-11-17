@@ -5,6 +5,7 @@ declare namespace Cypress {
     createPrint(title: string, options?: { printer?: string }): Chainable<void>;
     seedPrint(title: string, options?: { printer?: string }): Chainable<any>;
     openFilterPanel(): Chainable<void>;
+    closeFilterPanel(): Chainable<void>;
     seedPublicPrintFixture(): Chainable<any>;
     createProject(name: string): Chainable<any>;
     snapshotUserSettings(): Chainable<any[]>;

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -32,13 +33,13 @@ import {
 } from './bridge-connect-dialog.component';
 
 describe('BridgeConnectDialogComponent', () => {
-  let bridges: jasmine.SpyObj<BridgesService>;
-  let printers: jasmine.SpyObj<PrinterService>;
-  let catalog: jasmine.SpyObj<PrinterCatalogService>;
-  let dialog: jasmine.SpyObj<MatDialog>;
-  let dialogRef: jasmine.SpyObj<MatDialogRef<BridgeConnectDialogComponent>>;
-  let toastr: jasmine.SpyObj<ToastrService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let bridges: MockedObject<BridgesService>;
+  let printers: MockedObject<PrinterService>;
+  let catalog: MockedObject<PrinterCatalogService>;
+  let dialog: MockedObject<MatDialog>;
+  let dialogRef: MockedObject<MatDialogRef<BridgeConnectDialogComponent>>;
+  let toastr: MockedObject<ToastrService>;
+  let logging: MockedObject<LoggingService>;
   let fixture: ComponentFixture<BridgeConnectDialogComponent>;
 
   const garage = bridge();
@@ -79,7 +80,7 @@ describe('BridgeConnectDialogComponent', () => {
         { provide: LoggingService, useValue: logging },
         {
           provide: Clipboard,
-          useValue: { copy: jasmine.createSpy('copy').and.returnValue(true) },
+          useValue: { copy: vi.fn().mockReturnValue(true) },
         },
         {
           provide: MAT_DIALOG_DATA,
@@ -117,16 +118,18 @@ describe('BridgeConnectDialogComponent', () => {
   }
 
   beforeEach(() => {
-    bridges = jasmine.createSpyObj<BridgesService>('BridgesService', [
-      'connect',
-      'get',
-      'setSecret',
-      'clearSecret',
-    ]);
-    printers = jasmine.createSpyObj<PrinterService>('PrinterService', [
-      'getCurrentUserPrinterSummaries',
-    ]);
-    printers.getCurrentUserPrinterSummaries.and.returnValue(
+    bridges = {
+      connect: vi.fn().mockName('BridgesService.connect'),
+      get: vi.fn().mockName('BridgesService.get'),
+      setSecret: vi.fn().mockName('BridgesService.setSecret'),
+      clearSecret: vi.fn().mockName('BridgesService.clearSecret'),
+    } as unknown as MockedObject<BridgesService>;
+    printers = {
+      getCurrentUserPrinterSummaries: vi
+        .fn()
+        .mockName('PrinterService.getCurrentUserPrinterSummaries'),
+    } as unknown as MockedObject<PrinterService>;
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(
       of({
         items: [
           summary(3, 'A1 mini'),
@@ -136,23 +139,28 @@ describe('BridgeConnectDialogComponent', () => {
         totalCount: 3,
       } as never)
     );
-    catalog = jasmine.createSpyObj<PrinterCatalogService>(
-      'PrinterCatalogService',
-      ['match']
-    );
-    catalog.match.and.returnValue(
+    catalog = {
+      match: vi.fn().mockName('PrinterCatalogService.match'),
+    } as unknown as MockedObject<PrinterCatalogService>;
+    catalog.match.mockReturnValue(
       of({ id: 'bambu-lab-x1-carbon', confidence: 'high' })
     );
-    dialog = jasmine.createSpyObj<MatDialog>('MatDialog', ['open']);
-    dialogRef = jasmine.createSpyObj('MatDialogRef', ['close']);
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', [
-      'success',
-      'error',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    dialog = {
+      open: vi.fn().mockName('MatDialog.open'),
+    } as unknown as MockedObject<MatDialog>;
+    dialogRef = {
+      close: vi.fn().mockName('MatDialogRef.close'),
+    } as unknown as MockedObject<
+      MatDialogRef<BridgeConnectDialogComponent, any>
+    >;
+    toastr = {
+      success: vi.fn().mockName('ToastrService.success'),
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
   });
 
   it('lists printers no bridge watches first, and names the bridge of the others', async () => {
@@ -177,11 +185,11 @@ describe('BridgeConnectDialogComponent', () => {
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
-    fail('timed out');
+    throw new Error('timed out');
   }
 
   it('connects a discovered Bambu Lab printer, then asks for its access code sealed to the bridge', async () => {
-    bridges.connect.and.returnValue(of(bridgePrinter({ id: 7 })));
+    bridges.connect.mockReturnValue(of(bridgePrinter({ id: 7 })));
     await create();
     submit();
 
@@ -199,7 +207,7 @@ describe('BridgeConnectDialogComponent', () => {
 
     byTestId('connect-finish')!.click();
     expect(dialogRef.close).toHaveBeenCalledWith(
-      jasmine.objectContaining({ id: 7 })
+      expect.objectContaining({ id: 7 })
     );
   });
 
@@ -208,7 +216,7 @@ describe('BridgeConnectDialogComponent', () => {
       BRIDGE_KEY_PINS_STORAGE_KEY,
       JSON.stringify({ '42': OTHER_BRIDGE_KEY.fingerprint })
     );
-    bridges.connect.and.returnValue(of(bridgePrinter({ id: 7 })));
+    bridges.connect.mockReturnValue(of(bridgePrinter({ id: 7 })));
     await create();
     submit();
     await until(() => !!byTestId('key-changed'));
@@ -223,7 +231,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('shows the config-file section for a bridge without a key', async () => {
-    bridges.connect.and.returnValue(of(bridgePrinter({ id: 7 })));
+    bridges.connect.mockReturnValue(of(bridgePrinter({ id: 7 })));
     await create({ bridge: bridge({ publicKey: null }) });
     submit();
     await until(() => !!byTestId('credentials-snippet'));
@@ -234,11 +242,11 @@ describe('BridgeConnectDialogComponent', () => {
 
   it('reads the bridge again when its key changed under a credential', async () => {
     const entry = bridgePrinter({ id: 7 });
-    bridges.connect.and.returnValue(of(entry));
-    bridges.get.and.returnValue(
+    bridges.connect.mockReturnValue(of(entry));
+    bridges.get.mockReturnValue(
       of(bridge({ publicKey: OTHER_BRIDGE_KEY.publicKey }))
     );
-    bridges.setSecret.and.returnValue(
+    bridges.setSecret.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -256,7 +264,7 @@ describe('BridgeConnectDialogComponent', () => {
     input.value = '12345678';
     input.dispatchEvent(new Event('input'));
     byTestId('credential-save')!.click();
-    await until(() => bridges.get.calls.count() === 1);
+    await until(() => vi.mocked(bridges.get).mock.calls.length === 1);
     await until(
       () =>
         !!byTestId('credentials-fingerprint')?.textContent?.includes(
@@ -267,7 +275,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('connects through an older API that lists no fields and shows its [app_printer] section', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       of(bridgePrinter({ id: 7, secretFields: undefined, secrets: undefined }))
     );
     await create();
@@ -285,7 +293,7 @@ describe('BridgeConnectDialogComponent', () => {
 
     byTestId('connect-finish')!.click();
     expect(dialogRef.close).toHaveBeenCalledWith(
-      jasmine.objectContaining({ id: 7 })
+      expect.objectContaining({ id: 7 })
     );
   });
 
@@ -295,7 +303,7 @@ describe('BridgeConnectDialogComponent', () => {
       id: 8,
       secretFields: ['moonraker_api_key'],
     });
-    bridges.connect.and.returnValue(of(entry));
+    bridges.connect.mockReturnValue(of(entry));
     await create({
       discovered: discovered({ kind: 'moonraker', model: 'Voron 2.4' }),
     });
@@ -315,7 +323,7 @@ describe('BridgeConnectDialogComponent', () => {
       serial: null,
       secretFields: [],
     });
-    bridges.connect.and.returnValue(of(entry));
+    bridges.connect.mockReturnValue(of(entry));
     await create({
       discovered: discovered({
         kind: 'sdcp',
@@ -339,7 +347,7 @@ describe('BridgeConnectDialogComponent', () => {
       serial: null,
       secretFields: ['password'],
     });
-    bridges.connect.and.returnValue(of(entry));
+    bridges.connect.mockReturnValue(of(entry));
     await create({
       discovered: discovered({ kind: 'duet', model: 'Duet 3', port: 80 }),
     });
@@ -358,7 +366,7 @@ describe('BridgeConnectDialogComponent', () => {
       serial: null,
       secretFields: [],
     });
-    bridges.connect.and.returnValue(of(entry));
+    bridges.connect.mockReturnValue(of(entry));
     await create({
       discovered: discovered({
         kind: 'anycubic',
@@ -373,7 +381,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('adds a FlashForge by address, then asks for its check code', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       of(
         bridgePrinter({
           kind: 'flashforge',
@@ -404,7 +412,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('shows a FlashForge [app_printer] section with the check code through an older API', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       of(
         bridgePrinter({
           kind: 'flashforge',
@@ -443,7 +451,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('adds an OctoPrint by address, then asks for its API key', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       of(
         bridgePrinter({
           kind: 'octoprint',
@@ -473,7 +481,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('shows an OctoPrint [app_printer] section with the API key through an older API', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       of(
         bridgePrinter({
           kind: 'octoprint',
@@ -497,7 +505,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('names the other bridge when the printer is watched elsewhere', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -525,7 +533,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('offers no move for a conflict that names no other bridge', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       throwError(
         () =>
           new HttpErrorResponse({
@@ -541,7 +549,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('adds a Bambu Lab printer by address only with its serial', async () => {
-    bridges.connect.and.returnValue(of(bridgePrinter()));
+    bridges.connect.mockReturnValue(of(bridgePrinter()));
     await create({ discovered: null });
     const form = component().form;
     form.patchValue({
@@ -566,7 +574,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('sends the port of a printer added by address', async () => {
-    bridges.connect.and.returnValue(
+    bridges.connect.mockReturnValue(
       of(
         bridgePrinter({
           kind: 'prusalink',
@@ -594,7 +602,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('creates a new printer from the catalog match and selects it', async () => {
-    dialog.open.and.returnValue({
+    dialog.open.mockReturnValue({
       afterClosed: () =>
         of({
           id: 77,
@@ -605,11 +613,11 @@ describe('BridgeConnectDialogComponent', () => {
     await create();
     byTestId('connect-new-printer')!.click();
 
-    const config = dialog.open.calls.mostRecent().args[1] as {
+    const config = vi.mocked(dialog.open).mock.lastCall[1] as {
       data: Record<string, unknown>;
     };
     expect(config.data).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         source: 'bridges',
         initialModelId: 'bambu-lab-x1-carbon',
         initialName: 'Workshop X1C',
@@ -620,7 +628,7 @@ describe('BridgeConnectDialogComponent', () => {
   });
 
   it('still offers a new printer when the printer list fails', async () => {
-    printers.getCurrentUserPrinterSummaries.and.returnValue(
+    printers.getCurrentUserPrinterSummaries.mockReturnValue(
       throwError(() => new Error('down'))
     );
     await create();

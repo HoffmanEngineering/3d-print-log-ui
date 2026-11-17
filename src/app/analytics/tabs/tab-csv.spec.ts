@@ -49,7 +49,7 @@ describe('buildTabCsv', () => {
     const dataLines = csv.content
       .split('\r\n')
       .filter((line) => /^\d+$/.test(line));
-    expect(dataLines.length).toBeLessThanOrEqual(10_000);
+    expect(dataLines.length).toBeLessThanOrEqual(10000);
   });
 
   it('skips empty sections rather than emitting a bare heading', () => {

@@ -24,7 +24,9 @@ describe('BridgeKeyComponent', () => {
         provideRouter([]),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();
@@ -53,7 +55,7 @@ describe('BridgeKeyComponent', () => {
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
-    fail('timed out');
+    throw new Error('timed out');
   }
 
   function el(): HTMLElement {
@@ -189,7 +191,7 @@ describe('BridgeKeyComponent', () => {
   });
 
   it('says this browser cannot encrypt here, not that the key is invalid', async () => {
-    spyOnProperty(Crypto.prototype, 'subtle', 'get').and.returnValue(
+    vi.spyOn(Crypto.prototype, 'subtle', 'get').mockReturnValue(
       undefined as unknown as SubtleCrypto
     );
     await create(bridge(), 'bridge-key-unavailable');
@@ -230,7 +232,9 @@ describe('BridgeKeyComponent', () => {
         provideRouter([]),
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     }).compileComponents();

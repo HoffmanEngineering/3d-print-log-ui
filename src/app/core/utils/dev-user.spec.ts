@@ -38,20 +38,20 @@ describe('isDevAnonymous', () => {
   });
 
   it('returns false with no param and nothing stored', () => {
-    expect(isDevAnonymous('')).toBeFalse();
+    expect(isDevAnonymous('')).toBe(false);
   });
 
   it('returns false for a normal devUserId', () => {
-    expect(isDevAnonymous('?devUserId=2')).toBeFalse();
+    expect(isDevAnonymous('?devUserId=2')).toBe(false);
   });
 
   it('returns true and persists the value when devUserId=anonymous is present', () => {
-    expect(isDevAnonymous('?devUserId=anonymous')).toBeTrue();
+    expect(isDevAnonymous('?devUserId=anonymous')).toBe(true);
     expect(sessionStorage.getItem('devUserId')).toBe('anonymous');
   });
 
   it('returns true from the stored value after the param drops', () => {
     isDevAnonymous('?devUserId=anonymous');
-    expect(isDevAnonymous('')).toBeTrue();
+    expect(isDevAnonymous('')).toBe(true);
   });
 });

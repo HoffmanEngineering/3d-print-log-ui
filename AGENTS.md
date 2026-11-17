@@ -4,7 +4,7 @@ This file provides guidance to AI Agents like Claude Code (claude.ai/code) or Co
 
 ## Project Overview
 
-3D Print Log UI - An Angular 21 web application for tracking 3D prints, printers, filaments, and print statistics. Uses Auth0 for authentication and communicates with a backend API at `printLogApiUrl`.
+3D Print Log UI - An Angular 22 web application for tracking 3D prints, printers, filaments, and print statistics. Uses Auth0 for authentication and communicates with a backend API at `printLogApiUrl`.
 
 ## Commands
 
@@ -13,8 +13,9 @@ npm start                  # Dev server, HTTPS on localhost:4200
 npm run build:dev          # Development build
 npm run build              # Production build (runs prerendering)
 
-npm test                   # Karma watch mode
-npm run test:ci            # ChromeHeadless + coverage
+npm test                   # Vitest watch mode, in headless Chromium
+npm run test:ci            # One run, no coverage
+npm run test:coverage      # One run with coverage, what CI runs (about twice as slow; see Testing)
 npm run test:brief         # Token-efficient: CI mode, failures/warnings only
 npm run test:scripts       # Node tests for scripts/ (security headers, docs validation)
 
@@ -35,7 +36,7 @@ npm run capture:docs:all   # Documentation figures -> src/assets/docs/captures/
 
 Prefer `test:brief` and `lint:brief` when reporting failures — they are optimized for minimal output while preserving what is actionable.
 
-**Read the last line of `test:brief`, not the exit code.** These are meant to be piped (`npm run test:brief | tail -20`), and a shell pipeline reports the status of its _last_ command — so the exit code you see belongs to `tail`. The script prints `RESULT: PASSED` or `RESULT: FAILED (ng test exited N)` as its final line for exactly this reason. A compile error is the case that bites: Karma never reaches a `TOTAL:` line, so without that verdict the output ends in a blank summary that looks like a clean run.
+**Read the last line of `test:brief`, not the exit code.** These are meant to be piped (`npm run test:brief | tail -20`), and a shell pipeline reports the status of its _last_ command — so the exit code you see belongs to `tail`. The script prints `RESULT: PASSED` or `RESULT: FAILED (ng test exited N)` as its final line for exactly this reason. A compile error is the case that bites: Vitest never starts, so without that verdict the output ends in a blank summary that looks like a clean run.
 
 **`lint-staged` formats `*.{js,css,md,ts,scss}` on commit — not `.html`.** Templates are never auto-formatted, so an edit that writes CRLF silently flips a whole file and shows up as a several-hundred-line diff with equal insertions and deletions. Run `npx prettier --write` on every template you touch. `npm run prettier` currently reports one pre-existing warning (`settings.component.html`); anything beyond that is yours.
 
@@ -46,6 +47,8 @@ Never add a `Claude-Session:` trailer or a `claude.ai/code/session_…` link to 
 ## Architecture
 
 `core/` holds singleton services, guards, resolvers, HTTP interceptors and stores; `shared/` holds reusable components and pipes. Each feature is a lazy-loaded route array in `<feature>.routes.ts`, named for its route. A section's `''` route provides `provideSectionProviders()` (`shared/section-providers.ts`): the native `DateAdapter` and a section-scoped `MatDialog`, without which a page fails only at runtime. There is no shared NgModule: a component imports what its template uses, and an attribute directive no import supplies (`matTooltip`, `routerLink`) is dropped silently, not reported. Every /docs page, generated or hand-written, imports `DOCS_PAGE_IMPORTS` (`documentation/docs-page-imports.ts`). Slicer G-code parsers (Cura, PrusaSlicer, OrcaSlicer, Creality Print, Anycubic) live in `core/services/file-parsers/`.
+
+**`overrides` in `package.json` lets ngx-toastr 20 accept Angular 22.** Its newest release declares `@angular/core ^21` only, though it uses nothing Angular 22 removed (19.x did: `ComponentFactoryResolver`, which fails the build). Drop the override once a release declares 22.
 
 ### Authentication Flow
 
@@ -164,14 +167,18 @@ Angular throws **NG0600** for a signal write during `computed()` evaluation, and
 
 If a lazily-loading store must be readable from a computed, keep the read pure and schedule the work.
 
-### Every component is OnPush
+### Every component is OnPush, and the app is zoneless
 
-An OnPush component repaints only when an input changes, a template event fires, a signal it read changes, or something calls `markForCheck()`. One that is not dirty is skipped on a zone tick, and so is everything it renders. A plain field set from an HTTP response, a dialog's `afterClosed()` or a `FileReader` callback therefore changes nothing on screen, and no test fails unless it looks at the DOM after that callback.
+The app runs without zone.js (`provideZonelessChangeDetection()` in `main.ts`; the server bootstrap never had it). Change detection runs only when a signal a template reads changes, an input changes, a template event fires, or something calls `markForCheck()`, and only dirty views are checked. A plain field set from an HTTP response, a route's `queryParamMap` or `data`, a dialog's `afterClosed()`, a timer or a `FileReader` callback therefore changes nothing on screen, and no test fails unless it looks at the DOM after that callback. Nothing patches the browser's async APIs, so there is no `NgZone.run` to reach for: hold the state in a signal.
+
+zone.js is not installed at all, so `fakeAsync`, `tick` and `waitForAsync` are unavailable in specs. Fake time with Vitest instead: `vi.useFakeTimers()`, then `await vi.advanceTimersByTimeAsync(ms)`. The shared `afterEach` in `src/test-setup.ts` puts the real timers back.
+
+In end-to-end tests, a routed component's elements can reach the DOM a pass before its bindings. Read state from something that is itself bound (an `aria-*` attribute set by the template), not from a class or text that might not be applied yet; see `cy.openFilterPanel()`.
 
 - Hold displayed state in signals. Where a template reads a value signals can't hold, such as a reactive form you push controls into or an array you mutate in place, call `ChangeDetectorRef.markForCheck()` after the mutation (see `edit-print-detail.component.ts`). Replace a row in a list rather than mutating it, so an OnPush row component sees a new input.
 - The `prefer-on-push-component-change-detection` lint rule is an error everywhere except specs, and nothing is exempt. New components are OnPush.
 - `scripts/onpush-hosts.test.mjs` (run by `npm run test:scripts`) fails when an OnPush component renders a Default one or a `<router-outlet>`, which catches a Default component that slips past lint with a disable comment.
-- A conversion's test is a DOM assertion after a response that arrives once the component has rendered (a `Subject`, not `of`). The zoneless TestBed often reports the stale paint as NG0100, but not always: a Material form field calls `markForCheck()` during startup, which dirties every ancestor and hides the bug. When the test passes with the OnPush flag set and no signals, add `provideZoneChangeDetection()` to the providers and settle startup (`detectChanges()`, `await whenStable()`, `detectChanges()`) before emitting. Pattern: `filament-list.component.spec.ts`.
+- A conversion's test is a DOM assertion after a response that arrives once the component has rendered (a `Subject`, not `of`). The TestBed often reports the stale paint as NG0100, but not always: a Material form field calls `markForCheck()` during startup, which dirties every ancestor and hides the bug. Settle startup (`detectChanges()`, `await whenStable()`, `detectChanges()`) before emitting, so that startup marking is spent. Pattern: `filament-list.component.spec.ts`.
 
 ### A component input beats a `::ng-deep` override
 
@@ -198,13 +205,22 @@ A child's own `.thing img` rule and a parent's `::ng-deep .thing img` tie on spe
 
 ## Testing
 
-Jasmine + Karma with Chrome, specs co-located with source (`*.spec.ts`), unit-test environment in `src/environments/environment.unittest.ts`. Cypress E2E against `https://localhost:4200`; **E2E needs the API running in `E2ETesting` mode**, so ask before running it.
+Vitest, through Angular's `@angular/build:unit-test` builder, in headless Chromium (Vitest browser mode with Playwright, at Karma's old 800×600 viewport). Specs are co-located with source (`*.spec.ts`); the unit-test environment is `src/environments/environment.unittest.ts`. Cypress E2E runs against `https://localhost:4200`; **E2E needs the API running in `E2ETesting` mode**, so ask before running it.
 
-Components are standalone and go in TestBed `imports`. Mock services with `jasmine.createSpyObj<T>`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
+- **Run one file:** `npx ng test --no-watch --include src/app/path/to/file.spec.ts`.
+- **First run on a new machine:** `npx playwright install chromium`. CI does this itself.
+- **Shared setup:** `src/test-providers.ts` gives every TestBed its providers (noop animations). `src/test-setup.ts` runs before each file, and its `afterEach` restores every `vi.spyOn` spy and the real timers.
+- **Spec files share pages.** Vitest runs a few pages in parallel, and the files it sends to one page all run in it (`isolate: false`, the builder's default), as every spec shared Karma's. A spec that changes the document (an `<html>` class, a `<meta>` tag, `localStorage`) must put it back.
+- **Coverage is its own run** (`npm run test:coverage`), and CI runs it: the totals go on the run's summary page (`scripts/coverage-summary.mjs`), and CI uploads the HTML report as the `coverage-report` artifact. It covers our TypeScript and component templates (`.html`): V8 coverage maps template code back to the template, so an `@if` branch no test renders shows as uncovered. Karma's coverage counted TypeScript only, so the totals are not comparable with old Karma reports. JSON is excluded in `angular.json`.
+- **Coverage has floors** (`coverageThresholds` in `angular.json`: statements 87%, branches 77%, functions 74%, lines 83%, about a point under where they stood when set). Branches was re-based from 79% with the Angular 22 upgrade: the 22 compiler stopped emitting about 1,100 always-taken branches, so the percentage fell while uncovered branches went down (2,938 to 2,901). A run below any of them fails, in CI and in deploy. Raise them as coverage improves; lowering one is a decision to make in review, not a fix for a red build.
+
+Components are standalone and go in TestBed `imports`. Mock a service as an object of `vi.fn()`s cast to `MockedObject<T>` (`{ getX: vi.fn() } as unknown as MockedObject<XService>`), and read calls from `.mock.calls` / `.mock.lastCall`. Async work needs `fixture.detectChanges()` then `await fixture.whenStable()`.
+
+**`vi.spyOn` calls through; Jasmine's `spyOn` did not.** A spy meant to stub needs `.mockReturnValue(…)` or `.mockImplementation(…)`, or the real method runs.
 
 **Stubbing every collaborator can hide the bug that matters.** A component's contract with a service is not just the values it returns — with signals it includes _when_ that service touches reactive state. Every spec around `PrinterAvatarComponent` stubbed the store and passed while the print list rendered nothing in a real browser (see NG0600 above). When a component depends on a service that reads or writes signals, add at least one spec that wires the **real** service with `provideHttpClientTesting`, and assert the first `detectChanges()` does not throw.
 
-The suite also flakes under Karma's random ordering — re-run and check a failure in isolation before treating it as real.
+Because pages are shared, a spec that leaks state can fail a later one in the same page. Re-run, and check a failure in isolation with `--include`, before treating it as real.
 
 ## Analytics & Metrics
 

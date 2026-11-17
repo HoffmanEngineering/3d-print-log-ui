@@ -1,5 +1,5 @@
 import { NO_ERRORS_SCHEMA, Type } from '@angular/core';
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
@@ -22,15 +22,13 @@ describe('/docs pages', () => {
 
   /** Every routed page's component class, generated or hand-written. */
   const componentsByName = new Map<string, Type<unknown>>([
-    ...DOCS_PAGE_COMPONENTS.map(
-      (component) => [component.name, component] as [string, Type<unknown>]
-    ),
+    ...Object.entries<Type<unknown>>(DOCS_PAGE_COMPONENTS),
     ['DocsGettingStartedComponent', DocsGettingStartedComponent],
     ['DocsReleaseNotesComponent', DocsReleaseNotesComponent],
   ]);
 
-  beforeEach(waitForAsync(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [...componentsByName.values()],
       providers: [
         // docs-getting-started is auth-aware on a public route; docs-release-notes
@@ -45,14 +43,15 @@ describe('/docs pages', () => {
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
-  }));
+  });
 
   it('covers every routed page in the manifest', () => {
     expect(pages.length).toBeGreaterThan(0);
     for (const page of pages) {
-      expect(componentsByName.has(page.className))
-        .withContext(`no component for ${page.path}`)
-        .toBe(true);
+      expect(
+        componentsByName.has(page.className),
+        `no component for ${page.path}`
+      ).toBe(true);
     }
   });
 

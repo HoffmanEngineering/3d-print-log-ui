@@ -92,18 +92,23 @@ describe('BridgeCardComponent', () => {
         provideRouter([]),
         {
           provide: BridgesService,
-          useValue: jasmine.createSpyObj('BridgesService', [
-            'setSecret',
-            'clearSecret',
-          ]),
+          useValue: {
+            setSecret: vi.fn().mockName('BridgesService.setSecret'),
+            clearSecret: vi.fn().mockName('BridgesService.clearSecret'),
+          },
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
       ],
     }).compileComponents();
@@ -144,7 +149,7 @@ describe('BridgeCardComponent', () => {
     await create(bridge({ status: ConnectionStatus.Stale }));
     expect(one('bridge-status')!.textContent).toContain('Stale');
     expect(one('bridge-stale')).not.toBeNull();
-    expect((one('bridge-scan') as HTMLButtonElement).disabled).toBeTrue();
+    expect((one('bridge-scan') as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('groups what it found by state', async () => {
@@ -170,6 +175,68 @@ describe('BridgeCardComponent', () => {
     const row = one('bridge-configured-row')!;
     expect(row.textContent).toContain('Managed by the config file');
     expect(row.querySelector('button')).toBeNull();
+  });
+
+  it('links a config-file printer to the 3D Print Log printer it logs to', async () => {
+    await create(bridge(), [
+      discovered({
+        id: 20,
+        kind: 'moonraker',
+        name: 'u1',
+        model: null,
+        address: '192.168.4.207',
+        port: 7125,
+        state: DiscoveredPrinterState.Configured,
+        printerId: 42,
+        printerName: 'Snapmaker U1',
+      }),
+    ]);
+    const row = one('bridge-configured-row')!;
+    const link = row.querySelector<HTMLAnchorElement>(
+      '[data-testid="bridge-configured-printer-link"]'
+    )!;
+    expect(link).not.toBeNull();
+    expect(link.textContent!.trim()).toBe('Snapmaker U1');
+    expect(link.getAttribute('href')).toBe('/printers/42');
+    const meta = row.querySelector('.meta')!.textContent!.replace(/\s+/g, ' ');
+    expect(meta).toContain('192.168.4.207:7125');
+    expect(meta).toContain('u1 in the config file');
+    expect(row.querySelector('button')).toBeNull();
+  });
+
+  it('titles a config-file printer by its name, then its address, without a linked printer', async () => {
+    await create(bridge(), [
+      discovered({
+        id: 21,
+        kind: 'moonraker',
+        name: 'lava',
+        model: null,
+        address: '192.168.4.207',
+        port: 7125,
+        state: DiscoveredPrinterState.Configured,
+      }),
+      discovered({
+        id: 22,
+        kind: 'moonraker',
+        name: null,
+        model: null,
+        address: '192.168.4.42',
+        port: 7125,
+        state: DiscoveredPrinterState.Configured,
+        printerId: null,
+        printerName: null,
+      }),
+    ]);
+    const rows = all('bridge-configured-row');
+    expect(
+      rows.map((r) => r.querySelector('.name')!.textContent!.trim())
+    ).toEqual(['lava', '192.168.4.42']);
+    for (const r of rows) {
+      expect(
+        r.querySelector('[data-testid="bridge-configured-printer-link"]')
+      ).toBeNull();
+      expect(r.textContent).toContain('Managed by the config file');
+    }
   });
 
   it('offers to remove an app entry the config file overrides', async () => {
@@ -293,7 +360,7 @@ describe('BridgeCardComponent', () => {
     const editor = fixture.debugElement.query(
       By.directive(BridgeCredentialsComponent)
     ).componentInstance as BridgeCredentialsComponent;
-    expect(editor.keyWarningAbove()).toBeTrue();
+    expect(editor.keyWarningAbove()).toBe(true);
   });
 
   describe('with other bridges', () => {
@@ -376,7 +443,7 @@ describe('BridgeCardComponent', () => {
         all('bridge-new-row').some((r) =>
           r.textContent!.includes('Workshop X1C')
         )
-      ).toBeFalse();
+      ).toBe(false);
       expect(one('bridge-listed-elsewhere')!.textContent).toContain('Attic Pi');
     });
 

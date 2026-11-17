@@ -455,7 +455,7 @@ test('the declarations barrel lists every generated page component', () => {
     ts,
     /import \{ DocsPrintsComponent \} from '\.\/pages\/docs-prints\.component';/
   );
-  assert.match(ts, /export const DOCS_PAGE_COMPONENTS = \[/);
+  assert.match(ts, /export const DOCS_PAGE_COMPONENTS = \{/);
   assert.match(ts, /DocsPrintsComponent,/);
   assert.match(ts, /DocsAboutComponent,/);
 });

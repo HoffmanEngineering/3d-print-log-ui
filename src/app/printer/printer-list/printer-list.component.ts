@@ -19,6 +19,7 @@ import { Title } from '@angular/platform-browser';
 import { debounce } from 'lodash-es';
 import { ToastrService } from 'ngx-toastr';
 import { openSimpleDialog } from 'src/app/shared/simple-dialog/simple-dialog.component';
+import { escapeHtml } from 'src/app/core/utils/escape-html';
 import { MatDialog } from '@angular/material/dialog';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatButton } from '@angular/material/button';
@@ -94,7 +95,8 @@ export class PrinterListComponent implements OnInit {
   readonly printers = signal<PrinterSummarySimple[]>([]);
 
   readonly pageSize = signal<number | undefined>(undefined);
-  private currentPage: number | undefined;
+  /** 1-based; the paginator's `pageIndex` is bound to it. */
+  readonly currentPage = signal<number | undefined>(undefined);
   readonly totalCount = signal<number | undefined>(undefined);
 
   public includeInactive = false;
@@ -121,7 +123,7 @@ export class PrinterListComponent implements OnInit {
   constructor() {
     // Mark the list as loading on the keystroke itself, not when the debounce
     // finally fires, so the empty state cannot flash stale copy for 400ms.
-    const debouncedFilterUpdate = debounce(() => this.updateFilter(), 400);
+    const debouncedFilterUpdate = debounce(() => this.applyFilter(), 400);
 
     this.debouncedUpdateFilter = () => {
       this.isLoading.set(true);
@@ -163,6 +165,13 @@ export class PrinterListComponent implements OnInit {
       });
   }
 
+  /** A new search or filter: the old page number means nothing for it. */
+  public applyFilter() {
+    this.currentPage.set(1);
+    return this.updateFilter();
+  }
+
+  /** Reloads the current page, stepping back when it no longer exists (after a delete). */
   public async updateFilter() {
     const pageSize = this.pageSize();
     localStorage.setItem('printer_list_page_size', pageSize.toString(10));
@@ -170,14 +179,30 @@ export class PrinterListComponent implements OnInit {
     this.isLoading.set(true);
     const requestId = ++this.latestRequestId;
 
-    const response = await lastValueFrom(
-      this.printerService.getCurrentUserPrinterSummaries(
-        this.currentPage,
-        pageSize,
-        this.searchText,
-        this.includeInactive
-      )
-    );
+    const fetchPage = (pageNumber: number | undefined) =>
+      lastValueFrom(
+        this.printerService.getCurrentUserPrinterSummaries(
+          pageNumber,
+          pageSize,
+          this.searchText,
+          this.includeInactive
+        )
+      );
+
+    let response = await fetchPage(this.currentPage());
+
+    // The API does not clamp the page, so a page emptied by a delete comes back empty.
+    const { currentPage, totalCount } = response.paging;
+    if (
+      requestId === this.latestRequestId &&
+      response.items.length === 0 &&
+      totalCount > 0 &&
+      currentPage > 1
+    ) {
+      response = await fetchPage(
+        Math.min(currentPage - 1, Math.ceil(totalCount / pageSize))
+      );
+    }
 
     // A newer search started while this one was in flight; its result wins.
     if (requestId !== this.latestRequestId) {
@@ -198,8 +223,7 @@ export class PrinterListComponent implements OnInit {
 
   public clearSearch() {
     this.searchText = '';
-    this.currentPage = 1;
-    return this.updateFilter();
+    return this.applyFilter();
   }
 
   public unloadAllFilament(printer: PrinterSummarySimple) {
@@ -217,7 +241,7 @@ export class PrinterListComponent implements OnInit {
     this.isLoading.set(false);
     this.printers.set(response.items);
 
-    this.currentPage = response.paging.currentPage;
+    this.currentPage.set(response.paging.currentPage);
     this.pageSize.set(response.paging.pageSize);
     this.totalCount.set(response.paging.totalCount);
   }
@@ -227,7 +251,7 @@ export class PrinterListComponent implements OnInit {
       this.dialog,
       {
         title: 'Delete?',
-        body: `Are you sure you want to delete printer "${printer.name}"? <br /> <br />  This action cannot be undone.`,
+        body: `Are you sure you want to delete printer "${escapeHtml(printer.name ?? '')}"? <br /> <br />  This action cannot be undone.`,
         yesText: 'Delete',
         yesColor: 'warn',
         noText: 'Cancel',

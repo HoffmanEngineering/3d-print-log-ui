@@ -1,9 +1,5 @@
-import {
-  ComponentFixture,
-  TestBed,
-  fakeAsync,
-  tick,
-} from '@angular/core/testing';
+import type { MockedObject } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -74,26 +70,26 @@ const response = (
 describe('ActivityTabComponent', () => {
   let fixture: ComponentFixture<ActivityTabComponent>;
   let component: ActivityTabComponent;
-  let analytics: jasmine.SpyObj<AnalyticsService>;
+  let analytics: MockedObject<AnalyticsService>;
 
   /**
-   * Synchronous on purpose, to be called inside fakeAsync: createTabData debounces by 250ms,
-   * and whenStable() only drains microtasks — it never advances a timer, so a promise-based
-   * setup would assert against an empty tab every time.
+   * Advances fake timers, so call it after vi.useFakeTimers(): createTabData debounces by
+   * 250ms, and whenStable() never advances a timer, so a setup that waited for stability
+   * would assert against an empty tab every time.
    */
-  const setup = () => {
+  const setup = async () => {
     fixture = TestBed.createComponent(ActivityTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
-    tick(300);
+    await vi.advanceTimersByTimeAsync(300);
     fixture.detectChanges();
   };
 
   beforeEach(async () => {
-    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', [
-      'getActivity',
-    ]);
-    analytics.getActivity.and.returnValue(of(response()));
+    analytics = {
+      getActivity: vi.fn().mockName('AnalyticsService.getActivity'),
+    } as unknown as MockedObject<AnalyticsService>;
+    analytics.getActivity.mockReturnValue(of(response()));
 
     await TestBed.configureTestingModule({
       imports: [ActivityTabComponent, NoopAnimationsModule],
@@ -105,8 +101,9 @@ describe('ActivityTabComponent', () => {
     }).compileComponents();
   });
 
-  it('renders the series in chronological order regardless of response order', fakeAsync(() => {
-    analytics.getActivity.and.returnValue(
+  it('renders the series in chronological order regardless of response order', async () => {
+    vi.useFakeTimers();
+    analytics.getActivity.mockReturnValue(
       of(
         response({
           series: [
@@ -132,7 +129,7 @@ describe('ActivityTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
     expect(component.seriesData().map((d) => d.fullLabel)).toEqual(
       component
@@ -142,10 +139,11 @@ describe('ActivityTabComponent', () => {
         .sort()
     );
     expect(component.seriesData()[0].values['value']).toBe(2);
-  }));
+  });
 
-  it('switches the plotted metric without issuing another request', fakeAsync(() => {
-    setup();
+  it('switches the plotted metric without issuing another request', async () => {
+    vi.useFakeTimers();
+    await setup();
     expect(component.seriesData()[0].values['value']).toBe(2);
 
     component.setMetric('time');
@@ -158,10 +156,11 @@ describe('ActivityTabComponent', () => {
     expect(component.seriesData()[0].values['value']).toBe(3.5);
 
     expect(analytics.getActivity).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('disables the cost metric when the server could not cost the range', fakeAsync(() => {
-    analytics.getActivity.and.returnValue(
+  it('disables the cost metric when the server could not cost the range', async () => {
+    vi.useFakeTimers();
+    analytics.getActivity.mockReturnValue(
       of(
         response({
           series: [
@@ -178,23 +177,25 @@ describe('ActivityTabComponent', () => {
         })
       )
     );
-    setup();
+    await setup();
 
-    expect(component.costAvailable()).toBeFalse();
-  }));
+    expect(component.costAvailable()).toBe(false);
+  });
 
-  it('fails the whole tab on an error, with one retry affordance', fakeAsync(() => {
-    analytics.getActivity.and.returnValue(throwError(() => new Error('boom')));
-    setup();
+  it('fails the whole tab on an error, with one retry affordance', async () => {
+    vi.useFakeTimers();
+    analytics.getActivity.mockReturnValue(throwError(() => new Error('boom')));
+    await setup();
 
     expect(component.state()).toBe('error');
-  }));
+  });
 
-  it('renders the streak summary in plain language', fakeAsync(() => {
-    setup();
+  it('renders the streak summary in plain language', async () => {
+    vi.useFakeTimers();
+    await setup();
 
     expect(component.streakSummary()).toContain('2');
-  }));
+  });
 
   // 3d-print-log-api#294: resin is plotted in mL, never folded into grams.
   describe('resin', () => {
@@ -228,16 +229,18 @@ describe('ActivityTabComponent', () => {
         ) as NodeListOf<HTMLElement>
       ).map((t) => t.textContent?.trim());
 
-    it('offers no resin metric to a filament-only user', fakeAsync(() => {
-      setup();
+    it('offers no resin metric to a filament-only user', async () => {
+      vi.useFakeTimers();
+      await setup();
 
-      expect(component.resinAvailable()).toBeFalse();
+      expect(component.resinAvailable()).toBe(false);
       expect(toggles()).not.toContain('Resin');
-    }));
+    });
 
-    it('plots each bucket in mL under the resin metric', fakeAsync(() => {
-      analytics.getActivity.and.returnValue(of(withResin()));
-      setup();
+    it('plots each bucket in mL under the resin metric', async () => {
+      vi.useFakeTimers();
+      analytics.getActivity.mockReturnValue(of(withResin()));
+      await setup();
 
       expect(toggles()).toContain('Resin');
       component.setMetric('resin');
@@ -247,18 +250,20 @@ describe('ActivityTabComponent', () => {
         0, 42.5,
       ]);
       expect(component.seriesLabels.resin).toBe('Resin (mL)');
-    }));
+    });
 
-    it('falls back to filament when the resin metric has nothing to plot', fakeAsync(() => {
-      setup();
+    it('falls back to filament when the resin metric has nothing to plot', async () => {
+      vi.useFakeTimers();
+      await setup();
       component.setMetric('resin');
 
       expect(component.plottedMetric()).toBe('filament');
-    }));
+    });
 
-    it('appends the mL column to the series CSV', fakeAsync(() => {
-      analytics.getActivity.and.returnValue(of(withResin()));
-      setup();
+    it('appends the mL column to the series CSV', async () => {
+      vi.useFakeTimers();
+      analytics.getActivity.mockReturnValue(of(withResin()));
+      await setup();
 
       const csv = component.seriesCsv();
       expect(csv.columns).toEqual([
@@ -270,6 +275,6 @@ describe('ActivityTabComponent', () => {
         'Filament (mL)',
       ]);
       expect(csv.rows.map((row) => row.at(-1))).toEqual([0, 42.5]);
-    }));
+    });
   });
 });

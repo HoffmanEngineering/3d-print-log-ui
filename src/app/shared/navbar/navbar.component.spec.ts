@@ -1,10 +1,11 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import {
   Component,
   NO_ERRORS_SCHEMA,
   signal,
   WritableSignal,
+  ChangeDetectionStrategy,
 } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -18,7 +19,11 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { NavbarComponent } from './navbar.component';
 
 /** The real bell loads notifications and achievements; the navbar only places it. */
-@Component({ selector: 'app-notification-bell', template: '' })
+@Component({
+  selector: 'app-notification-bell',
+  changeDetection: ChangeDetectionStrategy.Eager,
+  template: '',
+})
 class NotificationBellStubComponent {}
 
 describe('NavbarComponent', () => {
@@ -28,7 +33,7 @@ describe('NavbarComponent', () => {
   let loggedIn: WritableSignal<boolean | null>;
   let hasUnread: WritableSignal<boolean>;
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     profile = signal<UserProfileInfo | null>(null);
     loggedIn = signal<boolean | null>(false);
     const mockAuthService: Partial<AuthService> = {
@@ -43,7 +48,7 @@ describe('NavbarComponent', () => {
       hasUnreadReleases: hasUnread,
       firstUnreadAnchor: signal('v1.52.0'),
     };
-    TestBed.configureTestingModule({
+    await TestBed.configureTestingModule({
       imports: [NavbarComponent, RouterTestingModule, MatMenuModule],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
@@ -60,7 +65,7 @@ describe('NavbarComponent', () => {
         add: { imports: [NotificationBellStubComponent] },
       })
       .compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(NavbarComponent);

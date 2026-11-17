@@ -1,4 +1,4 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -14,7 +14,7 @@ describe('DeviceGrantsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(DeviceGrantsService);
     http = TestBed.inject(HttpTestingController);
@@ -51,11 +51,15 @@ describe('DeviceGrantsService', () => {
     const req = http.expectOne(`${base}/7`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null, { status: 204, statusText: 'No Content' });
-    expect(done).toBeTrue();
+    expect(done).toBe(true);
   });
 
   it('revokes every paired device and returns the count', () => {
-    let result: { revoked: number } | undefined;
+    let result:
+      | {
+          revoked: number;
+        }
+      | undefined;
     service.revokeAll().subscribe((r) => (result = r));
 
     const req = http.expectOne(base);

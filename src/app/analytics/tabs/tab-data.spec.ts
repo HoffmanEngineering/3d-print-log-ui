@@ -1,5 +1,5 @@
 import { Injector, runInInjectionContext, signal } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { AnalyticsFilterValue } from '../models/analytics.models';
 import { createTabData } from './tab-data';
@@ -24,9 +24,12 @@ describe('createTabData', () => {
     injector = TestBed.inject(Injector);
   });
 
-  it('starts loading and becomes ready with the response', fakeAsync(() => {
+  it('starts loading and becomes ready with the response', async () => {
+    vi.useFakeTimers();
     const filter = signal(filterValue('UTC'));
-    const responses = new Subject<{ count: number }>();
+    const responses = new Subject<{
+      count: number;
+    }>();
 
     const tab = runInInjectionContext(injector, () =>
       createTabData(
@@ -36,17 +39,20 @@ describe('createTabData', () => {
       )
     );
 
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     expect(tab.state()).toBe('loading');
 
     responses.next({ count: 3 });
     expect(tab.state()).toBe('ready');
     expect(tab.data()).toEqual({ count: 3 });
-  }));
+  });
 
-  it('reports empty when the response has no data', fakeAsync(() => {
+  it('reports empty when the response has no data', async () => {
+    vi.useFakeTimers();
     const filter = signal(filterValue('UTC'));
-    const responses = new Subject<{ count: number }>();
+    const responses = new Subject<{
+      count: number;
+    }>();
 
     const tab = runInInjectionContext(injector, () =>
       createTabData(
@@ -56,13 +62,14 @@ describe('createTabData', () => {
       )
     );
 
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     responses.next({ count: 0 });
 
     expect(tab.state()).toBe('empty');
-  }));
+  });
 
-  it('fails the whole tab on an error and recovers on retry', fakeAsync(() => {
+  it('fails the whole tab on an error and recovers on retry', async () => {
+    vi.useFakeTimers();
     const filter = signal(filterValue('UTC'));
     let attempt = 0;
 
@@ -81,27 +88,35 @@ describe('createTabData', () => {
       )
     );
 
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     expect(attempt).toBe(1);
     expect(tab.state()).toBe('error');
     expect(tab.data()).toBeNull();
 
     tab.retry();
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     expect(attempt).toBe(2);
     expect(tab.state()).toBe('ready');
     expect(tab.data()).toEqual({ count: 2 });
-  }));
+  });
 
-  it('never applies a response from a superseded filter', fakeAsync(() => {
+  it('never applies a response from a superseded filter', async () => {
+    vi.useFakeTimers();
     const filter = signal(filterValue('UTC'));
-    const byZone = new Map<string, Subject<{ zone: string }>>();
+    const byZone = new Map<
+      string,
+      Subject<{
+        zone: string;
+      }>
+    >();
 
     const tab = runInInjectionContext(injector, () =>
       createTabData(
         filter,
         (f) => {
-          const subject = new Subject<{ zone: string }>();
+          const subject = new Subject<{
+            zone: string;
+          }>();
           byZone.set(f.timeZone, subject);
           return subject;
         },
@@ -109,9 +124,9 @@ describe('createTabData', () => {
       )
     );
 
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
     filter.set(filterValue('America/Chicago'));
-    tick(250);
+    await vi.advanceTimersByTimeAsync(250);
 
     // The FIRST request answers last. switchMap must have unsubscribed it, so the stale
     // answer can never land on top of the newer one.
@@ -119,5 +134,5 @@ describe('createTabData', () => {
     byZone.get('America/Chicago')!.next({ zone: 'America/Chicago' });
 
     expect(tab.data()).toEqual({ zone: 'America/Chicago' });
-  }));
+  });
 });

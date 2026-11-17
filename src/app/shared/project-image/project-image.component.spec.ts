@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { of } from 'rxjs';
@@ -6,13 +7,12 @@ import { ProjectService } from 'src/app/core/services/project.service';
 
 describe('ProjectImageComponent', () => {
   let fixture: ComponentFixture<ProjectImageComponent>;
-  let mockProjectService: jasmine.SpyObj<ProjectService>;
+  let mockProjectService: MockedObject<ProjectService>;
 
   beforeEach(async () => {
-    mockProjectService = jasmine.createSpyObj<ProjectService>(
-      'ProjectService',
-      ['getProjectImage']
-    );
+    mockProjectService = {
+      getProjectImage: vi.fn().mockName('ProjectService.getProjectImage'),
+    } as unknown as MockedObject<ProjectService>;
 
     await TestBed.configureTestingModule({
       imports: [ProjectImageComponent, NoopAnimationsModule],
@@ -47,7 +47,7 @@ describe('ProjectImageComponent', () => {
   });
 
   it('shows img when image data loads successfully', async () => {
-    mockProjectService.getProjectImage.and.returnValue(
+    mockProjectService.getProjectImage.mockReturnValue(
       of('data:image/png;base64,abc123')
     );
     fixture.componentRef.setInput('projectId', 'abc');
@@ -62,7 +62,7 @@ describe('ProjectImageComponent', () => {
   });
 
   it('asks for the thumbnail when one is bound', async () => {
-    mockProjectService.getProjectImage.and.returnValue(
+    mockProjectService.getProjectImage.mockReturnValue(
       of('data:image/webp;base64,abc123')
     );
     fixture.componentRef.setInput('projectId', 'abc');
@@ -82,7 +82,7 @@ describe('ProjectImageComponent', () => {
   });
 
   it('shows folder icon when image fetch returns empty string', async () => {
-    mockProjectService.getProjectImage.and.returnValue(of(''));
+    mockProjectService.getProjectImage.mockReturnValue(of(''));
     fixture.componentRef.setInput('projectId', 'abc');
     fixture.componentRef.setInput('imageId', 7);
     fixture.detectChanges();

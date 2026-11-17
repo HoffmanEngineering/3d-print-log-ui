@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -32,8 +33,8 @@ import {
 import { BridgeCredentialsComponent } from './bridge-credentials.component';
 
 describe('BridgeCredentialsComponent', () => {
-  let service: jasmine.SpyObj<BridgesService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let service: MockedObject<BridgesService>;
+  let logging: MockedObject<LoggingService>;
   let fixture: ComponentFixture<BridgeCredentialsComponent>;
   let changes: BridgePrinter[];
   let reloads: number;
@@ -51,11 +52,14 @@ describe('BridgeCredentialsComponent', () => {
         { provide: LoggingService, useValue: logging },
         {
           provide: ToastrService,
-          useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']),
+          useValue: {
+            success: vi.fn().mockName('ToastrService.success'),
+            error: vi.fn().mockName('ToastrService.error'),
+          },
         },
         {
           provide: Clipboard,
-          useValue: { copy: jasmine.createSpy('copy').and.returnValue(true) },
+          useValue: { copy: vi.fn().mockReturnValue(true) },
         },
       ],
     }).compileComponents();
@@ -91,7 +95,7 @@ describe('BridgeCredentialsComponent', () => {
       }
       await new Promise((resolve) => setTimeout(resolve, 5));
     }
-    fail('timed out');
+    throw new Error('timed out');
   }
 
   function el(): HTMLElement {
@@ -143,14 +147,14 @@ describe('BridgeCredentialsComponent', () => {
 
   beforeEach(() => {
     localStorage.removeItem(BRIDGE_KEY_PINS_STORAGE_KEY);
-    service = jasmine.createSpyObj<BridgesService>('BridgesService', [
-      'setSecret',
-      'clearSecret',
-    ]);
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-      'logException',
-    ]);
+    service = {
+      setSecret: vi.fn().mockName('BridgesService.setSecret'),
+      clearSecret: vi.fn().mockName('BridgesService.clearSecret'),
+    } as unknown as MockedObject<BridgesService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+      logException: vi.fn().mockName('LoggingService.logException'),
+    } as unknown as MockedObject<LoggingService>;
   });
 
   it('shows the fingerprint it computed from the key, never the API copy', async () => {
@@ -194,7 +198,7 @@ describe('BridgeCredentialsComponent', () => {
   });
 
   it('saves on Enter in the input', async () => {
-    service.setSecret.and.returnValue(
+    service.setSecret.mockReturnValue(
       of(stored(bridgePrinter(), 'access_code'))
     );
     await create();
@@ -202,12 +206,12 @@ describe('BridgeCredentialsComponent', () => {
     input('access_code').dispatchEvent(
       new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
     );
-    await until(() => service.setSecret.calls.count() === 1);
+    await until(() => vi.mocked(service.setSecret).mock.calls.length === 1);
     expect(input('access_code').value).toBe('');
   });
 
   it('pins the fingerprint it sealed to', async () => {
-    service.setSecret.and.returnValue(
+    service.setSecret.mockReturnValue(
       of(stored(bridgePrinter(), 'access_code'))
     );
     await create();
@@ -244,17 +248,17 @@ describe('BridgeCredentialsComponent', () => {
   it('seals what was typed (trimmed) to the bridge key, sends the computed fingerprint and forgets the value', async () => {
     const entry = bridgePrinter();
     const answer = new Subject<BridgePrinter>();
-    service.setSecret.and.returnValue(answer);
+    service.setSecret.mockReturnValue(answer);
     await create(bridge(), entry);
 
     type('access_code', ' 12345678 ');
     save('access_code');
     // The form is cleared before the seal even finishes.
     expect(input('access_code').value).toBe('');
-    await until(() => service.setSecret.calls.count() === 1);
+    await until(() => vi.mocked(service.setSecret).mock.calls.length === 1);
 
-    const [bridgeId, entryId, fieldName, body] =
-      service.setSecret.calls.mostRecent().args;
+    const [bridgeId, entryId, fieldName, body] = vi.mocked(service.setSecret)
+      .mock.lastCall;
     expect([bridgeId, entryId, fieldName]).toEqual([42, 7, 'access_code']);
     expect(body.keyFingerprint).toBe(TEST_BRIDGE_KEY.fingerprint);
     expect(body.sealed).toMatch(/^v1\./);
@@ -280,9 +284,9 @@ describe('BridgeCredentialsComponent', () => {
       replaced: false,
       context: 'bridges',
     });
-    for (const call of logging.logEvent.calls.all()) {
-      expect(JSON.stringify(call.args)).not.toContain('12345678');
-      expect(JSON.stringify(call.args)).not.toContain('v1.');
+    for (const call of vi.mocked(logging.logEvent).mock.calls) {
+      expect(JSON.stringify(call)).not.toContain('12345678');
+      expect(JSON.stringify(call)).not.toContain('v1.');
     }
   });
 
@@ -304,7 +308,7 @@ describe('BridgeCredentialsComponent', () => {
 
   it('asks again when the answer marks the new value stale', async () => {
     const entry = bridgePrinter();
-    service.setSecret.and.returnValue(of(stored(entry, 'access_code', true)));
+    service.setSecret.mockReturnValue(of(stored(entry, 'access_code', true)));
     await create(bridge(), entry);
     type('access_code', '12345678');
     save('access_code');
@@ -322,7 +326,7 @@ describe('BridgeCredentialsComponent', () => {
     'bridge_key_missing',
   ]) {
     it(`reloads the bridge on ${code}, without retrying`, async () => {
-      service.setSecret.and.returnValue(
+      service.setSecret.mockReturnValue(
         throwError(
           () =>
             new HttpErrorResponse({
@@ -390,11 +394,12 @@ describe('BridgeCredentialsComponent', () => {
   });
 
   it('clears a credential and passes the entry on without it', async () => {
-    service.clearSecret.and.returnValue(of(undefined));
+    service.clearSecret.mockReturnValue(of(undefined));
     await create(bridge(), stored(bridgePrinter(), 'access_code'));
     byTestId('credential-clear', field('access_code'))!.click();
     fixture.detectChanges();
-    expect(service.clearSecret).toHaveBeenCalledOnceWith(42, 7, 'access_code');
+    expect(service.clearSecret).toHaveBeenCalledTimes(1);
+    expect(service.clearSecret).toHaveBeenCalledWith(42, 7, 'access_code');
     expect(changes[0].secrets).toEqual([]);
   });
 
@@ -443,11 +448,11 @@ describe('BridgeCredentialsComponent', () => {
   it('does not overwrite a pin that changed while the seal was in flight', async () => {
     pinBefore(TEST_BRIDGE_KEY.fingerprint);
     const answer = new Subject<BridgePrinter>();
-    service.setSecret.and.returnValue(answer);
+    service.setSecret.mockReturnValue(answer);
     await create();
     type('access_code', '12345678');
     save('access_code');
-    await until(() => service.setSecret.calls.count() === 1);
+    await until(() => vi.mocked(service.setSecret).mock.calls.length === 1);
     // Meanwhile the user confirmed another key (here, or in another tab).
     TestBed.inject(BridgeKeyPinsService).pin(42, OTHER_BRIDGE_KEY.fingerprint);
     answer.next(stored(bridgePrinter(), 'access_code'));

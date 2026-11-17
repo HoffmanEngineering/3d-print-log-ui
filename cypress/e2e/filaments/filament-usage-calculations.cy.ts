@@ -211,7 +211,7 @@ describe('Material usage calculations', () => {
     createMaterial('Volume Usage Spool').then((id) => {
       logPrint('Usage Calc Volume', [volumeRow(id, 20)]);
 
-      // 20 ml at 1.24 g/cm3 is 24.8 g.
+      // 20 mL at 1.24 g/cm3 is 24.8 g.
       openMaterial(id);
 
       cy.get('app-filament-remaining-card').should('contain.text', '975 g');
@@ -244,7 +244,7 @@ describe('Material usage calculations', () => {
       const expectedM =
         remainingMg / (250 * Math.PI * PLA_DENSITY * DIAMETER * DIAMETER);
 
-      stat('Volume').should('have.text', `${oneDecimal(expectedMl)} ml`);
+      stat('Volume').should('have.text', `${oneDecimal(expectedMl)} mL`);
       stat('Length').should('have.text', `${oneDecimal(expectedM)} m`);
     });
   });
@@ -272,7 +272,7 @@ describe('Material usage calculations', () => {
       stat('Length').should('have.text', '250 m');
       stat('Volume').should(
         'have.text',
-        `${oneDecimal(remainingMg / 1000 / PLA_DENSITY)} ml`
+        `${oneDecimal(remainingMg / 1000 / PLA_DENSITY)} mL`
       );
     });
   });
@@ -301,7 +301,7 @@ describe('Material usage calculations', () => {
         'contain.text',
         `${Math.round(remainingMg / 1000)} g`
       );
-      stat('Volume').should('have.text', '850 ml');
+      stat('Volume').should('have.text', '850 mL');
       noStat('Length');
     });
   });

@@ -46,6 +46,9 @@ export class CuraSlicerFileParserService extends GcodeParserBase {
   }
 
   parseSetting(gcode: string): string {
+    // A file saved on Windows has CRLF endings; the stray \r would split the
+    // settings block, since `.` does not match it.
+    gcode = gcode.replace(/\r\n?/g, '\n');
     let settings = gcode.match(/;End of Gcode(?<test>(.|\n)*)/g)?.[0];
 
     if (settings === null || settings === undefined) {

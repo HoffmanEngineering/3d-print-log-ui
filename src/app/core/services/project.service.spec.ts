@@ -65,27 +65,25 @@ describe('ProjectService', () => {
   });
 
   describe('getProjectImage', () => {
-    it('fetches image blob and returns base64 data URL', (done) => {
+    it('fetches image blob and returns base64 data URL', async () => {
       const projectId = 'abc-123';
       const imageId = 7;
       const fakeBlob = new Blob(['fake'], { type: 'image/png' });
 
       service.getProjectImage(projectId, imageId).subscribe((result) => {
         expect(result).toContain('data:');
-        done();
       });
 
       const req = httpMock.expectOne(
         `${environment.printLogApiUrl}/api/Projects/${projectId}/images/${imageId}`
       );
-      expect(req.request.headers.has('allow-anonymous-request')).toBeTrue();
+      expect(req.request.headers.has('allow-anonymous-request')).toBe(true);
       req.flush(fakeBlob);
     });
 
-    it('returns empty string on HTTP error', (done) => {
+    it('returns empty string on HTTP error', async () => {
       service.getProjectImage('abc-123', 7).subscribe((result) => {
         expect(result).toBe('');
-        done();
       });
 
       httpMock
@@ -132,9 +130,9 @@ describe('ProjectService', () => {
       );
       // PUT is a full replace: a payload that omits the key cannot clear an override, it
       // just leaves whatever the server already had.
-      expect('startDateOverride' in req.request.body).toBeTrue();
+      expect('startDateOverride' in req.request.body).toBe(true);
       expect(req.request.body.startDateOverride).toBeNull();
-      expect('finishDateOverride' in req.request.body).toBeTrue();
+      expect('finishDateOverride' in req.request.body).toBe(true);
       expect(req.request.body.finishDateOverride).toBeNull();
       req.flush({});
     });

@@ -1,3 +1,4 @@
+import type { MockedObject } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
@@ -13,8 +14,8 @@ import { LoggingService } from '../../core/services/logging.service';
 import { ConnectedAgentsComponent } from './connected-agents.component';
 
 describe('ConnectedAgentsComponent', () => {
-  let service: jasmine.SpyObj<ConnectedAgentsService>;
-  let logging: jasmine.SpyObj<LoggingService>;
+  let service: MockedObject<ConnectedAgentsService>;
+  let logging: MockedObject<LoggingService>;
   let fixture: ComponentFixture<ConnectedAgentsComponent>;
 
   const sampleAgents: ConnectedAgent[] = [
@@ -22,13 +23,15 @@ describe('ConnectedAgentsComponent', () => {
   ];
 
   beforeEach(async () => {
-    service = jasmine.createSpyObj<ConnectedAgentsService>(
-      'ConnectedAgentsService',
-      ['getConnectedAgents', 'revoke']
-    );
-    logging = jasmine.createSpyObj<LoggingService>('LoggingService', [
-      'logEvent',
-    ]);
+    service = {
+      getConnectedAgents: vi
+        .fn()
+        .mockName('ConnectedAgentsService.getConnectedAgents'),
+      revoke: vi.fn().mockName('ConnectedAgentsService.revoke'),
+    } as unknown as MockedObject<ConnectedAgentsService>;
+    logging = {
+      logEvent: vi.fn().mockName('LoggingService.logEvent'),
+    } as unknown as MockedObject<LoggingService>;
 
     await TestBed.configureTestingModule({
       imports: [ConnectedAgentsComponent, NoopAnimationsModule],
@@ -69,13 +72,13 @@ describe('ConnectedAgentsComponent', () => {
   }
 
   it('shows a spinner while loading', () => {
-    service.getConnectedAgents.and.returnValue(new Subject<ConnectedAgent[]>());
+    service.getConnectedAgents.mockReturnValue(new Subject<ConnectedAgent[]>());
     create();
     expect(fixture.nativeElement.querySelector('mat-spinner')).toBeTruthy();
   });
 
   it('heads the two lists so they read as separate', () => {
-    service.getConnectedAgents.and.returnValue(of([]));
+    service.getConnectedAgents.mockReturnValue(of([]));
     create();
     const headings = Array.from(
       fixture.nativeElement.querySelectorAll('h3') as NodeListOf<HTMLElement>
@@ -84,20 +87,20 @@ describe('ConnectedAgentsComponent', () => {
   });
 
   it('renders the empty state when there are no agents', () => {
-    service.getConnectedAgents.and.returnValue(of([]));
+    service.getConnectedAgents.mockReturnValue(of([]));
     create();
     expect(text()).toContain('No AI agents connected.');
   });
 
   it('renders connected agents and a disconnect-all action', () => {
-    service.getConnectedAgents.and.returnValue(of(sampleAgents));
+    service.getConnectedAgents.mockReturnValue(of(sampleAgents));
     create();
     expect(text()).toContain('Claude');
     expect(text()).toContain('Disconnect all AI agents');
   });
 
   it('shows an error state with retry when loading fails', () => {
-    service.getConnectedAgents.and.returnValue(
+    service.getConnectedAgents.mockReturnValue(
       throwError(() => new Error('boom'))
     );
     create();
@@ -106,28 +109,28 @@ describe('ConnectedAgentsComponent', () => {
   });
 
   it('confirms inline, revokes each grant, logs, then reloads', () => {
-    service.getConnectedAgents.and.returnValue(of(sampleAgents));
-    service.revoke.and.returnValue(of(undefined));
+    service.getConnectedAgents.mockReturnValue(of(sampleAgents));
+    service.revoke.mockReturnValue(of(undefined));
     create();
 
     clickButton('Disconnect all AI agents');
     expect(text()).toContain('Yes, disconnect all');
 
     // After a successful disconnect, the list is reloaded (now empty).
-    service.getConnectedAgents.and.returnValue(of([]));
+    service.getConnectedAgents.mockReturnValue(of([]));
     clickButton('Yes, disconnect all');
 
     expect(service.revoke).toHaveBeenCalledWith('grant-1');
     expect(logging.logEvent).toHaveBeenCalledWith(
       'ConnectedAgents_Revoke',
-      jasmine.objectContaining({ count: 1 })
+      expect.objectContaining({ count: 1 })
     );
     expect(text()).toContain('No AI agents connected.');
   });
 
   it('does not submit twice while a revoke is in flight', () => {
-    service.getConnectedAgents.and.returnValue(of(sampleAgents));
-    service.revoke.and.returnValue(new Subject<void>()); // never completes
+    service.getConnectedAgents.mockReturnValue(of(sampleAgents));
+    service.revoke.mockReturnValue(new Subject<void>()); // never completes
     create();
 
     clickButton('Disconnect all AI agents');
@@ -139,8 +142,8 @@ describe('ConnectedAgentsComponent', () => {
   });
 
   it('preserves the agents and offers retry when a revoke fails', () => {
-    service.getConnectedAgents.and.returnValue(of(sampleAgents));
-    service.revoke.and.returnValue(throwError(() => new Error('nope')));
+    service.getConnectedAgents.mockReturnValue(of(sampleAgents));
+    service.revoke.mockReturnValue(throwError(() => new Error('nope')));
     create();
 
     clickButton('Disconnect all AI agents');

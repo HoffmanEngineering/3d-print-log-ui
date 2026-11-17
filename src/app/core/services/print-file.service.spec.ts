@@ -3,7 +3,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { PrintFileService, PrintFileAttachment } from './print-file.service';
 import { environment } from 'src/environments/environment';
 
@@ -14,7 +14,7 @@ describe('PrintFileService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     service = TestBed.inject(PrintFileService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -122,7 +122,7 @@ describe('PrintFileService', () => {
         type: 'application/octet-stream',
       });
       const result = service.validateFile(file);
-      expect(result.valid).toBeTrue();
+      expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
 
@@ -131,7 +131,7 @@ describe('PrintFileService', () => {
         type: 'application/pdf',
       });
       const result = service.validateFile(file);
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect(result.error).toContain('.pdf');
       expect(result.error).toContain('not supported');
     });
@@ -143,7 +143,7 @@ describe('PrintFileService', () => {
       // Override size via Object.defineProperty since File.size is read-only
       Object.defineProperty(bigFile, 'size', { value: 201 * 1024 * 1024 });
       const result = service.validateFile(bigFile);
-      expect(result.valid).toBeFalse();
+      expect(result.valid).toBe(false);
       expect(result.error).toContain('200MB');
     });
   });

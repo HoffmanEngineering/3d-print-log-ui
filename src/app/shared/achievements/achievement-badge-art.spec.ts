@@ -21,7 +21,7 @@ describe('achievement-badge-art', () => {
 
   it('has glyph colors for every fill the badges paint with', () => {
     for (const id of FILL_IDS) {
-      expect(BADGE_PALETTE[id]).withContext(id).toBeDefined();
+      expect(BADGE_PALETTE[id], id).toBeDefined();
     }
   });
 

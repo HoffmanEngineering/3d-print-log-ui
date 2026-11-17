@@ -1,5 +1,6 @@
+import type { MockedObject } from 'vitest';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
 
@@ -19,14 +20,15 @@ describe('DocsReleaseNotesComponent', () => {
 
   /** The router's fragment stream, so a test can navigate in place. */
   let fragment$: BehaviorSubject<string | null>;
-  let releaseNotes: jasmine.SpyObj<VersionReleaseNoteDialogService>;
+  let releaseNotes: MockedObject<VersionReleaseNoteDialogService>;
 
   async function setup(fragment: string | null) {
     fragment$ = new BehaviorSubject<string | null>(fragment);
-    releaseNotes = jasmine.createSpyObj<VersionReleaseNoteDialogService>(
-      'VersionReleaseNoteDialogService',
-      ['markReleaseNotesViewed']
-    );
+    releaseNotes = {
+      markReleaseNotesViewed: vi
+        .fn()
+        .mockName('VersionReleaseNoteDialogService.markReleaseNotesViewed'),
+    } as unknown as MockedObject<VersionReleaseNoteDialogService>;
 
     await TestBed.configureTestingModule({
       imports: [DocsReleaseNotesComponent],
@@ -63,7 +65,7 @@ describe('DocsReleaseNotesComponent', () => {
   ) {
     for (let attempt = 0; attempt < tries && !done(); attempt++) {
       // A real macrotask yield, not just a microtask drain: the archive is a
-      // lazy chunk, so Karma actually fetches a module here and no amount of
+      // lazy chunk, so the test browser actually fetches a module here and no amount of
       // detectChanges will outwait that.
       await new Promise((resolve) => setTimeout(resolve, 10));
       await tick(fixture);
@@ -82,22 +84,22 @@ describe('DocsReleaseNotesComponent', () => {
 
   // Every way onto this page clears the navbar's unread indicator, including
   // the dialog's "read every release you missed" link.
-  it('marks the release notes read', waitForAsync(async () => {
+  it('marks the release notes read', async () => {
     const fixture = await setup(null);
     await tick(fixture);
 
     expect(releaseNotes.markReleaseNotesViewed).toHaveBeenCalledTimes(1);
-  }));
+  });
 
-  it('starts with the archive closed', waitForAsync(async () => {
+  it('starts with the archive closed', async () => {
     const fixture = await setup(null);
     await settle(fixture);
 
     expect(fixture.componentInstance.expanded()).toBe(false);
     expect(fixture.componentInstance.archive().length).toBe(0);
-  }));
+  });
 
-  it('loads every release the template does not carry', waitForAsync(async () => {
+  it('loads every release the template does not carry', async () => {
     const fixture = await setup(null);
     await settle(fixture);
 
@@ -108,18 +110,18 @@ describe('DocsReleaseNotesComponent', () => {
     expect(fixture.componentInstance.archive().length).toBe(
       DOC_RELEASES.length - RECENT
     );
-  }));
+  });
 
-  it('clears the loading flag once the archive has arrived', waitForAsync(async () => {
+  it('clears the loading flag once the archive has arrived', async () => {
     const fixture = await setup(null);
     await settle(fixture);
 
     await fixture.componentInstance.loadArchive();
 
     expect(fixture.componentInstance.loading()).toBe(false);
-  }));
+  });
 
-  it('expands the archive for a deep link to an anchor that is not on the page', waitForAsync(async () => {
+  it('expands the archive for a deep link to an anchor that is not on the page', async () => {
     // /docs/release-notes#v1.1.0 is a bookmark someone may hold; the oldest
     // release is nowhere near the ten the template renders.
     const oldest = DOC_RELEASES[DOC_RELEASES.length - 1];
@@ -132,18 +134,18 @@ describe('DocsReleaseNotesComponent', () => {
         .archive()
         .some((release) => release.anchor === oldest.anchor)
     ).toBe(true);
-  }));
+  });
 
-  it('leaves the archive closed for a deep link the template already answers', waitForAsync(async () => {
+  it('leaves the archive closed for a deep link the template already answers', async () => {
     // The newest release is in the template, so the browser has already
     // scrolled to it and there is no reason to pull in the chunk.
     const fixture = await setup(DOC_RELEASES[0].anchor);
     await settle(fixture);
 
     expect(fixture.componentInstance.expanded()).toBe(false);
-  }));
+  });
 
-  it('renders an archived release into the page once expanded', waitForAsync(async () => {
+  it('renders an archived release into the page once expanded', async () => {
     const fixture = await setup(null);
     await settle(fixture);
 
@@ -155,11 +157,11 @@ describe('DocsReleaseNotesComponent', () => {
       `#${CSS.escape(oldest.anchor)}`
     );
 
-    expect(heading).withContext(`no element for ${oldest.anchor}`).toBeTruthy();
+    expect(heading, `no element for ${oldest.anchor}`).toBeTruthy();
     expect(heading!.textContent).toContain(oldest.version);
-  }));
+  });
 
-  it('declares every manifest anchor across the template and the archive', waitForAsync(async () => {
+  it('declares every manifest anchor across the template and the archive', async () => {
     // The anchor contract, checked where it actually has to hold: in the DOM.
     const fixture = await setup(null);
     await settle(fixture);
@@ -172,9 +174,9 @@ describe('DocsReleaseNotesComponent', () => {
     ).map((release) => release.anchor);
 
     expect(missing).toEqual([]);
-  }));
+  });
 
-  it('expands the archive when the fragment changes on an open page', waitForAsync(async () => {
+  it('expands the archive when the fragment changes on an open page', async () => {
     // Angular reuses this component when only the hash changes, so this path
     // never re-runs ngOnInit. Reading a snapshot once would leave the anchor
     // unresolved.
@@ -190,9 +192,9 @@ describe('DocsReleaseNotesComponent', () => {
     expect(
       fixture.nativeElement.querySelector(`#${CSS.escape(oldest.anchor)}`)
     ).toBeTruthy();
-  }));
+  });
 
-  it('renders an archived heading as text, not as an HTML entity', waitForAsync(async () => {
+  it('renders an archived heading as text, not as an HTML entity', async () => {
     // The title is data: the archive prints it through {{ }}, so an `&amp;` in
     // the frontmatter would reach the reader as literal "&amp;".
     const fixture = await setup(null);
@@ -206,7 +208,7 @@ describe('DocsReleaseNotesComponent', () => {
         fixture.nativeElement.querySelector(`#${CSS.escape(release.anchor)}`)
     );
 
-    expect(ampersand).withContext('no release title with an &').toBeTruthy();
+    expect(ampersand, 'no release title with an &').toBeTruthy();
     const heading = fixture.nativeElement.querySelector(
       `#${CSS.escape(ampersand!.anchor)}`
     );
@@ -214,5 +216,5 @@ describe('DocsReleaseNotesComponent', () => {
       `${ampersand!.version} - ${ampersand!.title}`
     );
     expect(heading.textContent).not.toContain('&amp;');
-  }));
+  });
 });

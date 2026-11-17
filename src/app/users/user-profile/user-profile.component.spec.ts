@@ -1,13 +1,9 @@
+import type { MockedObject } from 'vitest';
 import { UserPrintsComponent } from '../user-prints/user-prints.component';
 import { AdComponent } from '../../shared/ad/ad.component';
 import { AchievementStripComponent } from '../achievement-strip/achievement-strip.component';
 import { StatsComponent } from '../stats/stats.component';
-import {
-  NO_ERRORS_SCHEMA,
-  provideZoneChangeDetection,
-  signal,
-  WritableSignal,
-} from '@angular/core';
+import { NO_ERRORS_SCHEMA, signal, WritableSignal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { MatMenuModule } from '@angular/material/menu';
@@ -37,11 +33,11 @@ describe('UserProfileComponent', () => {
   let fixture: ComponentFixture<UserProfileComponent>;
   let component: UserProfileComponent;
 
-  let userService: jasmine.SpyObj<UserService>;
-  let authService: jasmine.SpyObj<AuthService>;
-  let metaTags: jasmine.SpyObj<MetaTagService>;
-  let seoService: jasmine.SpyObj<SeoService>;
-  let toastr: jasmine.SpyObj<ToastrService>;
+  let userService: MockedObject<UserService>;
+  let authService: MockedObject<AuthService>;
+  let metaTags: MockedObject<MetaTagService>;
+  let seoService: MockedObject<SeoService>;
+  let toastr: MockedObject<ToastrService>;
 
   const user = {
     id: 12,
@@ -69,7 +65,7 @@ describe('UserProfileComponent', () => {
     seo: () => ReturnType<SeoService['forUser']> = () =>
       of<SeoLookup>({ kind: 'unavailable' })
   ) => {
-    seoService.forUser.and.callFake(seo);
+    seoService.forUser.mockImplementation(seo);
     TestBed.overrideTemplate(UserProfileComponent, '');
     fixture = TestBed.createComponent(UserProfileComponent);
     component = fixture.componentInstance;
@@ -77,28 +73,39 @@ describe('UserProfileComponent', () => {
   };
 
   beforeEach(() => {
-    userService = jasmine.createSpyObj<UserService>('UserService', [
-      'updateCurrentUserDetail',
-      'updateCurrentUserCoverPicture',
-      'removeCurrentUserCoverPicture',
-    ]);
-    userService.updateCurrentUserDetail.and.callFake((detail) =>
+    userService = {
+      updateCurrentUserDetail: vi
+        .fn()
+        .mockName('UserService.updateCurrentUserDetail'),
+      updateCurrentUserCoverPicture: vi
+        .fn()
+        .mockName('UserService.updateCurrentUserCoverPicture'),
+      removeCurrentUserCoverPicture: vi
+        .fn()
+        .mockName('UserService.removeCurrentUserCoverPicture'),
+    } as unknown as MockedObject<UserService>;
+    userService.updateCurrentUserDetail.mockImplementation((detail) =>
       of(detail as UserDetailDto)
     );
-    authService = jasmine.createSpyObj<AuthService>(
-      'AuthService',
-      ['updateCurrentUserCoverPicture'],
-      { userProfile: signal(null) }
-    );
-    metaTags = jasmine.createSpyObj<MetaTagService>('MetaTagService', [
-      'setTitle',
-      'setSocialMediaTags',
-      'applySeoMetadata',
-      'preventIndexing',
-      'restoreShellRobots',
-    ]);
-    seoService = jasmine.createSpyObj<SeoService>('SeoService', ['forUser']);
-    toastr = jasmine.createSpyObj<ToastrService>('ToastrService', ['error']);
+    authService = {
+      updateCurrentUserCoverPicture: vi
+        .fn()
+        .mockName('AuthService.updateCurrentUserCoverPicture'),
+      userProfile: signal(null),
+    } as unknown as MockedObject<AuthService>;
+    metaTags = {
+      setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+      setSocialMediaTags: vi.fn().mockName('MetaTagService.setSocialMediaTags'),
+      applySeoMetadata: vi.fn().mockName('MetaTagService.applySeoMetadata'),
+      preventIndexing: vi.fn().mockName('MetaTagService.preventIndexing'),
+      restoreShellRobots: vi.fn().mockName('MetaTagService.restoreShellRobots'),
+    } as unknown as MockedObject<MetaTagService>;
+    seoService = {
+      forUser: vi.fn().mockName('SeoService.forUser'),
+    } as unknown as MockedObject<SeoService>;
+    toastr = {
+      error: vi.fn().mockName('ToastrService.error'),
+    } as unknown as MockedObject<ToastrService>;
 
     TestBed.configureTestingModule({
       imports: [UserProfileComponent],
@@ -114,7 +121,9 @@ describe('UserProfileComponent', () => {
         { provide: SeoService, useValue: seoService },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
     });
@@ -139,7 +148,9 @@ describe('UserProfileComponent', () => {
     it('saves a new profile visibility', () => {
       component.saveProfileVisibility(ProfileViewStatus.Private);
 
-      expect(userService.updateCurrentUserDetail).toHaveBeenCalledOnceWith({
+      expect(userService.updateCurrentUserDetail).toHaveBeenCalledTimes(1);
+
+      expect(userService.updateCurrentUserDetail).toHaveBeenCalledWith({
         ...user,
         viewStatus: ProfileViewStatus.Private,
       });
@@ -153,10 +164,10 @@ describe('UserProfileComponent', () => {
       component.saveDescription();
 
       expect(
-        userService.updateCurrentUserDetail.calls.mostRecent().args[0].bio
+        vi.mocked(userService.updateCurrentUserDetail).mock.lastCall[0].bio
       ).toBe('New bio');
       expect(component.userDetail().bio).toBe('New bio');
-      expect(component.isEditingDescription()).toBeFalse();
+      expect(component.isEditingDescription()).toBe(false);
     });
 
     it('restores the saved bio when editing is cancelled', () => {
@@ -166,7 +177,7 @@ describe('UserProfileComponent', () => {
       component.cancelEditingDescription();
 
       expect(component.bio()).toBe('Prints things');
-      expect(component.isEditingDescription()).toBeFalse();
+      expect(component.isEditingDescription()).toBe(false);
     });
 
     it('refuses a cover photo that is not an image', () => {
@@ -179,14 +190,17 @@ describe('UserProfileComponent', () => {
     });
 
     it('removes the cover photo everywhere it is shown', () => {
-      userService.removeCurrentUserCoverPicture.and.returnValue(of(undefined));
+      userService.removeCurrentUserCoverPicture.mockReturnValue(of(undefined));
 
       component.removeCoverPhoto();
 
       expect(component.userDetail().coverPicture).toBeNull();
-      expect(
-        authService.updateCurrentUserCoverPicture
-      ).toHaveBeenCalledOnceWith(null);
+      expect(authService.updateCurrentUserCoverPicture).toHaveBeenCalledTimes(
+        1
+      );
+      expect(authService.updateCurrentUserCoverPicture).toHaveBeenCalledWith(
+        null
+      );
     });
   });
 
@@ -229,7 +243,7 @@ describe('UserProfileComponent', () => {
 
     it("restores the shell's robots tags when the page is left", () => {
       create(() => of<SeoLookup>({ kind: 'ok', seo: profileSeo }));
-      metaTags.restoreShellRobots.calls.reset();
+      metaTags.restoreShellRobots.mockClear();
       fixture.destroy();
       expect(metaTags.restoreShellRobots).toHaveBeenCalled();
     });
@@ -238,8 +252,8 @@ describe('UserProfileComponent', () => {
 
 /**
  * The real template, with responses that arrive after the first render the way
- * HTTP does. Zone change detection like the app, and startup settled first, so
- * a view that is not repainted shows up as stale.
+ * HTTP does. Zoneless change detection like the app (the TestBed default), and
+ * startup settled first, so a view that is not repainted shows up as stale.
  */
 describe('UserProfileComponent rendering', () => {
   let fixture: ComponentFixture<UserProfileComponent>;
@@ -263,15 +277,16 @@ describe('UserProfileComponent rendering', () => {
   beforeEach(async () => {
     signedIn = signal<UserProfileInfo | null>(null);
     saved = new Subject();
-    const userService = jasmine.createSpyObj<UserService>('UserService', [
-      'updateCurrentUserDetail',
-    ]);
-    userService.updateCurrentUserDetail.and.returnValue(saved);
+    const userService = {
+      updateCurrentUserDetail: vi
+        .fn()
+        .mockName('UserService.updateCurrentUserDetail'),
+    };
+    userService.updateCurrentUserDetail.mockReturnValue(saved);
 
     TestBed.configureTestingModule({
       imports: [FormsModule, MatMenuModule, UserProfileComponent],
       providers: [
-        provideZoneChangeDetection(),
         {
           provide: ActivatedRoute,
           useValue: { data: of({ userDetail: ada }) },
@@ -281,13 +296,19 @@ describe('UserProfileComponent rendering', () => {
         { provide: ToastrService, useValue: {} },
         {
           provide: MetaTagService,
-          useValue: jasmine.createSpyObj('MetaTagService', [
-            'setTitle',
-            'setSocialMediaTags',
-            'applySeoMetadata',
-            'preventIndexing',
-            'restoreShellRobots',
-          ]),
+          useValue: {
+            setTitle: vi.fn().mockName('MetaTagService.setTitle'),
+            setSocialMediaTags: vi
+              .fn()
+              .mockName('MetaTagService.setSocialMediaTags'),
+            applySeoMetadata: vi
+              .fn()
+              .mockName('MetaTagService.applySeoMetadata'),
+            preventIndexing: vi.fn().mockName('MetaTagService.preventIndexing'),
+            restoreShellRobots: vi
+              .fn()
+              .mockName('MetaTagService.restoreShellRobots'),
+          },
         },
         {
           provide: SeoService,
@@ -295,7 +316,9 @@ describe('UserProfileComponent rendering', () => {
         },
         {
           provide: LoggingService,
-          useValue: jasmine.createSpyObj('LoggingService', ['logEvent']),
+          useValue: {
+            logEvent: vi.fn().mockName('LoggingService.logEvent'),
+          },
         },
       ],
       schemas: [NO_ERRORS_SCHEMA],

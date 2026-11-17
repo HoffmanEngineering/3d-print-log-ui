@@ -1454,25 +1454,14 @@ export class FilamentDetailComponent
     this.loggingService.logEvent('ChangedDefaultFilamentDiameter', {
       diameter: newDiameterMm,
     });
-    if (this.defaultFilamentDiameterMmSetting()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultFilamentDiameterMmSetting().id,
-          newDiameterMm.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSetting.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Filaments_DefaultDiameterMm,
-          newDiameterMm.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentDiameterMmSetting.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Filaments_DefaultDiameterMm,
+        newDiameterMm.toString()
+      )
+      .then((setting) => {
+        this.defaultFilamentDiameterMmSetting.set(setting);
+      });
   }
 
   changeDefaultFilamentPrice(newPrice: string | null) {
@@ -1484,25 +1473,14 @@ export class FilamentDetailComponent
       price: newPrice,
       symbol: this.preferredCurrencySymbol,
     });
-    if (this.defaultFilamentPriceSetting()) {
-      this.userSettingService
-        .updateUserSetting(
-          this.defaultFilamentPriceSetting().id,
-          newPrice.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentPriceSetting.set(setting);
-        });
-    } else {
-      this.userSettingService
-        .addUserSetting(
-          UserSettingType.Filaments_DefaultPrice,
-          newPrice.toString()
-        )
-        .subscribe((setting) => {
-          this.defaultFilamentPriceSetting.set(setting);
-        });
-    }
+    void this.userSettingService
+      .addOrUpdateSetting(
+        UserSettingType.Filaments_DefaultPrice,
+        newPrice.toString()
+      )
+      .then((setting) => {
+        this.defaultFilamentPriceSetting.set(setting);
+      });
   }
 
   public getMaterialCategoryName(nickname: string): string {

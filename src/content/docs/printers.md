@@ -126,6 +126,22 @@ every slot in order (T0, T1, T2 and so on, or the names the printer reports).
 Saving a new print doesn't change a multi-slot printer's slots. The slots
 already say what is loaded.
 
+#### Material Usage marked "Other" {#other_rows}
+
+When a connection such as the 3D Print Log bridge logs a print but doesn't know
+which roll is in a slot, that slot's Material Usage row shows as **Other**, with
+its estimate and a note on the color and material the printer reported there.
+Either way of fixing it links the row:
+
+- **Load the roll in that slot** while the print is still printing. The newest
+  print that is still printing on that printer takes it for its **Other** row
+  on that slot. Finished prints are never changed.
+- **Pick the roll on the print.** Edit the print, pick the roll for the
+  **Other** row, and save. On a printer with more than one slot, the roll is
+  then loaded in the slot that row came from, when the print is still printing
+  or is the printer's latest print. Editing an older print doesn't change
+  what's loaded now.
+
 ---
 
 ### Connections {#connections}

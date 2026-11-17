@@ -49,17 +49,21 @@ export const copyPrintDetailResolver: ResolveFn<PrintDetailWithUser> = (
           }
         );
 
+        // getPrintImage answers '' for an image it could not fetch. Uploading that from the
+        // copy would fail after the new print was created, so the copy goes without it.
         const cleanedPrint: PrintDetail = {
           ...print,
           id: null,
-          images: images.map((image, i) => {
-            return {
-              id: null,
-              isDefault: image.isDefault,
-              url: image.url,
-              displayOrder: i,
-            };
-          }),
+          images: images
+            .filter((image) => image.url !== '')
+            .map((image, i) => {
+              return {
+                id: null,
+                isDefault: image.isDefault,
+                url: image.url,
+                displayOrder: i,
+              };
+            }),
           filamentUsage: cleanedFilamentUsage,
         };
 

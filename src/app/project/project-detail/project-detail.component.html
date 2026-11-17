@@ -96,7 +96,7 @@
                   $safeNavigationMigration(images()[selectedImageIndex()]?.id)
                 "
                 [editable]="true"
-                [maxImages]="5"
+                [maxImages]="maxImages()"
                 (imageSelected)="onImageSelected($event)"
                 (imageDeleted)="onImageDeleted($event)"
                 (defaultChanged)="onDefaultChanged($event)"
@@ -107,6 +107,7 @@
                 #fileInput
                 type="file"
                 accept="image/*"
+                multiple
                 style="display: none"
                 (change)="onFileSelected($event)"
               />
@@ -151,9 +152,9 @@
             @if (p.description) {
               <p class="description">{{ p.description }}</p>
             }
-            @if (p.url) {
+            @if (sourceUrl(); as url) {
               <p>
-                <a [href]="p.url" target="_blank" rel="noopener"
+                <a [href]="url" target="_blank" rel="noopener noreferrer"
                   >View model source</a
                 >
               </p>
@@ -227,7 +228,7 @@
       <app-ad></app-ad>
     </div>
     <div class="ad-sidebar">
-      <app-sidebar-ad></app-sidebar-ad>
+      <app-sidebar-ad [minWidth]="1100"></app-sidebar-ad>
     </div>
   </div>
 }

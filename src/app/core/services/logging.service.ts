@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { environment } from 'src/environments/environment';
 import { redactEmailTokens } from '../utils/redact-email-tokens';
 import { redactTagUids } from '../utils/redact-tag-uids';
+import { createTelemetryNoiseFilter } from '../utils/telemetry-noise-filter';
 
 /** The subset of the App Insights API that LoggingService depends on. */
 interface TelemetrySink {
@@ -148,13 +149,28 @@ export class LoggingService {
           correlationHeaderExcludedDomains: ['*.auth0.com'],
           enableRequestHeaderTracking: false,
           enableResponseHeaderTracking: true,
+          // Uncaught errors reach ErrorHandlerService through Angular's global error
+          // listeners (provideAppErrorHandling), which logs them. The SDK's own window.onerror
+          // hook would report each one a second time.
+          disableExceptionTracking: true,
         },
       });
       // Before loading: the SDK sends the initial page view from inside loadAppInsights(), and on
       // /email-preferences that URL still holds the token fragment.
+      const isNoise = createTelemetryNoiseFilter({
+        appOrigin: globalThis.location.origin,
+        apiUrl: environment.printLogApiUrl,
+        authDomain: environment.authentication?.domain,
+      });
       appInsights.addTelemetryInitializer((item) => {
+        // Ad-blocked Google calls and errors thrown inside third-party tags: not ours to fix,
+        // and the bulk of what was ingested.
+        if (isNoise(item)) {
+          return false;
+        }
         redactEmailTokens(item);
         redactTagUids(item);
+        return true;
       });
       appInsights.loadAppInsights();
       appInsights.context.application.ver = environment.version;

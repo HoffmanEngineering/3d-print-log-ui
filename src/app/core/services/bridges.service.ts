@@ -105,6 +105,13 @@ export interface DiscoveredPrinter {
   state: DiscoveredPrinterState;
   /** The app's entry for it, when one matches (Connected, or Configured with an entry too). */
   printerEntryId: number | null;
+  /**
+   * For a config-file printer: the 3D Print Log printer its config entry logs to. Missing from
+   * an older API, and null when the bridge doesn't say or that printer is gone.
+   */
+  printerId?: number | null;
+  /** That printer's current name. */
+  printerName?: string | null;
   firstSeenAt: string;
   lastSeenAt: string;
 }

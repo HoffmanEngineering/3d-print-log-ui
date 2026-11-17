@@ -4,12 +4,15 @@
     [selectedIndex]="selectedIndex()"
     (indexChange)="onIndexChange($event)"
   >
-    @if (selectedImage(); as image) {
+    <!-- One-item @for, tracked by id: a new selection gets a new app-print-image, which
+         fetches on init. Without a direct URL (a private print) imageData must be null,
+         not undefined, for it to fetch with the owner's token. -->
+    @for (image of selectedImages(); track image.id) {
       <div class="main-image">
         <app-print-image
           [printId]="printId()"
           [imageId]="image.id"
-          [imageData]="image.url"
+          [imageData]="image.url ?? null"
           [alt]="selectedAlt()"
           [showDeleteOnHover]="false"
         ></app-print-image>

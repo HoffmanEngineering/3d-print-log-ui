@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { AdsenseModule } from 'ng2-adsense';
 import { ToastrService } from 'ngx-toastr';
 import { of, Subject } from 'rxjs';
 
@@ -115,8 +114,6 @@ describe('PrinterMaintenanceComponent', () => {
         FormsModule,
         NoopAnimationsModule,
         PrinterAvatarComponent,
-        // The template renders app-ad for real, which needs the Adsense config.
-        AdsenseModule.forRoot({ adClient: 'ca-pub-test' }),
         PrinterMaintenanceComponent,
       ],
       providers: [
@@ -270,6 +267,33 @@ describe('PrinterMaintenanceComponent', () => {
       expect(component.entries()[0]).toBe(entry);
       expect(entry.description).toBe('Replace nozzle');
       expect(text()).toContain('Replace nozzle');
+    });
+  });
+
+  describe('toggleDone', () => {
+    it('saves an existing row', async () => {
+      await setUp([anEntry()]);
+      const entry = component.entries()[0];
+
+      component.toggleDone(entry, true);
+
+      expect(entry.done).toBe(true);
+      expect(
+        maintenanceService.updatePrinterMaintenanceEntry
+      ).toHaveBeenCalledWith(entry);
+    });
+
+    it('only marks a new, unsaved row: there is nothing to PUT yet', async () => {
+      await setUp([anEntry()]);
+      component.addEntry();
+      const draft = component.entries()[0];
+
+      component.toggleDone(draft, true);
+
+      expect(draft.done).toBe(true);
+      expect(
+        maintenanceService.updatePrinterMaintenanceEntry
+      ).not.toHaveBeenCalled();
     });
   });
 });

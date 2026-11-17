@@ -193,6 +193,52 @@ describe('QrLabelDialogComponent', () => {
     expect(mockPrintWindow.close).toHaveBeenCalled();
   });
 
+  it('escapes the temperature and accepts only a hex color in the printed labels', async () => {
+    const mockPrintWindow = stubPrintWindow();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.labels.set([
+      {
+        filament: {
+          ...mockFilament,
+          colorHex: 'FF0000;"><script>alert(1)</script>',
+          recommendedTemp: '<img src=x onerror=alert(2)>' as unknown as number,
+        },
+        qrCodeSvg: '',
+        qrCodeSvgString: '<svg></svg>',
+        url: '',
+      } as never,
+    ]);
+
+    component.print();
+
+    const html = mockPrintWindow.document.write.mock.lastCall?.[0] as string;
+    expect(html).not.toContain('<script>');
+    expect(html).not.toContain('<img');
+    expect(html).toContain('&lt;img src=x onerror=alert(2)&gt;');
+    expect(html).toContain('background-color: #cccccc;');
+  });
+
+  it('keeps a valid hex color in the printed labels', async () => {
+    const mockPrintWindow = stubPrintWindow();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    component.labels.set([
+      {
+        filament: mockFilament,
+        qrCodeSvg: '',
+        qrCodeSvgString: '<svg></svg>',
+        url: '',
+      } as never,
+    ]);
+
+    component.print();
+
+    const html = mockPrintWindow.document.write.mock.lastCall?.[0] as string;
+    expect(html).toContain('background-color: #FF0000;');
+    expect(html).toContain('Nozzle: 210°C');
+  });
+
   it('warns instead of alerting when the print window is blocked', async () => {
     vi.spyOn(window, 'open').mockReturnValue(null);
 

@@ -19,7 +19,23 @@ describe('NotificationService', () => {
   const base = `${environment.printLogApiUrl}/api/notifications`;
   const countUrl = `${base}/unread-count`;
 
+  let visibility: DocumentVisibilityState;
+  let online: boolean;
+
+  const setVisibility = (state: DocumentVisibilityState) => {
+    visibility = state;
+    document.dispatchEvent(new Event('visibilitychange'));
+  };
+
   beforeEach(() => {
+    // Headless Chromium's own answers are not ours to rely on; the test decides.
+    visibility = 'visible';
+    online = true;
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(
+      () => visibility
+    );
+    vi.spyOn(navigator, 'onLine', 'get').mockImplementation(() => online);
+
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(withXhr(), withInterceptorsFromDi()),
@@ -32,14 +48,14 @@ describe('NotificationService', () => {
 
   afterEach(() => http.verify());
 
-  it('startPolling fetches immediately then every 30s', async () => {
+  it('startPolling fetches immediately then every 60s', async () => {
     vi.useFakeTimers();
     service.startPolling();
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 0 });
 
-    await vi.advanceTimersByTimeAsync(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 2, unreadAchievementCount: 0 });
@@ -68,7 +84,7 @@ describe('NotificationService', () => {
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 1 });
-    await vi.advanceTimersByTimeAsync(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 1, unreadAchievementCount: 1 });
@@ -133,7 +149,7 @@ describe('NotificationService', () => {
     service.startPolling();
     http.expectOne(countUrl).flush({ unreadCount: 0 });
 
-    await vi.advanceTimersByTimeAsync(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http.expectOne(countUrl).flush({ unreadCount: 0 });
 
     service.stopPolling();
@@ -147,7 +163,7 @@ describe('NotificationService', () => {
       .expectOne(countUrl)
       .flush('down', { status: 503, statusText: 'Service Unavailable' });
 
-    await vi.advanceTimersByTimeAsync(30000);
+    await vi.advanceTimersByTimeAsync(60000);
     http
       .expectOne(countUrl)
       .flush({ unreadCount: 2, unreadAchievementCount: 1 });
@@ -155,6 +171,83 @@ describe('NotificationService', () => {
     expect(service.unreadAchievementCount()).toBe(1);
     service.stopPolling();
     vi.clearAllTimers();
+  });
+
+  describe('tab visibility and connectivity', () => {
+    it('does not poll while the tab is hidden', async () => {
+      vi.useFakeTimers();
+      setVisibility('hidden');
+      service.startPolling();
+      http.expectNone(countUrl);
+
+      await vi.advanceTimersByTimeAsync(5 * 60000);
+      http.expectNone(countUrl);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('stops polling when the tab is hidden', async () => {
+      vi.useFakeTimers();
+      service.startPolling();
+      http.expectOne(countUrl).flush({ unreadCount: 1 });
+
+      setVisibility('hidden');
+      await vi.advanceTimersByTimeAsync(5 * 60000);
+      http.expectNone(countUrl);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('refreshes at once when the tab becomes visible again, then keeps polling', async () => {
+      vi.useFakeTimers();
+      service.startPolling();
+      http.expectOne(countUrl).flush({ unreadCount: 1 });
+      setVisibility('hidden');
+      await vi.advanceTimersByTimeAsync(10 * 60000);
+
+      setVisibility('visible');
+      http.expectOne(countUrl).flush({ unreadCount: 3 });
+      expect(service.unreadCount()).toBe(3);
+
+      await vi.advanceTimersByTimeAsync(60000);
+      http.expectOne(countUrl).flush({ unreadCount: 4 });
+      expect(service.unreadCount()).toBe(4);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('skips polls while offline and refreshes when the connection returns', async () => {
+      vi.useFakeTimers();
+      online = false;
+      service.startPolling();
+      http.expectNone(countUrl);
+      await vi.advanceTimersByTimeAsync(3 * 60000);
+      http.expectNone(countUrl);
+
+      online = true;
+      window.dispatchEvent(new Event('online'));
+      http.expectOne(countUrl).flush({ unreadCount: 2 });
+      expect(service.unreadCount()).toBe(2);
+
+      service.stopPolling();
+      vi.clearAllTimers();
+    });
+
+    it('stopPolling ends polling even when the tab becomes visible afterward', async () => {
+      vi.useFakeTimers();
+      service.startPolling();
+      http.expectOne(countUrl).flush({ unreadCount: 1 });
+
+      service.stopPolling();
+      setVisibility('hidden');
+      setVisibility('visible');
+      await vi.advanceTimersByTimeAsync(5 * 60000);
+      http.expectNone(countUrl);
+      vi.clearAllTimers();
+    });
   });
 
   it('stopPolling resets both counts', async () => {

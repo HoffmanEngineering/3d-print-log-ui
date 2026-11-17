@@ -65,8 +65,11 @@ interface ModelInfo {
   min?: { speed?: number };
 }
 
-interface ViewerMessage {
-  data: { type: string; progress?: number; data?: ModelInfo };
+/** What the viewer iframe posts to this window (adapter.js and ui.js). */
+interface ViewerAction {
+  type: string;
+  progress?: number;
+  data?: ModelInfo;
 }
 
 export type ViewerStep = 'reading' | 'analyzing' | 'done';
@@ -139,8 +142,19 @@ export class GcodeViewerModalComponent implements AfterViewInit {
     });
   }
 
-  public async onMessage(e: ViewerMessage) {
-    switch (e.data.type) {
+  /**
+   * The listener is on the window, so it also hears ad frames, an opener and third-party
+   * scripts. Only the viewer iframe may drive the dialog: a MODEL_INFO from anywhere else
+   * would close it with someone else's numbers.
+   */
+  public async onMessage(e: MessageEvent) {
+    const viewer = this.iframe()?.nativeElement.contentWindow;
+    if (!viewer || e.source !== viewer) {
+      return;
+    }
+    const action: ViewerAction | null =
+      typeof e.data === 'object' ? e.data : null;
+    switch (action?.type) {
       case Actions.GCODE_PARSER_INIT: {
         const lastSelectedPrinterId =
           +(await this.getLastSelectedPrinter())?.value || null;
@@ -167,15 +181,15 @@ export class GcodeViewerModalComponent implements AfterViewInit {
       case Actions.MODEL_INFO: {
         this.analyzingProgress.set(100);
         this.dialogRef.close(
-          this.parseModelInfoToPrintDetail(e.data.data ?? {})
+          this.parseModelInfoToPrintDetail(action.data ?? {})
         );
         break;
       }
       case Actions.SET_LOAD_PROGRESS:
-        this.loadingProgress.set(e.data.progress ?? 0);
+        this.loadingProgress.set(action.progress ?? 0);
         break;
       case Actions.SET_ANALYZE_PROGRESS: {
-        const progress = e.data.progress ?? 0;
+        const progress = action.progress ?? 0;
         if (progress > 0) {
           this.loadingProgress.set(100);
         }

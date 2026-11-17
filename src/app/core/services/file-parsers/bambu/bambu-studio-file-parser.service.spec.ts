@@ -37,4 +37,54 @@ Walls: 3
 Support: No Supports`);
     expect(print.title).toBe('Toy');
   });
+
+  // Bambu Studio's header writes "; total filament length [mm] : a,b" (one value
+  // per used filament, see GCodeProcessor.cpp format_filament_used_info); the
+  // "; filament used [mm] =" lines are commented out in its GCode.cpp.
+  describe('Bambu Studio header usage lines', () => {
+    const header = (lengths: string, weights: string) => `; HEADER_BLOCK_START
+; BambuStudio 02.00.01.50
+; model printing time: 30m 0s; total estimated time: 35m 10s
+; total layer number: 40
+; total filament length [mm] : ${lengths}
+; total filament volume [cm^3] : 1.20,0.60
+; total filament weight [g] : ${weights}
+; HEADER_BLOCK_END`;
+
+    it('reads usage from the total filament length and weight lines', async () => {
+      const gcode = `${header('500.00,250.00', '1.49,0.75')}
+; CONFIG_BLOCK_START
+; filament_colour = #FF0000;#0000FF
+; filament_type = PLA;PETG
+; CONFIG_BLOCK_END`;
+
+      const print = await service.parse(gcode);
+
+      expect(print.filamentUsage.map((f) => f.estimatedLengthInM)).toEqual([
+        0.5, 0.25,
+      ]);
+      expect(print.filamentUsage.map((f) => f.estimatedAmountMg)).toEqual([
+        1490, 750,
+      ]);
+      expect(print.filamentUsage.map((f) => f.notes)).toEqual([
+        'Slot 1 · #FF0000 · PLA',
+        'Slot 2 · #0000FF · PETG',
+      ]);
+    });
+
+    it('does not guess a slot when fewer filaments were used than the project lists', async () => {
+      // The lines list only the filaments the plate used, so the first value
+      // need not belong to slot 1.
+      const gcode = `${header('500.00', '1.49')}
+; filament_colour = #FF0000;#0000FF;#00FF00
+; filament_type = PLA;PETG;PLA`;
+
+      const print = await service.parse(gcode);
+
+      expect(print.filamentUsage.length).toBe(1);
+      expect(print.filamentUsage[0].estimatedLengthInM).toBe(0.5);
+      expect(print.filamentUsage[0].estimatedAmountMg).toBe(1490);
+      expect(print.filamentUsage[0].notes).toBe('Filament 1');
+    });
+  });
 });

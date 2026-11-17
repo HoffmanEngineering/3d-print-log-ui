@@ -5,9 +5,10 @@ import { PrintDetailHeroComponent } from './print-detail-hero.component';
 
 describe('PrintDetailHeroComponent', () => {
   let fixture: ComponentFixture<PrintDetailHeroComponent>;
+  let mockPrintService: { getPrintImage: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
-    const mockPrintService = {
+    mockPrintService = {
       getPrintImage: vi
         .fn()
         .mockName('PrintService.getPrintImage')
@@ -59,5 +60,38 @@ describe('PrintDetailHeroComponent', () => {
     ]);
     fixture.detectChanges();
     expect(fixture.componentInstance.selectedIndex()).toBe(1);
+  });
+
+  // A private print's image needs the owner's token, which a plain <img src> never sends,
+  // so an image without a direct URL is fetched through PrintService.
+  it('fetches an image without a direct URL through PrintService', () => {
+    fixture.componentRef.setInput('images', [
+      { id: 7, isDefault: true, displayOrder: 0 },
+    ]);
+    fixture.detectChanges();
+    expect(mockPrintService.getPrintImage).toHaveBeenCalledWith(1, 7);
+  });
+
+  it('fetches the newly selected image when the selection changes', () => {
+    fixture.componentRef.setInput('images', [
+      { id: 1, isDefault: true, displayOrder: 0 },
+      { id: 2, isDefault: false, displayOrder: 1 },
+    ]);
+    fixture.detectChanges();
+    fixture.componentInstance.selectedIndex.set(1);
+    fixture.detectChanges();
+    expect(mockPrintService.getPrintImage).toHaveBeenLastCalledWith(1, 2);
+  });
+
+  it('shows a direct URL as it is, without fetching', () => {
+    const url = 'https://api.example.test/api/Prints/1/image/3';
+    fixture.componentRef.setInput('images', [
+      { id: 3, isDefault: true, displayOrder: 0, url },
+    ]);
+    fixture.detectChanges();
+    expect(mockPrintService.getPrintImage).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('img').getAttribute('src')).toBe(
+      url
+    );
   });
 });

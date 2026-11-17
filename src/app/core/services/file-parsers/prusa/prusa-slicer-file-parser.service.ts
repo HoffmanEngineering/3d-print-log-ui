@@ -83,8 +83,12 @@ export class PrusaSlicerFileParserService extends GcodeParserBase {
       notes += 'Ooze Prevention: Enabled\n';
     }
 
-    if (settings.getNumber('draft_shield') === 1) {
+    // PrusaSlicer 2.4+ writes disabled/limited/enabled; 2.3 and older wrote 0/1.
+    const draftShield = settings.get('draft_shield').toLowerCase();
+    if (draftShield === 'enabled' || draftShield === '1') {
       notes += 'Draft Shield: Enabled\n';
+    } else if (draftShield === 'limited') {
+      notes += 'Draft Shield: Limited\n';
     }
 
     const settingId = settings.get('print_settings_id');

@@ -28,6 +28,7 @@ import { LoggingService } from 'src/app/core/services/logging.service';
 import { QrCodeService } from 'src/app/core/services/qr-code.service';
 import { MatInputModule } from '@angular/material/input';
 import { ToastrService } from 'ngx-toastr';
+import { normalizeHex } from 'src/app/shared/charts/filament-swatch-colors';
 import {
   LABEL_DIMENSIONS,
   LabelSize,
@@ -482,13 +483,13 @@ export class QrLabelDialogComponent implements OnInit, OnDestroy {
       ? `<div class="label-brand">${this.escapeHtml(label.filament.brand)}</div>`
       : '';
 
+    // This markup is written into the print window as-is, so every value from
+    // the filament is escaped and the color must be a real hex value.
     const tempHtml = label.filament.recommendedTemp
-      ? `<div class="label-temp">Nozzle: ${label.filament.recommendedTemp}°C</div>`
+      ? `<div class="label-temp">Nozzle: ${this.escapeHtml(String(label.filament.recommendedTemp))}°C</div>`
       : '';
 
-    const colorHex = label.filament.colorHex
-      ? `#${label.filament.colorHex}`
-      : '#cccccc';
+    const colorHex = normalizeHex(label.filament.colorHex) ?? '#cccccc';
 
     return `
       <div class="print-label print-label-${size}">

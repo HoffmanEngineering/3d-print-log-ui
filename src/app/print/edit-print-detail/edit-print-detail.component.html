@@ -121,11 +121,38 @@
           }
         </mat-form-field>
         @if (printers.length === 0) {
-          <div class="add-first-printer field">
-            <span>Add the printer you printed this on</span>
-            <button type="button" mat-stroked-button (click)="openAddPrinter()">
+          <div
+            class="add-first-printer field"
+            [class.add-first-printer--error]="printerRequiredShown()"
+            role="group"
+            aria-labelledby="add-first-printer-label"
+          >
+            <span id="add-first-printer-label">
+              Add the printer you printed this on
+              <span class="required-marker" aria-hidden="true">*</span>
+            </span>
+            <button
+              type="button"
+              mat-flat-button
+              color="primary"
+              (click)="openAddPrinter()"
+              [attr.aria-describedby]="
+                printerRequiredShown() ? 'add-first-printer-error' : null
+              "
+            >
+              <mat-icon>add</mat-icon>
               Add printer
             </button>
+            @if (printerRequiredShown()) {
+              <span
+                id="add-first-printer-error"
+                class="add-first-printer__error"
+                role="alert"
+                data-testid="add-first-printer-error"
+              >
+                A print needs a printer. Add one to save this print.
+              </span>
+            }
           </div>
         } @else {
           <mat-form-field class="field">

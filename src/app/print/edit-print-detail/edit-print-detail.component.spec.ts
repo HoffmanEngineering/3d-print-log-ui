@@ -2073,6 +2073,95 @@ describe('EditPrintDetailComponent', () => {
         ) as MockedObject<ToastrService>;
         expect(toastr.info).not.toHaveBeenCalled();
       });
+
+      describe('on submit', () => {
+        const block = () =>
+          (editor!.nativeElement as HTMLElement).querySelector(
+            '.add-first-printer'
+          ) as HTMLElement;
+        const blockError = () =>
+          block().querySelector('[data-testid="add-first-printer-error"]');
+
+        function submitWithTitle(form: EditPrintDetailComponent): void {
+          form.printForm.controls.title.setValue('Benchy');
+          // As typing would: the title's ng-invalid class is only removed by a render.
+          editor!.detectChanges();
+          form.onSubmit();
+          editor!.detectChanges();
+        }
+
+        it('shows no error before the user tries to save', () => {
+          openEditor({ printers: [] });
+
+          expect(blockError()).toBeNull();
+          expect(block().classList).not.toContain('add-first-printer--error');
+        });
+
+        it('marks the block, says why, and focuses Add printer instead of saving', () => {
+          const form = openEditor({ printers: [] });
+          const printService = TestBed.inject(
+            PrintService
+          ) as unknown as Record<string, ReturnType<typeof vi.fn>>;
+
+          submitWithTitle(form);
+
+          expect(block().classList).toContain('add-first-printer--error');
+          expect(blockError()?.textContent).toContain(
+            'A print needs a printer'
+          );
+          expect(blockError()?.getAttribute('role')).toBe('alert');
+          expect(document.activeElement).toBe(block().querySelector('button'));
+          expect(printService['addPrint']).not.toHaveBeenCalled();
+        });
+
+        it('logs PrinterRequired, not the hidden-field toast', () => {
+          const form = openEditor({ printers: [] });
+          const toastr = TestBed.inject(
+            ToastrService
+          ) as MockedObject<ToastrService>;
+          const logger = TestBed.inject(
+            LoggingService
+          ) as MockedObject<LoggingService>;
+
+          submitWithTitle(form);
+
+          expect(toastr.error).not.toHaveBeenCalled();
+          expect(logger.logEvent).toHaveBeenCalledWith(
+            'EditPrintDetail_PrinterRequired'
+          );
+          expect(logger.logEvent).not.toHaveBeenCalledWith(
+            'EditPrintDetail_HiddenFieldInvalid',
+            expect.anything()
+          );
+        });
+
+        it('focuses an invalid visible field above it first, but still marks the block', () => {
+          const form = openEditor({ printers: [] });
+          form.printForm.controls.title.setValue('');
+
+          form.onSubmit();
+          editor!.detectChanges();
+
+          expect(document.activeElement?.id).toBe('edit-print-title');
+          expect(blockError()).not.toBeNull();
+        });
+
+        it('clears once a printer is added', async () => {
+          const form = openEditor({ printers: [] });
+          const { closed } = stubDialog(form);
+          printerService.getCurrentUserPrinterSummaries.mockReturnValue(
+            of({ paging: {}, items: [printer(42, 'Core One')] } as never)
+          );
+          submitWithTitle(form);
+
+          await form.openAddPrinter();
+          closed.next({ id: 42 });
+          editor!.detectChanges();
+
+          expect(block()).toBeNull();
+          expect(form.printerRequiredShown()).toBe(false);
+        });
+      });
     });
 
     describe('detecting the slicer printer', () => {

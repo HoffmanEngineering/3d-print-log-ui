@@ -449,6 +449,13 @@ export class EditPrintDetailComponent
    */
   readonly saving = signal(false);
 
+  /**
+   * Set when Save is pressed by a user with no printers: the "add your printer" block then
+   * shows its error. A print needs a printer, and that block stands in for the printer select,
+   * so it is where the user has to be sent. Cleared when a printer is added.
+   */
+  readonly printerRequiredShown = signal(false);
+
   public lastSelectedPrinterSetting: UserSetting | null = null;
 
   readonly defaultPrintViewStatusSetting = signal<UserSetting | null>(null);
@@ -1882,6 +1889,11 @@ export class EditPrintDetailComponent
     this.printForm.markAllAsTouched();
     if (!this.printForm.valid) {
       this.saving.set(false);
+      const missingPrinter = this.isMissingFirstPrinter();
+      this.printerRequiredShown.set(missingPrinter);
+      if (missingPrinter) {
+        this.loggingService.logEvent('EditPrintDetail_PrinterRequired');
+      }
       this.focusFirstInvalidControl();
       return;
     }
@@ -2035,11 +2047,19 @@ export class EditPrintDetailComponent
    * is told instead of Submit doing nothing.
    */
   private focusFirstInvalidControl(): void {
-    const field = (
-      this.el.nativeElement as HTMLElement
-    ).querySelector<HTMLElement>('[formcontrolname].ng-invalid');
+    const host = this.el.nativeElement as HTMLElement;
+    const field = host.querySelector<HTMLElement>(
+      '[formcontrolname].ng-invalid'
+    );
     if (field) {
       field.focus();
+      return;
+    }
+
+    // No printers: the printer select is replaced by the add-printer block, whose error
+    // (printerRequiredShown) says why the print was not saved. Send the user to its button.
+    if (this.isMissingFirstPrinter()) {
+      host.querySelector<HTMLElement>('.add-first-printer button')?.focus();
       return;
     }
 
@@ -2278,8 +2298,16 @@ export class EditPrintDetailComponent
     return candidates.reduce((a, b) => (b.id > a.id ? b : a));
   }
 
+  /** The user has no printers yet, so the printer the print needs can't be picked. */
+  private isMissingFirstPrinter(): boolean {
+    return (
+      this.printers.length === 0 && this.printForm.get('printerId').invalid
+    );
+  }
+
   private selectAddedPrinter(printerId: number): void {
     const select = () => {
+      this.printerRequiredShown.set(false);
       this.printForm.get('printerId').setValue(printerId);
       this.changeDetector.markForCheck();
     };

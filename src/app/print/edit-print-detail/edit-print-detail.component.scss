@@ -385,6 +385,30 @@ form > div {
   }
 }
 
+.add-first-printer {
+  // Keeps the box the same size when the error border appears.
+  border: 1px solid transparent;
+
+  .required-marker {
+    color: var(--app-text-secondary);
+  }
+}
+
+// Save was pressed without a printer: the block is the field in error.
+.add-first-printer--error {
+  border-color: var(--app-error-text);
+
+  .required-marker {
+    color: var(--app-error-text);
+  }
+}
+
+.add-first-printer__error {
+  flex-basis: 100%;
+  font-size: 0.875rem;
+  color: var(--app-error-text);
+}
+
 // ---- Page layout. Breakpoints are 960px (stacked rows below) and 1280px
 // (the sidebar ad).
 

@@ -1,7 +1,10 @@
 import type { MockedObject } from 'vitest';
 import { dispatchBeforeUnload } from 'src/app/core/guards/testing/dispatch-before-unload';
 import { provideHttpClient, withXhr } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -361,7 +364,7 @@ describe('PrinterDetailComponent', () => {
       expect(slotsPanel()).toBeNull();
     });
 
-    it('saves what the slots loaded, without marking the form dirty', async () => {
+    it('leaves what the slots loaded out of the save, without marking the form dirty', async () => {
       await setUp(aPrinterDetail({ slotCount: 4 }));
 
       (
@@ -371,8 +374,148 @@ describe('PrinterDetailComponent', () => {
 
       expect(component.printerForm().dirty).toBe(false);
       component.onSubmit();
+      // The slot endpoints saved it already, and a list here would carry no slots.
       const saved = vi.mocked(printerService.updatePrinter).mock.lastCall[0];
-      expect(saved.loadedFilaments.map((pf) => pf.id)).toEqual(['pf-1']);
+      expect(saved.loadedFilaments).toBeUndefined();
+    });
+  });
+
+  // A print, the bridge or another tab can change what is loaded while this page is open.
+  // The save sends the list only when the user changed it here, so it cannot revert theirs.
+  describe('loaded spools on save', () => {
+    const spool = (id: string) =>
+      ({
+        id,
+        displayName: `Spool ${id}`,
+        colorName: '',
+        materialType: 'PLA',
+      }) as never;
+    const withSpoolA = (overrides: Partial<PrinterDetail> = {}) =>
+      aPrinterDetail({
+        loadedFilaments: [{ id: 'pf-a', filament: spool('spool-a') }] as never,
+        ...overrides,
+      });
+    const pickInDialog = (filament: unknown) => {
+      const closed = new Subject<unknown>();
+      dialog.open.mockReturnValue({
+        componentInstance: { dialogRef: { afterClosed: () => closed } },
+      } as never);
+      component.loadFilament();
+      closed.next(filament);
+    };
+    const savedUpdate = () =>
+      vi.mocked(printerService.updatePrinter).mock.lastCall[0];
+
+    it('leaves the list out when only another field changed', async () => {
+      await setUp(withSpoolA(), { settle: true });
+      component.printerForm().get('description')!.setValue('fixed a typo');
+
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments).toBeUndefined();
+      expect(savedUpdate().description).toBe('fixed a typo');
+    });
+
+    it('sends the whole list after a spool is loaded here', async () => {
+      await setUp(withSpoolA(), { settle: true });
+
+      pickInDialog(spool('spool-b'));
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments.map((pf) => pf.filament.id)).toEqual(
+        ['spool-a', 'spool-b']
+      );
+    });
+
+    it('sends an empty list after the last spool is removed here', async () => {
+      await setUp(withSpoolA(), { settle: true });
+
+      component.removeFilament(0);
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments).toEqual([]);
+    });
+
+    it('sends the list when one spool is swapped for another', async () => {
+      await setUp(withSpoolA(), { settle: true });
+
+      component.removeFilament(0);
+      pickInDialog(spool('spool-b'));
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments.map((pf) => pf.filament.id)).toEqual(
+        ['spool-b']
+      );
+    });
+
+    it('leaves the list out when a change was undone before saving', async () => {
+      await setUp(withSpoolA(), { settle: true });
+
+      pickInDialog(spool('spool-b'));
+      component.removeFilament(1);
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments).toBeUndefined();
+    });
+
+    it('never sends the list for a saved multi-slot printer', async () => {
+      await setUp(withSpoolA({ slotCount: 4 }), { settle: true });
+      component.printerForm().get('name')!.setValue('Renamed');
+
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments).toBeUndefined();
+    });
+
+    it('sends the list when creating a printer', async () => {
+      await setUp(null, { settle: true });
+      component
+        .printerForm()
+        .patchValue({ name: 'New', make: 'X', model: 'Y' });
+      pickInDialog(spool('spool-b'));
+
+      component.onSubmit();
+
+      const created = vi.mocked(printerService.addPrinter).mock.lastCall[0];
+      expect(created.loadedFilaments.map((pf) => pf.filament.id)).toEqual([
+        'spool-b',
+      ]);
+    });
+
+    it('sends an empty list when creating a printer with nothing loaded', async () => {
+      await setUp(null, { settle: true });
+      component
+        .printerForm()
+        .patchValue({ name: 'New', make: 'X', model: 'Y' });
+
+      component.onSubmit();
+
+      expect(
+        vi.mocked(printerService.addPrinter).mock.lastCall[0].loadedFilaments
+      ).toEqual([]);
+    });
+
+    it('does not resend a list it already saved when the save is retried', async () => {
+      await setUp(withSpoolA(), { settle: true });
+      const panel = {
+        hasStagedImages: vi.fn().mockReturnValue(true),
+        uploadStagedImages: vi.fn().mockReturnValue(
+          of({
+            allSucceeded: false,
+            transientFailures: [{}],
+            permanentFailures: [],
+          })
+        ),
+      };
+      (component as unknown as { imagesPanel: () => unknown }).imagesPanel =
+        () => panel;
+      pickInDialog(spool('spool-b'));
+
+      component.onSubmit();
+      expect(savedUpdate().loadedFilaments).toHaveLength(2);
+      component.onSubmit();
+
+      expect(savedUpdate().loadedFilaments).toBeUndefined();
     });
   });
 
@@ -1110,4 +1253,86 @@ describe('PrinterDetailComponent', () => {
       });
     });
   });
+});
+
+/**
+ * The same save through the REAL PrinterService, asserting on the PUT body itself. Spool A was
+ * loaded when the page opened; meanwhile a print or the bridge loaded another spool on the
+ * server. A save that only edits the description must not send the list read at page open.
+ */
+describe('PrinterDetailComponent saving with the real PrinterService', () => {
+  const setUp = async (slotCount: number) => {
+    const printer = aPrinterDetail({
+      slotCount,
+      loadedFilaments: [
+        { id: 'pf-a', slot: 0, filament: { id: 'spool-a', displayName: 'A' } },
+      ] as never,
+    });
+    const catalog = {
+      search: vi.fn().mockReturnValue(of([])),
+      popular: vi.fn().mockReturnValue(of([])),
+      get: vi.fn().mockReturnValue(of(null)),
+      match: vi.fn().mockReturnValue(of(null)),
+    } as unknown as MockedObject<PrinterCatalogService>;
+    await TestBed.configureTestingModule({
+      imports: [NoopAnimationsModule, PrinterDetailComponent],
+      providers: [
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        { provide: PrinterCatalogService, useValue: catalog },
+        {
+          provide: LoggingService,
+          useValue: { logEvent: vi.fn(), logException: vi.fn() },
+        },
+        {
+          provide: Router,
+          useValue: {
+            navigate: vi.fn().mockResolvedValue(true),
+            navigateByUrl: vi.fn().mockResolvedValue(true),
+          },
+        },
+        {
+          provide: ToastrService,
+          useValue: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+        },
+        { provide: MatDialog, useValue: { open: vi.fn() } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            data: of({
+              printer,
+              printerCategories: [fffCategory],
+              materialCategories: [],
+            }),
+            snapshot: { queryParamMap: convertToParamMap({}) },
+          },
+        },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(PrinterDetailComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+    // Child panels (connections, Spoolman, slots) fetch on their own; answer them empty.
+    http.match(() => true).forEach((r) => r.flush([]));
+    return { component: fixture.componentInstance, http };
+  };
+
+  for (const slotCount of [1, 4]) {
+    it(`leaves loadedFilaments out of a description-only PUT (${slotCount} slot)`, async () => {
+      const { component, http } = await setUp(slotCount);
+
+      component.printerForm().get('description')!.setValue('fixed a typo');
+      component.printerForm().get('description')!.markAsDirty();
+      component.onSubmit();
+
+      const put = http.match(
+        (r) => r.method === 'PUT' && r.url.endsWith('/api/Printers/42')
+      );
+      expect(put.length).toBe(1);
+      expect('loadedFilaments' in put[0].request.body).toBe(false);
+      expect(put[0].request.body.description).toBe('fixed a typo');
+    });
+  }
 });

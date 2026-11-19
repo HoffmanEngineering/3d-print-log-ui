@@ -157,7 +157,11 @@ export interface AddPrinterDetailDto {
 
   category: string;
 
-  loadedFilaments: AddPrinterFilamentSummaryDto[];
+  /**
+   * Replaces the printer's loaded spools, unloading any not listed ([] unloads everything).
+   * Omitted on an update, the API leaves what is loaded alone.
+   */
+  loadedFilaments?: AddPrinterFilamentSummaryDto[];
 
   bedWidthMm?: number;
   bedHeightMm?: number;
@@ -172,6 +176,14 @@ export interface AddPrinterDetailDto {
   /** Omitted keeps the printer's current count. */
   slotCount?: number;
 }
+
+/**
+ * A printer to save. On an update, leave `loadedFilaments` out unless the user changed what is
+ * loaded: the list replaces the server's, which a print or the bridge may have changed since.
+ */
+export type PrinterSave = Omit<PrinterDetail, 'loadedFilaments'> & {
+  loadedFilaments?: PrinterFilamentSummaryDto[];
+};
 
 export interface AddPrinterFilamentSummaryDto {
   /**
@@ -228,7 +240,7 @@ export class PrinterService {
     return this.http.post<PrinterDetail>(url, dto);
   }
 
-  updatePrinter(printer: PrinterDetail): Observable<PrinterDetail> {
+  updatePrinter(printer: PrinterSave): Observable<PrinterDetail> {
     const url = `${this.baseApi}/api/Printers/${printer.id}`;
 
     const dto: AddPrinterDetailDto = this.getAddPrinterDto(printer);
@@ -286,17 +298,7 @@ export class PrinterService {
     return this.http.delete<void>(url);
   }
 
-  private getAddPrinterDto(printer: PrinterDetail): AddPrinterDetailDto {
-    const filamentUsage: AddPrinterFilamentSummaryDto[] =
-      printer.loadedFilaments.map((pf) => {
-        const usage: AddPrinterFilamentSummaryDto = {
-          id: pf.id,
-          filamentId: pf.filament?.id ?? null,
-        };
-
-        return usage;
-      });
-
+  private getAddPrinterDto(printer: PrinterSave): AddPrinterDetailDto {
     const printDto: AddPrinterDetailDto = {
       id: printer.id,
       name: printer.name,
@@ -307,7 +309,6 @@ export class PrinterService {
       filamentDiameter: printer.filamentDiameter,
       beamDiameter: printer.beamDiameter,
       isActive: printer.isActive,
-      loadedFilaments: filamentUsage,
       category: printer.category.nickname,
       bedDepthMm: printer.bedDepthMm,
       bedHeightMm: printer.bedHeightMm,
@@ -320,6 +321,14 @@ export class PrinterService {
       catalogModelId: printer.catalogModelId ?? null,
       slotCount: printer.slotCount,
     };
+
+    // Absent, not empty: an empty list would unload every spool.
+    if (printer.loadedFilaments) {
+      printDto.loadedFilaments = printer.loadedFilaments.map((pf) => ({
+        id: pf.id,
+        filamentId: pf.filament?.id ?? null,
+      }));
+    }
 
     return printDto;
   }

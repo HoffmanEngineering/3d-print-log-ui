@@ -402,6 +402,34 @@ export class PrinterDetailComponent
     return this.printerForm().get('loadedFilaments') as UntypedFormArray;
   }
 
+  /**
+   * The spools the server had loaded as far as this page knows: when the printer resolved, or
+   * as of this page's last save or slot change. Compared with the form on save, sorted.
+   */
+  private savedLoadedFilamentIds: string[] = [];
+
+  /** The form's spools, sorted: the API ignores the order. */
+  private formLoadedFilamentIds(): string[] {
+    return this.loadedFilaments.controls
+      .map((c) => c.get('filament')?.value?.id ?? null)
+      .sort();
+  }
+
+  /**
+   * Whether the save should send the loaded list. The list replaces what the server has, and
+   * a print, the bridge or another tab may have changed that since the page opened, so it is
+   * sent only when the user changed it here. A saved multi-slot printer never sends it: the
+   * slot endpoints already saved each change, and a list would carry no slots.
+   */
+  private loadedFilamentsChangedHere(): boolean {
+    if (this.showSlots()) return false;
+    const now = this.formLoadedFilamentIds();
+    return (
+      now.length !== this.savedLoadedFilamentIds.length ||
+      now.some((id, i) => id !== this.savedLoadedFilamentIds[i])
+    );
+  }
+
   ngOnDestroy(): void {
     this.printerCategorySubscription?.unsubscribe?.();
     this.linkedModelSubscription?.unsubscribe();
@@ -446,6 +474,7 @@ export class PrinterDetailComponent
       const form = this.buildFormFromPrinterDetail(data.printer);
       this.printerForm.set(form);
       this.formPrinterId.set(form.get('id').value ?? null);
+      this.savedLoadedFilamentIds = this.formLoadedFilamentIds();
 
       this.recalculateFormFieldsForSelectedPrinterCategory(
         form.get('type').value
@@ -886,8 +915,8 @@ export class PrinterDetailComponent
   }
 
   /**
-   * The slots saved a change already. Mirror it into the form so the printer PUT sends the
-   * same list, and leave the form pristine: there is nothing unsaved.
+   * The slots saved a change already. Mirror it into the form and leave the form pristine:
+   * there is nothing unsaved, and the printer save does not send it again.
    */
   protected onSlotsChanged(loaded: PrinterFilamentSummaryDto[]): void {
     this.loadedFilaments.clear({ emitEvent: false });
@@ -897,6 +926,7 @@ export class PrinterDetailComponent
         { emitEvent: false }
       )
     );
+    this.savedLoadedFilamentIds = this.formLoadedFilamentIds();
   }
 
   onSubmit() {
@@ -906,16 +936,25 @@ export class PrinterDetailComponent
 
     let savePrinter: Observable<PrinterDetail>;
     const wasNew = newPrinter.id === null;
+    const sentLoadedIds = this.formLoadedFilamentIds();
 
     if (wasNew) {
       savePrinter = this.printerService.addPrinter(newPrinter);
-    } else {
+    } else if (this.loadedFilamentsChangedHere()) {
       savePrinter = this.printerService.updatePrinter(newPrinter);
+    } else {
+      // Unchanged here, so leave it out: the API then keeps what is loaded now.
+      savePrinter = this.printerService.updatePrinter({
+        ...newPrinter,
+        loadedFilaments: undefined,
+      });
     }
 
     savePrinter.subscribe(
       (printer) => {
         this.printerForm().markAsPristine();
+        // A retry after a failed photo upload must not resend a list that is now saved.
+        this.savedLoadedFilamentIds = sentLoadedIds;
 
         // The record is no longer new. Write the ID back BEFORE any upload, so a retry is
         // an update and never a second POST.

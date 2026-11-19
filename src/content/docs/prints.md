@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-10-10
+updated: 2026-11-18
 related: [projects, materials]
 ---
 
@@ -155,7 +155,9 @@ From the 3D Print list, click on the <button mat-raised-button
 color="accent">Add New Print</button> button.
 
 Give the print a **Title** and a **Start Date**, and select an active
-**Printer**. Optionally, enter the URL for where you found the 3D model. Use the
+**Printer**. Every print needs a printer: if you haven't added one yet, the form
+shows **Add printer** in its place, and the new printer is selected as soon as
+you save it, without losing anything you've entered. Optionally, enter the URL for where you found the 3D model. Use the
 **"Choose File" button** to upload one or more images for the 3D print (up to 5
 on the free tier, or 20 with [Pro](/docs/pro-subscription)). The **Notes** field can be used to record any additional details
 you may want. Both the Title and Notes fields are searched in the Print List, so

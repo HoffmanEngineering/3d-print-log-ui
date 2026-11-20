@@ -102,8 +102,8 @@ export class PrintersTabComponent implements OnDestroy {
     const response = this.data();
     if (!response) return [];
 
-    return [...response.timeSeries]
-      .sort(
+    return response.timeSeries
+      .toSorted(
         (left, right) =>
           left.localStart.localeCompare(right.localStart) ||
           left.index - right.index
@@ -191,8 +191,10 @@ export class PrintersTabComponent implements OnDestroy {
   readonly timeSeriesCsv = computed<CsvExport>(() => ({
     filename: 'analytics-printers-print-time.csv',
     columns: ['Period', 'Printer id', 'Print time (s)'],
-    rows: [...(this.data()?.timeSeries ?? [])]
-      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+    rows: (this.data()?.timeSeries ?? [])
+      .toSorted((left, right) =>
+        left.localStart.localeCompare(right.localStart)
+      )
       .flatMap((bucket) =>
         Object.entries(bucket.printSecondsByPrinterId).map(
           ([printerId, seconds]) => [bucket.localStart, printerId, seconds]

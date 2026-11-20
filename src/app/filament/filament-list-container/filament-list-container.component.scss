@@ -1,3 +1,5 @@
+@use '../../shared/filter-panel/filter-panel' as filter-panel;
+
 table {
   width: 100%;
   th,
@@ -64,25 +66,16 @@ table {
   }
 }
 
-.filter-panel {
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease;
-
-  &.filter-panel--open {
-    max-height: 500px;
-    overflow-y: auto;
-    opacity: 1;
-  }
+// Reserves the loading bar's 4px so the list doesn't shift when it appears.
+// No background of its own: the page shows through in both themes.
+.loading-bar-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-@media screen and (max-width: 599px), screen and (max-height: 500px) {
-  .filter-panel--open {
-    max-height: 180px;
-  }
+.filter-panel {
+  @include filter-panel.collapsible(500px);
 }
 
 .filter-panel-inner {

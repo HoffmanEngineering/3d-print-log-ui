@@ -1,0 +1,48 @@
+// Collapsible filter panel shared by the print and material lists.
+//
+// $cap is the open panel's height limit; past it the panel scrolls. Phones and
+// short screens get $compact-cap so the list under the panel stays in view.
+//
+// Where `interpolate-size` is supported (Chromium), the panel animates its real
+// height to `auto`, and max-height is only the scroll limit. Elsewhere it falls
+// back to animating max-height, which collapses the same way.
+//
+// The template must also set `[inert]` while the panel is closed: a panel
+// collapsed to zero height still holds focusable controls.
+@mixin collapsible($cap, $compact-cap: 180px) {
+  --filter-panel-cap: #{$cap};
+
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition:
+    max-height 0.25s ease,
+    opacity 0.2s ease;
+
+  &.filter-panel--open {
+    max-height: var(--filter-panel-cap);
+    overflow-y: auto;
+    opacity: 1;
+  }
+
+  @supports (interpolate-size: allow-keywords) {
+    interpolate-size: allow-keywords;
+    block-size: 0;
+    max-height: var(--filter-panel-cap);
+    transition:
+      block-size 0.25s ease,
+      opacity 0.2s ease;
+
+    &.filter-panel--open {
+      block-size: auto;
+    }
+  }
+
+  @media screen and (max-width: 599px), screen and (max-height: 500px) {
+    --filter-panel-cap: #{$compact-cap};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

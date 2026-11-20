@@ -234,8 +234,8 @@ export class MaterialsTabComponent {
     const response = this.data();
     if (!response) return [];
 
-    return [...response.consumptionOverTime]
-      .sort(
+    return response.consumptionOverTime
+      .toSorted(
         (left, right) =>
           left.localStart.localeCompare(right.localStart) ||
           left.index - right.index
@@ -310,7 +310,7 @@ export class MaterialsTabComponent {
   );
 
   private sortedBuckets() {
-    return [...(this.data()?.consumptionOverTime ?? [])].sort((left, right) =>
+    return (this.data()?.consumptionOverTime ?? []).toSorted((left, right) =>
       left.localStart.localeCompare(right.localStart)
     );
   }

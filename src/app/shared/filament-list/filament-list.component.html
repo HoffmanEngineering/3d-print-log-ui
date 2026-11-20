@@ -31,6 +31,7 @@
       id="filament-filter-panel"
       class="filter-panel"
       [class.filter-panel--open]="isFilterPanelOpen"
+      [inert]="!isFilterPanelOpen"
     >
       <div class="filter-panel-inner">
         <mat-checkbox

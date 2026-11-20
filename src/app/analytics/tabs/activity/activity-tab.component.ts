@@ -107,9 +107,9 @@ export class ActivityTabComponent {
 
     const metric = this.plottedMetric();
     return (
-      [...response.series]
+      response.series
         // API response order is not display order (spec §11). Sort by the civil localStart.
-        .sort(
+        .toSorted(
           (left, right) =>
             left.localStart.localeCompare(right.localStart) ||
             left.index - right.index
@@ -206,8 +206,10 @@ export class ActivityTabComponent {
       // 3d-print-log-api#294: after every existing column.
       'Filament (mL)',
     ],
-    rows: [...(this.data()?.series ?? [])]
-      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+    rows: (this.data()?.series ?? [])
+      .toSorted((left, right) =>
+        left.localStart.localeCompare(right.localStart)
+      )
       .map((bucket) => [
         bucket.localStart,
         bucket.count,
@@ -221,8 +223,8 @@ export class ActivityTabComponent {
   readonly calendarCsv = computed<CsvExport>(() => ({
     filename: 'analytics-activity-calendar.csv',
     columns: ['Date', 'Prints'],
-    rows: [...(this.data()?.calendar ?? [])]
-      .sort((left, right) => left.date.localeCompare(right.date))
+    rows: (this.data()?.calendar ?? [])
+      .toSorted((left, right) => left.date.localeCompare(right.date))
       .map((day) => [day.date, day.count]),
   }));
 

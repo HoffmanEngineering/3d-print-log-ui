@@ -1,3 +1,5 @@
+@use '../filter-panel/filter-panel' as filter-panel;
+
 // ── Host / root layout ───────────────────────────────────────────────────────
 
 :host {
@@ -75,24 +77,7 @@ table {
 // ── Collapsible filter panel ────────────────────────────────────────────────
 
 .filter-panel {
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease;
-
-  &.filter-panel--open {
-    max-height: 400px;
-    overflow-y: auto;
-    opacity: 1;
-  }
-}
-
-@media screen and (max-width: 599px), screen and (max-height: 500px) {
-  .filter-panel--open {
-    max-height: 180px;
-  }
+  @include filter-panel.collapsible(400px);
 }
 
 .filter-panel-inner {

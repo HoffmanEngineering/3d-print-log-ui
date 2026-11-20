@@ -204,7 +204,7 @@ export function crossBridge(
     if (new Set(sightings.map((s) => s.bridgeId)).size < 2) {
       continue;
     }
-    const ranked = [...sightings].sort(
+    const ranked = sightings.toSorted(
       (a, b) =>
         Number(isStale(byId.get(a.bridgeId)!)) -
           Number(isStale(byId.get(b.bridgeId)!)) ||

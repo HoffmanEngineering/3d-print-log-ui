@@ -594,9 +594,7 @@ export class EntityImagesPanelComponent {
    */
   private syncStoredImages(incoming: EntityImageValue[]): void {
     const staged = this.items().filter((item) => !!item.file);
-    const stored = [...incoming].sort(
-      (a, b) => a.displayOrder - b.displayOrder
-    );
+    const stored = incoming.toSorted((a, b) => a.displayOrder - b.displayOrder);
     this.items.set(
       [...stored, ...staged].map((item, index) => ({
         ...item,

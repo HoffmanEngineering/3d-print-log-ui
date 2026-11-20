@@ -1,17 +1,10 @@
 <div data-cy="capture-material-list">
-  <div
-    style="
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: white;
-    "
-  >
+  <div class="loading-bar-slot">
     @if (isLoading()) {
       <mat-progress-bar
         color="primary"
         mode="indeterminate"
-        aria-label="Searching for prints."
+        aria-label="Loading materials."
       >
       </mat-progress-bar>
     }

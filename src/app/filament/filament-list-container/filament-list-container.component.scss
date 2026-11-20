@@ -66,6 +66,14 @@ table {
   }
 }
 
+// Reserves the loading bar's 4px so the list doesn't shift when it appears.
+// No background of its own: the page shows through in both themes.
+.loading-bar-slot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .filter-panel {
   @include filter-panel.collapsible(500px);
 }

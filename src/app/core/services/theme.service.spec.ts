@@ -42,12 +42,17 @@ describe('ThemeService', () => {
   afterEach(() => {
     document.documentElement.classList.remove('dark-theme');
     document.querySelector('meta[name="color-scheme"]')?.remove();
+    document.querySelector('meta[name="theme-color"]')?.remove();
   });
 
-  function colorSchemeMeta(): string | null | undefined {
+  function metaContent(name: string): string | null | undefined {
     return document
-      .querySelector('meta[name="color-scheme"]')
+      .querySelector(`meta[name="${name}"]`)
       ?.getAttribute('content');
+  }
+
+  function colorSchemeMeta(): string | null | undefined {
+    return metaContent('color-scheme');
   }
 
   it('defaults to system mode when localStorage is empty', () => {
@@ -173,6 +178,50 @@ describe('ThemeService', () => {
         document.querySelectorAll('meta[name="color-scheme"]').length
       ).toBe(1);
       expect(meta.content).toBe('dark');
+    });
+  });
+
+  // The browser chrome color. index.html sets it before first paint; after
+  // that, a theme change must update it or the toolbar stays the old color.
+  describe('theme-color meta', () => {
+    it('setMode(dark) switches it to the dark toolbar color', () => {
+      buildService('light');
+      service.setMode('dark');
+      expect(metaContent('theme-color')).toBe('#283593');
+    });
+
+    it('setMode(light) switches it back to the light toolbar color', () => {
+      buildService('dark');
+      service.setMode('dark');
+      service.setMode('light');
+      expect(metaContent('theme-color')).toBe('#3F50B5');
+    });
+
+    it('follows the OS in system mode', () => {
+      buildService('system', false);
+      service.initialize();
+      expect(metaContent('theme-color')).toBe('#3F50B5');
+
+      const [, listener] = vi.mocked(mockMediaQuery.addEventListener).mock
+        .calls[0];
+      mockMediaQuery.matches = true;
+      listener();
+      expect(metaContent('theme-color')).toBe('#283593');
+    });
+
+    it('updates the meta index.html already has', () => {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = '#3F50B5';
+      document.head.appendChild(meta);
+
+      buildService('light');
+      service.setMode('dark');
+
+      expect(document.querySelectorAll('meta[name="theme-color"]').length).toBe(
+        1
+      );
+      expect(meta.content).toBe('#283593');
     });
   });
 

@@ -130,8 +130,8 @@ export class OverviewTabComponent {
     if (!response) return [];
 
     const granularity = response.granularity;
-    return [...response.series]
-      .sort(
+    return response.series
+      .toSorted(
         (left, right) =>
           left.localStart.localeCompare(right.localStart) ||
           left.index - right.index
@@ -268,8 +268,10 @@ export class OverviewTabComponent {
   readonly seriesCsv = computed<CsvExport>(() => ({
     filename: 'analytics-overview-prints-over-time.csv',
     columns: ['Period', 'Status', 'Prints'],
-    rows: [...(this.data()?.series ?? [])]
-      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+    rows: (this.data()?.series ?? [])
+      .toSorted((left, right) =>
+        left.localStart.localeCompare(right.localStart)
+      )
       .flatMap((bucket) =>
         Object.entries(bucket.countsByStatus).map(([status, count]) => [
           bucket.localStart,

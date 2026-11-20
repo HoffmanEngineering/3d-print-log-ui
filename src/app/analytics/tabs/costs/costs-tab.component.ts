@@ -110,8 +110,8 @@ export class CostsTabComponent {
     const response = this.data();
     if (!response) return [];
 
-    return [...response.spendOverTime]
-      .sort(
+    return response.spendOverTime
+      .toSorted(
         (left, right) =>
           left.localStart.localeCompare(right.localStart) ||
           left.index - right.index
@@ -142,8 +142,8 @@ export class CostsTabComponent {
     const response = this.data();
     if (!response) return [];
 
-    return [...response.spendOverTime]
-      .sort(
+    return response.spendOverTime
+      .toSorted(
         (left, right) =>
           left.localStart.localeCompare(right.localStart) ||
           left.index - right.index
@@ -180,8 +180,10 @@ export class CostsTabComponent {
   readonly spendCsv = computed<CsvExport>(() => ({
     filename: 'analytics-costs-spend-over-time.csv',
     columns: ['Period', 'Filament', 'Electricity', 'Maintenance'],
-    rows: [...(this.data()?.spendOverTime ?? [])]
-      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+    rows: (this.data()?.spendOverTime ?? [])
+      .toSorted((left, right) =>
+        left.localStart.localeCompare(right.localStart)
+      )
       .map((bucket) => [
         bucket.localStart,
         bucket.filament,

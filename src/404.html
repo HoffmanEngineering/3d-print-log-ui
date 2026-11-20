@@ -10,6 +10,7 @@
     />
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#3F50B5" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/x-icon" href="/favicon_1293b2036.ico" />
     <!-- Served by Azure Static Web Apps (responseOverrides.404) for every path
          that is neither a file nor an SPA route, with the 404 status kept. It is
@@ -19,6 +20,11 @@
       (function () {
         try {
           var mode = localStorage.getItem('theme-mode') || 'system';
+          if (mode === 'light' || mode === 'dark') {
+            document
+              .querySelector('meta[name="color-scheme"]')
+              .setAttribute('content', mode);
+          }
           var isDark =
             mode === 'dark' ||
             (mode === 'system' &&

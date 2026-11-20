@@ -1,3 +1,5 @@
+@use '../../shared/filter-panel/filter-panel' as filter-panel;
+
 table {
   width: 100%;
   th,
@@ -84,17 +86,9 @@ table {
 
 // Collapsible filter panel
 .filter-panel {
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease;
-
-  &.filter-panel--open {
-    max-height: 300px;
-    opacity: 1;
-  }
+  // The print filters wrap to several rows on a phone, so they keep their full
+  // cap there instead of the shared compact one.
+  @include filter-panel.collapsible(300px, $compact-cap: 300px);
 }
 
 .filter-panel-inner {

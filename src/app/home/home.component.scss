@@ -365,16 +365,15 @@ $bp-narrow: 560px;
 
   // Deliberately quieter than .tier-links: this row sits directly under the
   // hero CTAs, and six accent-colored links there would compete with them.
-  // Ink-colored, underlined on hover only.
+  // Ink-colored with a quiet rule-colored underline that turns accent on hover.
   a {
     color: inherit;
-    text-decoration: none;
-    border-bottom: 1.5px solid var(--home-rule-strong);
-    padding-bottom: 1px;
+    text-decoration: underline 1.5px var(--home-rule-strong);
+    text-underline-offset: 0.3em;
 
     &:hover {
       color: var(--home-accent);
-      border-bottom-color: var(--home-accent);
+      text-decoration-color: var(--home-accent);
     }
   }
 }
@@ -387,12 +386,12 @@ $bp-narrow: 560px;
 
   a {
     color: inherit;
-    text-decoration: none;
-    border-bottom: 1px solid var(--home-rule-strong);
+    text-decoration: underline 1px var(--home-rule-strong);
+    text-underline-offset: 0.25em;
 
     &:hover {
       color: var(--home-accent);
-      border-bottom-color: var(--home-accent);
+      text-decoration-color: var(--home-accent);
     }
   }
 }
@@ -486,12 +485,11 @@ $bp-narrow: 560px;
     font-weight: 600;
     font-size: 14.5px;
     color: var(--home-accent);
-    text-decoration: none;
-    border-bottom: 1.5px solid var(--home-accent-soft);
-    padding-bottom: 1px;
+    text-decoration: underline 1.5px var(--home-accent-soft);
+    text-underline-offset: 0.3em;
 
     &:hover {
-      border-bottom-color: var(--home-accent);
+      text-decoration-color: var(--home-accent);
     }
   }
 }

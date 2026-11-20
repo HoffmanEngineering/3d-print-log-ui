@@ -121,8 +121,8 @@ export class AccuracyTabComponent implements OnDestroy {
     const response = this.data();
     if (!response) return [];
 
-    return [...response.biasTrend]
-      .sort(
+    return response.biasTrend
+      .toSorted(
         (left, right) =>
           left.localStart.localeCompare(right.localStart) ||
           left.index - right.index
@@ -151,8 +151,10 @@ export class AccuracyTabComponent implements OnDestroy {
   readonly biasTrendCsv = computed<CsvExport>(() => ({
     filename: 'analytics-accuracy-bias-trend.csv',
     columns: ['Period', 'Median actual / estimated', 'Sample size'],
-    rows: [...(this.data()?.biasTrend ?? [])]
-      .sort((left, right) => left.localStart.localeCompare(right.localStart))
+    rows: (this.data()?.biasTrend ?? [])
+      .toSorted((left, right) =>
+        left.localStart.localeCompare(right.localStart)
+      )
       .map((bucket) => [
         bucket.localStart,
         bucket.medianRatio,

@@ -1122,7 +1122,7 @@ export class EditPrintDetailComponent
 
     if (print && print.images) {
       // Sort images by displayOrder before adding to form array
-      const sortedImages = [...print.images].sort(
+      const sortedImages = print.images.toSorted(
         (a, b) => a.displayOrder - b.displayOrder
       );
 
@@ -1789,7 +1789,7 @@ export class EditPrintDetailComponent
     }
 
     // Sort by displayOrder to ensure correct sequence
-    const sortedImages = [...newImages].sort(
+    const sortedImages = newImages.toSorted(
       (a, b) => (a.value.displayOrder ?? 0) - (b.value.displayOrder ?? 0)
     );
 

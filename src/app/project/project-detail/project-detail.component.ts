@@ -231,8 +231,8 @@ export class ProjectDetailComponent implements OnInit {
     const p = this.project();
     if (!p || p.images.length === 0) return [];
     const resolved = this.resolvedUrls();
-    return [...p.images]
-      .sort((a, b) => a.displayOrder - b.displayOrder)
+    return p.images
+      .toSorted((a, b) => a.displayOrder - b.displayOrder)
       .map((img) => ({
         id: img.id,
         url: `${environment.printLogApiUrl}/api/Projects/${p.id}/images/${img.id}`,
@@ -419,9 +419,7 @@ export class ProjectDetailComponent implements OnInit {
 
   onEditClick(): void {
     const p = this.project()!;
-    const sorted = [...p.images].sort(
-      (a, b) => a.displayOrder - b.displayOrder
-    );
+    const sorted = p.images.toSorted((a, b) => a.displayOrder - b.displayOrder);
     const resolved = this.resolvedUrls();
     this.images.set(
       sorted.map((img) => ({
@@ -470,7 +468,7 @@ export class ProjectDetailComponent implements OnInit {
       finishDateOverride: formValue.finishDateOverride,
     };
 
-    const stagedImages = [...this.images()].sort(
+    const stagedImages = this.images().toSorted(
       (a, b) => a.displayOrder - b.displayOrder
     );
 

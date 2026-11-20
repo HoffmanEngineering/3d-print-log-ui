@@ -77,7 +77,7 @@ export class PrinterComparisonComponent {
     const column = this.sortColumn();
     const ascending = this.sortAscending();
 
-    return [...this.rows()].sort((left, right) => {
+    return this.rows().toSorted((left, right) => {
       const a = left[column];
       const b = right[column];
 

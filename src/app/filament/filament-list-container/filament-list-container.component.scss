@@ -1,3 +1,5 @@
+@use '../../shared/filter-panel/filter-panel' as filter-panel;
+
 table {
   width: 100%;
   th,
@@ -65,24 +67,7 @@ table {
 }
 
 .filter-panel {
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition:
-    max-height 0.25s ease,
-    opacity 0.2s ease;
-
-  &.filter-panel--open {
-    max-height: 500px;
-    overflow-y: auto;
-    opacity: 1;
-  }
-}
-
-@media screen and (max-width: 599px), screen and (max-height: 500px) {
-  .filter-panel--open {
-    max-height: 180px;
-  }
+  @include filter-panel.collapsible(500px);
 }
 
 .filter-panel-inner {

@@ -82,8 +82,8 @@
     "@types/d3": "^7.4.3",
     "@types/node": "^22.19.18",
     "@types/qrcode": "^1.5.5",
-    "@vitest/browser-playwright": "^5.1.0",
-    "@vitest/coverage-v8": "^5.1.0",
+    "@vitest/browser-playwright": "^5.1.1",
+    "@vitest/coverage-v8": "^5.1.1",
     "angular-eslint": "22.6.0",
     "axe-core": "^4.13.0",
     "baseline-browser-mapping": "^2.11.33",
@@ -102,7 +102,7 @@
     "turndown": "^7.2.4",
     "typescript": "6.0.3",
     "typescript-eslint": "^8.71.2",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   },
   "lint-staged": {
     "*.{js,css,md,ts,scss}": "prettier --write"

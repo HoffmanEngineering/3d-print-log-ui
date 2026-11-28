@@ -39,7 +39,8 @@
   }
 
   .timeline-detail {
-    font-size: 0.85em;
+    font-size: 0.8125rem; // em would shrink it twice: monospace starts small
+
     padding: 1px 6px;
     border-radius: 4px;
     background: var(--app-surface-container);

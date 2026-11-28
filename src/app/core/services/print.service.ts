@@ -166,6 +166,11 @@ export interface PrintSummary {
   createdByUserId: number;
   estimatedPrintTimeInSeconds: number | null;
   printTimeInSeconds: number | null;
+  /**
+   * When the printer paused the print, while it is paused (3d-print-log-api#343). Null when it
+   * isn't; absent from older APIs. The print's status stays Printing while paused.
+   */
+  pausedSince?: string | null;
 
   sumActualFilamentWeightMg: number;
   sumEstimatedFilamentWeightMg: number;
@@ -220,6 +225,16 @@ export interface PrintDetailDTO {
    * did or it has since been deleted. Creator-only, like the external pair.
    */
   connectionDisplayName?: string | null;
+  /**
+   * When the printer paused the print, while it is paused (3d-print-log-api#343). Null when it
+   * isn't; absent from older APIs. The print's status stays Printing while paused.
+   */
+  pausedSince?: string | null;
+  /**
+   * Seconds the print spent paused, once its pauses have ended. Its print time includes them.
+   * Creator-only; absent from older APIs.
+   */
+  pausedSeconds?: number | null;
 }
 
 /** A field `PatchPrintDTO.clear` can null out. */
@@ -342,6 +357,10 @@ export interface PrintDetail {
    * did or it has since been deleted. Creator-only, like the external pair.
    */
   connectionDisplayName?: string | null;
+  /** Read from the API, never sent back. See `PrintDetailDTO.pausedSince`. */
+  pausedSince?: string | null;
+  /** Read from the API, never sent back. See `PrintDetailDTO.pausedSeconds`. */
+  pausedSeconds?: number | null;
 }
 
 /**
@@ -527,6 +546,8 @@ export class PrintService {
           externalSource: newPrint.externalSource ?? null,
           externalId: newPrint.externalId ?? null,
           connectionDisplayName: newPrint.connectionDisplayName ?? null,
+          pausedSince: newPrint.pausedSince ?? null,
+          pausedSeconds: newPrint.pausedSeconds ?? null,
         };
         return print;
       })

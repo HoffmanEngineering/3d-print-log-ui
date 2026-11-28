@@ -266,9 +266,9 @@
                       [class]="'status-' + p.status"
                     >
                       <mat-icon class="meta-icon">{{
-                        getStatusIcon(p.status)
+                        getStatusIcon(p.status, p.pausedSince)
                       }}</mat-icon>
-                      <span>{{ getStatus(p.status) }}</span>
+                      <span>{{ getStatus(p.status, p.pausedSince) }}</span>
                     </div>
                   </div>
                 </div>
@@ -462,9 +462,9 @@
                     [class]="'status-' + ep.status"
                   >
                     <mat-icon class="meta-icon">{{
-                      getStatusIcon(ep.status)
+                      getStatusIcon(ep.status, ep.pausedSince)
                     }}</mat-icon>
-                    <span>{{ getStatus(ep.status) }}</span>
+                    <span>{{ getStatus(ep.status, ep.pausedSince) }}</span>
                   </div>
                 </div>
               </div>
@@ -860,7 +860,7 @@
         @if (row.kind === 'project') {
           {{ getProjectStatusLabel(row.item.projectStatus) }}
         } @else if (row.kind === 'expanded-print') {
-          {{ getStatus(row.print.status) }}
+          {{ getStatus(row.print.status, row.print.pausedSince) }}
         } @else if (row.kind === 'print') {
           {{ getStatus($safeNavigationMigration(row.item.print?.status)) }}
         }

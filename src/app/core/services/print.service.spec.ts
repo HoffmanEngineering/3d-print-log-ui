@@ -337,6 +337,21 @@ describe('PrintService', () => {
       expect(print?.externalId).toBe('voron-1:000042');
       expect(print?.connectionDisplayName).toBe('Voron in the garage');
     });
+
+    it('getPrintDetail carries the paused fields', () => {
+      let print: PrintDetail | undefined;
+      service.getPrintDetail(9).subscribe((p) => (print = p));
+      httpMock
+        .expectOne((r) => r.url.endsWith('/api/Prints/9'))
+        .flush({
+          ...detailDto,
+          pausedSince: '2026-11-27T10:00:00Z',
+          pausedSeconds: 360,
+        });
+
+      expect(print?.pausedSince).toBe('2026-11-27T10:00:00Z');
+      expect(print?.pausedSeconds).toBe(360);
+    });
   });
 
   // The edit form saves with PATCH (#263) so it cannot revert a connector's updates.

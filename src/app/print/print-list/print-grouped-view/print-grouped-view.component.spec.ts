@@ -169,6 +169,16 @@ describe('PrintGroupedViewComponent', () => {
     ref = fixture.componentRef;
   });
 
+  it('labels a printing print paused on the printer as Paused', () => {
+    const since = '2026-11-27T10:00:00Z';
+    expect(component.getStatus(PrintStatus.Printing, since)).toBe('Paused');
+    expect(component.getStatusIcon(PrintStatus.Printing, since)).toBe(
+      'pause_circle_outline'
+    );
+    expect(component.getStatus(PrintStatus.Success, since)).toBe('Success');
+    expect(component.getStatus(PrintStatus.Printing)).toBe('Printing');
+  });
+
   it('calls getGroupedFeed on init with default inputs', async () => {
     vi.useFakeTimers();
     fixture.detectChanges();

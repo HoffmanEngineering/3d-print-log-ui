@@ -38,6 +38,7 @@ import {
   PrintSummary,
   PrintSummarySortColumn,
 } from 'src/app/core/services/print.service';
+import { isPaused } from 'src/app/core/utils/print-paused';
 import { UserSetting } from 'src/app/core/services/user-setting.service';
 import { PrinterSummary } from 'src/app/core/services/printer.service';
 import { PagedList } from 'src/app/core/types/paging';
@@ -353,7 +354,13 @@ export class PrintGroupedViewComponent implements OnInit {
     return `${(printer.make + ' ' + printer.model).trim()}`;
   }
 
-  getStatus(status: PrintStatus | undefined): string {
+  getStatus(
+    status: PrintStatus | undefined,
+    pausedSince?: string | null
+  ): string {
+    if (isPaused({ status, pausedSince })) {
+      return 'Paused';
+    }
     switch (status) {
       case PrintStatus.Pending:
         return 'Pending';
@@ -372,7 +379,13 @@ export class PrintGroupedViewComponent implements OnInit {
     }
   }
 
-  getStatusIcon(status: PrintStatus | undefined): string {
+  getStatusIcon(
+    status: PrintStatus | undefined,
+    pausedSince?: string | null
+  ): string {
+    if (isPaused({ status, pausedSince })) {
+      return 'pause_circle_outline';
+    }
     switch (status) {
       case PrintStatus.Pending:
         return 'pending_actions';

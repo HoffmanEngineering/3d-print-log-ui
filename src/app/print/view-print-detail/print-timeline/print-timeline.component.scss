@@ -1,0 +1,55 @@
+.timeline {
+  // The detail page's band heading, which its styles can't reach in here.
+  h2 {
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    margin: 0 0 8px;
+  }
+
+  ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--mat-divider-color);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .timeline-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--app-text-secondary);
+  }
+
+  .timeline-label {
+    color: var(--app-text-primary);
+  }
+
+  .timeline-detail {
+    font-size: 0.8125rem; // em would shrink it twice: monospace starts small
+
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: var(--app-surface-container);
+    color: var(--app-text-secondary);
+  }
+
+  .timeline-time {
+    margin-left: auto;
+    font-size: 0.85em;
+    color: var(--app-text-secondary);
+  }
+}

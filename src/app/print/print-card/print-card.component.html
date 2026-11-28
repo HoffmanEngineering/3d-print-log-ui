@@ -135,7 +135,10 @@
           }
 
           <div class="meta-item">
-            <app-print-status-badge [status]="print().status" />
+            <app-print-status-badge
+              [status]="print().status"
+              [paused]="!!print().pausedSince"
+            />
           </div>
         </div>
       </div>

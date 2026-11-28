@@ -247,6 +247,18 @@ describe('PrintListComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('labels a printing print paused on the printer as Paused', () => {
+    const paused = {
+      status: PrintStatus.Printing,
+      pausedSince: '2026-11-27T10:00:00Z',
+    } as PrintSummary;
+    expect(component.getStatus(paused)).toBe('Paused');
+    expect(component.getStatusIcon(paused)).toBe('pause_circle_outline');
+    expect(
+      component.getStatus({ ...paused, status: PrintStatus.Success })
+    ).toBe('Success');
+  });
+
   /**
    * The table and the card list are two renderings of the same rows, and only
    * the one that fits gets built. Hiding the other with CSS after the fact used

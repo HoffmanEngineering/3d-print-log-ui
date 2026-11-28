@@ -58,6 +58,7 @@ import {
   PrintSummary,
   PrintSummarySortColumn,
 } from '../../core/services/print.service';
+import { isPaused } from '../../core/utils/print-paused';
 import { PrintShareDialogComponent } from '../print-share-dialog/print-share-dialog.component';
 import { PrintTableLayoutComponent } from './print-table-layout/print-table-layout.component';
 import { FilamentSearchModalComponent } from 'src/app/shared/filament-search-modal/filament-search-modal.component';
@@ -1309,7 +1310,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public getStatus(print: PrintSummary) {
-    if (print.status === PrintStatus.Cancelled) {
+    if (isPaused(print)) {
+      return 'Paused';
+    } else if (print.status === PrintStatus.Cancelled) {
       return 'Cancelled';
     } else if (print.status === PrintStatus.Failed) {
       return 'Failed';
@@ -1327,7 +1330,9 @@ export class PrintListComponent implements OnInit, OnDestroy {
   }
 
   public getStatusIcon(print: PrintSummary): string {
-    if (print.status === PrintStatus.Cancelled) {
+    if (isPaused(print)) {
+      return 'pause_circle_outline';
+    } else if (print.status === PrintStatus.Cancelled) {
       return 'remove_circle_outline';
     } else if (print.status === PrintStatus.Failed) {
       return 'error_outline';

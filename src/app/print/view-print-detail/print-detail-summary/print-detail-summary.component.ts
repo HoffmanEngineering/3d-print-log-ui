@@ -78,6 +78,22 @@ export class PrintDetailSummaryComponent {
   protected readonly printer = computed(() => this.print()?.printer ?? null);
 
   /**
+   * "Active 1h · paused 6m" for a print that paused (3d-print-log-api#343): its print time
+   * includes the pauses. Null for a print that never paused, which is nearly every print.
+   */
+  protected readonly activeTime = computed(() => {
+    const total = this.print()?.printTimeInSeconds ?? 0;
+    const paused = this.print()?.pausedSeconds ?? 0;
+    if (paused <= 0 || total <= paused) {
+      return null;
+    }
+    const format = (s: number) =>
+      String(this.durationPipe.transform(s) ?? '').trim();
+    return `Active ${format(total - paused)} · paused ${format(paused)}`;
+  });
+  private readonly durationPipe = new DurationPipe();
+
+  /**
    * GET /api/Users/{id}/summary returns `displayName: null` for a user who has
    * not set one, which rendered an empty <a> — an axe "link-name" failure and
    * an unlabeled tab stop. Treat a blank name as no attributable user: the

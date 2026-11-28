@@ -7,7 +7,7 @@ nav: false
 group: integrations
 order: 50
 mode: how-to
-updated: 2026-10-15
+updated: 2026-11-27
 related: [printlog-bridge, klipper-spoolman, switch-from-notifier, prints]
 ---
 
@@ -80,6 +80,9 @@ When a print finishes, the status inside of 3D Print Log will change to
 
 If a print is canceled, 3D Print Log will change the status to **Failed**. The
 Print Time and Filament Usage will be updated.
+
+When Klipper pauses a print, it shows as **Paused** until it resumes, and each
+pause goes on the print's [timeline](/docs/prints#timeline).
 
 ---
 

@@ -16,8 +16,17 @@ import { PrintStatus } from 'src/app/core/services/print.service';
 })
 export class PrintStatusBadgeComponent {
   readonly status = input.required<PrintStatus>();
+  /** The print is paused on the printer. Shown only while it is still printing. */
+  readonly paused = input(false);
+
+  private readonly showPaused = computed(
+    () => this.paused() && this.status() === PrintStatus.Printing
+  );
 
   protected readonly label = computed(() => {
+    if (this.showPaused()) {
+      return 'Paused';
+    }
     switch (this.status()) {
       case PrintStatus.Pending:
         return 'Pending';
@@ -37,6 +46,9 @@ export class PrintStatusBadgeComponent {
   });
 
   protected readonly icon = computed(() => {
+    if (this.showPaused()) {
+      return 'pause_circle_outline';
+    }
     switch (this.status()) {
       case PrintStatus.Pending:
         return 'pending_actions';
@@ -55,5 +67,7 @@ export class PrintStatusBadgeComponent {
     }
   });
 
-  protected readonly statusClass = computed(() => `status-${this.status()}`);
+  protected readonly statusClass = computed(() =>
+    this.showPaused() ? 'status-paused' : `status-${this.status()}`
+  );
 }

@@ -23,7 +23,10 @@
 }
 
 <div class="chip-row">
-  <app-print-status-badge [status]="print().status" />
+  <app-print-status-badge
+    [status]="print().status"
+    [paused]="!!print().pausedSince"
+  />
 </div>
 
 <section class="panel" aria-labelledby="at-a-glance-heading">
@@ -67,7 +70,12 @@
 
     @if (print().printTimeInSeconds > 0) {
       <dt>Print time</dt>
-      <dd>{{ print().printTimeInSeconds | duration }}</dd>
+      <dd>
+        {{ print().printTimeInSeconds | duration }}
+        @if (activeTime(); as active) {
+          <span class="active-time">{{ active }}</span>
+        }
+      </dd>
     }
     @if (print().estimatedPrintTimeInSeconds > 0) {
       <dt>Estimated time</dt>

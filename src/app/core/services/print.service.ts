@@ -166,6 +166,11 @@ export interface PrintSummary {
   createdByUserId: number;
   estimatedPrintTimeInSeconds: number | null;
   printTimeInSeconds: number | null;
+  /**
+   * When the printer paused the print, while it is paused (3d-print-log-api#343). Null when it
+   * isn't; absent from older APIs. The print's status stays Printing while paused.
+   */
+  pausedSince?: string | null;
 
   sumActualFilamentWeightMg: number;
   sumEstimatedFilamentWeightMg: number;
@@ -220,6 +225,32 @@ export interface PrintDetailDTO {
    * did or it has since been deleted. Creator-only, like the external pair.
    */
   connectionDisplayName?: string | null;
+  /**
+   * When the printer paused the print, while it is paused (3d-print-log-api#343). Null when it
+   * isn't; absent from older APIs. The print's status stays Printing while paused.
+   */
+  pausedSince?: string | null;
+  /**
+   * Seconds the print spent paused, once its pauses have ended. Its print time includes them.
+   * Creator-only; absent from older APIs.
+   */
+  pausedSeconds?: number | null;
+}
+
+/** One entry on a print's timeline (`GET /api/Prints/{id}/timeline`). */
+export interface PrintTimelineEvent {
+  id: number;
+  /** `started`, `finished`, `claimed`, `paused` or `failure`; more may be added. */
+  type: string;
+  occurredAt: string;
+  /** When a pause ended; null while it is still open, and on other entries. */
+  endedAt?: string | null;
+  /** What recorded it: `web`, `apiKey`, `moonraker`, `octoPrint`... */
+  source?: string | null;
+  /** The finished status (`Success`...), the printer's failure code, or the claiming connector. */
+  code?: string | null;
+  /** A failure's reason in words. */
+  message?: string | null;
 }
 
 /** A field `PatchPrintDTO.clear` can null out. */
@@ -342,6 +373,10 @@ export interface PrintDetail {
    * did or it has since been deleted. Creator-only, like the external pair.
    */
   connectionDisplayName?: string | null;
+  /** Read from the API, never sent back. See `PrintDetailDTO.pausedSince`. */
+  pausedSince?: string | null;
+  /** Read from the API, never sent back. See `PrintDetailDTO.pausedSeconds`. */
+  pausedSeconds?: number | null;
 }
 
 /**
@@ -486,6 +521,17 @@ export class PrintService {
     return this.http.get<PagedList<PrintSummary>>(url, { params, headers });
   }
 
+  /**
+   * The print's timeline, oldest first (3d-print-log-api#343). Creator only: the API answers
+   * anyone else 403. An API older than the timeline answers 404.
+   */
+  getPrintTimeline(id: number): Observable<PrintTimelineEvent[]> {
+    const url = `${this.baseApi}/api/Prints/${id}/timeline`;
+    return this.http
+      .get<{ events?: PrintTimelineEvent[] | null }>(url)
+      .pipe(map((timeline) => timeline.events ?? []));
+  }
+
   getPrintDetail(id: number): Observable<PrintDetail> {
     const url = `${this.baseApi}/api/Prints/${id}`;
     const headers = new HttpHeaders().set('allow-anonymous-request', 'true');
@@ -527,6 +573,8 @@ export class PrintService {
           externalSource: newPrint.externalSource ?? null,
           externalId: newPrint.externalId ?? null,
           connectionDisplayName: newPrint.connectionDisplayName ?? null,
+          pausedSince: newPrint.pausedSince ?? null,
+          pausedSeconds: newPrint.pausedSeconds ?? null,
         };
         return print;
       })

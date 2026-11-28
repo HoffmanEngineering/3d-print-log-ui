@@ -34,6 +34,32 @@ describe('PrintStatusBadgeComponent', () => {
     expect(render(PrintStatus.Failed).classList).toContain('status-5');
   });
 
+  describe('paused', () => {
+    const renderPaused = (status: PrintStatus) => {
+      fixture.componentRef.setInput('paused', true);
+      return render(status);
+    };
+
+    it('says Paused for a printing print that is paused', () => {
+      const el = renderPaused(PrintStatus.Printing);
+      expect(el.textContent).toContain('Paused');
+      expect(el.querySelector('mat-icon').textContent).toContain(
+        'pause_circle_outline'
+      );
+      expect(el.classList).toContain('status-paused');
+    });
+
+    it('keeps the final status once the print has ended', () => {
+      const el = renderPaused(PrintStatus.Success);
+      expect(el.textContent).toContain('Success');
+      expect(el.classList).not.toContain('status-paused');
+    });
+
+    it('says Printing when not paused', () => {
+      expect(render(PrintStatus.Printing).textContent).toContain('Printing');
+    });
+  });
+
   it('falls back to Unknown for an unrecognized status', () => {
     const el = render(99 as PrintStatus);
     expect(el.textContent).toContain('Unknown');

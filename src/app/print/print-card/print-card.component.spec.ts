@@ -90,6 +90,17 @@ describe('PrintCardComponent', () => {
     expect(content).toContain('Success');
   });
 
+  it('says Paused for a printing print paused on the printer', () => {
+    fixture.componentRef.setInput('print', {
+      ...mockPrint,
+      status: PrintStatus.Printing,
+      pausedSince: '2026-11-27T10:00:00Z',
+    });
+    fixture.detectChanges();
+    const badge = fixture.nativeElement.querySelector('.status-badge');
+    expect(badge.textContent).toContain('Paused');
+  });
+
   it('should emit deleted output when delete is triggered', () => {
     const deletedSpy = vi.fn();
     component.deleted.subscribe(deletedSpy);

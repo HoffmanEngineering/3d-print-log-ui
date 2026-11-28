@@ -149,6 +149,11 @@ describe('ViewPrintDetailComponent', () => {
         .fn()
         .mockName('PrintService.getPrintImage')
         .mockReturnValue(of('')),
+      // The owner's timeline band (3d-print-log-api#343).
+      getPrintTimeline: vi
+        .fn()
+        .mockName('PrintService.getPrintTimeline')
+        .mockReturnValue(of([])),
     } as unknown as MockedObject<PrintService>;
     printService.calculatePrintCost.mockReturnValue({
       valid: true,
@@ -273,6 +278,33 @@ describe('ViewPrintDetailComponent', () => {
   it('treats an anonymous visitor as a non-owner', async () => {
     await setup({ viewerId: null });
     expect(component.isOwner()).toBe(false);
+  });
+
+  // The timeline is the creator's only (3d-print-log-api#343): anyone else gets a 403, so the
+  // page must not even ask for it.
+  describe('the timeline band', () => {
+    const timelineBand = () =>
+      (fixture.nativeElement as HTMLElement).querySelector(
+        'app-print-timeline'
+      );
+
+    it('is fetched and shown for the owner', async () => {
+      await setup({ viewerId: OWNER_ID });
+      expect(timelineBand()).toBeTruthy();
+      expect(printServiceSpy.getPrintTimeline).toHaveBeenCalled();
+    });
+
+    it('is never fetched for a signed-in stranger', async () => {
+      await setup({ viewerId: 999 });
+      expect(timelineBand()).toBeNull();
+      expect(printServiceSpy.getPrintTimeline).not.toHaveBeenCalled();
+    });
+
+    it('is never fetched for an anonymous visitor', async () => {
+      await setup({ viewerId: null });
+      expect(timelineBand()).toBeNull();
+      expect(printServiceSpy.getPrintTimeline).not.toHaveBeenCalled();
+    });
   });
 
   // The three cases above prove the computed. These prove the parent actually

@@ -6,7 +6,7 @@ navLabel: Prints
 group: features
 order: 10
 mode: reference
-updated: 2026-11-18
+updated: 2026-11-27
 related: [projects, materials]
 ---
 
@@ -268,6 +268,30 @@ following:
 - **Set the default image** — The default image is shown in the print list and on the public print view. It is marked with a <mat-icon inline="true">star</mat-icon> in the thumbnail strip. To change the default, hover over any other thumbnail and click the <mat-icon inline="true">star_border</mat-icon> icon that appears.
 - **Reorder images** — Drag and drop thumbnails in the strip to change the display order of your images.
 - **Delete an image** — Hover over a thumbnail and click the <mat-icon inline="true">close</mat-icon> icon to remove that image. Deletions take effect when you click <button mat-raised-button color="primary">Submit</button>.
+
+---
+
+### Print timeline and pauses {#timeline}
+
+A print logged by an integration keeps a **Timeline** on its page: when it
+started and finished, when a connection claimed it, each time the printer paused
+it and for how long, and why it failed, with the printer's own error code when
+it gave one. Only you can see it, even on a public print.
+
+While the printer has a print paused, its status shows
+<mat-icon inline="true">pause_circle_outline</mat-icon> **Paused** in the print
+list and on the print page. The print is still **Printing** underneath: filters
+and counts treat it as printing, and it goes back to **Printing** when the
+printer resumes.
+
+**Print time includes pauses.** For a print that paused, the print page also
+shows its active time, such as "Active 3h 40m · paused 25m". The bridge
+leaves out pauses shorter than 30 seconds.
+
+Pauses come from the [printlog-bridge](/docs/printlog-bridge) and the
+[Moonraker notifier](/docs/klipper). The
+[OctoPrint webhook](/docs/octoprint-webhook) can't report them, since it never
+sends the resume.
 
 ---
 

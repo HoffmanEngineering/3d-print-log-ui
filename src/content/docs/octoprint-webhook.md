@@ -6,7 +6,7 @@ navLabel: Log prints from OctoPrint
 group: integrations
 order: 40
 mode: how-to
-updated: 2026-10-29
+updated: 2026-11-27
 related: [printlog-bridge-octoprint, switch-from-octoprint-webhook, prints]
 ---
 
@@ -73,6 +73,7 @@ help!](/feedback)
 
 - OctoPrint does not keep track of actual filament usage, so we cannot save actual filament usage on completion/failures. 3D Print Log can only record the initial estimated usage.
 - OctoPrint does not analyze print settings, so no print settings from the slicer will be automatically recorded in the Notes section.
+- Pauses are not recorded: the Webhooks plugin reports a pause but never the resume. To see pauses on the print's [timeline](/docs/prints#timeline), use the [printlog-bridge](/docs/printlog-bridge-octoprint) instead.
 
 ---
 

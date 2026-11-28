@@ -1,0 +1,21 @@
+@if (rows().length) {
+  <section class="timeline" aria-labelledby="timeline-heading">
+    <h2 id="timeline-heading">Timeline</h2>
+    <ol>
+      @for (row of rows(); track row.id) {
+        <li>
+          <mat-icon class="timeline-icon" aria-hidden="true">{{
+            row.icon
+          }}</mat-icon>
+          <span class="timeline-label">{{ row.label }}</span>
+          @if (row.detail) {
+            <code class="timeline-detail">{{ row.detail }}</code>
+          }
+          <time class="timeline-time" [attr.datetime]="row.occurredAt">{{
+            row.occurredAt | localeDate: 'short'
+          }}</time>
+        </li>
+      }
+    </ol>
+  </section>
+}

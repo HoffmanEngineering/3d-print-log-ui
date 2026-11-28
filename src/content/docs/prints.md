@@ -288,9 +288,10 @@ printer resumes.
 shows its active time, such as "Active 3h 40m · paused 25m". The bridge
 leaves out pauses shorter than 30 seconds.
 
-Pauses come from the [printlog-bridge](/docs/printlog-bridge), the
-[Moonraker notifier](/docs/klipper) and the
-[OctoPrint webhook](/docs/octoprint-webhook).
+Pauses come from the [printlog-bridge](/docs/printlog-bridge) and the
+[Moonraker notifier](/docs/klipper). The
+[OctoPrint webhook](/docs/octoprint-webhook) can't report them, since it never
+sends the resume.
 
 ---
 

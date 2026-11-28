@@ -62,10 +62,6 @@ If a print is canceled in OctoPrint, 3D Print Log will change the status to
 "Failed" and save a picture (if you have a webcam configured in OctoPrint). The
 Print Time and Filament Usage will be updated.
 
-When the webhook sends OctoPrint's **Print Paused** and **Print Resumed**
-events, a paused print shows as **Paused** until it resumes, and each pause goes
-on the print's [timeline](/docs/prints#timeline).
-
 ---
 
 ### Limitations
@@ -77,6 +73,7 @@ help!](/feedback)
 
 - OctoPrint does not keep track of actual filament usage, so we cannot save actual filament usage on completion/failures. 3D Print Log can only record the initial estimated usage.
 - OctoPrint does not analyze print settings, so no print settings from the slicer will be automatically recorded in the Notes section.
+- Pauses are not recorded: the Webhooks plugin reports a pause but never the resume. To see pauses on the print's [timeline](/docs/prints#timeline), use the [printlog-bridge](/docs/printlog-bridge-octoprint) instead.
 
 ---
 

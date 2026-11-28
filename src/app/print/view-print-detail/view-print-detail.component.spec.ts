@@ -149,6 +149,11 @@ describe('ViewPrintDetailComponent', () => {
         .fn()
         .mockName('PrintService.getPrintImage')
         .mockReturnValue(of('')),
+      // The owner's timeline band (3d-print-log-api#343).
+      getPrintTimeline: vi
+        .fn()
+        .mockName('PrintService.getPrintTimeline')
+        .mockReturnValue(of([])),
     } as unknown as MockedObject<PrintService>;
     printService.calculatePrintCost.mockReturnValue({
       valid: true,

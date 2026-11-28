@@ -54,6 +54,7 @@ import { PrintCommentsComponent } from '../print-comments/print-comments.compone
 import { PrintDetailLoaderService } from '../services/print-detail-loader.service';
 import { PrintDetailHeroComponent } from './print-detail-hero/print-detail-hero.component';
 import { PrintDetailSummaryComponent } from './print-detail-summary/print-detail-summary.component';
+import { PrintTimelineComponent } from './print-timeline/print-timeline.component';
 import { PrintImageValue } from './print-image-value.model';
 
 export { PrintImageValue } from './print-image-value.model';
@@ -99,6 +100,7 @@ const LOADING_STATE: PrintDetailState = {
     PrintCommentsComponent,
     PrintDetailHeroComponent,
     PrintDetailSummaryComponent,
+    PrintTimelineComponent,
     SkeletonComponent,
   ],
 })

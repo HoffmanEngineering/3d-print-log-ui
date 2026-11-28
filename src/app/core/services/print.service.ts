@@ -237,6 +237,22 @@ export interface PrintDetailDTO {
   pausedSeconds?: number | null;
 }
 
+/** One entry on a print's timeline (`GET /api/Prints/{id}/timeline`). */
+export interface PrintTimelineEvent {
+  id: number;
+  /** `started`, `finished`, `claimed`, `paused` or `failure`; more may be added. */
+  type: string;
+  occurredAt: string;
+  /** When a pause ended; null while it is still open, and on other entries. */
+  endedAt?: string | null;
+  /** What recorded it: `web`, `apiKey`, `moonraker`, `octoPrint`... */
+  source?: string | null;
+  /** The finished status (`Success`...), the printer's failure code, or the claiming connector. */
+  code?: string | null;
+  /** A failure's reason in words. */
+  message?: string | null;
+}
+
 /** A field `PatchPrintDTO.clear` can null out. */
 export type PrintClearableField =
   | 'startDate'
@@ -503,6 +519,17 @@ export class PrintService {
     }
 
     return this.http.get<PagedList<PrintSummary>>(url, { params, headers });
+  }
+
+  /**
+   * The print's timeline, oldest first (3d-print-log-api#343). Creator only: the API answers
+   * anyone else 403. An API older than the timeline answers 404.
+   */
+  getPrintTimeline(id: number): Observable<PrintTimelineEvent[]> {
+    const url = `${this.baseApi}/api/Prints/${id}/timeline`;
+    return this.http
+      .get<{ events?: PrintTimelineEvent[] | null }>(url)
+      .pipe(map((timeline) => timeline.events ?? []));
   }
 
   getPrintDetail(id: number): Observable<PrintDetail> {

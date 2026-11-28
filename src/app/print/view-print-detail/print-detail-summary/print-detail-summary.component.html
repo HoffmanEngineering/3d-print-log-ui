@@ -70,7 +70,12 @@
 
     @if (print().printTimeInSeconds > 0) {
       <dt>Print time</dt>
-      <dd>{{ print().printTimeInSeconds | duration }}</dd>
+      <dd>
+        {{ print().printTimeInSeconds | duration }}
+        @if (activeTime(); as active) {
+          <span class="active-time">{{ active }}</span>
+        }
+      </dd>
     }
     @if (print().estimatedPrintTimeInSeconds > 0) {
       <dt>Estimated time</dt>

@@ -122,3 +122,9 @@ $muted-dark: rgba(255, 255, 255, 0.7);
     border-color: $hairline-dark;
   }
 }
+
+.active-time {
+  display: block;
+  font-size: 0.85em;
+  color: var(--app-text-secondary);
+}

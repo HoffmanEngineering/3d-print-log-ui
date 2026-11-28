@@ -6,7 +6,7 @@ navLabel: Log prints from OctoPrint
 group: integrations
 order: 40
 mode: how-to
-updated: 2026-10-29
+updated: 2026-11-27
 related: [printlog-bridge-octoprint, switch-from-octoprint-webhook, prints]
 ---
 
@@ -61,6 +61,10 @@ Usage will be updated.
 If a print is canceled in OctoPrint, 3D Print Log will change the status to
 "Failed" and save a picture (if you have a webcam configured in OctoPrint). The
 Print Time and Filament Usage will be updated.
+
+When the webhook sends OctoPrint's **Print Paused** and **Print Resumed**
+events, a paused print shows as **Paused** until it resumes, and each pause goes
+on the print's [timeline](/docs/prints#timeline).
 
 ---
 

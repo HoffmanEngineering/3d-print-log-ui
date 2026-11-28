@@ -134,6 +134,26 @@ describe('PrintDetailSummaryComponent', () => {
     expect(el.textContent).toContain('$1.84');
   });
 
+  describe('active time', () => {
+    const withPause = (pausedSeconds: number | null | undefined) => {
+      fixture.componentRef.setInput('print', {
+        ...print,
+        printTimeInSeconds: 3960,
+        pausedSeconds,
+      });
+      return renderAs(true).textContent as string;
+    };
+
+    it('is shown with the paused time when the print paused', () => {
+      expect(withPause(360)).toContain('Active 1h · paused 6m');
+    });
+
+    it('is hidden when the print never paused', () => {
+      expect(withPause(0)).not.toContain('Active');
+      expect(withPause(null)).not.toContain('Active');
+    });
+  });
+
   it('omits all cost figures from non-owners', () => {
     const el = renderAs(false);
     expect(el.textContent).not.toContain('$0.21');

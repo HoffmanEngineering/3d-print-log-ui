@@ -112,6 +112,10 @@
           </section>
         }
 
+        @if (isOwner()) {
+          <app-print-timeline class="band" [printId]="p.id" />
+        }
+
         <div class="band-split">
           <!--
             These two sections carry aria-label rather than a band-level <h2>:

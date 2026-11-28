@@ -6,7 +6,7 @@ navLabel: Log prints from Klipper
 group: integrations
 order: 42
 mode: explanation
-updated: 2026-10-30
+updated: 2026-11-27
 related: [printlog-bridge-install, printlog-bridge-bambu, printlog-bridge-prusalink, printlog-bridge-octoprint, printlog-bridge-sdcp, printlog-bridge-duet, printlog-bridge-flashforge, printlog-bridge-anycubic, klipper-spoolman, printlog-bridge-docker, printlog-bridge-spools, snapmaker-u1, printlog-bridge-troubleshooting, printlog-bridge-privacy, switch-from-notifier, switch-from-octoprint-webhook]
 ---
 
@@ -70,7 +70,9 @@ A paired bridge also finds the printers on its network and lists them on the [Br
 
 **When a print starts**, a new print appears on your [Print List](/prints) with the status **Printing**. Its title comes from the file name, and it carries the slicer's estimated print time and filament when the file has them. The largest thumbnail the slicer embedded in the file (OrcaSlicer, PrusaSlicer, Cura and SuperSlicer all embed one) becomes its picture. Shortly after, the print gets the slicer and its version, and the [slicer settings](#slicer-settings) it was sliced with in its notes.
 
-**When the print ends**, the bridge records the outcome, the print time and the filament Klipper actually fed, and adds one frame from the printer's webcam. For a failed print, that frame becomes the picture shown.
+**While it prints**, each pause of 30 seconds or more goes on the print's [timeline](/docs/prints#timeline), and the print shows **Paused** until the printer resumes. A pause still running when the bridge restarts keeps its start time.
+
+**When the print ends**, the bridge records the outcome, the print time (pauses included) and the filament Klipper actually fed, and adds one frame from the printer's webcam. For a failed print, that frame becomes the picture shown, and Moonraker's reason (such as `klippy_shutdown`) goes on the timeline.
 
 | Moonraker ends the job as | The print becomes | Note added to the print |
 | --- | --- | --- |

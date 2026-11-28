@@ -113,7 +113,11 @@
         }
 
         @if (isOwner()) {
-          <app-print-timeline class="band" [printId]="p.id" />
+          <app-print-timeline
+            class="band"
+            [printId]="p.id"
+            [printStatus]="p.status"
+          />
         }
 
         <div class="band-split">

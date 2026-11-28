@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import {
   PrintService,
+  PrintStatus,
   PrintTimelineEvent,
 } from 'src/app/core/services/print.service';
 import { PrintTimelineComponent } from './print-timeline.component';
@@ -102,6 +103,28 @@ describe('PrintTimelineComponent', () => {
     await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('section')).toBeNull();
+  });
+
+  it('drops the last print entries while the next print loads', async () => {
+    await render([event({ type: 'failure', message: 'Klipper shutdown' })]);
+    expect(fixture.nativeElement.textContent).toContain('Klipper shutdown');
+
+    printService.getPrintTimeline.mockReturnValue(
+      new Subject<PrintTimelineEvent[]>()
+    );
+    fixture.componentRef.setInput('printId', 10);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Klipper shutdown');
+  });
+
+  it('does not call a pause open on a print that has ended', async () => {
+    fixture.componentRef.setInput('printStatus', PrintStatus.Success);
+    const el = await render([event({ type: 'paused', endedAt: null })]);
+    expect(el.textContent).toContain('Paused');
+    expect(el.textContent).not.toContain('still paused');
   });
 
   it('shows entries that arrive after the first render', async () => {

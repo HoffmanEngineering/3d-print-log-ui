@@ -179,6 +179,31 @@ describe('PrintGroupedViewComponent', () => {
     expect(component.getStatus(PrintStatus.Printing)).toBe('Printing');
   });
 
+  it('says Paused in the table status cell of a paused standalone print', async () => {
+    vi.useFakeTimers();
+    const paused: GroupedFeedItemDto = {
+      ...mockPrintItem,
+      print: {
+        ...mockPrintItem.print,
+        status: PrintStatus.Printing,
+        pausedSince: '2026-11-27T10:00:00Z',
+      },
+    };
+    mockProjectService.getGroupedFeed.mockReturnValue(
+      of(makePagedList([paused]))
+    );
+    component.displayedColumns.set(['title', 'status', 'more']);
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(500);
+    fixture.detectChanges();
+
+    const cell = (fixture.nativeElement as HTMLElement).querySelector(
+      'td.mat-column-status'
+    );
+    expect(cell?.textContent?.trim()).toBe('Paused');
+    vi.clearAllTimers();
+  });
+
   it('calls getGroupedFeed on init with default inputs', async () => {
     vi.useFakeTimers();
     fixture.detectChanges();

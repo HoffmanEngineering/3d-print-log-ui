@@ -7,9 +7,10 @@ import {
 } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatIconModule } from '@angular/material/icon';
-import { catchError, of, switchMap } from 'rxjs';
+import { catchError, of, startWith, switchMap } from 'rxjs';
 import {
   PrintService,
+  PrintStatus,
   PrintTimelineEvent,
 } from 'src/app/core/services/print.service';
 import { LocaleDatePipe } from 'src/app/shared/pipes/locale-date.pipe';
@@ -50,26 +51,33 @@ export class PrintTimelineComponent {
   private readonly printService = inject(PrintService);
 
   readonly printId = input.required<number>();
+  /** The print's status: an open pause on a print that has since ended isn't "still paused". */
+  readonly printStatus = input<PrintStatus | null>(null);
 
   private readonly events = toSignal(
     toObservable(this.printId).pipe(
       switchMap((id) =>
-        this.printService
-          .getPrintTimeline(id)
-          .pipe(catchError(() => of([] as PrintTimelineEvent[])))
+        this.printService.getPrintTimeline(id).pipe(
+          // Empty while another print's loads, so the last one's history never shows under it.
+          startWith([] as PrintTimelineEvent[]),
+          catchError(() => of([] as PrintTimelineEvent[]))
+        )
       )
     ),
     { initialValue: [] as PrintTimelineEvent[] }
   );
 
-  protected readonly rows = computed(() =>
-    this.events()
-      .map(toRow)
-      .filter((row): row is TimelineRow => row !== null)
-  );
+  protected readonly rows = computed(() => {
+    // Printing, or not known: a pause without an end is still going.
+    const status = this.printStatus();
+    const running = status === null || status === PrintStatus.Printing;
+    return this.events()
+      .map((e) => toRow(e, running))
+      .filter((row): row is TimelineRow => row !== null);
+  });
 }
 
-function toRow(e: PrintTimelineEvent): TimelineRow | null {
+function toRow(e: PrintTimelineEvent, running: boolean): TimelineRow | null {
   const row = (icon: string, label: string, detail: string | null = null) => ({
     id: e.id,
     occurredAt: e.occurredAt,
@@ -92,7 +100,9 @@ function toRow(e: PrintTimelineEvent): TimelineRow | null {
         'pause_circle_outline',
         e.endedAt
           ? `Paused for ${pauseLength(e.occurredAt, e.endedAt)}`
-          : 'Paused (still paused)'
+          : running
+            ? 'Paused (still paused)'
+            : 'Paused' // ended by hand while paused: when it resumed isn't known
       );
     case 'failure': {
       const reason = e.message || e.code;

@@ -862,7 +862,7 @@
         } @else if (row.kind === 'expanded-print') {
           {{ getStatus(row.print.status, row.print.pausedSince) }}
         } @else if (row.kind === 'print') {
-          {{ getStatus($safeNavigationMigration(row.item.print?.status)) }}
+          {{ getStatus(row.item.print?.status, row.item.print?.pausedSince) }}
         }
       </td>
     </ng-container>
